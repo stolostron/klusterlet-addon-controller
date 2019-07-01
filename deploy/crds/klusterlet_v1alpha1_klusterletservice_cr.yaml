@@ -1,0 +1,7 @@
+apiVersion: klusterlet.mcm.ibm.com/v1alpha1
+kind: KlusterletService
+metadata:
+  name: example-klusterletservice
+spec:
+  # Add fields here
+  size: 3
