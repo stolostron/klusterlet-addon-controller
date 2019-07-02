@@ -4,22 +4,59 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// IMPORTANT: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 
 // KlusterletServiceSpec defines the desired state of KlusterletService
 // +k8s:openapi-gen=true
 type KlusterletServiceSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
+	ConnectionManager ConnectionManager `json:"connection-manager"`
+	CertificateIssuer CertificateIssuer `json:"certificate-issuer"`
+	Search            Search            `json:"search"`
+	WorkManager       WorkManager       `json:"work-manager"`
+	PolicyController  PolicyController  `json:"policy-controller"`
+	ServiceRegistry   ServiceRegistry   `json:"service-registry"`
+	TopologyCollector TopologyCollector `json:"topology-collector"`
+}
+
+// ConnectionManager defines the desired state of the ConnectionManager component
+// +k8s:openapi-gen=true
+type ConnectionManager struct {
+}
+
+// CertificateIssuer defines the desired state of the CertificateIssuer component
+// +k8s:openapi-gen=true
+type CertificateIssuer struct {
+}
+
+// Search defines the desired state of the Search component
+// +k8s:openapi-gen=true
+type Search struct {
+}
+
+// WorkManager defines the desired state of the WorkManager component
+// +k8s:openapi-gen=true
+type WorkManager struct {
+}
+
+// PolicyController defines the desired state of the PolicyController component
+// +k8s:openapi-gen=true
+type PolicyController struct {
+}
+
+// ServiceRegistry defines the desired state of the ServiceRegistry component
+// +k8s:openapi-gen=true
+type ServiceRegistry struct {
+}
+
+// TopologyCollector defines the desired state of the TopologyCollector component
+// +k8s:openapi-gen=true
+type TopologyCollector struct {
 }
 
 // KlusterletServiceStatus defines the observed state of KlusterletService
 // +k8s:openapi-gen=true
 type KlusterletServiceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
 }
 
