@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/mongodb"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -20,6 +21,7 @@ type KlusterletServiceSpec struct {
 	ClusterName string `json:"clusterName"`
 
 	ConnectionManager connmgr.ConnectionManager `json:"connectionManager,omitempty"`
+	MongoDB           mongodb.MongoDB           `json:"mongodb,omitempty"`
 }
 
 // KlusterletServiceStatus defines the observed state of KlusterletService

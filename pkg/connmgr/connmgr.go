@@ -1,6 +1,8 @@
 package connmgr
 
 import (
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
+
 	"k8s.io/kubernetes/pkg/apis/core"
 )
 
@@ -18,21 +20,10 @@ type ConnectionManager struct {
 	Hubs []Hub `json:"hubs,omitempty"`
 
 	Affinity        core.Affinity             `json:"affinity,omitempty"`
-	Image           Image                     `json:"image,omitempty"`
+	Image           image.Image               `json:"image,omitempty"`
 	ImagePullSecret core.LocalObjectReference `json:"imagePullSecret,omitempty"`
 	NodeSelector    core.NodeSelector         `json:"nodeSelector,omitempty"`
 	Tolerations     []core.Toleration         `json:"tolerations,omitempty"`
-}
-
-// Image defines the image to pull for a container
-// +k8s:openapi-gen=true
-type Image struct {
-	// +kubebuilder:validation:MinLength=1
-	Repository string `json:"repository,omitempty"`
-	// +kubebuilder:validation:MinLength=1
-	Tag string `json:"tag,omitempty"`
-	// +kubebuilder:validation:Enum=Always,Never,IfNotPresent
-	PullPolicy core.PullPolicy `json:"pullPolicy,omitempty"`
 }
 
 // Hub defines an MCM hub for the ConnectionManager component
