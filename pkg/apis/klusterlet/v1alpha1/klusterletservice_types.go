@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/conn_mgr"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -16,14 +16,10 @@ type KlusterletServiceSpec struct {
 	Version string `json:"version"`
 	// +kubebuilder:validation:MinLength=1
 	Namespace string `json:"namespace"`
+	// +kubebuilder:validation:MinLength=1
+	ClusterName string `json:"clusterName"`
 
-	ConnectionManager conn_mgr.ConnectionManager `json:"connectionManager"`
-	// CertificateIssuer CertificateIssuer `json:"certificateIssuer"`
-	// Search            Search            `json:"search,omitempty"`
-	// WorkManager       WorkManager       `json:"workManager,omitempty"`
-	// PolicyController  PolicyController  `json:"policyController,omitempty"`
-	// ServiceRegistry   ServiceRegistry   `json:"serviceRegistry,omitempty"`
-	// TopologyCollector TopologyCollector `json:"topologyCollector,omitempty"`
+	ConnectionManager connmgr.ConnectionManager `json:"connectionManager,omitempty"`
 }
 
 // KlusterletServiceStatus defines the observed state of KlusterletService
