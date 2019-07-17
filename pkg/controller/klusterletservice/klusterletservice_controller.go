@@ -122,6 +122,12 @@ func (r *ReconcileKlusterletService) Reconcile(request reconcile.Request) (recon
 		if err := installClusterIssuerCRD(r); err != nil {
 			return reconcile.Result{}, err
 		}
+		if err := installOrderCRD(r); err != nil {
+			return reconcile.Result{}, err
+		}
+		if err := installChallengeCRD(r); err != nil {
+			return reconcile.Result{}, err
+		}
 
 		certmgrSA, err := getOrCreateServiceAccount(r, certMgr.Spec.ServiceAccount.Name, instance.Namespace)
 		if err != nil {
@@ -143,31 +149,81 @@ func (r *ReconcileKlusterletService) Reconcile(request reconcile.Request) (recon
 		return reconcile.Result{}, err
 	}
 
-	if err := createSelfSignIssuer(r, "self-signed", instance.Namespace); err != nil {
+	// Self Signed Issuer
+	if err := createSelfSignIssuer(r, "self-signed", ""); err != nil {
 		return reconcile.Result{}, err
 	}
 
+	// Tiller
+	tiller := newTillerCR(instance)
+	if err := controllerutil.SetControllerReference(instance, tiller, r.scheme); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	foundTiller := &klusterletv1alpha1.Tiller{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: certMgr.Name, Namespace: certMgr.Namespace}, foundTiller)
+	if err != nil && errors.IsNotFound(err) {
+		reqLogger.Info("Creating a new Tiller", "Tiller.Namespace", tiller.Namespace, "Tiller.Name", tiller.Name)
+		if err := r.client.Create(context.TODO(), tiller); err != nil {
+			return reconcile.Result{}, err
+		}
+	}
 	return reconcile.Result{}, nil
 }
 
+func newTillerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.Tiller {
+	labels := map[string]string{
+		"app": cr.Name,
+	}
+	return &klusterletv1alpha1.Tiller{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cr.Name,
+			Namespace: cr.Namespace,
+			Labels:    labels,
+		},
+		Spec: klusterletv1alpha1.TillerSpec{},
+	}
+}
+
 func createSelfSignIssuer(r *ReconcileKlusterletService, name string, namespace string) error {
-	clusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, clusterIssuer)
-	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating self signed cluster issuer", "Name", name, "Namespace", namespace)
-		clusterIssuer = &certmanagerv1alpha1.ClusterIssuer{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: namespace,
-			},
-			Spec: certmanagerv1alpha1.IssuerSpec{
-				IssuerConfig: certmanagerv1alpha1.IssuerConfig{
-					SelfSigned: &certmanagerv1alpha1.SelfSignedIssuer{},
+	if namespace == "" {
+		clusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
+		err := r.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: ""}, clusterIssuer)
+		if err != nil && errors.IsNotFound(err) {
+			log.Info("Creating self signed cluster issuer", "Name", name)
+			clusterIssuer = &certmanagerv1alpha1.ClusterIssuer{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: name,
 				},
-			},
+				Spec: certmanagerv1alpha1.IssuerSpec{
+					IssuerConfig: certmanagerv1alpha1.IssuerConfig{
+						SelfSigned: &certmanagerv1alpha1.SelfSignedIssuer{},
+					},
+				},
+			}
+			if err := r.client.Create(context.TODO(), clusterIssuer); err != nil {
+				return err
+			}
 		}
-		if err := r.client.Create(context.TODO(), clusterIssuer); err != nil {
-			return err
+	} else {
+		issuer := &certmanagerv1alpha1.Issuer{}
+		err := r.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, issuer)
+		if err != nil && errors.IsNotFound(err) {
+			log.Info("Creating self signed cluster issuer", "Name", name)
+			issuer = &certmanagerv1alpha1.Issuer{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+				Spec: certmanagerv1alpha1.IssuerSpec{
+					IssuerConfig: certmanagerv1alpha1.IssuerConfig{
+						SelfSigned: &certmanagerv1alpha1.SelfSignedIssuer{},
+					},
+				},
+			}
+			if err := r.client.Create(context.TODO(), issuer); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -205,29 +261,6 @@ func addServiceAccountToSCC(r *ReconcileKlusterletService, sa *corev1.ServiceAcc
 
 func addImagePullSecretToServiceAccount() {}
 
-// newPodForCR returns a busybox pod with the same name/namespace as the cr
-// func newPodForCR(cr *klusterletv1alpha1.KlusterletService) *corev1.Pod {
-// 	labels := map[string]string{
-// 		"app": cr.Name,
-// 	}
-// 	return &corev1.Pod{
-// 		ObjectMeta: metav1.ObjectMeta{
-// 			Name:      cr.Name + "-pod",
-// 			Namespace: cr.Namespace,
-// 			Labels:    labels,
-// 		},
-// 		Spec: corev1.PodSpec{
-// 			Containers: []corev1.Container{
-// 				{
-// 					Name:    "busybox",
-// 					Image:   "busybox",
-// 					Command: []string{"sleep", "3600"},
-// 				},
-// 			},
-// 		},
-// 	}
-// }
-
 func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.CertManager {
 	labels := map[string]string{
 		"app": cr.Name,
@@ -254,7 +287,6 @@ func installCertificateCRD(r *ReconcileKlusterletService) error {
 	certificatesCRD := &apiextensionv1beta1.CustomResourceDefinition{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "certificates.certmanager.k8s.io", Namespace: ""}, certificatesCRD)
 	if err != nil && errors.IsNotFound(err) {
-		//create certificates.certmanager.k8s.io CRDs
 		certificatesCRD = &apiextensionv1beta1.CustomResourceDefinition{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "certificates.certmanager.k8s.io",
@@ -320,7 +352,6 @@ func installIssuerCRD(r *ReconcileKlusterletService) error {
 	issuerCRD := &apiextensionv1beta1.CustomResourceDefinition{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "issuers.certmanager.k8s.io", Namespace: ""}, issuerCRD)
 	if err != nil && errors.IsNotFound(err) {
-		//create certificates.certmanager.k8s.io CRDs
 		issuerCRD = &apiextensionv1beta1.CustomResourceDefinition{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "issuers.certmanager.k8s.io",
@@ -351,7 +382,6 @@ func installClusterIssuerCRD(r *ReconcileKlusterletService) error {
 	clusterIssuerCRD := &apiextensionv1beta1.CustomResourceDefinition{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "clusterissuers.certmanager.k8s.io", Namespace: ""}, clusterIssuerCRD)
 	if err != nil && errors.IsNotFound(err) {
-		//create certificates.certmanager.k8s.io CRDs
 		clusterIssuerCRD = &apiextensionv1beta1.CustomResourceDefinition{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "clusterissuers.certmanager.k8s.io",
@@ -367,6 +397,114 @@ func installClusterIssuerCRD(r *ReconcileKlusterletService) error {
 			},
 		}
 		err = r.client.Create(context.TODO(), clusterIssuerCRD)
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+	return nil
+}
+
+func installOrderCRD(r *ReconcileKlusterletService) error {
+	log.Info("Installing orders.certmanager.k8s.io CRD")
+
+	orderCRD := &apiextensionv1beta1.CustomResourceDefinition{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "orders.certmanager.k8s.io", Namespace: ""}, orderCRD)
+	if err != nil && errors.IsNotFound(err) {
+		orderCRD = &apiextensionv1beta1.CustomResourceDefinition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "orders.certmanager.k8s.io",
+			},
+			Spec: apiextensionv1beta1.CustomResourceDefinitionSpec{
+				Scope:   "Namespaced",
+				Group:   "certmanager.k8s.io",
+				Version: "v1alpha1",
+				Names: apiextensionv1beta1.CustomResourceDefinitionNames{
+					Kind:   "Order",
+					Plural: "orders",
+				},
+				AdditionalPrinterColumns: []apiextensionv1beta1.CustomResourceColumnDefinition{
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "State",
+						Type:     "string",
+						JSONPath: ".status.state",
+					},
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "Issuer",
+						Type:     "string",
+						JSONPath: ".spec.issuerRef.name",
+						Priority: 1,
+					},
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "Reason",
+						Type:     "string",
+						JSONPath: ".status.reason",
+						Priority: 1,
+					},
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "Age",
+						Type:     "date",
+						JSONPath: ".metadata.creationTimestamp",
+					},
+				},
+			},
+		}
+		err = r.client.Create(context.TODO(), orderCRD)
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+	return nil
+}
+
+func installChallengeCRD(r *ReconcileKlusterletService) error {
+	log.Info("Installing challenges.certmanager.k8s.io CRD")
+
+	challengeCRD := &apiextensionv1beta1.CustomResourceDefinition{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "challenges.certmanager.k8s.io", Namespace: ""}, challengeCRD)
+	if err != nil && errors.IsNotFound(err) {
+		challengeCRD = &apiextensionv1beta1.CustomResourceDefinition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "challenges.certmanager.k8s.io",
+			},
+			Spec: apiextensionv1beta1.CustomResourceDefinitionSpec{
+				Scope:   "Namespaced",
+				Group:   "certmanager.k8s.io",
+				Version: "v1alpha1",
+				Names: apiextensionv1beta1.CustomResourceDefinitionNames{
+					Kind:   "Challenge",
+					Plural: "challenges",
+				},
+				AdditionalPrinterColumns: []apiextensionv1beta1.CustomResourceColumnDefinition{
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "State",
+						Type:     "string",
+						JSONPath: ".status.state",
+					},
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "Domain",
+						Type:     "string",
+						JSONPath: "..spec.dnsName",
+						Priority: 1,
+					},
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "Reason",
+						Type:     "string",
+						JSONPath: ".status.reason",
+						Priority: 1,
+					},
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "Age",
+						Type:     "date",
+						JSONPath: ".metadata.creationTimestamp",
+					},
+				},
+			},
+		}
+		err = r.client.Create(context.TODO(), challengeCRD)
 		if err != nil {
 			return err
 		}
