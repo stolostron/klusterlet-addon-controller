@@ -1,8 +1,6 @@
 package v1alpha1
 
 import (
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/mongodb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -18,7 +16,7 @@ type KlusterletServiceSpec struct {
 	Namespace string `json:"namespace"`
 	// +kubebuilder:validation:MinLength=1
 	ClusterName string `json:"clusterName"`
-  // +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MinLength=1
 	ClusterNamespace string `json:"clusterNamespace"`
 
 	// CertificateManager CertificateManager `json:"certManager"`
@@ -29,7 +27,6 @@ type KlusterletServiceSpec struct {
 	// PolicyController  PolicyController  `json:"policyController,omitempty"`
 	// ServiceRegistry   ServiceRegistry   `json:"serviceRegistry,omitempty"`
 	// TopologyCollector TopologyCollector `json:"topologyCollector,omitempty"`
-	MongoDB           mongodb.MongoDB           `json:"mongodb,omitempty"`
 }
 
 // KlusterletConnectionManager defines configuration for the ConnectionManager component
