@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
 	apiextensionv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -33,10 +34,57 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 		if err := client.Create(context.TODO(), certMgr); err != nil {
 			return err
 		}
+		if err := createSelfSignIssuer(client, "self-signed", ""); err != nil {
+			return err
+		}
 	} else if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func createSelfSignIssuer(client client.Client, name string, namespace string) error {
+	if namespace == "" {
+		clusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
+		err := client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: ""}, clusterIssuer)
+		if err != nil && errors.IsNotFound(err) {
+			log.Info("Creating self signed cluster issuer", "Name", name)
+			clusterIssuer = &certmanagerv1alpha1.ClusterIssuer{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: name,
+				},
+				Spec: certmanagerv1alpha1.IssuerSpec{
+					IssuerConfig: certmanagerv1alpha1.IssuerConfig{
+						SelfSigned: &certmanagerv1alpha1.SelfSignedIssuer{},
+					},
+				},
+			}
+			if err := client.Create(context.TODO(), clusterIssuer); err != nil {
+				return err
+			}
+		}
+	} else {
+		issuer := &certmanagerv1alpha1.Issuer{}
+		err := client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, issuer)
+		if err != nil && errors.IsNotFound(err) {
+			log.Info("Creating self signed cluster issuer", "Name", name)
+			issuer = &certmanagerv1alpha1.Issuer{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+				Spec: certmanagerv1alpha1.IssuerSpec{
+					IssuerConfig: certmanagerv1alpha1.IssuerConfig{
+						SelfSigned: &certmanagerv1alpha1.SelfSignedIssuer{},
+					},
+				},
+			}
+			if err := client.Create(context.TODO(), issuer); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
