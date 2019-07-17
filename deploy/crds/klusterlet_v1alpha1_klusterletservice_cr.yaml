@@ -1,7 +1,12 @@
 apiVersion: klusterlet.mcm.ibm.com/v1alpha1
 kind: KlusterletService
 metadata:
-  name: example-klusterletservice
+  name: klusterlet
 spec:
   # Add fields here
-  size: 3
+  clusterName: test
+  clusterNamespace: test
+
+  connectionManager:
+    bootstrapConfig:
+        hub0: multicluster-endpoint/klusterlet-bootstrap

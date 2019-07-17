@@ -1,9 +1,6 @@
 package v1alpha1
 
 import (
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/mongodb"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -19,15 +16,30 @@ type KlusterletServiceSpec struct {
 	Namespace string `json:"namespace"`
 	// +kubebuilder:validation:MinLength=1
 	ClusterName string `json:"clusterName"`
+	// +kubebuilder:validation:MinLength=1
+	ClusterNamespace string `json:"clusterNamespace"`
 
-	ConnectionManager connmgr.ConnectionManager `json:"connectionManager,omitempty"`
-	MongoDB           mongodb.MongoDB           `json:"mongodb,omitempty"`
+	// CertificateManager CertificateManager `json:"certManager"`
+	ConnectionManager KlusterletConnectionManager `json:"connectionManager"`
+	// CertificateIssuer CertificateIssuer `json:"certificateIssuer"`
+	// Search            Search            `json:"search,omitempty"`
+	// WorkManager       WorkManager       `json:"workManager,omitempty"`
+	// PolicyController  PolicyController  `json:"policyController,omitempty"`
+	// ServiceRegistry   ServiceRegistry   `json:"serviceRegistry,omitempty"`
+	// TopologyCollector TopologyCollector `json:"topologyCollector,omitempty"`
+}
+
+// KlusterletConnectionManager defines configuration for the ConnectionManager component
+// +k8s:openapi-gen=true
+type KlusterletConnectionManager struct {
+	BootStrapConfig map[string]string `json:"bootstrapConfig"`
 }
 
 // KlusterletServiceStatus defines the observed state of KlusterletService
 // +k8s:openapi-gen=true
 type KlusterletServiceStatus struct {
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
+	Test string `json:"test"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

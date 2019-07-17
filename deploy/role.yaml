@@ -50,5 +50,7 @@ rules:
   - klusterlet.mcm.ibm.com
   resources:
   - '*'
+  - tillers
+  - connectionmanagers
   verbs:
   - '*'
