@@ -19,13 +19,19 @@ type KlusterletServiceSpec struct {
 	ClusterNamespace string `json:"clusterNamespace"`
 
 	// CertificateManager CertificateManager `json:"certManager"`
-	// ConnectionManager conn_mgr.ConnectionManager `json:"connectionManager"`
+	ConnectionManager KlusterletConnectionManager `json:"connectionManager"`
 	// CertificateIssuer CertificateIssuer `json:"certificateIssuer"`
 	// Search            Search            `json:"search,omitempty"`
 	// WorkManager       WorkManager       `json:"workManager,omitempty"`
 	// PolicyController  PolicyController  `json:"policyController,omitempty"`
 	// ServiceRegistry   ServiceRegistry   `json:"serviceRegistry,omitempty"`
 	// TopologyCollector TopologyCollector `json:"topologyCollector,omitempty"`
+}
+
+// KlusterletConnectionManager defines configuration for the ConnectionManager component
+// +k8s:openapi-gen=true
+type KlusterletConnectionManager struct {
+	BootStrapConfig map[string]string `json:"bootstrapConfig"`
 }
 
 // KlusterletServiceStatus defines the observed state of KlusterletService

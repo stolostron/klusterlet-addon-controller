@@ -18,15 +18,17 @@ var log = logf.Log.WithName("tiller")
 
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
 	tiller := newTillerCR(instance)
-	if err := controllerutil.SetControllerReference(instance, tiller, scheme); err != nil {
+	err := controllerutil.SetControllerReference(instance, tiller, scheme)
+	if err != nil {
 		return err
 	}
 
 	foundTiller := &klusterletv1alpha1.Tiller{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: tiller.Name, Namespace: tiller.Namespace}, foundTiller)
+	err = client.Get(context.TODO(), types.NamespacedName{Name: tiller.Name, Namespace: tiller.Namespace}, foundTiller)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating a new Tiller", "Tiller.Namespace", tiller.Namespace, "Tiller.Name", tiller.Name)
-		if err := client.Create(context.TODO(), tiller); err != nil {
+		err = client.Create(context.TODO(), tiller)
+		if err != nil {
 			return err
 		}
 	}

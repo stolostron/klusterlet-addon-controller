@@ -22,99 +22,132 @@ var log = logf.Log.WithName("certmgr")
 
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
 	certMgr := newCertManagerCR(instance)
-	if err := controllerutil.SetControllerReference(instance, certMgr, scheme); err != nil {
+	err := controllerutil.SetControllerReference(instance, certMgr, scheme)
+	if err != nil {
 		return err
 	}
 
 	foundCertManager := &klusterletv1alpha1.CertManager{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: certMgr.Name, Namespace: certMgr.Namespace}, foundCertManager)
+	err = client.Get(context.TODO(), types.NamespacedName{Name: certMgr.Name, Namespace: certMgr.Namespace}, foundCertManager)
 	if err != nil && errors.IsNotFound(err) {
-		preCreate(client, instance, certMgr)
-		log.Info("Creating a new CertManager", "CertManager.Namespace", certMgr.Namespace, "CertManager.Name", certMgr.Name)
-		if err := client.Create(context.TODO(), certMgr); err != nil {
+		err := installCRDs(client)
+		if err != nil {
 			return err
 		}
-		if err := createSelfSignIssuer(client, "self-signed", ""); err != nil {
+
+		err = createServiceAccount(client, scheme, instance, certMgr)
+		if err != nil {
+			return err
+		}
+
+		log.Info("Creating a new CertManager", "CertManager.Namespace", certMgr.Namespace, "CertManager.Name", certMgr.Name)
+		err = client.Create(context.TODO(), certMgr)
+		if err != nil {
+			return err
+		}
+
+		err = createSelfSignClusterIssuer(client, scheme, instance)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, instance *klusterletv1alpha1.KlusterletService) error {
+	clusterIssuer := &certmanagerv1alpha1.ClusterIssuer{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: instance.Name + "-self-signed",
+		},
+		Spec: certmanagerv1alpha1.IssuerSpec{
+			IssuerConfig: certmanagerv1alpha1.IssuerConfig{
+				SelfSigned: &certmanagerv1alpha1.SelfSignedIssuer{},
+			},
+		},
+	}
+	err := controllerutil.SetControllerReference(instance, clusterIssuer, scheme)
+	if err != nil {
+		return err
+	}
+
+	foundClusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
+	err = client.Get(context.TODO(), types.NamespacedName{Name: clusterIssuer.Name}, foundClusterIssuer)
+	if err != nil && errors.IsNotFound(err) {
+		log.Info("Creating SelfSigned ClusterIssuer")
+		return client.Create(context.TODO(), clusterIssuer)
+	}
+
+	return nil
+}
+
+func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance *klusterletv1alpha1.KlusterletService, certmgr *klusterletv1alpha1.CertManager) error {
+	serviceAccount := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      certmgr.Spec.ServiceAccount.Name,
+			Namespace: certmgr.Namespace,
+		},
+	}
+	err := controllerutil.SetControllerReference(instance, serviceAccount, scheme)
+	if err != nil {
+		return err
+	}
+
+	foundServiceAccount := &corev1.ServiceAccount{}
+	err = client.Get(context.TODO(), types.NamespacedName{Name: serviceAccount.Name, Namespace: serviceAccount.Namespace}, foundServiceAccount)
+	if err != nil && errors.IsNotFound(err) {
+		log.Info("Creating ServiceAccount", "Name", serviceAccount.Name, "Namespace", serviceAccount.Namespace)
+		err = client.Create(context.TODO(), serviceAccount)
+		if err != nil {
 			return err
 		}
 	} else if err != nil {
 		return err
 	}
 
+	foundPrivilegedSCC := &openshiftsecurityv1.SecurityContextConstraints{}
+	err = client.Get(context.TODO(), types.NamespacedName{Name: "privileged", Namespace: ""}, foundPrivilegedSCC)
+	if err == nil {
+		user := "system:serviceaccount:" + serviceAccount.Namespace + ":" + serviceAccount.Name
+		log.Info("Adding User to SCC", "User", user, "SCC", foundPrivilegedSCC.Name)
+		foundPrivilegedSCC.Users = append(foundPrivilegedSCC.Users, user)
+		err = client.Update(context.TODO(), foundPrivilegedSCC)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func createSelfSignIssuer(client client.Client, name string, namespace string) error {
-	if namespace == "" {
-		clusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
-		err := client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: ""}, clusterIssuer)
-		if err != nil && errors.IsNotFound(err) {
-			log.Info("Creating self signed cluster issuer", "Name", name)
-			clusterIssuer = &certmanagerv1alpha1.ClusterIssuer{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: name,
-				},
-				Spec: certmanagerv1alpha1.IssuerSpec{
-					IssuerConfig: certmanagerv1alpha1.IssuerConfig{
-						SelfSigned: &certmanagerv1alpha1.SelfSignedIssuer{},
-					},
-				},
-			}
-			if err := client.Create(context.TODO(), clusterIssuer); err != nil {
-				return err
-			}
-		}
-	} else {
-		issuer := &certmanagerv1alpha1.Issuer{}
-		err := client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, issuer)
-		if err != nil && errors.IsNotFound(err) {
-			log.Info("Creating self signed cluster issuer", "Name", name)
-			issuer = &certmanagerv1alpha1.Issuer{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: namespace,
-				},
-				Spec: certmanagerv1alpha1.IssuerSpec{
-					IssuerConfig: certmanagerv1alpha1.IssuerConfig{
-						SelfSigned: &certmanagerv1alpha1.SelfSignedIssuer{},
-					},
-				},
-			}
-			if err := client.Create(context.TODO(), issuer); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func preCreate(client client.Client, instance *klusterletv1alpha1.KlusterletService, certMgr *klusterletv1alpha1.CertManager) error {
-	if err := installCertificateCRD(client); err != nil {
-		return err
-	}
-	if err := installIssuerCRD(client); err != nil {
-		return err
-	}
-	if err := installClusterIssuerCRD(client); err != nil {
-		return err
-	}
-	if err := installOrderCRD(client); err != nil {
-		return err
-	}
-	if err := installChallengeCRD(client); err != nil {
-		return err
-	}
-	certMgrSA, err := getOrCreateServiceAccount(client, certMgr.Spec.ServiceAccount.Name, instance.Namespace)
+func installCRDs(client client.Client) error {
+	err := installCertificateCRD(client)
 	if err != nil {
 		return err
 	}
-	privilegedSCC := &openshiftsecurityv1.SecurityContextConstraints{}
-	if err := client.Get(context.TODO(), types.NamespacedName{Name: "privileged", Namespace: ""}, privilegedSCC); err != nil {
+	err = installIssuerCRD(client)
+	if err != nil {
 		return err
 	}
-	if err := addServiceAccountToSCC(client, certMgrSA, privilegedSCC); err != nil {
+	err = installClusterIssuerCRD(client)
+	if err != nil {
 		return err
 	}
+	err = installOrderCRD(client)
+	if err != nil {
+		return err
+	}
+	err = installChallengeCRD(client)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -194,13 +227,13 @@ func installCertificateCRD(client client.Client) error {
 				},
 			},
 		}
-		err = client.Create(context.TODO(), certificatesCRD)
-		if err != nil {
-			return err
-		}
-	} else if err != nil {
+		return client.Create(context.TODO(), certificatesCRD)
+	}
+
+	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -224,13 +257,13 @@ func installIssuerCRD(client client.Client) error {
 				},
 			},
 		}
-		err = client.Create(context.TODO(), issuerCRD)
-		if err != nil {
-			return err
-		}
-	} else if err != nil {
+		return client.Create(context.TODO(), issuerCRD)
+	}
+
+	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -254,13 +287,13 @@ func installClusterIssuerCRD(client client.Client) error {
 				},
 			},
 		}
-		err = client.Create(context.TODO(), clusterIssuerCRD)
-		if err != nil {
-			return err
-		}
-	} else if err != nil {
+		return client.Create(context.TODO(), clusterIssuerCRD)
+	}
+
+	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -308,13 +341,13 @@ func installOrderCRD(client client.Client) error {
 				},
 			},
 		}
-		err = client.Create(context.TODO(), orderCRD)
-		if err != nil {
-			return err
-		}
-	} else if err != nil {
+		return client.Create(context.TODO(), orderCRD)
+	}
+
+	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -362,38 +395,13 @@ func installChallengeCRD(client client.Client) error {
 				},
 			},
 		}
-		err = client.Create(context.TODO(), challengeCRD)
-		if err != nil {
-			return err
-		}
-	} else if err != nil {
+		return client.Create(context.TODO(), challengeCRD)
+	}
+
+	if err != nil {
 		return err
 	}
 	return nil
-}
-
-//NOTE: service account related methods may need to be refactored to another package
-func getOrCreateServiceAccount(client client.Client, name string, namespace string) (*corev1.ServiceAccount, error) {
-	log.Info("Get or create service account", "Name", name, "Namespace", namespace)
-
-	serviceAccount := &corev1.ServiceAccount{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, serviceAccount)
-	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating service account", "Name", name, "Namespace", namespace)
-		serviceAccount = &corev1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: namespace,
-			},
-		}
-		if err := client.Create(context.TODO(), serviceAccount); err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, err
-	}
-	log.Info("Get or create service account", "Name", serviceAccount.Name, "Namespace", serviceAccount.Namespace)
-	return serviceAccount, nil
 }
 
 func addServiceAccountToSCC(client client.Client, sa *corev1.ServiceAccount, scc *openshiftsecurityv1.SecurityContextConstraints) error {
