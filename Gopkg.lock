@@ -326,6 +326,17 @@
   version = "v0.3.7"
 
 [[projects]]
+  digest = "1:b4f7daf4daf5178c9dc5aef79f7471245d6b50c797258b15085f4d214dcfdcdd"
+  name = "github.com/jetstack/cert-manager"
+  packages = [
+    "pkg/apis/certmanager",
+    "pkg/apis/certmanager/v1alpha1",
+  ]
+  pruneopts = "NT"
+  revision = "55fadf104b94cbf9836364f8b824ce71cf0f522e"
+  version = "v0.8.1"
+
+[[projects]]
   digest = "1:f5b9328966ccea0970b1d15075698eff0ddb3e75889560aad2e9f76b289b536a"
   name = "github.com/joho/godotenv"
   packages = ["."]
@@ -1098,6 +1109,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/go-openapi/spec",
+    "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1",
     "github.com/openshift/api/security/v1",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",

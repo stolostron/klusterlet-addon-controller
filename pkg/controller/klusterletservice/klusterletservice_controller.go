@@ -3,6 +3,7 @@ package klusterletservice
 import (
 	"context"
 
+	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -142,7 +143,34 @@ func (r *ReconcileKlusterletService) Reconcile(request reconcile.Request) (recon
 		return reconcile.Result{}, err
 	}
 
+	if err := createSelfSignIssuer(r, "self-signed", instance.Namespace); err != nil {
+		return reconcile.Result{}, err
+	}
+
 	return reconcile.Result{}, nil
+}
+
+func createSelfSignIssuer(r *ReconcileKlusterletService, name string, namespace string) error {
+	clusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, clusterIssuer)
+	if err != nil && errors.IsNotFound(err) {
+		log.Info("Creating self signed cluster issuer", "Name", name, "Namespace", namespace)
+		clusterIssuer = &certmanagerv1alpha1.ClusterIssuer{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+			Spec: certmanagerv1alpha1.IssuerSpec{
+				IssuerConfig: certmanagerv1alpha1.IssuerConfig{
+					SelfSigned: &certmanagerv1alpha1.SelfSignedIssuer{},
+				},
+			},
+		}
+		if err := r.client.Create(context.TODO(), clusterIssuer); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func getOrCreateServiceAccount(r *ReconcileKlusterletService, name string, namespace string) (*corev1.ServiceAccount, error) {
