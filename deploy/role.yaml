@@ -50,5 +50,6 @@ rules:
   - klusterlet.mcm.ibm.com
   resources:
   - '*'
+  - tillers
   verbs:
   - '*'

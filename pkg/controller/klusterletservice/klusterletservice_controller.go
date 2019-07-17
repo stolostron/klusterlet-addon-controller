@@ -3,9 +3,11 @@ package klusterletservice
 import (
 	"context"
 
+	openshiftsecurityv1 "github.com/openshift/api/security/v1"
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
-
 	corev1 "k8s.io/api/core/v1"
+	apiextensionv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -100,54 +102,248 @@ func (r *ReconcileKlusterletService) Reconcile(request reconcile.Request) (recon
 		return reconcile.Result{}, err
 	}
 
-	// Define a new Pod object
-	pod := newPodForCR(instance)
-
-	// Set KlusterletService instance as the owner and controller
-	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
+	// CertManager
+	certMgr := newCertManagerCR(instance)
+	if err := controllerutil.SetControllerReference(instance, certMgr, r.scheme); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// Check if this Pod already exists
-	found := &corev1.Pod{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
+	foundCertManager := &klusterletv1alpha1.CertManager{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: certMgr.Name, Namespace: certMgr.Namespace}, foundCertManager)
+
 	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-		err = r.client.Create(context.TODO(), pod)
-		if err != nil {
+		if err := installCertificateCRD(r); err != nil {
+			return reconcile.Result{}, err
+		}
+		if err := installIssuerCRD(r); err != nil {
+			return reconcile.Result{}, err
+		}
+		if err := installClusterIssuerCRD(r); err != nil {
 			return reconcile.Result{}, err
 		}
 
-		// Pod created successfully - don't requeue
-		return reconcile.Result{}, nil
+		certmgrSA, err := getOrCreateServiceAccount(r, certMgr.Spec.ServiceAccount.Name, instance.Namespace)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		privilegedSCC := &openshiftsecurityv1.SecurityContextConstraints{}
+		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "privileged", Namespace: ""}, privilegedSCC); err != nil {
+			return reconcile.Result{}, err
+		}
+		if err := addServiceAccountToSCC(r, certmgrSA, privilegedSCC); err != nil {
+			return reconcile.Result{}, err
+		}
+
+		reqLogger.Info("Creating a new CertManager", "CertManager.Namespace", certMgr.Namespace, "CertManager.Name", certMgr.Name)
+		if err := r.client.Create(context.TODO(), certMgr); err != nil {
+			return reconcile.Result{}, err
+		}
 	} else if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// Pod already exists - don't requeue
-	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
 	return reconcile.Result{}, nil
 }
 
+func getOrCreateServiceAccount(r *ReconcileKlusterletService, name string, namespace string) (*corev1.ServiceAccount, error) {
+	log.Info("Get or create service account", "Name", name, "Namespace", namespace)
+
+	serviceAccount := &corev1.ServiceAccount{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, serviceAccount)
+	if err != nil && errors.IsNotFound(err) {
+		log.Info("Creating service account", "Name", name, "Namespace", namespace)
+		serviceAccount = &corev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+		}
+		if err := r.client.Create(context.TODO(), serviceAccount); err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+	log.Info("Get or create service account", "Name", serviceAccount.Name, "Namespace", serviceAccount.Namespace)
+	return serviceAccount, nil
+}
+
+func addServiceAccountToSCC(r *ReconcileKlusterletService, sa *corev1.ServiceAccount, scc *openshiftsecurityv1.SecurityContextConstraints) error {
+	user := "system:serviceaccount:" + sa.Namespace + ":" + sa.Name
+	log.Info("Add ServiceAccount to SecurityContextConstraints", "user", user, "scc.Name", scc.Name)
+	scc.Users = append(scc.Users, user)
+	return r.client.Update(context.TODO(), scc)
+}
+
+func addImagePullSecretToServiceAccount() {}
+
 // newPodForCR returns a busybox pod with the same name/namespace as the cr
-func newPodForCR(cr *klusterletv1alpha1.KlusterletService) *corev1.Pod {
+// func newPodForCR(cr *klusterletv1alpha1.KlusterletService) *corev1.Pod {
+// 	labels := map[string]string{
+// 		"app": cr.Name,
+// 	}
+// 	return &corev1.Pod{
+// 		ObjectMeta: metav1.ObjectMeta{
+// 			Name:      cr.Name + "-pod",
+// 			Namespace: cr.Namespace,
+// 			Labels:    labels,
+// 		},
+// 		Spec: corev1.PodSpec{
+// 			Containers: []corev1.Container{
+// 				{
+// 					Name:    "busybox",
+// 					Image:   "busybox",
+// 					Command: []string{"sleep", "3600"},
+// 				},
+// 			},
+// 		},
+// 	}
+// }
+
+func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.CertManager {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
-	return &corev1.Pod{
+	return &klusterletv1alpha1.CertManager{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-pod",
+			Name:      cr.Name,
 			Namespace: cr.Namespace,
 			Labels:    labels,
 		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:    "busybox",
-					Image:   "busybox",
-					Command: []string{"sleep", "3600"},
-				},
+		Spec: klusterletv1alpha1.CertManagerSpec{
+			ClusterResourceNamespace: cr.Namespace,
+			ServiceAccount: klusterletv1alpha1.CertManagerServiceAccount{
+				Create: false,
+				Name:   "cert-manager",
 			},
 		},
 	}
+}
+
+func installCertificateCRD(r *ReconcileKlusterletService) error {
+	log.Info("Installing certificates.certmanager.k8s.io CRD")
+
+	certificatesCRD := &apiextensionv1beta1.CustomResourceDefinition{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "certificates.certmanager.k8s.io", Namespace: ""}, certificatesCRD)
+	if err != nil && errors.IsNotFound(err) {
+		//create certificates.certmanager.k8s.io CRDs
+		certificatesCRD = &apiextensionv1beta1.CustomResourceDefinition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "certificates.certmanager.k8s.io",
+			},
+			Spec: apiextensionv1beta1.CustomResourceDefinitionSpec{
+				Scope:   "Namespaced",
+				Group:   "certmanager.k8s.io",
+				Version: "v1alpha1",
+				Names: apiextensionv1beta1.CustomResourceDefinitionNames{
+					Kind:       "Certificate",
+					Plural:     "certificates",
+					ShortNames: []string{"cert", "certs"},
+				},
+				AdditionalPrinterColumns: []apiextensionv1beta1.CustomResourceColumnDefinition{
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "Ready",
+						Type:     "string",
+						JSONPath: ".status.conditions[?(@.type==\"Ready\")].status",
+					},
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "Secret",
+						Type:     "string",
+						JSONPath: ".spec.secretName",
+					},
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "Issuer",
+						Type:     "string",
+						JSONPath: ".spec.issuerRef.name",
+						Priority: 1,
+					},
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "Status",
+						Type:     "string",
+						JSONPath: ".status.conditions[?(@.type==\"Ready\")].message",
+						Priority: 1,
+					},
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "Age",
+						Type:     "date",
+						JSONPath: ".metadata.creationTimestamp",
+					},
+					apiextensionv1beta1.CustomResourceColumnDefinition{
+						Name:     "Expiration",
+						Type:     "string",
+						JSONPath: ".status.notAfter",
+					},
+				},
+			},
+		}
+		err = r.client.Create(context.TODO(), certificatesCRD)
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+	return nil
+}
+
+func installIssuerCRD(r *ReconcileKlusterletService) error {
+	log.Info("Installing issuers.certmanager.k8s.io CRD")
+
+	issuerCRD := &apiextensionv1beta1.CustomResourceDefinition{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "issuers.certmanager.k8s.io", Namespace: ""}, issuerCRD)
+	if err != nil && errors.IsNotFound(err) {
+		//create certificates.certmanager.k8s.io CRDs
+		issuerCRD = &apiextensionv1beta1.CustomResourceDefinition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "issuers.certmanager.k8s.io",
+			},
+			Spec: apiextensionv1beta1.CustomResourceDefinitionSpec{
+				Scope:   "Namespaced",
+				Group:   "certmanager.k8s.io",
+				Version: "v1alpha1",
+				Names: apiextensionv1beta1.CustomResourceDefinitionNames{
+					Kind:   "Issuer",
+					Plural: "issuers",
+				},
+			},
+		}
+		err = r.client.Create(context.TODO(), issuerCRD)
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+	return nil
+}
+
+func installClusterIssuerCRD(r *ReconcileKlusterletService) error {
+	log.Info("Installing clusterissuers.certmanager.k8s.io CRD")
+
+	clusterIssuerCRD := &apiextensionv1beta1.CustomResourceDefinition{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "clusterissuers.certmanager.k8s.io", Namespace: ""}, clusterIssuerCRD)
+	if err != nil && errors.IsNotFound(err) {
+		//create certificates.certmanager.k8s.io CRDs
+		clusterIssuerCRD = &apiextensionv1beta1.CustomResourceDefinition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "clusterissuers.certmanager.k8s.io",
+			},
+			Spec: apiextensionv1beta1.CustomResourceDefinitionSpec{
+				Scope:   "Cluster",
+				Group:   "certmanager.k8s.io",
+				Version: "v1alpha1",
+				Names: apiextensionv1beta1.CustomResourceDefinitionNames{
+					Kind:   "ClusterIssuer",
+					Plural: "clusterissuers",
+				},
+			},
+		}
+		err = r.client.Create(context.TODO(), clusterIssuerCRD)
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+	return nil
 }

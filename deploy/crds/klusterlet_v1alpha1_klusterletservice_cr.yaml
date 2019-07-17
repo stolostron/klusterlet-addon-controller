@@ -4,4 +4,5 @@ metadata:
   name: example-klusterletservice
 spec:
   # Add fields here
-  size: 3
+  clusterName: test
+  clusterNamespace: test

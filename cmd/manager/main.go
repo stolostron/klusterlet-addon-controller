@@ -10,6 +10,9 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	openshiftsecurityv1 "github.com/openshift/api/security/v1"
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller"
 
@@ -97,6 +100,16 @@ func main() {
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := apiextensionsv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := openshiftsecurityv1.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

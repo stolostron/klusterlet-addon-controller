@@ -1,8 +1,6 @@
 package v1alpha1
 
 import (
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/conn_mgr"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -17,7 +15,11 @@ type KlusterletServiceSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	Namespace string `json:"namespace"`
 
-	ConnectionManager conn_mgr.ConnectionManager `json:"connectionManager"`
+	ClusterName      string `json:"clusterName"`
+	ClusterNamespace string `json:"clusterNamespace"`
+
+	// CertificateManager CertificateManager `json:"certManager"`
+	// ConnectionManager conn_mgr.ConnectionManager `json:"connectionManager"`
 	// CertificateIssuer CertificateIssuer `json:"certificateIssuer"`
 	// Search            Search            `json:"search,omitempty"`
 	// WorkManager       WorkManager       `json:"workManager,omitempty"`
@@ -30,6 +32,7 @@ type KlusterletServiceSpec struct {
 // +k8s:openapi-gen=true
 type KlusterletServiceStatus struct {
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
+	Test string `json:"test"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
