@@ -113,6 +113,7 @@ func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance
 
 	foundPrivilegedSCC := &openshiftsecurityv1.SecurityContextConstraints{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: "privileged", Namespace: ""}, foundPrivilegedSCC)
+	// if client.Get return error that means no privileged SCC in that case skip adding user to scc and ignore error
 	if err == nil {
 		user := "system:serviceaccount:" + serviceAccount.Namespace + ":" + serviceAccount.Name
 		log.Info("Adding User to SCC", "User", user, "SCC", foundPrivilegedSCC.Name)
