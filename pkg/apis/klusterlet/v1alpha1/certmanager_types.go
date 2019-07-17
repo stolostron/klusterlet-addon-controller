@@ -24,6 +24,7 @@ type CertManagerSpec struct {
 	// ClusterNamespace         string `json:"clusterNamespace"`
 	ClusterResourceNamespace string                    `json:"clusterResourceNamespace"`
 	ServiceAccount           CertManagerServiceAccount `json:"serviceAccount"`
+	FullNameOverride         string                    `json:"fullnameOverride"`
 }
 
 // CertManagerStatus defines the observed state of CertManager

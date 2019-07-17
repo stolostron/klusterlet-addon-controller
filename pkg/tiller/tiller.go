@@ -39,10 +39,12 @@ func newTillerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.T
 	}
 	return &klusterletv1alpha1.Tiller{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name,
+			Name:      cr.Name + "-tiller",
 			Namespace: cr.Namespace,
 			Labels:    labels,
 		},
-		Spec: klusterletv1alpha1.TillerSpec{},
+		Spec: klusterletv1alpha1.TillerSpec{
+			FullNameOverride: cr.Name + "-tiller",
+		},
 	}
 }

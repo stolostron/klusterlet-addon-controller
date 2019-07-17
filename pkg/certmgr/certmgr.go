@@ -104,7 +104,7 @@ func preCreate(client client.Client, instance *klusterletv1alpha1.KlusterletServ
 	if err := installChallengeCRD(client); err != nil {
 		return err
 	}
-	certmgrSA, err := getOrCreateServiceAccount(client, certMgr.Spec.ServiceAccount.Name, instance.Namespace)
+	certMgrSA, err := getOrCreateServiceAccount(client, certMgr.Spec.ServiceAccount.Name, instance.Namespace)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func preCreate(client client.Client, instance *klusterletv1alpha1.KlusterletServ
 	if err := client.Get(context.TODO(), types.NamespacedName{Name: "privileged", Namespace: ""}, privilegedSCC); err != nil {
 		return err
 	}
-	if err := addServiceAccountToSCC(client, certmgrSA, privilegedSCC); err != nil {
+	if err := addServiceAccountToSCC(client, certMgrSA, privilegedSCC); err != nil {
 		return err
 	}
 	return nil
@@ -124,7 +124,7 @@ func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alp
 	}
 	return &klusterletv1alpha1.CertManager{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name,
+			Name:      cr.Name + "-cert-manager",
 			Namespace: cr.Namespace,
 			Labels:    labels,
 		},
@@ -132,8 +132,9 @@ func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alp
 			ClusterResourceNamespace: cr.Namespace,
 			ServiceAccount: klusterletv1alpha1.CertManagerServiceAccount{
 				Create: false,
-				Name:   "cert-manager",
+				Name:   cr.Name + "-cert-manager",
 			},
+			FullNameOverride: cr.Name + "-cert-manager",
 		},
 	}
 }
