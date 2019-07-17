@@ -306,6 +306,7 @@ func (in *KlusterletServiceList) DeepCopyObject() runtime.Object {
 func (in *KlusterletServiceSpec) DeepCopyInto(out *KlusterletServiceSpec) {
 	*out = *in
 	in.ConnectionManager.DeepCopyInto(&out.ConnectionManager)
+	out.MongoDB = in.MongoDB
 	return
 }
 
