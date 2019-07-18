@@ -39,9 +39,6 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 }
 
 func newWorkManagerTillerIntegration(cr *klusterletv1alpha1.KlusterletService, client client.Client) klusterletv1alpha1.WorkManagerTillerIntegration {
-	tillerIntegration := &klusterletv1alpha1.WorkManagerTillerIntegration{}
-	tillerIntegration.Enabled = cr.Spec.TillerIntegration.Enabled
-
 	if cr.Spec.TillerIntegration.Enabled {
 		// KlusterletOperator deployed Tiller
 		foundTillerService := &corev1.Service{}
