@@ -47,6 +47,7 @@ func newTillerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.T
 		},
 		Spec: klusterletv1alpha1.TillerSpec{
 			FullNameOverride: cr.Name + "-tiller",
+			CACertIssuer:     cr.Name + "-self-signed",
 		},
 	}
 }

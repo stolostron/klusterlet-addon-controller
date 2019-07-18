@@ -14,6 +14,7 @@ type TillerSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
 	FullNameOverride string `json:"fullnameOverride"`
+	CACertIssuer     string `json:"caCertIssuer"`
 }
 
 // TillerStatus defines the observed state of Tiller

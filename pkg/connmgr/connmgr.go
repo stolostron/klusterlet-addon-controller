@@ -39,7 +39,6 @@ func newConnectionManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterle
 	labels := map[string]string{
 		"app": cr.Name,
 	}
-	log.Info("[DEBUG]", "cr.Spec.ConnectionManager.BootStrapConfig", cr.Spec.ConnectionManager.BootStrapConfig)
 	return &klusterletv1alpha1.ConnectionManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name + "-connmgr",
@@ -49,7 +48,7 @@ func newConnectionManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterle
 		Spec: klusterletv1alpha1.ConnectionManagerSpec{
 			ClusterName:      cr.Spec.ClusterName,
 			ClusterNamespace: cr.Spec.ClusterNamespace,
-			BootStrapConfig:  cr.Spec.ConnectionManager.BootStrapConfig,
+			BootStrapConfig:  cr.Spec.BootStrapConfig,
 			FullNameOverride: cr.Name + "-connmgr",
 		},
 	}
