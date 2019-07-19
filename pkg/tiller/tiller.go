@@ -18,13 +18,15 @@ import (
 var log = logf.Log.WithName("tiller")
 
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
+	// ICP Tiller
 	foundICPTillerService := &corev1.Service{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, foundICPTillerService)
 	if err == nil {
-		log.Info("Found ICP Tiller, skip Tiller Reconcile.")
+		log.Info("Found ICP Tiller, skip TillerCR Reconcile.")
 		return nil
 	}
 
+	// No ICP Tiller
 	tillerCR := newTillerCR(instance)
 	err = controllerutil.SetControllerReference(instance, tillerCR, scheme)
 	if err != nil {

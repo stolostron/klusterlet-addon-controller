@@ -23,13 +23,20 @@ import (
 var log = logf.Log.WithName("certmgr")
 
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
+	// ICP CertManager
 	findICPCertMgr := &extensionsv1beta1.Deployment{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: "cert-manager-ibm-cert-manager", Namespace: "cert-manager"}, findICPCertMgr)
 	if err == nil {
-		log.Info("Found ICP CertManager, skip CertManager Reconcile.")
+		err = createSelfSignClusterIssuer(client, scheme, instance)
+		if err != nil {
+			return nil
+		}
+
+		log.Info("Found ICP CertManager, skip CertManagerCR Reconcile.")
 		return nil
 	}
 
+	// No ICP CertManager
 	certMgr := newCertManagerCR(instance)
 	err = controllerutil.SetControllerReference(instance, certMgr, scheme)
 	if err != nil {
@@ -70,10 +77,10 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	return nil
 }
 
-func createSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, instance *klusterletv1alpha1.KlusterletService) error {
+func createSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, cr *klusterletv1alpha1.KlusterletService) error {
 	clusterIssuer := &certmanagerv1alpha1.ClusterIssuer{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: instance.Name + "-self-signed",
+			Name: cr.Name + "-self-signed",
 		},
 		Spec: certmanagerv1alpha1.IssuerSpec{
 			IssuerConfig: certmanagerv1alpha1.IssuerConfig{
@@ -81,7 +88,7 @@ func createSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, i
 			},
 		},
 	}
-	err := controllerutil.SetControllerReference(instance, clusterIssuer, scheme)
+	err := controllerutil.SetControllerReference(cr, clusterIssuer, scheme)
 	if err != nil {
 		return err
 	}
