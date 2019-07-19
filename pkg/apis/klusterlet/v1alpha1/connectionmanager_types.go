@@ -14,16 +14,16 @@ type ConnectionManagerSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
 
-	ClusterName      string `json:"clusterName"`
+	// +kubebuilder:validation:MinLength=1
+	FullNameOverride string `json:"fullnameOverride"`
+
+	// +kubebuilder:validation:MinLength=1
+	ClusterName string `json:"clusterName"`
+
+	// +kubebuilder:validation:MinLength=1
 	ClusterNamespace string `json:"clusterNamespace"`
 
 	BootStrapConfig map[string]string `json:"bootstrapConfig"`
-
-	// NodeSelector corev1.NodeSelector `json:"nodeSelector"`
-	// Affinity     corev1.Affinity     `json:"affinity"`
-	// Toleration   corev1.Toleration   `json:"toleration"`
-
-	FullNameOverride string `json:"fullnameOverride"`
 }
 
 // ConnectionManagerStatus defines the observed state of ConnectionManager

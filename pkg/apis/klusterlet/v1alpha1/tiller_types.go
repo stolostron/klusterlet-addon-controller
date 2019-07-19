@@ -14,19 +14,15 @@ type TillerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
+
+	// +kubebuilder:validation:MinLength=1
 	FullNameOverride string `json:"fullnameOverride"`
-	CACertIssuer     string `json:"caCertIssuer"`
 
+	// +kubebuilder:validation:MinLength=1
+	CACertIssuer string `json:"caCertIssuer"`
+
+	// +kubebuilder:validation:MinLength=1
 	DefaultAdminUser string `json:"tiller_default_admin_user"`
-	IAMHost          string `json:"tiller_iam_host,omitempty"`
-	IAMPort          string `json:"tiller_iam_port,omitempty"`
-	HistoryMax       int    `json:"tiller_history_max,omitempty"`
-	CipherSuites     string `json:"tiller_ciphersuites,omitempty"`
-	HostNetwork      string `json:"tiller_host_network,omitempty"`
-	RouterHTTPSPort  int    `json:"router_https_port,omitempty"`
-
-	ServiceType     string `json:"tiller_service_type,omitempty"`
-	ServiceNodePort int    `json:"tiller_service_nodeport,omitempty"`
 
 	Image image.Image `json:"image,omitempty"`
 }

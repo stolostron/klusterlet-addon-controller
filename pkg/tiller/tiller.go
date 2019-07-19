@@ -3,6 +3,8 @@ package tiller
 import (
 	"context"
 
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
+
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -65,6 +67,11 @@ func newTillerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.T
 			FullNameOverride: cr.Name + "-tiller",
 			CACertIssuer:     cr.Name + "-self-signed",
 			DefaultAdminUser: cr.Name + "admin",
+			Image: image.Image{
+				Repository: "ibmcom/tiller",
+				Tag:        "v2.12.3-icp-3.2.0",
+				PullPolicy: "IfNotPresent",
+			},
 		},
 	}
 }
