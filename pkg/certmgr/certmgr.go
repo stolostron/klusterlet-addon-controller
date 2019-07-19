@@ -23,7 +23,6 @@ import (
 var log = logf.Log.WithName("certmgr")
 
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
-	// find ICP CertManager
 	findICPCertMgr := &extensionsv1beta1.Deployment{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: "cert-manager-ibm-cert-manager", Namespace: "cert-manager"}, findICPCertMgr)
 	if err == nil {
