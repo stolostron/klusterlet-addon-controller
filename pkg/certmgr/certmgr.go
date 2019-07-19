@@ -14,15 +14,25 @@ import (
 
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	apiextensionv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 var log = logf.Log.WithName("certmgr")
 
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
+	// find ICP CertManager
+	findICPCertMgr := &extensionsv1beta1.Deployment{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "cert-manager-ibm-cert-manager", Namespace: "cert-manager"}, findICPCertMgr)
+	if err == nil {
+		log.Info("Found ICP CertManager, skip CertManager Reconcile.")
+		return nil
+	}
+
 	certMgr := newCertManagerCR(instance)
-	err := controllerutil.SetControllerReference(instance, certMgr, scheme)
+	err = controllerutil.SetControllerReference(instance, certMgr, scheme)
 	if err != nil {
 		return err
 	}
