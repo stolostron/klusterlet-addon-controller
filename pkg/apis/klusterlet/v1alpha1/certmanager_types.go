@@ -10,8 +10,8 @@ import (
 // CertManagerServiceAccount defines service account configuration in the spec
 // +k8s:openapi-gen=true
 type CertManagerServiceAccount struct {
-	Create bool   `json:"create"`
-	Name   string `json:"name"`
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
 }
 
 // CertManagerSpec defines the desired state of CertManager
@@ -20,11 +20,15 @@ type CertManagerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
-	// ClusterName              string `json:"clusterName"`
-	// ClusterNamespace         string `json:"clusterNamespace"`
-	ClusterResourceNamespace string                    `json:"clusterResourceNamespace"`
-	ServiceAccount           CertManagerServiceAccount `json:"serviceAccount"`
-	FullNameOverride         string                    `json:"fullnameOverride"`
+
+	// +kubebuilder:validation:MinLength=1
+	FullNameOverride string `json:"fullnameOverride"`
+
+	// +kubebuilder:validation:MinLength=1
+	ClusterResourceNamespace string `json:"clusterResourceNamespace"`
+
+	// +kubebuilder:validation:MinLength=1
+	ServiceAccount CertManagerServiceAccount `json:"serviceAccount"`
 }
 
 // CertManagerStatus defines the observed state of CertManager

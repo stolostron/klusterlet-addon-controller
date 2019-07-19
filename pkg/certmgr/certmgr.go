@@ -179,12 +179,11 @@ func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alp
 			Labels:    labels,
 		},
 		Spec: klusterletv1alpha1.CertManagerSpec{
+			FullNameOverride:         cr.Name + "-certmgr",
 			ClusterResourceNamespace: cr.Namespace,
 			ServiceAccount: klusterletv1alpha1.CertManagerServiceAccount{
-				Create: false,
-				Name:   cr.Name + "-certmgr",
+				Name: cr.Name + "-certmgr",
 			},
-			FullNameOverride: cr.Name + "-certmgr",
 		},
 	}
 }
