@@ -4,8 +4,8 @@ metadata:
   name: klusterlet
 spec:
   # Add fields here
-  clusterName: test
-  clusterNamespace: test
+  clusterName: hao-working-l8t
+  clusterNamespace: hao-working-l8t
 
   clusterLabels:
     cloud: "IBM"

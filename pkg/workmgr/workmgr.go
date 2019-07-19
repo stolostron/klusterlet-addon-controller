@@ -14,6 +14,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
+
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -40,14 +44,14 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 
 func newWorkManagerTillerIntegration(cr *klusterletv1alpha1.KlusterletService, client client.Client) klusterletv1alpha1.WorkManagerTillerIntegration {
 	if cr.Spec.TillerIntegration.Enabled {
-		// KlusterletOperator deployed Tiller
-		foundTillerService := &corev1.Service{}
-		err := client.Get(context.TODO(), types.NamespacedName{Name: cr.Name + "-tiller", Namespace: cr.Namespace}, foundTillerService)
+		// ICP Tiller
+		foundICPTillerService := &corev1.Service{}
+		err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, foundICPTillerService)
 		if err == nil {
-			tillerServiceHostname := foundTillerService.Name + "." + foundTillerService.Namespace
+			tillerServiceHostname := foundICPTillerService.Name + "." + foundICPTillerService.Namespace
 			var tillerServicePort int32
 
-			for _, port := range foundTillerService.Spec.Ports {
+			for _, port := range foundICPTillerService.Spec.Ports {
 				if port.Name == "grpc" && port.Protocol == "TCP" {
 					tillerServicePort = port.Port
 				}
@@ -56,20 +60,43 @@ func newWorkManagerTillerIntegration(cr *klusterletv1alpha1.KlusterletService, c
 			return klusterletv1alpha1.WorkManagerTillerIntegration{
 				Enabled:       true,
 				Endpoint:      tillerServiceHostname + ":" + strconv.FormatInt(int64(tillerServicePort), 10),
-				CertIssuer:    cr.Name + "-tiller",
+				CertIssuer:    "icp-ca-issuer",
 				AutoGenSecret: true,
-				User:          "admin",
+				User:          getICPTillerDefaultAdminUser(client),
 			}
 		}
-		//TODO: ICP Tiller
-		//NOTE: we can actually detect the default admin user by decoding the tiller server cert...
 
-		log.Info("Unable to locate TillerService")
+		// KlusterletOperator deployed Tiller
+		return klusterletv1alpha1.WorkManagerTillerIntegration{
+			Enabled:       true,
+			Endpoint:      cr.Name + "-tiller" + ":44134",
+			CertIssuer:    cr.Name + "-tiller",
+			AutoGenSecret: true,
+			User:          cr.Name + "admin",
+		}
 	}
 
 	return klusterletv1alpha1.WorkManagerTillerIntegration{
 		Enabled: false,
 	}
+}
+
+func getICPTillerDefaultAdminUser(client client.Client) string {
+	findICPTillerDeployment := &extensionsv1beta1.Deployment{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, findICPTillerDeployment)
+	if err != nil {
+		return "admin"
+	}
+	for _, container := range findICPTillerDeployment.Spec.Template.Spec.Containers {
+		if container.Name == "tiller" {
+			for _, env := range container.Env {
+				if env.Name == "default_admin_user" {
+					return env.Value
+				}
+			}
+		}
+	}
+	return "admin"
 }
 
 func newWorkManagerPrometheusIntegration(cr *klusterletv1alpha1.KlusterletService, client client.Client) klusterletv1alpha1.WorkManagerPrometheusIntegration {
@@ -117,6 +144,24 @@ func newWorkManagerCR(cr *klusterletv1alpha1.KlusterletService, client client.Cl
 
 			TillerIntegration:     newWorkManagerTillerIntegration(cr, client),
 			PrometheusIntegration: newWorkManagerPrometheusIntegration(cr, client),
+
+			WorkManagerConfig: klusterletv1alpha1.WorkManagerConfig{
+				Enabled: true,
+				Image: image.Image{
+					Repository: "ibmcom/mcm-klusterlet",
+					Tag:        "3.2.0",
+					PullPolicy: "IfNotPresent",
+				},
+			},
+
+			DeployableConfig: klusterletv1alpha1.DeployableConfig{
+				Enabled: true,
+				Image: image.Image{
+					Repository: "ibmcom/deployable",
+					Tag:        "3.2.0",
+					PullPolicy: "IfNotPresent",
+				},
+			},
 
 			//TODO: non OpenShift
 			Service: klusterletv1alpha1.WorkManagerService{

@@ -10,8 +10,12 @@ import (
 // +k8s:openapi-gen=true
 type KlusterletServiceSpec struct {
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
+
+	// +kubebuilder:validation:MinLength=1
+	Registry string `json:"registry"`
 	// +kubebuilder:validation:MinLength=1
 	Version string `json:"version"`
+
 	// +kubebuilder:validation:MinLength=1
 	Namespace string `json:"namespace"`
 	// +kubebuilder:validation:MinLength=1

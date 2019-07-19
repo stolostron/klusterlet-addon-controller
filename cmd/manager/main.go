@@ -14,6 +14,7 @@ import (
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -115,6 +116,11 @@ func main() {
 	}
 
 	if err := certmanagerv1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := extensionsv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

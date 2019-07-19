@@ -158,7 +158,7 @@ func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alp
 	}
 	return &klusterletv1alpha1.CertManager{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-cert-manager",
+			Name:      cr.Name + "-certmgr",
 			Namespace: cr.Namespace,
 			Labels:    labels,
 		},
@@ -166,9 +166,9 @@ func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alp
 			ClusterResourceNamespace: cr.Namespace,
 			ServiceAccount: klusterletv1alpha1.CertManagerServiceAccount{
 				Create: false,
-				Name:   cr.Name + "-cert-manager",
+				Name:   cr.Name + "-certmgr",
 			},
-			FullNameOverride: cr.Name + "-cert-manager",
+			FullNameOverride: cr.Name + "-certmgr",
 		},
 	}
 }
@@ -403,11 +403,4 @@ func installChallengeCRD(client client.Client) error {
 		return err
 	}
 	return nil
-}
-
-func addServiceAccountToSCC(client client.Client, sa *corev1.ServiceAccount, scc *openshiftsecurityv1.SecurityContextConstraints) error {
-	user := "system:serviceaccount:" + sa.Namespace + ":" + sa.Name
-	log.Info("Add ServiceAccount to SecurityContextConstraints", "user", user, "scc.Name", scc.Name)
-	scc.Users = append(scc.Users, user)
-	return client.Update(context.TODO(), scc)
 }

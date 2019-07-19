@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,6 +28,23 @@ type WorkManagerSpec struct {
 
 	Service WorkManagerService `json:"service"`
 	Ingress WorkManagerIngress `json:"ingress"`
+
+	WorkManagerConfig WorkManagerConfig `json:"workManager"`
+	DeployableConfig  DeployableConfig  `json:"deployable"`
+}
+
+// WorkManagerConfig defines work-manager container configuration paramaters
+// +k8s:openapi-gen=true
+type WorkManagerConfig struct {
+	Enabled bool        `json:"enabled"`
+	Image   image.Image `json:"image"`
+}
+
+// DeployableConfig defines deployable container configuration paramaters
+// +k8s:openapi-gen=true
+type DeployableConfig struct {
+	Enabled bool        `json:"enabled"`
+	Image   image.Image `json:"image"`
 }
 
 // WorkManagerTillerIntegration defines tiller integration paramaters

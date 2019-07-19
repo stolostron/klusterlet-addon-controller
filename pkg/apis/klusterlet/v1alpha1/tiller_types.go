@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -15,6 +16,19 @@ type TillerSpec struct {
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
 	FullNameOverride string `json:"fullnameOverride"`
 	CACertIssuer     string `json:"caCertIssuer"`
+
+	DefaultAdminUser string `json:"tiller_default_admin_user"`
+	IAMHost          string `json:"tiller_iam_host,omitempty"`
+	IAMPort          string `json:"tiller_iam_port,omitempty"`
+	HistoryMax       int    `json:"tiller_history_max,omitempty"`
+	CipherSuites     string `json:"tiller_ciphersuites,omitempty"`
+	HostNetwork      string `json:"tiller_host_network,omitempty"`
+	RouterHTTPSPort  int    `json:"router_https_port,omitempty"`
+
+	ServiceType     string `json:"tiller_service_type,omitempty"`
+	ServiceNodePort int    `json:"tiller_service_nodeport,omitempty"`
+
+	Image image.Image `json:"image,omitempty"`
 }
 
 // TillerStatus defines the observed state of Tiller
