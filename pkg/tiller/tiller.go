@@ -66,7 +66,7 @@ func newTillerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.T
 		Spec: klusterletv1alpha1.TillerSpec{
 			FullNameOverride: cr.Name + "-tiller",
 			CACertIssuer:     cr.Name + "-self-signed",
-			DefaultAdminUser: cr.Name + "admin",
+			DefaultAdminUser: cr.Name + "-admin",
 			Image: image.Image{
 				Repository: "ibmcom/tiller",
 				Tag:        "v2.12.3-icp-3.2.0",

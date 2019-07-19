@@ -11,6 +11,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
+	openshiftroutev1 "github.com/openshift/api/route/v1"
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller"
@@ -111,6 +112,11 @@ func main() {
 	}
 
 	if err := openshiftsecurityv1.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := openshiftroutev1.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

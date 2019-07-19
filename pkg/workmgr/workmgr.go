@@ -16,6 +16,7 @@ import (
 
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 
+	openshiftroutev1 "github.com/openshift/api/route/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -72,7 +73,7 @@ func newWorkManagerTillerIntegration(cr *klusterletv1alpha1.KlusterletService, c
 			Endpoint:      cr.Name + "-tiller" + ":44134",
 			CertIssuer:    cr.Name + "-tiller",
 			AutoGenSecret: true,
-			User:          cr.Name + "admin",
+			User:          cr.Name + "-admin",
 		}
 	}
 
@@ -177,14 +178,44 @@ func newWorkManagerCR(cr *klusterletv1alpha1.KlusterletService, client client.Cl
 				},
 			},
 
-			//TODO: non OpenShift
-			Service: klusterletv1alpha1.WorkManagerService{
-				ServiceType: "ClusterIP",
-			},
-			//TODO: non OpenShift
-			Ingress: klusterletv1alpha1.WorkManagerIngress{
-				IngressType: "Route",
-			},
+			Service: newWorkManagerServiceConfig(),
+			Ingress: newWorkManagerIngressConfig(client),
 		},
+	}
+}
+
+func newWorkManagerServiceConfig() klusterletv1alpha1.WorkManagerService {
+	//TODO: IKS EKS GKE AKS
+
+	// Other
+	return klusterletv1alpha1.WorkManagerService{
+		ServiceType: "ClusterIP",
+	}
+}
+
+func newWorkManagerIngressConfig(c client.Client) klusterletv1alpha1.WorkManagerIngress {
+	// OpenShift
+	routeList := &openshiftroutev1.RouteList{}
+	err := c.List(context.TODO(), &client.ListOptions{}, routeList)
+	if err == nil {
+		return klusterletv1alpha1.WorkManagerIngress{
+			IngressType: "Route",
+			//TODO: user specified hostname and port override
+		}
+	}
+
+	// ICP Nginx Ingress
+	foundICPIngressDaemonSet := &extensionsv1beta1.DaemonSet{}
+	err = c.Get(context.TODO(), types.NamespacedName{Name: "nginx-ingress-controller", Namespace: "kube-system"}, foundICPIngressDaemonSet)
+	if err == nil {
+		return klusterletv1alpha1.WorkManagerIngress{
+			IngressType: "Ingress",
+			//TODO: user specified hostname and port override
+		}
+	}
+
+	// Other
+	return klusterletv1alpha1.WorkManagerIngress{
+		IngressType: "None",
 	}
 }

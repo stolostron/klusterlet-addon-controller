@@ -89,6 +89,7 @@ func (in *CertManagerServiceAccount) DeepCopy() *CertManagerServiceAccount {
 func (in *CertManagerSpec) DeepCopyInto(out *CertManagerSpec) {
 	*out = *in
 	out.ServiceAccount = in.ServiceAccount
+	out.Image = in.Image
 	return
 }
 
