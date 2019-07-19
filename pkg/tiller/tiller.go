@@ -18,6 +18,12 @@ import (
 var log = logf.Log.WithName("tiller")
 
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
+	// No Tiller Integration
+	if instance.Spec.TillerIntegration.Enabled == false {
+		log.Info("Tiller Integration disabled, skip Tiller Reconcile.")
+		return nil
+	}
+
 	// ICP Tiller
 	foundICPTillerService := &corev1.Service{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, foundICPTillerService)
