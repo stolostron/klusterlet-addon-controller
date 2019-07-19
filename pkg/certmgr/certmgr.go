@@ -3,6 +3,8 @@ package certmgr
 import (
 	"context"
 
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
+
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -183,6 +185,11 @@ func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alp
 			ClusterResourceNamespace: cr.Namespace,
 			ServiceAccount: klusterletv1alpha1.CertManagerServiceAccount{
 				Name: cr.Name + "-certmgr",
+			},
+			Image: image.Image{
+				Repository: "ibmcom/icp-cert-manager-controller",
+				Tag:        "0.7.0",
+				PullPolicy: "IfNotPresent",
 			},
 		},
 	}

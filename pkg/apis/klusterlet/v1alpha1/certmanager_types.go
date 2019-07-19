@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -29,6 +30,8 @@ type CertManagerSpec struct {
 
 	// +kubebuilder:validation:MinLength=1
 	ServiceAccount CertManagerServiceAccount `json:"serviceAccount"`
+
+	Image image.Image `json:"image"`
 }
 
 // CertManagerStatus defines the observed state of CertManager
