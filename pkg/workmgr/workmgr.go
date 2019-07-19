@@ -155,7 +155,6 @@ func newWorkManagerCR(cr *klusterletv1alpha1.KlusterletService, client client.Cl
 			ClusterLabels:    cr.Spec.ClusterLabels,
 
 			ConnectionManager: cr.Name + "-connmgr",
-			Tiller:            cr.Name + "-tiller",
 
 			TillerIntegration:     newWorkManagerTillerIntegration(cr, client),
 			PrometheusIntegration: newWorkManagerPrometheusIntegration(cr, client),

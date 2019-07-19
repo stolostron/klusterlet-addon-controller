@@ -14,13 +14,20 @@ type WorkManagerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
-	ClusterName      string            `json:"clusterName"`
-	ClusterNamespace string            `json:"clusterNamespace"`
-	ClusterLabels    map[string]string `json:"clusterLabels"`
 
+	// +kubebuilder:validation:MinLength=1
+	ClusterName string `json:"clusterName"`
+
+	// +kubebuilder:validation:MinLength=1
+	ClusterNamespace string `json:"clusterNamespace"`
+
+	// +kubebuilder:validation:MinLength=1
+	ClusterLabels map[string]string `json:"clusterLabels"`
+
+	// +kubebuilder:validation:MinLength=1
 	ConnectionManager string `json:"connectionManager"`
-	Tiller            string `json:"tiller"`
 
+	// +kubebuilder:validation:MinLength=1
 	FullNameOverride string `json:"fullnameOverride"`
 
 	TillerIntegration     WorkManagerTillerIntegration     `json:"tillerIntegration"`
