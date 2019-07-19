@@ -101,7 +101,7 @@ func getICPTillerDefaultAdminUser(client client.Client) string {
 
 func newWorkManagerPrometheusIntegration(cr *klusterletv1alpha1.KlusterletService, client client.Client) klusterletv1alpha1.WorkManagerPrometheusIntegration {
 	if cr.Spec.PrometheusIntegration.Enabled {
-		//OpenShift Prometheus Service
+		// OpenShift Prometheus Service
 		foundOpenshiftPrometheusService := &corev1.Service{}
 		err := client.Get(context.TODO(), types.NamespacedName{Name: "prometheus-k8s", Namespace: "openshift-monitoring"}, foundOpenshiftPrometheusService)
 		if err == nil { //found OpenShift Prometheus
@@ -112,8 +112,23 @@ func newWorkManagerPrometheusIntegration(cr *klusterletv1alpha1.KlusterletServic
 				UseBearerToken: true,
 			}
 		}
-		//TODO: ICP Prometheus Service
+
+		// ICP Prometheus Service
+		foundICPPrometheusService := &corev1.Service{}
+		err = client.Get(context.TODO(), types.NamespacedName{Name: "prometheus-k8s", Namespace: "openshift-monitoring"}, foundICPPrometheusService)
+		if err == nil { //found ICP Prometheus
+			return klusterletv1alpha1.WorkManagerPrometheusIntegration{
+				Enabled:        true,
+				Service:        "kube-system/monitoring-prometheus",
+				Secret:         "kube-system/monitoring-monitoring-client-certs",
+				UseBearerToken: false,
+			}
+		}
+
 		//TODO: KlusterletOperator deployed Prometheus
+		return klusterletv1alpha1.WorkManagerPrometheusIntegration{
+			Enabled: false,
+		}
 	}
 
 	return klusterletv1alpha1.WorkManagerPrometheusIntegration{
