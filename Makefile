@@ -49,8 +49,7 @@ DOCKER_BUILD_OPTS = --build-arg VCS_REF=$(VCS_REF) --build-arg VCS_URL=$(GIT_REM
 
 PHONY: deps
 ## Download all project dependencies
-# deps: init
-deps: 
+deps: init
 	go get -u github.com/golang/dep/cmd/dep
 	go get -u github.com/rws-github/go-swagger/cmd/swagger
 	dep ensure -v
@@ -64,10 +63,10 @@ check: %check: %go:check %go:copyright:check %i18n:check
 build: %build:
 
 .PHONY: image
-image::
+image:: deps
 	$(MAKE) operator:build
 
-.PHONY : clean
+.PHONY: clean
 ## Clean build-harness and remove Go generated build and test files
 clean:: %clean: %go:clean
 	@[ "$(BUILD_HARNESS_PATH)" == '/' ] || \
