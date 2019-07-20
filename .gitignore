@@ -15,7 +15,9 @@ vendor
 .vscode
 build/_output
 build/bin
+build-harness/
+.build-docker/
+
 .dev-env.template
 .build-harness
-build-harness/
 .vendor-new

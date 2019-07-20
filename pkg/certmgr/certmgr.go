@@ -20,6 +20,7 @@ import (
 
 var log = logf.Log.WithName("certmgr")
 
+// Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
 	certMgr := newCertManagerCR(instance)
 	err := controllerutil.SetControllerReference(instance, certMgr, scheme)
@@ -405,9 +406,10 @@ func installChallengeCRD(client client.Client) error {
 	return nil
 }
 
-func addServiceAccountToSCC(client client.Client, sa *corev1.ServiceAccount, scc *openshiftsecurityv1.SecurityContextConstraints) error {
-	user := "system:serviceaccount:" + sa.Namespace + ":" + sa.Name
-	log.Info("Add ServiceAccount to SecurityContextConstraints", "user", user, "scc.Name", scc.Name)
-	scc.Users = append(scc.Users, user)
-	return client.Update(context.TODO(), scc)
-}
+// WARNING: Marked as unused by the linter (pkg/certmgr/certmgr.go:408:6:warning: func addServiceAccountToSCC is unused (U1000) (staticcheck))
+// func addServiceAccountToSCC(client client.Client, sa *corev1.ServiceAccount, scc *openshiftsecurityv1.SecurityContextConstraints) error {
+// 	user := "system:serviceaccount:" + sa.Namespace + ":" + sa.Name
+// 	log.Info("Add ServiceAccount to SecurityContextConstraints", "user", user, "scc.Name", scc.Name)
+// 	scc.Users = append(scc.Users, user)
+// 	return client.Update(context.TODO(), scc)
+// }

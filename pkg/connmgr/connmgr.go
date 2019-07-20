@@ -16,6 +16,7 @@ import (
 
 var log = logf.Log.WithName("connmgr")
 
+// Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
 	connMgrCR := newConnectionManagerCR(instance)
 	err := controllerutil.SetControllerReference(instance, connMgrCR, scheme)

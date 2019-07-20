@@ -16,6 +16,7 @@ import (
 
 var log = logf.Log.WithName("tiller")
 
+// Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
 	tiller := newTillerCR(instance)
 	err := controllerutil.SetControllerReference(instance, tiller, scheme)
