@@ -17,4 +17,5 @@ build/_output
 build/bin
 .dev-env.template
 .build-harness
+build-harness/
 .vendor-new

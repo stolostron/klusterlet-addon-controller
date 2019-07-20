@@ -1,0 +1,38 @@
+sudo: required
+language: go
+
+go:
+  - "1.12"
+
+os:
+  - linux
+#  - linux-ppc64le
+#  - linux-s390
+
+env:
+  matrix:
+    - OS=linux
+
+branches:
+  only:
+    - master
+    - dev
+    - /^[0-9]+\..*$/
+    - /^v[0-9]+\..*$/
+    - /^release-[0-9]+\..*$/
+
+services:
+  - docker
+
+matrix:
+  fast_finish: true
+
+before_install:
+  - echo Go version is $TRAVIS_GO_VERSION
+  - source travis-env.sh
+
+script:
+  - ./travis.sh
+
+after_script:
+  - test "$TRAVIS_PULL_REQUEST" = "false" && ./build/slack-notification.sh || echo "Slack notification not sent"

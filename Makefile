@@ -19,7 +19,7 @@ GO111MODULE := off
 # GOFLAGS=-mod=vendor
 GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | grep -v /internal | grep -v /build | grep -v /test | grep -v /i18n/resources)
 
-DOCKER_FILE = Dockerfile
+DOCKER_FILE = build/Dockerfile
 DOCKER_BUILD_PATH = .build-docker
 DOCKER_IMAGE ?= icp-multicluster-endpoint-operator
 ## WARNING: OPERATOR IMAGE_DESCRIPTION VAR MUST NOT CONTAIN SPACES.
@@ -84,11 +84,16 @@ clean:: %clean: %go:clean
 .PHONY: operator\:build
 operator\:build: deps
 	## WARNING: DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES.
-	operator-sdk build $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):$(DOCKER_BUILD_TAG) --image-build-args "$(DOCKER_BUILD_OPTS)"
+	operator-sdk build $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):$(DOCKER_TAG) --image-build-args "$(DOCKER_BUILD_OPTS)"
 
 .PHONY: operator\:run
 operator\:run:
 	operator-sdk up local --namespace="" --operator-flags="--zap-encoder=console"
+
+.PHONY: image
+image::
+	$(MAKE) operator:build
+	
 
 helpz:
 ifndef build-harness
