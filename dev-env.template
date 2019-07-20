@@ -1,0 +1,12 @@
+export GITHUB_USER=
+export GITHUB_TOKEN=
+export ARTIFACTORY_TOKEN=
+
+echo "Enter your IBM Intranet Password:"
+read -s PASSWD_INPUT
+export TF_VAR_password=$PASSWD_INPUT
+
+export TF_VAR_user_name=$GITHUB_USER
+export ARTIFACTORY_USER=$GITHUB_USER
+export DOCKER_USER=$GITHUB_USER
+export DOCKER_PASS=$ARTIFACTORY_TOKEN
