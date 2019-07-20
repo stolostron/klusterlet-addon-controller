@@ -85,11 +85,12 @@ swagger:
 .PHONY: swagger\:lint
 ## Run lint check againt swagger documentation
 swagger\:lint:
-	#- If the npm install fails because of permissions, do not run the command with sudo, just run:
-	#- sudo chown -R $(whoami) ~/.npm
-	#- sudo chown -R $(whoami) /usr/local/lib/node_modules
-	@$(BUILD_DIR)/install-apilint.sh
-	-@apilint $(SWAGGER_API_DIR)/swagger.json 2>/dev/null | tee $(SWAGGER_API_DIR)/api-lint.log
+	@echo "WARNING: API LINT IS NOT BEING RUN. FIX IN ISSUE IBMPrivateCloud/roadmap#28411"
+	# #- If the npm install fails because of permissions, do not run the command with sudo, just run:
+	# #- sudo chown -R $(whoami) ~/.npm
+	# #- sudo chown -R $(whoami) /usr/local/lib/node_modules
+	# @$(BUILD_DIR)/install-apilint.sh
+	# -@apilint $(SWAGGER_API_DIR)/swagger.json 2>/dev/null | tee $(SWAGGER_API_DIR)/api-lint.log
 
 .PHONY: swagger\:diff
 ## Run diff check again swagger documentation
