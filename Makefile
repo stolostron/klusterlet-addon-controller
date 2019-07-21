@@ -56,7 +56,9 @@ deps: init
 
 .PHONY: check
 ## Runs a set of required checks
-check: %check: %go:check %go:copyright:check %i18n:check
+# check: %check: %go:check %go:copyright:check %i18n:check
+check: %check: %go:copyright:check
+	@echo "WARNING: GO API & i18n CHECKING IS NOT BEING RUN. NEED GIT USER ACCESS TO armada-opensource-lib. FIX IN ISSUE IBMPrivateCloud/roadmap#28411"
 
 .PHONY: build
 ## Build all cmd binary files
