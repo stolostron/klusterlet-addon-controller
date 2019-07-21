@@ -14,7 +14,6 @@
 vendor
 .vscode
 build/_output
-build/bin
 build-harness/
 .build-docker/
 
