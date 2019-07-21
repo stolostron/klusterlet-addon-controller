@@ -83,6 +83,7 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
 fi
 
 fold_start image "Image"
+announce make operator:tools
 announce make image
 fold_end image
 

@@ -18,6 +18,7 @@ CGO_ENABLED=0
 GO111MODULE := off
 # GOFLAGS=-mod=vendor
 GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | grep -v /internal | grep -v /build | grep -v /test | grep -v /i18n/resources)
+GOOS = $(shell go env GOOS)
 
 DOCKER_FILE = build/Dockerfile
 DOCKER_BUILD_PATH = .build-docker
@@ -39,6 +40,13 @@ ARCH_TYPE = $(ARCH)
 
 ifeq ($(ARCH), x86_64)
 	ARCH_TYPE = amd64
+endif
+
+ifeq ($(GOOS), darwin)
+	OPERATOR_SDK_DOWNLOAD_URL = https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-apple-darwin
+endif
+ifeq ($(GOOS), linux)
+	OPERATOR_SDK_DOWNLOAD_URL = https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu
 endif
 
 BEFORE_SCRIPT := $(shell ./build/before-make-script.sh)
@@ -108,6 +116,12 @@ swagger\:diff:
 
 
 # ### OPERATOR SDK #######################
+.PHONY: operator\:tools
+operator\:tools: $(GOPATH)/bin/operator-sdk
+
+$(GOPATH)/bin/operator-sdk:
+	@curl -Lo $(GOPATH)/bin/operator-sdk $(OPERATOR_SDK_DOWNLOAD_URL) 
+	@chmod +x $(GOPATH)/bin/operator-sdk
 
 .PHONY: operator\:build
 operator\:build: deps
