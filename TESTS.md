@@ -1,0 +1,1 @@
+Reference: https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/writing-e2e-tests.md

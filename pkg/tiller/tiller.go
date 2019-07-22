@@ -1,3 +1,11 @@
+/*
+ * IBM Confidential
+ * OCO Source Materials
+ * 5737-E67
+ * (C) Copyright IBM Corporation 2018 All Rights Reserved
+ * The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+ */
+
 package tiller
 
 import (
@@ -19,6 +27,7 @@ import (
 
 var log = logf.Log.WithName("tiller")
 
+// Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
 	// No Tiller Integration
 	if instance.Spec.TillerIntegration.Enabled == false {
