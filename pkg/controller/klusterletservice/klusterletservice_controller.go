@@ -11,6 +11,8 @@
 import (
 	"context"
 
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/workmgr"
+
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/certmgr"
@@ -61,13 +63,13 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// TODO(user): Modify this to be the types you create that are owned by the primary resource
 	// Watch for changes to secondary resource Pods and requeue the owner KlusterletService
-	// err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
-	// 	IsController: true,
-	// 	OwnerType:    &klusterletv1alpha1.KlusterletService{},
-	// })
-	// if err != nil {
-	// 	return err
-	// }
+	err = c.Watch(&source.Kind{Type: &klusterletv1alpha1.WorkManager{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &klusterletv1alpha1.KlusterletService{},
+	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -107,13 +109,23 @@ func (r *ReconcileKlusterletService) Reconcile(request reconcile.Request) (recon
 		return reconcile.Result{}, err
 	}
 
-	if err := certmgr.Reconcile(instance, r.client, r.scheme); err != nil {
+	err = certmgr.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
 		return reconcile.Result{}, err
 	}
-	if err := tiller.Reconcile(instance, r.client, r.scheme); err != nil {
+
+	err = tiller.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
 		return reconcile.Result{}, err
 	}
-	if err := connmgr.Reconcile(instance, r.client, r.scheme); err != nil {
+
+	err = connmgr.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = workmgr.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
 		return reconcile.Result{}, err
 	}
 

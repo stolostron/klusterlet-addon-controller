@@ -5,11 +5,13 @@
  * (C) Copyright IBM Corporation 2018 All Rights Reserved
  * The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
  */
- 
- package certmgr
+
+package certmgr
 
 import (
 	"context"
+
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -22,7 +24,9 @@ import (
 
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	apiextensionv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -30,8 +34,22 @@ var log = logf.Log.WithName("certmgr")
 
 // Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
+	// ICP CertManager
+	findICPCertMgr := &extensionsv1beta1.Deployment{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "cert-manager-ibm-cert-manager", Namespace: "cert-manager"}, findICPCertMgr)
+	if err == nil {
+		err = createSelfSignClusterIssuer(client, scheme, instance)
+		if err != nil {
+			return nil
+		}
+
+		log.Info("Found ICP CertManager, skip CertManagerCR Reconcile.")
+		return nil
+	}
+
+	// No ICP CertManager
 	certMgr := newCertManagerCR(instance)
-	err := controllerutil.SetControllerReference(instance, certMgr, scheme)
+	err = controllerutil.SetControllerReference(instance, certMgr, scheme)
 	if err != nil {
 		return err
 	}
@@ -70,10 +88,10 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	return nil
 }
 
-func createSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, instance *klusterletv1alpha1.KlusterletService) error {
+func createSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, cr *klusterletv1alpha1.KlusterletService) error {
 	clusterIssuer := &certmanagerv1alpha1.ClusterIssuer{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: instance.Name + "-self-signed",
+			Name: cr.Name + "-self-signed",
 		},
 		Spec: certmanagerv1alpha1.IssuerSpec{
 			IssuerConfig: certmanagerv1alpha1.IssuerConfig{
@@ -81,7 +99,7 @@ func createSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, i
 			},
 		},
 	}
-	err := controllerutil.SetControllerReference(instance, clusterIssuer, scheme)
+	err := controllerutil.SetControllerReference(cr, clusterIssuer, scheme)
 	if err != nil {
 		return err
 	}
@@ -167,17 +185,21 @@ func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alp
 	}
 	return &klusterletv1alpha1.CertManager{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-cert-manager",
+			Name:      cr.Name + "-certmgr",
 			Namespace: cr.Namespace,
 			Labels:    labels,
 		},
 		Spec: klusterletv1alpha1.CertManagerSpec{
+			FullNameOverride:         cr.Name + "-certmgr",
 			ClusterResourceNamespace: cr.Namespace,
 			ServiceAccount: klusterletv1alpha1.CertManagerServiceAccount{
-				Create: false,
-				Name:   cr.Name + "-cert-manager",
+				Name: cr.Name + "-certmgr",
 			},
-			FullNameOverride: cr.Name + "-cert-manager",
+			Image: image.Image{
+				Repository: "ibmcom/icp-cert-manager-controller",
+				Tag:        "0.7.0",
+				PullPolicy: "IfNotPresent",
+			},
 		},
 	}
 }

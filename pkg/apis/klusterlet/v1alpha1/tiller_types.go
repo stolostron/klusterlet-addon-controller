@@ -9,6 +9,7 @@
  package v1alpha1
 
 import (
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -21,7 +22,17 @@ type TillerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
+
+	// +kubebuilder:validation:MinLength=1
 	FullNameOverride string `json:"fullnameOverride"`
+
+	// +kubebuilder:validation:MinLength=1
+	CACertIssuer string `json:"caCertIssuer"`
+
+	// +kubebuilder:validation:MinLength=1
+	DefaultAdminUser string `json:"tiller_default_admin_user"`
+
+	Image image.Image `json:"image,omitempty"`
 }
 
 // TillerStatus defines the observed state of Tiller

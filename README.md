@@ -8,12 +8,12 @@ https://github.ibm.com/IBMPrivateCloud/klusterlet-component-operator/README.md
 
 2. Install klusterlet CRD
 ```
-kubectl apply -f deploy/crds/klusterlet_v1alpha1_klusterletservice_crd.yaml
+make install-crd
 ```
 
 3. Run Klusterlet Operator 
 ```
-make run
+make operator:run
 ```
 
 ## Installing Klusterlet using Klusterlet Operator 
