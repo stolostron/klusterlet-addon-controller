@@ -52,5 +52,6 @@ rules:
   - '*'
   - tillers
   - connectionmanagers
+  - workmanagers
   verbs:
   - '*'

@@ -10,8 +10,12 @@ import (
 // +k8s:openapi-gen=true
 type KlusterletServiceSpec struct {
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
+
+	// +kubebuilder:validation:MinLength=1
+	Registry string `json:"registry"`
 	// +kubebuilder:validation:MinLength=1
 	Version string `json:"version"`
+
 	// +kubebuilder:validation:MinLength=1
 	Namespace string `json:"namespace"`
 	// +kubebuilder:validation:MinLength=1
@@ -19,19 +23,42 @@ type KlusterletServiceSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ClusterNamespace string `json:"clusterNamespace"`
 
+	ClusterLabels map[string]string `json:"clusterLabels"`
+
 	// CertificateManager CertificateManager `json:"certManager"`
-	ConnectionManager KlusterletConnectionManager `json:"connectionManager"`
+	// ConnectionManager KlusterletConnectionManagerSpec `json:"connectionManager"`
 	// CertificateIssuer CertificateIssuer `json:"certificateIssuer"`
 	// Search            Search            `json:"search,omitempty"`
 	// WorkManager       WorkManager       `json:"workManager,omitempty"`
 	// PolicyController  PolicyController  `json:"policyController,omitempty"`
 	// ServiceRegistry   ServiceRegistry   `json:"serviceRegistry,omitempty"`
 	// TopologyCollector TopologyCollector `json:"topologyCollector,omitempty"`
+	BootStrapConfig       map[string]string                   `json:"bootstrapConfig"`
+	TillerIntegration     KlusterletTillerIntegrationSpec     `json:"tillerIntegration"`
+	PrometheusIntegration KlusterletPrometheusIntegrationSpec `json:"prometheusIntegration"`
 }
 
-// KlusterletConnectionManager defines configuration for the ConnectionManager component
+// KlusterletWorkManagerSpec defines configuration for the WorkManager component
 // +k8s:openapi-gen=true
-type KlusterletConnectionManager struct {
+type KlusterletWorkManagerSpec struct {
+	ClusterLabels map[string]string `json:"clusterLabels"`
+}
+
+// KlusterletPrometheusIntegrationSpec defines configuration for the WorkManager Promtheus Integration
+// +k8s:openapi-gen=true
+type KlusterletPrometheusIntegrationSpec struct {
+	Enabled bool `json:"enabled"`
+}
+
+// KlusterletTillerIntegrationSpec defines configuration for the WorkManager Tiller Integration
+// +k8s:openapi-gen=true
+type KlusterletTillerIntegrationSpec struct {
+	Enabled bool `json:"enabled"`
+}
+
+// KlusterletConnectionManagerSpec defines configuration for the ConnectionManager component
+// +k8s:openapi-gen=true
+type KlusterletConnectionManagerSpec struct {
 	BootStrapConfig map[string]string `json:"bootstrapConfig"`
 }
 

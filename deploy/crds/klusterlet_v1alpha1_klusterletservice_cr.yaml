@@ -4,9 +4,22 @@ metadata:
   name: klusterlet
 spec:
   # Add fields here
-  clusterName: test
-  clusterNamespace: test
+  clusterName: hao-working-l8t
+  clusterNamespace: hao-working-l8t
 
-  connectionManager:
-    bootstrapConfig:
-        hub0: multicluster-endpoint/klusterlet-bootstrap
+  clusterLabels:
+    cloud: "IBM"
+    vendor: "ICP"
+    environment: "Dev"
+    region: "US"
+    datacenter: "toronto"
+    owner: "marketing"
+
+  bootstrapConfig:
+    hub0: multicluster-endpoint/klusterlet-bootstrap
+
+  tillerIntegration:
+    enabled: true
+
+  prometheusIntegration:
+    enabled: true
