@@ -55,7 +55,7 @@ BEFORE_SCRIPT := $(shell ./build/before-make-script.sh)
 
 DOCKER_BUILD_OPTS = --build-arg VCS_REF=$(VCS_REF) --build-arg VCS_URL=$(GIT_REMOTE_URL) --build-arg IMAGE_NAME=$(DOCKER_IMAGE) --build-arg IMAGE_DESCRIPTION=$(IMAGE_DESCRIPTION) --build-arg ARCH_TYPE=$(ARCH_TYPE)
 
-PHONY: deps
+.PHONY: deps
 ## Download all project dependencies
 deps: init
 	go get -u github.com/golang/dep/cmd/dep
@@ -132,6 +132,7 @@ operator\:build: deps
 operator\:run:
 	operator-sdk up local --namespace="" --operator-flags="--zap-encoder=console"
 
+.PHONY: helpz
 helpz:
 ifndef build-harness
 	$(eval MAKEFILE_LIST := Makefile build-harness/modules/go/Makefile)
