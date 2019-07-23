@@ -528,6 +528,17 @@
   version = "v1.0.3"
 
 [[projects]]
+  digest = "1:ef9ef93a8bdc395a787857d5927cebbe904b75982175bc8bf10255b48734de73"
+  name = "github.ibm.com/IBMPrivateCloud/hcm-api"
+  packages = [
+    "pkg/apis/mcm",
+    "pkg/apis/mcm/v1alpha1",
+  ]
+  pruneopts = "NT"
+  revision = "35250ec8a1beba9b11b55999bbc1475e05746af3"
+  version = "3.2.0"
+
+[[projects]]
   digest = "1:8bcb2616463bc981681c4b26f2aa817be8167682b76fb7884ec3fafdc9f82372"
   name = "go.opencensus.io"
   packages = [
@@ -977,6 +988,14 @@
   revision = "8d9ed539ba3134352c586810e749e58df4e94e4f"
 
 [[projects]]
+  branch = "master"
+  digest = "1:abe37ce66cff483e862792852a6b90ef9682f5f45b430089dd081e951c6cb168"
+  name = "k8s.io/cluster-registry"
+  packages = ["pkg/apis/clusterregistry/v1alpha1"]
+  pruneopts = "NT"
+  revision = "eb099a00440591a03ff5e38a2ef943098090721d"
+
+[[projects]]
   digest = "1:dc1ae99dcab96913d81ae970b1f7a7411a54199b14bfb17a7e86f9a56979c720"
   name = "k8s.io/code-generator"
   packages = [
@@ -1129,6 +1148,7 @@
     "github.com/operator-framework/operator-sdk/pkg/metrics",
     "github.com/operator-framework/operator-sdk/version",
     "github.com/spf13/pflag",
+    "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1",
     "k8s.io/api/core/v1",
     "k8s.io/api/extensions/v1beta1",
     "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",

@@ -23,3 +23,6 @@ spec:
 
   prometheusIntegration:
     enabled: true
+
+  searchCollector:
+    enabled: true

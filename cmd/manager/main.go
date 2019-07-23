@@ -21,6 +21,7 @@ import (
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	openshiftroutev1 "github.com/openshift/api/route/v1"
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
+	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -135,6 +136,11 @@ func main() {
 	}
 
 	if err := extensionsv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := mcmv1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

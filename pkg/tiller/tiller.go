@@ -10,6 +10,9 @@ package tiller
 
 import (
 	"context"
+	"strconv"
+
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 
@@ -83,4 +86,45 @@ func newTillerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.T
 			},
 		},
 	}
+}
+
+func GetICPTillerDefaultAdminUser(client client.Client) string {
+	findICPTillerDeployment := &extensionsv1beta1.Deployment{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, findICPTillerDeployment)
+	if err != nil {
+		return "admin"
+	}
+
+	for _, container := range findICPTillerDeployment.Spec.Template.Spec.Containers {
+		if container.Name == "tiller" {
+			for _, env := range container.Env {
+				if env.Name == "default_admin_user" {
+					return env.Value
+				}
+			}
+		}
+	}
+
+	return "admin"
+}
+
+func GetICPTillerServiceEndpoint(client client.Client) string {
+	foundICPTillerService := &corev1.Service{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, foundICPTillerService)
+	if err != nil {
+		return ""
+	}
+	if err == nil {
+		tillerServiceHostname := foundICPTillerService.Name + "." + foundICPTillerService.Namespace
+		var tillerServicePort int32
+
+		for _, port := range foundICPTillerService.Spec.Ports {
+			if port.Name == "grpc" && port.Protocol == "TCP" {
+				tillerServicePort = port.Port
+			}
+		}
+
+		return tillerServiceHostname + ":" + strconv.FormatInt(int64(tillerServicePort), 10)
+	}
+	return ""
 }

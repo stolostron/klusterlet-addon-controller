@@ -11,6 +11,8 @@
 import (
 	"context"
 
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/searchcollector"
+
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/workmgr"
 
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
@@ -64,6 +66,14 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// TODO(user): Modify this to be the types you create that are owned by the primary resource
 	// Watch for changes to secondary resource Pods and requeue the owner KlusterletService
 	err = c.Watch(&source.Kind{Type: &klusterletv1alpha1.WorkManager{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &klusterletv1alpha1.KlusterletService{},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &klusterletv1alpha1.SearchCollector{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &klusterletv1alpha1.KlusterletService{},
 	})
@@ -125,6 +135,11 @@ func (r *ReconcileKlusterletService) Reconcile(request reconcile.Request) (recon
 	}
 
 	err = workmgr.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = searchcollector.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

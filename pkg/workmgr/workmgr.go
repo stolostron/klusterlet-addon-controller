@@ -7,7 +7,8 @@ package workmgr
 
 import (
 	"context"
-	"strconv"
+
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -30,7 +31,7 @@ import (
 var log = logf.Log.WithName("workmgr")
 
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
-	workmgrCR := newWorkManagerCR(instance, client)
+	workmgrCR := newWorkManagerCR(instance)
 	err := controllerutil.SetControllerReference(instance, workmgrCR, scheme)
 	if err != nil {
 		return err
@@ -39,6 +40,11 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	foundWorkManager := &klusterletv1alpha1.WorkManager{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: workmgrCR.Name, Namespace: workmgrCR.Namespace}, foundWorkManager)
 	if err != nil && errors.IsNotFound(err) {
+		workmgrCR.Spec.TillerIntegration = newWorkManagerTillerIntegration(instance, client)
+		workmgrCR.Spec.PrometheusIntegration = newWorkManagerPrometheusIntegration(instance, client)
+		workmgrCR.Spec.Service = newWorkManagerServiceConfig()
+		workmgrCR.Spec.Ingress = newWorkManagerIngressConfig(client)
+
 		log.Info("Creating a new WorkManager", "WorkManager.Namespace", workmgrCR.Namespace, "WorkManager.Name", workmgrCR.Name)
 		err = client.Create(context.TODO(), workmgrCR)
 		if err != nil {
@@ -51,58 +57,32 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 func newWorkManagerTillerIntegration(cr *klusterletv1alpha1.KlusterletService, client client.Client) klusterletv1alpha1.WorkManagerTillerIntegration {
 	if cr.Spec.TillerIntegration.Enabled {
 		// ICP Tiller
-		foundICPTillerService := &corev1.Service{}
-		err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, foundICPTillerService)
-		if err == nil {
-			tillerServiceHostname := foundICPTillerService.Name + "." + foundICPTillerService.Namespace
-			var tillerServicePort int32
-
-			for _, port := range foundICPTillerService.Spec.Ports {
-				if port.Name == "grpc" && port.Protocol == "TCP" {
-					tillerServicePort = port.Port
-				}
-			}
-
+		icpTillerServiceEndpoint := tiller.GetICPTillerServiceEndpoint(client)
+		if icpTillerServiceEndpoint != "" {
 			return klusterletv1alpha1.WorkManagerTillerIntegration{
-				Enabled:       true,
-				Endpoint:      tillerServiceHostname + ":" + strconv.FormatInt(int64(tillerServicePort), 10),
-				CertIssuer:    "icp-ca-issuer",
-				AutoGenSecret: true,
-				User:          getICPTillerDefaultAdminUser(client),
+				Enabled:           true,
+				HelmReleasePrefix: "md",
+				Endpoint:          icpTillerServiceEndpoint,
+				CertIssuer:        "icp-ca-issuer",
+				AutoGenSecret:     true,
+				User:              tiller.GetICPTillerDefaultAdminUser(client),
 			}
 		}
 
 		// KlusterletOperator deployed Tiller
 		return klusterletv1alpha1.WorkManagerTillerIntegration{
-			Enabled:       true,
-			Endpoint:      cr.Name + "-tiller" + ":44134",
-			CertIssuer:    cr.Name + "-tiller",
-			AutoGenSecret: true,
-			User:          cr.Name + "-admin",
+			Enabled:           true,
+			HelmReleasePrefix: "md",
+			Endpoint:          cr.Name + "-tiller" + ":44134",
+			CertIssuer:        cr.Name + "-tiller",
+			AutoGenSecret:     true,
+			User:              cr.Name + "-admin",
 		}
 	}
 
 	return klusterletv1alpha1.WorkManagerTillerIntegration{
 		Enabled: false,
 	}
-}
-
-func getICPTillerDefaultAdminUser(client client.Client) string {
-	findICPTillerDeployment := &extensionsv1beta1.Deployment{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, findICPTillerDeployment)
-	if err != nil {
-		return "admin"
-	}
-	for _, container := range findICPTillerDeployment.Spec.Template.Spec.Containers {
-		if container.Name == "tiller" {
-			for _, env := range container.Env {
-				if env.Name == "default_admin_user" {
-					return env.Value
-				}
-			}
-		}
-	}
-	return "admin"
 }
 
 func newWorkManagerPrometheusIntegration(cr *klusterletv1alpha1.KlusterletService, client client.Client) klusterletv1alpha1.WorkManagerPrometheusIntegration {
@@ -142,7 +122,7 @@ func newWorkManagerPrometheusIntegration(cr *klusterletv1alpha1.KlusterletServic
 	}
 }
 
-func newWorkManagerCR(cr *klusterletv1alpha1.KlusterletService, client client.Client) *klusterletv1alpha1.WorkManager {
+func newWorkManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.WorkManager {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
@@ -162,9 +142,6 @@ func newWorkManagerCR(cr *klusterletv1alpha1.KlusterletService, client client.Cl
 
 			ConnectionManager: cr.Name + "-connmgr",
 
-			TillerIntegration:     newWorkManagerTillerIntegration(cr, client),
-			PrometheusIntegration: newWorkManagerPrometheusIntegration(cr, client),
-
 			WorkManagerConfig: klusterletv1alpha1.WorkManagerConfig{
 				Enabled: true,
 				Image: image.Image{
@@ -182,9 +159,6 @@ func newWorkManagerCR(cr *klusterletv1alpha1.KlusterletService, client client.Cl
 					PullPolicy: "IfNotPresent",
 				},
 			},
-
-			Service: newWorkManagerServiceConfig(),
-			Ingress: newWorkManagerIngressConfig(client),
 		},
 	}
 }

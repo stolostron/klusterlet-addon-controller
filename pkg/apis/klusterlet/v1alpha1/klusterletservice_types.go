@@ -42,8 +42,15 @@ type KlusterletServiceSpec struct {
 	// ServiceRegistry   ServiceRegistry   `json:"serviceRegistry,omitempty"`
 	// TopologyCollector TopologyCollector `json:"topologyCollector,omitempty"`
 	BootStrapConfig       map[string]string                   `json:"bootstrapConfig"`
+	SearchCollectorConfig KlusterletSearchCollectorSpec       `json:"searchCollector"`
 	TillerIntegration     KlusterletTillerIntegrationSpec     `json:"tillerIntegration"`
 	PrometheusIntegration KlusterletPrometheusIntegrationSpec `json:"prometheusIntegration"`
+}
+
+// KlusterletSearchCollectorSpec defines configuration for the SearchCollector component
+// +k8s:openapi-gen=true
+type KlusterletSearchCollectorSpec struct {
+	Enabled bool `json:"enabled"`
 }
 
 // KlusterletWorkManagerSpec defines configuration for the WorkManager component
