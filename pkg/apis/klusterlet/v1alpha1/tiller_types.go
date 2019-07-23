@@ -5,12 +5,13 @@
  * (C) Copyright IBM Corporation 2018 All Rights Reserved
  * The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
  */
- 
- package v1alpha1
+
+package v1alpha1
 
 import (
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!

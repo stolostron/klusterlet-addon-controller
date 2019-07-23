@@ -5,8 +5,8 @@
  * (C) Copyright IBM Corporation 2018 All Rights Reserved
  * The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
  */
- 
- package v1alpha1
+
+package v1alpha1
 
 import (
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
@@ -18,6 +18,7 @@ import (
 
 // CertManagerServiceAccount defines service account configuration in the spec
 // +k8s:openapi-gen=true
+// swagger:model
 type CertManagerServiceAccount struct {
 	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
@@ -25,6 +26,7 @@ type CertManagerServiceAccount struct {
 
 // CertManagerSpec defines the desired state of CertManager
 // +k8s:openapi-gen=true
+// swagger:model
 type CertManagerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
@@ -44,6 +46,7 @@ type CertManagerSpec struct {
 
 // CertManagerStatus defines the observed state of CertManager
 // +k8s:openapi-gen=true
+// swagger:model
 type CertManagerStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
@@ -55,6 +58,7 @@ type CertManagerStatus struct {
 // CertManager is the Schema for the certmanagers API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
+// swagger:model
 type CertManager struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -66,6 +70,7 @@ type CertManager struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CertManagerList contains a list of CertManager
+// swagger:model
 type CertManagerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

@@ -33,7 +33,7 @@ var log = logf.Log.WithName("tiller")
 // Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
 	// No Tiller Integration
-	if instance.Spec.TillerIntegration.Enabled == false {
+	if !instance.Spec.TillerIntegration.Enabled {
 		log.Info("Tiller Integration disabled, skip Tiller Reconcile.")
 		return nil
 	}
@@ -88,6 +88,7 @@ func newTillerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.T
 	}
 }
 
+// GetICPTillerDefaultAdminUser gets the ICP tiller default admin user
 func GetICPTillerDefaultAdminUser(client client.Client) string {
 	findICPTillerDeployment := &extensionsv1beta1.Deployment{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, findICPTillerDeployment)
@@ -108,6 +109,7 @@ func GetICPTillerDefaultAdminUser(client client.Client) string {
 	return "admin"
 }
 
+// GetICPTillerServiceEndpoint gets the ICP tiller endpoint
 func GetICPTillerServiceEndpoint(client client.Client) string {
 	foundICPTillerService := &corev1.Service{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, foundICPTillerService)

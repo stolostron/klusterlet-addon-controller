@@ -1,0 +1,433 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "description": "API for cluster management and CLI support.",
+        "title": "Defines the API to support Multicluster Endpoints (klusterlets).\nIBM Confidential\nOCO Source Materials\n5737-E67\n(C) Copyright IBM Corporation 2016, 2019 All Rights Reserved\nThe source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.",
+        "license": {
+            "name": "Licensed Materials - Property of IBM Copyright IBM Corporation 2018 All Rights Reserved U.S. Government Users Restricted Rights - Use, duplication or disclosure restricted by GSA ADP The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office."
+        },
+        "version": "3.2.1"
+    },
+    "paths": {},
+    "servers": [
+        {
+            "url": "/"
+        }
+    ],
+    "components": {
+        "schemas": {
+            "CauseType": {
+                "description": "CauseType is a machine readable value providing more detail about what\noccurred in a status response. An operation may have multiple causes for a\nstatus (whether Failure or Success).",
+                "type": "string",
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+            },
+            "CertManager": {
+                "description": "CertManager is the Schema for the certmanagers API\n+k8s:openapi-gen=true\n+kubebuilder:subresource:status",
+                "type": "object",
+                "properties": {
+                    "annotations": {
+                        "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "x-go-name": "Annotations"
+                    },
+                    "apiVersion": {
+                        "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+                        "type": "string",
+                        "x-go-name": "APIVersion"
+                    },
+                    "clusterName": {
+                        "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+                        "type": "string",
+                        "x-go-name": "ClusterName"
+                    },
+                    "creationTimestamp": {
+                        "$ref": "#/components/schemas/Time"
+                    },
+                    "deletionGracePeriodSeconds": {
+                        "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+                        "type": "integer",
+                        "format": "int64",
+                        "x-go-name": "DeletionGracePeriodSeconds"
+                    },
+                    "deletionTimestamp": {
+                        "$ref": "#/components/schemas/Time"
+                    },
+                    "finalizers": {
+                        "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\n+optional\n+patchStrategy=merge",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "x-go-name": "Finalizers"
+                    },
+                    "generateName": {
+                        "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#idempotency\n+optional",
+                        "type": "string",
+                        "x-go-name": "GenerateName"
+                    },
+                    "generation": {
+                        "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+                        "type": "integer",
+                        "format": "int64",
+                        "x-go-name": "Generation"
+                    },
+                    "initializers": {
+                        "$ref": "#/components/schemas/Initializers"
+                    },
+                    "kind": {
+                        "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+                        "type": "string",
+                        "x-go-name": "Kind"
+                    },
+                    "labels": {
+                        "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "x-go-name": "Labels"
+                    },
+                    "name": {
+                        "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+                        "type": "string",
+                        "x-go-name": "Name"
+                    },
+                    "namespace": {
+                        "description": "Namespace defines the space within each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+                        "type": "string",
+                        "x-go-name": "Namespace"
+                    },
+                    "ownerReferences": {
+                        "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OwnerReference"
+                        },
+                        "x-go-name": "OwnerReferences"
+                    },
+                    "resourceVersion": {
+                        "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                        "type": "string",
+                        "x-go-name": "ResourceVersion"
+                    },
+                    "selfLink": {
+                        "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n+optional",
+                        "type": "string",
+                        "x-go-name": "SelfLink"
+                    },
+                    "spec": {
+                        "$ref": "#/components/schemas/CertManagerSpec"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/CertManagerStatus"
+                    },
+                    "uid": {
+                        "$ref": "#/components/schemas/UID"
+                    }
+                },
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
+            },
+            "CertManagerList": {
+                "description": "CertManagerList contains a list of CertManager",
+                "type": "object",
+                "properties": {
+                    "apiVersion": {
+                        "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+                        "type": "string",
+                        "x-go-name": "APIVersion"
+                    },
+                    "continue": {
+                        "description": "continue may be set if the user set a limit on the number of items returned, and indicates that\nthe server has more data available. The value is opaque and may be used to issue another request\nto the endpoint that served this list to retrieve the next set of available objects. Continuing a\nconsistent list may not be possible if the server configuration has changed or more than a few\nminutes have passed. The resourceVersion field returned when using this continue value will be\nidentical to the value in the first response, unless you have received this token from an error\nmessage.",
+                        "type": "string",
+                        "x-go-name": "Continue"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CertManager"
+                        },
+                        "x-go-name": "Items"
+                    },
+                    "kind": {
+                        "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+                        "type": "string",
+                        "x-go-name": "Kind"
+                    },
+                    "resourceVersion": {
+                        "description": "String that identifies the server's internal version of this object that\ncan be used by clients to determine when objects have changed.\nValue must be treated as opaque by clients and passed unmodified back to the server.\nPopulated by the system.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                        "type": "string",
+                        "x-go-name": "ResourceVersion"
+                    },
+                    "selfLink": {
+                        "description": "selfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n+optional",
+                        "type": "string",
+                        "x-go-name": "SelfLink"
+                    }
+                },
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
+            },
+            "CertManagerServiceAccount": {
+                "description": "CertManagerServiceAccount defines service account configuration in the spec\n+k8s:openapi-gen=true",
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "+kubebuilder:validation:MinLength=1",
+                        "type": "string",
+                        "x-go-name": "Name"
+                    }
+                },
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
+            },
+            "CertManagerSpec": {
+                "description": "CertManagerSpec defines the desired state of CertManager\n+k8s:openapi-gen=true",
+                "type": "object",
+                "properties": {
+                    "clusterResourceNamespace": {
+                        "description": "+kubebuilder:validation:MinLength=1",
+                        "type": "string",
+                        "x-go-name": "ClusterResourceNamespace"
+                    },
+                    "fullnameOverride": {
+                        "description": "+kubebuilder:validation:MinLength=1",
+                        "type": "string",
+                        "x-go-name": "FullNameOverride"
+                    },
+                    "image": {
+                        "$ref": "#/components/schemas/Image"
+                    },
+                    "serviceAccount": {
+                        "$ref": "#/components/schemas/CertManagerServiceAccount"
+                    }
+                },
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
+            },
+            "CertManagerStatus": {
+                "description": "CertManagerStatus defines the observed state of CertManager\n+k8s:openapi-gen=true",
+                "type": "object",
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
+            },
+            "Image": {
+                "description": "Image defines the image to pull for a container\n+k8s:openapi-gen=true",
+                "type": "object",
+                "properties": {
+                    "pullPolicy": {
+                        "$ref": "#/components/schemas/PullPolicy"
+                    },
+                    "repository": {
+                        "description": "+kubebuilder:validation:MinLength=1",
+                        "type": "string",
+                        "x-go-name": "Repository"
+                    },
+                    "tag": {
+                        "description": "+kubebuilder:validation:MinLength=1",
+                        "type": "string",
+                        "x-go-name": "Tag"
+                    }
+                },
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
+            },
+            "Initializer": {
+                "type": "object",
+                "title": "Initializer is information about an initializer that has not yet completed.",
+                "properties": {
+                    "name": {
+                        "description": "name of the process that is responsible for initializing this object.",
+                        "type": "string",
+                        "x-go-name": "Name"
+                    }
+                },
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+            },
+            "Initializers": {
+                "type": "object",
+                "title": "Initializers tracks the progress of initialization.",
+                "properties": {
+                    "pending": {
+                        "description": "Pending is a list of initializers that must execute in order before this object is visible.\nWhen the last pending initializer is removed, and no failing result is set, the initializers\nstruct will be set to nil and the object is considered as initialized and visible to all\nclients.\n+patchMergeKey=name\n+patchStrategy=merge",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Initializer"
+                        },
+                        "x-go-name": "Pending"
+                    },
+                    "result": {
+                        "$ref": "#/components/schemas/Status"
+                    }
+                },
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+            },
+            "OwnerReference": {
+                "description": "OwnerReference contains enough information to let you identify an owning\nobject. An owning object must be in the same namespace as the dependent, or\nbe cluster-scoped, so there is no namespace field.",
+                "type": "object",
+                "properties": {
+                    "apiVersion": {
+                        "description": "API version of the referent.",
+                        "type": "string",
+                        "x-go-name": "APIVersion"
+                    },
+                    "blockOwnerDeletion": {
+                        "description": "If true, AND if the owner has the \"foregroundDeletion\" finalizer, then\nthe owner cannot be deleted from the key-value store until this\nreference is removed.\nDefaults to false.\nTo set this field, a user needs \"delete\" permission of the owner,\notherwise 422 (Unprocessable Entity) will be returned.\n+optional",
+                        "type": "boolean",
+                        "x-go-name": "BlockOwnerDeletion"
+                    },
+                    "controller": {
+                        "description": "If true, this reference points to the managing controller.\n+optional",
+                        "type": "boolean",
+                        "x-go-name": "Controller"
+                    },
+                    "kind": {
+                        "description": "Kind of the referent.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+                        "type": "string",
+                        "x-go-name": "Kind"
+                    },
+                    "name": {
+                        "description": "Name of the referent.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names",
+                        "type": "string",
+                        "x-go-name": "Name"
+                    },
+                    "uid": {
+                        "$ref": "#/components/schemas/UID"
+                    }
+                },
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+            },
+            "PullPolicy": {
+                "description": "PullPolicy describes a policy for if/when to pull a container image",
+                "type": "string",
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/kubernetes/pkg/apis/core"
+            },
+            "Status": {
+                "type": "object",
+                "title": "Status is a return value for calls that don't return other objects.",
+                "properties": {
+                    "apiVersion": {
+                        "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+                        "type": "string",
+                        "x-go-name": "APIVersion"
+                    },
+                    "code": {
+                        "description": "Suggested HTTP return code for this status, 0 if not set.\n+optional",
+                        "type": "integer",
+                        "format": "int32",
+                        "x-go-name": "Code"
+                    },
+                    "continue": {
+                        "description": "continue may be set if the user set a limit on the number of items returned, and indicates that\nthe server has more data available. The value is opaque and may be used to issue another request\nto the endpoint that served this list to retrieve the next set of available objects. Continuing a\nconsistent list may not be possible if the server configuration has changed or more than a few\nminutes have passed. The resourceVersion field returned when using this continue value will be\nidentical to the value in the first response, unless you have received this token from an error\nmessage.",
+                        "type": "string",
+                        "x-go-name": "Continue"
+                    },
+                    "details": {
+                        "$ref": "#/components/schemas/StatusDetails"
+                    },
+                    "kind": {
+                        "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+                        "type": "string",
+                        "x-go-name": "Kind"
+                    },
+                    "message": {
+                        "description": "A human-readable description of the status of this operation.\n+optional",
+                        "type": "string",
+                        "x-go-name": "Message"
+                    },
+                    "reason": {
+                        "$ref": "#/components/schemas/StatusReason"
+                    },
+                    "resourceVersion": {
+                        "description": "String that identifies the server's internal version of this object that\ncan be used by clients to determine when objects have changed.\nValue must be treated as opaque by clients and passed unmodified back to the server.\nPopulated by the system.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency\n+optional",
+                        "type": "string",
+                        "x-go-name": "ResourceVersion"
+                    },
+                    "selfLink": {
+                        "description": "selfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n+optional",
+                        "type": "string",
+                        "x-go-name": "SelfLink"
+                    },
+                    "status": {
+                        "description": "Status of the operation.\nOne of: \"Success\" or \"Failure\".\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status\n+optional",
+                        "type": "string",
+                        "x-go-name": "Status"
+                    }
+                },
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+            },
+            "StatusCause": {
+                "description": "StatusCause provides more information about an api.Status failure, including\ncases when multiple errors are encountered.",
+                "type": "object",
+                "properties": {
+                    "field": {
+                        "description": "The field of the resource that has caused this error, as named by its JSON\nserialization. May include dot and postfix notation for nested attributes.\nArrays are zero-indexed.  Fields may appear more than once in an array of\ncauses due to fields having multiple errors.\nOptional.\n\nExamples:\n\"name\" - the field \"name\" on the current resource\n\"items[0].name\" - the field \"name\" on the first array entry in \"items\"\n+optional",
+                        "type": "string",
+                        "x-go-name": "Field"
+                    },
+                    "message": {
+                        "description": "A human-readable description of the cause of the error.  This field may be\npresented as-is to a reader.\n+optional",
+                        "type": "string",
+                        "x-go-name": "Message"
+                    },
+                    "reason": {
+                        "$ref": "#/components/schemas/CauseType"
+                    }
+                },
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+            },
+            "StatusDetails": {
+                "description": "StatusDetails is a set of additional properties that MAY be set by the\nserver to provide additional information about a response. The Reason\nfield of a Status object defines what attributes will be set. Clients\nmust ignore fields that do not match the defined type of each attribute,\nand should assume that any attribute may be empty, invalid, or under\ndefined.",
+                "type": "object",
+                "properties": {
+                    "causes": {
+                        "description": "The Causes array includes more details associated with the StatusReason\nfailure. Not all StatusReasons may provide detailed causes.\n+optional",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StatusCause"
+                        },
+                        "x-go-name": "Causes"
+                    },
+                    "group": {
+                        "description": "The group attribute of the resource associated with the status StatusReason.\n+optional",
+                        "type": "string",
+                        "x-go-name": "Group"
+                    },
+                    "kind": {
+                        "description": "The kind attribute of the resource associated with the status StatusReason.\nOn some operations may differ from the requested resource Kind.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+                        "type": "string",
+                        "x-go-name": "Kind"
+                    },
+                    "name": {
+                        "description": "The name attribute of the resource associated with the status StatusReason\n(when there is a single name which can be described).\n+optional",
+                        "type": "string",
+                        "x-go-name": "Name"
+                    },
+                    "retryAfterSeconds": {
+                        "description": "If specified, the time in seconds before the operation should be retried. Some errors may indicate\nthe client must take an alternate action - for those errors this field may indicate how long to wait\nbefore taking the alternate action.\n+optional",
+                        "type": "integer",
+                        "format": "int32",
+                        "x-go-name": "RetryAfterSeconds"
+                    },
+                    "uid": {
+                        "$ref": "#/components/schemas/UID"
+                    }
+                },
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+            },
+            "StatusReason": {
+                "description": "StatusReason is an enumeration of possible failure causes.  Each StatusReason\nmust map to a single HTTP status code, but multiple reasons may map\nto the same HTTP status code.\nTODO: move to apiserver",
+                "type": "string",
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+            },
+            "Time": {
+                "description": "+protobuf.options.marshal=false\n+protobuf.as=Timestamp\n+protobuf.options.(gogoproto.goproto_stringer)=false",
+                "type": "object",
+                "title": "Time is a wrapper around time.Time which supports correct\nmarshaling to YAML and JSON.  Wrappers are provided for many\nof the factory methods that the time package offers.",
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+            },
+            "UID": {
+                "description": "UID is a type that holds unique ID values, including UUIDs.  Because we\ndon't ONLY use UUIDs, this is an alias to string.  Being a type captures\nintent and helps make sure that UIDs and names do not get conflated.",
+                "type": "string",
+                "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/apimachinery/pkg/types"
+            }
+        }
+    }
+}

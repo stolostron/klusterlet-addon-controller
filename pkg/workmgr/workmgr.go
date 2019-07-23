@@ -1,8 +1,11 @@
+//Package v1alpha1 Defines the API to support Multicluster Endpoints (klusterlets).
 // IBM Confidential
 // OCO Source Materials
 // 5737-E67
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2016, 2019 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+//
+
 package workmgr
 
 import (
@@ -30,6 +33,7 @@ import (
 
 var log = logf.Log.WithName("workmgr")
 
+// Reconcile Resolves differences in the running state of the connection manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
 	workmgrCR := newWorkManagerCR(instance)
 	err := controllerutil.SetControllerReference(instance, workmgrCR, scheme)

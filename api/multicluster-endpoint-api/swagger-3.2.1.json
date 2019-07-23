@@ -11,8 +11,8 @@
   ],
   "swagger": "2.0",
   "info": {
-    "description": "API for cluster management and CLI support.",
-    "title": "Defines the API to support Multicluster Endpoints (klusterlets).\nIBM Confidential\nOCO Source Materials\n5737-E67\n(C) Copyright IBM Corporation 2016, 2019 All Rights Reserved\nThe source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.",
+    "description": "Package for IBM Multicluster Endpoint Operator (klusterlet)\n\nAPI for cluster management and CLI support.",
+    "title": "IBM Confidential\nOCO Source Materials\n5737-E67\n(C) Copyright IBM Corporation 2018 All Rights Reserved\nThe source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.",
     "license": {
       "name": "Licensed Materials - Property of IBM Copyright IBM Corporation 2018 All Rights Reserved U.S. Government Users Restricted Rights - Use, duplication or disclosure restricted by GSA ADP The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office."
     },
@@ -178,8 +178,11 @@
       "description": "CertManagerServiceAccount defines service account configuration in the spec\n+k8s:openapi-gen=true",
       "type": "object",
       "properties": {
+        "create": {
+          "type": "boolean",
+          "x-go-name": "Create"
+        },
         "name": {
-          "description": "+kubebuilder:validation:MinLength=1",
           "type": "string",
           "x-go-name": "Name"
         }
@@ -191,17 +194,13 @@
       "type": "object",
       "properties": {
         "clusterResourceNamespace": {
-          "description": "+kubebuilder:validation:MinLength=1",
+          "description": "INSERT ADDITIONAL SPEC FIELDS - desired state of cluster\nImportant: Run \"operator-sdk generate k8s\" to regenerate code after modifying this file\nAdd custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html\nClusterName              string `json:\"clusterName\"`\nClusterNamespace         string `json:\"clusterNamespace\"`",
           "type": "string",
           "x-go-name": "ClusterResourceNamespace"
         },
         "fullnameOverride": {
-          "description": "+kubebuilder:validation:MinLength=1",
           "type": "string",
           "x-go-name": "FullNameOverride"
-        },
-        "image": {
-          "$ref": "#/definitions/Image"
         },
         "serviceAccount": {
           "$ref": "#/definitions/CertManagerServiceAccount"
@@ -213,26 +212,6 @@
       "description": "CertManagerStatus defines the observed state of CertManager\n+k8s:openapi-gen=true",
       "type": "object",
       "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
-    },
-    "Image": {
-      "description": "Image defines the image to pull for a container\n+k8s:openapi-gen=true",
-      "type": "object",
-      "properties": {
-        "pullPolicy": {
-          "$ref": "#/definitions/PullPolicy"
-        },
-        "repository": {
-          "description": "+kubebuilder:validation:MinLength=1",
-          "type": "string",
-          "x-go-name": "Repository"
-        },
-        "tag": {
-          "description": "+kubebuilder:validation:MinLength=1",
-          "type": "string",
-          "x-go-name": "Tag"
-        }
-      },
-      "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
     },
     "Initializer": {
       "type": "object",
@@ -298,11 +277,6 @@
         }
       },
       "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
-    },
-    "PullPolicy": {
-      "description": "PullPolicy describes a policy for if/when to pull a container image",
-      "type": "string",
-      "x-go-package": "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/vendor/k8s.io/kubernetes/pkg/apis/core"
     },
     "Status": {
       "type": "object",
