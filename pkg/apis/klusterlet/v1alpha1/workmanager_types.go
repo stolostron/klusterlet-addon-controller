@@ -1,13 +1,16 @@
+//Package v1alpha1 Defines the API to support Multicluster Endpoints (klusterlets).
 // IBM Confidential
 // OCO Source Materials
 // 5737-E67
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2016, 2019 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+//
 package v1alpha1
 
 import (
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -45,21 +48,21 @@ type WorkManagerSpec struct {
 	DeployableConfig  DeployableConfig  `json:"deployable"`
 }
 
-// WorkManagerConfig defines work-manager container configuration paramaters
+// WorkManagerConfig defines work-manager container configuration parameters
 // +k8s:openapi-gen=true
 type WorkManagerConfig struct {
 	Enabled bool        `json:"enabled"`
 	Image   image.Image `json:"image"`
 }
 
-// DeployableConfig defines deployable container configuration paramaters
+// DeployableConfig defines deployable container configuration parameters
 // +k8s:openapi-gen=true
 type DeployableConfig struct {
 	Enabled bool        `json:"enabled"`
 	Image   image.Image `json:"image"`
 }
 
-// WorkManagerTillerIntegration defines tiller integration paramaters
+// WorkManagerTillerIntegration defines tiller integration parameters
 // +k8s:openapi-gen=true
 type WorkManagerTillerIntegration struct {
 	Enabled           bool   `json:"enabled"`
@@ -70,7 +73,7 @@ type WorkManagerTillerIntegration struct {
 	User              string `json:"user"`
 }
 
-// WorkManagerPrometheusIntegration defines promethues integration paramaters
+// WorkManagerPrometheusIntegration defines prometheus integration parameters
 // +k8s:openapi-gen=true
 type WorkManagerPrometheusIntegration struct {
 	Enabled        bool   `json:"enabled"`
@@ -79,7 +82,7 @@ type WorkManagerPrometheusIntegration struct {
 	UseBearerToken bool   `json:"useBearerToken"`
 }
 
-// WorkManagerService defines tiller integration paramaters
+// WorkManagerService defines tiller integration parameters
 // +k8s:openapi-gen=true
 type WorkManagerService struct {
 	// +kubebuilder:validation:Enum=ClusterIP,NodePort,LoadBalancer

@@ -33,7 +33,8 @@ WORKING_CHANGES = $(shell git status --porcelain)
 BUILD_DATE = $(shell date +%m/%d@%H:%M:%S)
 VCS_REF = $(if $(WORKING_CHANGES),$(GIT_COMMIT)-$(BUILD_DATE),$(GIT_COMMIT))
 GIT_REMOTE_URL = "git@github.ibm.com:IBMPrivateCloud/ibm-klusterlet-operator.git"
-SWAGGER_API_DIR = "$(DOCKER_BUILD_PATH)/api"
+SWAGGER_API_DIR = "api/multicluster-endpoint-api"
+RELEASED_API_VERSION = 3.2.1
 
 ARCH ?= $(shell uname -m)
 ARCH_TYPE = $(ARCH)
@@ -64,9 +65,8 @@ deps: init
 
 .PHONY: check
 ## Runs a set of required checks
-# check: %check: %go:check %go:copyright:check %i18n:check
-check: %check: %go:copyright:check
-	@echo "WARNING: GO API & i18n CHECKING IS NOT BEING RUN. NEED GIT USER ACCESS TO armada-opensource-lib. FIX IN ISSUE IBMPrivateCloud/roadmap#28411"
+check: %check: %go:check %go:copyright:check 
+#	@echo "WARNING: i18n is not yet supported by `make check`."
 
 .PHONY: build
 ## Build all cmd binary files
@@ -80,7 +80,7 @@ image:: deps
 ## Run all project tests
 # test: %test: %i18n:resources %go:test
 test: %test: 
-	@echo "WARNING: TEST NOT BEING RUN. THERE ARE NO TESTS. LET'S ADD SOME TESTS, PLEASE. FIX IN ISSUE IBMPrivateCloud/roadmap#28411"
+	@echo "WARNING: THERE IS NO TESTING OF THIS COMPONENT. LET'S ADD SOME TESTS, PLEASE. FIX IN ISSUE IBMPrivateCloud/roadmap#28411"
 
 .PHONY: clean
 ## Clean build-harness and remove Go generated build and test files
@@ -95,25 +95,29 @@ clean:: %clean: %go:clean
 ## Generate swagger documentation
 swagger:
 	@mkdir -p $(SWAGGER_API_DIR)
-	@$(GOPATH)/bin/swagger generate spec -b ./pkg/apis/klusterlet -m -o $(SWAGGER_API_DIR)/swagger.json
+	@$(GOPATH)/bin/swagger generate spec -b ./pkg/apis/klusterlet/v1alpha1 -m -o $(SWAGGER_API_DIR)/swagger.json
+	# Currently, swagger validate identifies the following issues: 
+	# The swagger spec at "api/multicluster-endpoint-api/swagger.json" showed up some valid but possibly unwanted constructs.
+	# 2019/07/22 16:42:00 See warnings below:
+	# 2019/07/22 16:42:00 - WARNING: spec has no valid path defined
+	# 2019/07/22 16:42:00 - WARNING: definition "#/definitions/CertManagerList" is not used anywhere
+	# @$(GOPATH)/bin/swagger validate $(SWAGGER_API_DIR)/swagger.json
 
 .PHONY: swagger\:lint
 ## Run lint check againt swagger documentation
 swagger\:lint:
-	@echo "WARNING: API LINT IS NOT BEING RUN. FIX IN ISSUE IBMPrivateCloud/roadmap#28411"
-	# #- If the npm install fails because of permissions, do not run the command with sudo, just run:
-	# #- sudo chown -R $(whoami) ~/.npm
-	# #- sudo chown -R $(whoami) /usr/local/lib/node_modules
-	# @$(BUILD_DIR)/install-apilint.sh
-	# -@apilint $(SWAGGER_API_DIR)/swagger.json 2>/dev/null | tee $(SWAGGER_API_DIR)/api-lint.log
+	# @echo "WARNING: API LINT IS NOT BEING RUN. FIX IN ISSUE IBMPrivateCloud/roadmap#28411"
+	#- If the npm install fails because of permissions, do not run the command with sudo, just run:
+	#- sudo chown -R $(whoami) ~/.npm
+	#- sudo chown -R $(whoami) /usr/local/lib/node_modules
+	@$(BUILD_DIR)/install-apilint.sh
+	-@apilint $(SWAGGER_API_DIR)/swagger.json 2>/dev/null | tee $(SWAGGER_API_DIR)/api-lint.log
 
 .PHONY: swagger\:diff
 ## Run diff check again swagger documentation
 swagger\:diff:
-	@echo "WARNING: API DIFF IS NOT BEING RUN. FIX IN ISSUE IBMPrivateCloud/roadmap#28411"
-	# @echo "Running api-diff ..."
-	# @$(BUILD_DIR)/api-diff.sh $(API_API_DIR) 3.2.0
-
+	@echo "Running api-diff ..."
+	@$(BUILD_DIR)/api-diff.sh $(SWAGGER_API_DIR) $(RELEASED_API_VERSION)
 
 # ### OPERATOR SDK #######################
 .PHONY: operator\:tools

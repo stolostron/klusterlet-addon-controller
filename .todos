@@ -1,0 +1,13 @@
+[x] Update TravisCI SSH key as part of settings. 
+[ ] Update the linter ignore warning string. .gotmetalinter.json from cloudctl as example
+[x] Adopt go:imports cloudctl/Makefile
+[x] Update imports to include go libraries, then external, then internal.
+[ ] Copy i18n:check from cloudctl/Makefile (missing task)
+[x] Move go-swagger meta comments from doc.go to klusterletservice_types.go
+[x] Add swagger validate the swagger.json
+[ ] Pre-commit script sets things into loop (Stop that)
+```
+2019/07/22 17:05:05 generating opensource from build/Dockerfile
+2019/07/22 17:06:41 generating opensource from Gopkg.lock
+```
+[ ] Specify release version for compare

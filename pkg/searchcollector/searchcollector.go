@@ -3,6 +3,8 @@
 // 5737-E67
 // (C) Copyright IBM Corporation 2019 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package searchcollector provides a reconciler for the search collector
 package searchcollector
 
 import (
@@ -27,6 +29,7 @@ import (
 
 var log = logf.Log.WithName("searchcollector")
 
+// Reconcile reconciles the search collector
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, c client.Client, scheme *runtime.Scheme) error {
 	// Deployed on hub
 	clusteStatusList := &mcmv1alpha1.ClusterStatusList{}
@@ -52,7 +55,7 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, c client.Client, 
 		if err != nil {
 			return err
 		}
-	} else if err == nil && instance.Spec.SearchCollectorConfig.Enabled == false {
+	} else if err == nil && !instance.Spec.SearchCollectorConfig.Enabled {
 		log.Info("Deleting SearchCollector", "SearchCollector.Namespace", foundSearchCollectorCR.Namespace, "SearchCollector.Name", foundSearchCollectorCR.Name)
 		err = c.Delete(context.TODO(), foundSearchCollectorCR)
 		if err != nil {

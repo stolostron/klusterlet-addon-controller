@@ -11,23 +11,21 @@ package certmgr
 import (
 	"context"
 
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
-
+	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
+	openshiftsecurityv1 "github.com/openshift/api/security/v1"
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	apiextensionv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
-	openshiftsecurityv1 "github.com/openshift/api/security/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
-	apiextensionv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 )
 
 var log = logf.Log.WithName("certmgr")
@@ -224,34 +222,34 @@ func installCertificateCRD(client client.Client) error {
 					ShortNames: []string{"cert", "certs"},
 				},
 				AdditionalPrinterColumns: []apiextensionv1beta1.CustomResourceColumnDefinition{
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "Ready",
 						Type:     "string",
 						JSONPath: ".status.conditions[?(@.type==\"Ready\")].status",
 					},
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "Secret",
 						Type:     "string",
 						JSONPath: ".spec.secretName",
 					},
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "Issuer",
 						Type:     "string",
 						JSONPath: ".spec.issuerRef.name",
 						Priority: 1,
 					},
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "Status",
 						Type:     "string",
 						JSONPath: ".status.conditions[?(@.type==\"Ready\")].message",
 						Priority: 1,
 					},
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "Age",
 						Type:     "date",
 						JSONPath: ".metadata.creationTimestamp",
 					},
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "Expiration",
 						Type:     "string",
 						JSONPath: ".status.notAfter",
@@ -348,24 +346,24 @@ func installOrderCRD(client client.Client) error {
 					Plural: "orders",
 				},
 				AdditionalPrinterColumns: []apiextensionv1beta1.CustomResourceColumnDefinition{
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "State",
 						Type:     "string",
 						JSONPath: ".status.state",
 					},
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "Issuer",
 						Type:     "string",
 						JSONPath: ".spec.issuerRef.name",
 						Priority: 1,
 					},
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "Reason",
 						Type:     "string",
 						JSONPath: ".status.reason",
 						Priority: 1,
 					},
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "Age",
 						Type:     "date",
 						JSONPath: ".metadata.creationTimestamp",
@@ -402,24 +400,24 @@ func installChallengeCRD(client client.Client) error {
 					Plural: "challenges",
 				},
 				AdditionalPrinterColumns: []apiextensionv1beta1.CustomResourceColumnDefinition{
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "State",
 						Type:     "string",
 						JSONPath: ".status.state",
 					},
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "Domain",
 						Type:     "string",
 						JSONPath: "..spec.dnsName",
 						Priority: 1,
 					},
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "Reason",
 						Type:     "string",
 						JSONPath: ".status.reason",
 						Priority: 1,
 					},
-					apiextensionv1beta1.CustomResourceColumnDefinition{
+					{
 						Name:     "Age",
 						Type:     "date",
 						JSONPath: ".metadata.creationTimestamp",

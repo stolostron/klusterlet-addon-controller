@@ -4,6 +4,8 @@
 *.dll
 *.so
 *.dylib
+*.tap
+cover.html
 
 # Test binary, build with `go test -c`
 *.test
@@ -16,6 +18,8 @@ vendor
 build/_output
 build-harness/
 .build-docker/
+.build/*.jar
+api/multicluster-endpoint-api/openapi.json
 
 .dev-env.template
 .build-harness
