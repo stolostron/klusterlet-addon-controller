@@ -48,20 +48,28 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, c client.Client, 
 
 	foundSearchCollectorCR := &klusterletv1alpha1.SearchCollector{}
 	err = c.Get(context.TODO(), types.NamespacedName{Name: searchCollectorCR.Name, Namespace: searchCollectorCR.Namespace}, foundSearchCollectorCR)
-	if err != nil && errors.IsNotFound(err) && instance.Spec.SearchCollectorConfig.Enabled {
-		searchCollectorCR.Spec.TillerIntegration = newSearchCollectorTillerIntegration(instance, c)
-		log.Info("Creating a new SearchCollector", "SearchCollector.Namespace", searchCollectorCR.Namespace, "SearchCollector.Name", searchCollectorCR.Name)
-		err = c.Create(context.TODO(), searchCollectorCR)
-		if err != nil {
-			return err
+	if err != nil && errors.IsNotFound(err) {
+		if instance.Spec.SearchCollectorConfig.Enabled {
+			searchCollectorCR.Spec.TillerIntegration = newSearchCollectorTillerIntegration(instance, c)
+			log.Info("Creating a new SearchCollector", "SearchCollector.Namespace", searchCollectorCR.Namespace, "SearchCollector.Name", searchCollectorCR.Name)
+			err = c.Create(context.TODO(), searchCollectorCR)
+			if err != nil {
+				return err
+			}
 		}
-	} else if err == nil && !instance.Spec.SearchCollectorConfig.Enabled {
+		return nil
+	}
+
+	if !instance.Spec.SearchCollectorConfig.Enabled {
 		log.Info("Deleting SearchCollector", "SearchCollector.Namespace", foundSearchCollectorCR.Namespace, "SearchCollector.Name", foundSearchCollectorCR.Name)
 		err = c.Delete(context.TODO(), foundSearchCollectorCR)
 		if err != nil {
 			return err
 		}
-	} else if err != nil {
+		return nil
+	}
+
+	if err != nil {
 		return err
 	}
 
