@@ -24,3 +24,6 @@ api/multicluster-endpoint-api/openapi.json
 .dev-env.template
 .build-harness
 .vendor-new
+
+#Scratch 
+scratch
