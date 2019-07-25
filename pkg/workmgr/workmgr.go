@@ -97,8 +97,8 @@ func newWorkManagerPrometheusIntegration(cr *klusterletv1alpha1.KlusterletServic
 		if err == nil { //found OpenShift Prometheus
 			return klusterletv1alpha1.WorkManagerPrometheusIntegration{
 				Enabled:        true,
-				Service:        "prometheus-k8s/openshift-monitoring",
-				Secret:         "kube-system/monitoring-monitoring-client-certs",
+				Service:        "openshift-monitoring/prometheus-k8s",
+				Secret:         "",
 				UseBearerToken: true,
 			}
 		}
