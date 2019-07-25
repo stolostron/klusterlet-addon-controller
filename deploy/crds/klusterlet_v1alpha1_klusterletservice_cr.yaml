@@ -4,8 +4,8 @@ metadata:
   name: klusterlet
 spec:
   # Add fields here
-  clusterName: hao-working-l8t
-  clusterNamespace: hao-working-l8t
+  clusterName: CLUSTER_NAME
+  clusterNamespace: CLUSTER_NAMESPACE
 
   clusterLabels:
     cloud: "IBM"
@@ -14,7 +14,6 @@ spec:
     region: "US"
     datacenter: "toronto"
     owner: "marketing"
-
   bootstrapConfig:
     hub0: multicluster-endpoint/klusterlet-bootstrap
 
@@ -24,5 +23,9 @@ spec:
   prometheusIntegration:
     enabled: true
 
+  topologyIntegration:
+    enabled: false
+    updateInterval: 16
+    
   searchCollector:
-    enabled: true
+    enabled: false

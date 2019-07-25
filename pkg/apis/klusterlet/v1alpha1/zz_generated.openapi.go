@@ -18,15 +18,19 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.CertManager":             schema_pkg_apis_klusterlet_v1alpha1_CertManager(ref),
-		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.CertManagerSpec":         schema_pkg_apis_klusterlet_v1alpha1_CertManagerSpec(ref),
-		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.CertManagerStatus":       schema_pkg_apis_klusterlet_v1alpha1_CertManagerStatus(ref),
-		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.KlusterletService":       schema_pkg_apis_klusterlet_v1alpha1_KlusterletService(ref),
-		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.KlusterletServiceSpec":   schema_pkg_apis_klusterlet_v1alpha1_KlusterletServiceSpec(ref),
-		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.KlusterletServiceStatus": schema_pkg_apis_klusterlet_v1alpha1_KlusterletServiceStatus(ref),
-		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.Tiller":                  schema_pkg_apis_klusterlet_v1alpha1_Tiller(ref),
-		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.TillerSpec":              schema_pkg_apis_klusterlet_v1alpha1_TillerSpec(ref),
-		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.TillerStatus":            schema_pkg_apis_klusterlet_v1alpha1_TillerStatus(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.CertManager":               schema_pkg_apis_klusterlet_v1alpha1_CertManager(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.CertManagerServiceAccount": schema_pkg_apis_klusterlet_v1alpha1_CertManagerServiceAccount(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.CertManagerSpec":           schema_pkg_apis_klusterlet_v1alpha1_CertManagerSpec(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.CertManagerStatus":         schema_pkg_apis_klusterlet_v1alpha1_CertManagerStatus(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.KlusterletService":         schema_pkg_apis_klusterlet_v1alpha1_KlusterletService(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.KlusterletServiceSpec":     schema_pkg_apis_klusterlet_v1alpha1_KlusterletServiceSpec(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.KlusterletServiceStatus":   schema_pkg_apis_klusterlet_v1alpha1_KlusterletServiceStatus(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.Tiller":                    schema_pkg_apis_klusterlet_v1alpha1_Tiller(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.TillerSpec":                schema_pkg_apis_klusterlet_v1alpha1_TillerSpec(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.TillerStatus":              schema_pkg_apis_klusterlet_v1alpha1_TillerStatus(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.TopologyCollector":         schema_pkg_apis_klusterlet_v1alpha1_TopologyCollector(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.TopologyCollectorSpec":     schema_pkg_apis_klusterlet_v1alpha1_TopologyCollectorSpec(ref),
+		"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.TopologyCollectorStatus":   schema_pkg_apis_klusterlet_v1alpha1_TopologyCollectorStatus(ref),
 	}
 }
 
@@ -73,6 +77,32 @@ func schema_pkg_apis_klusterlet_v1alpha1_CertManager(ref common.ReferenceCallbac
 	}
 }
 
+func schema_pkg_apis_klusterlet_v1alpha1_CertManagerServiceAccount(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "CertManagerServiceAccount defines service account configuration in the spec",
+				Properties: map[string]spec.Schema{
+					"create": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"create", "name"},
+			},
+		},
+		Dependencies: []string{},
+	}
+}
+
 func schema_pkg_apis_klusterlet_v1alpha1_CertManagerSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -86,11 +116,17 @@ func schema_pkg_apis_klusterlet_v1alpha1_CertManagerSpec(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
+					"serviceAccount": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.CertManagerServiceAccount"),
+						},
+					},
 				},
-				Required: []string{"clusterResourceNamespace"},
+				Required: []string{"clusterResourceNamespace", "serviceAccount"},
 			},
 		},
-		Dependencies: []string{},
+		Dependencies: []string{
+			"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.CertManagerServiceAccount"},
 	}
 }
 
@@ -269,6 +305,73 @@ func schema_pkg_apis_klusterlet_v1alpha1_TillerStatus(ref common.ReferenceCallba
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "TillerStatus defines the observed state of Tiller",
+				Properties:  map[string]spec.Schema{},
+			},
+		},
+		Dependencies: []string{},
+	}
+}
+
+func schema_pkg_apis_klusterlet_v1alpha1_TopologyCollector(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TopologyCollector is the Schema for the topologycollectors API",
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.TopologyCollectorSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.TopologyCollectorStatus"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.TopologyCollectorSpec", "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1.TopologyCollectorStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_klusterlet_v1alpha1_TopologyCollectorSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TopologyCollectorSpec defines the desired state of TopologyCollector",
+				Properties:  map[string]spec.Schema{},
+			},
+		},
+		Dependencies: []string{},
+	}
+}
+
+func schema_pkg_apis_klusterlet_v1alpha1_TopologyCollectorStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TopologyCollectorStatus defines the observed state of TopologyCollector",
 				Properties:  map[string]spec.Schema{},
 			},
 		},

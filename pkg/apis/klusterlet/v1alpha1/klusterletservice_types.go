@@ -1,24 +1,9 @@
 //Package v1alpha1 Defines the API to support Multicluster Endpoints (klusterlets).
-// IBM Confidential
-// OCO Source Materials
-// 5737-E67
-// (C) Copyright IBM Corporation 2016, 2019 All Rights Reserved
-// The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
-//
-// API for cluster management and CLI support.
-//
-//    Schemes: http, https
-//    BasePath: /
-//    Version: 3.2.1
-//    License: Licensed Materials - Property of IBM Copyright IBM Corporation 2018 All Rights Reserved U.S. Government Users Restricted Rights - Use, duplication or disclosure restricted by GSA ADP The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
-//    Contact:
-//
-//    Consumes:
-//    - application/json
-//    Produces:
-//    - application/json
-//
-// swagger:meta
+//IBM Confidential
+//OCO Source Materials
+//5737-E67
+//(C) Copyright IBM Corporation 2019 All Rights Reserved
+//The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
 package v1alpha1
 
 import (
@@ -54,10 +39,12 @@ type KlusterletServiceSpec struct {
 	// PolicyController  PolicyController  `json:"policyController,omitempty"`
 	// ServiceRegistry   ServiceRegistry   `json:"serviceRegistry,omitempty"`
 	// TopologyCollector TopologyCollector `json:"topologyCollector,omitempty"`
-	BootStrapConfig       map[string]string                   `json:"bootstrapConfig"`
-	SearchCollectorConfig KlusterletSearchCollectorSpec       `json:"searchCollector"`
-	TillerIntegration     KlusterletTillerIntegrationSpec     `json:"tillerIntegration"`
-	PrometheusIntegration KlusterletPrometheusIntegrationSpec `json:"prometheusIntegration"`
+	//	MongoDB           mongodb.MongoDB           `json:"mongodb,omitempty"`
+	BootStrapConfig       map[string]string                          `json:"bootstrapConfig"`
+	TillerIntegration     KlusterletTillerIntegrationSpec            `json:"tillerIntegration"`
+	PrometheusIntegration KlusterletPrometheusIntegrationSpec        `json:"prometheusIntegration"`
+	TopologyIntegration   KlusterletTopologyCollectorIntegrationSpec `json:"topologyIntegration"`
+	SearchCollectorConfig KlusterletSearchCollectorSpec              `json:"searchCollector"`
 }
 
 // KlusterletSearchCollectorSpec defines configuration for the SearchCollector component
@@ -70,6 +57,13 @@ type KlusterletSearchCollectorSpec struct {
 // +k8s:openapi-gen=true
 type KlusterletWorkManagerSpec struct {
 	ClusterLabels map[string]string `json:"clusterLabels"`
+}
+
+// KlusterletTopologyCollectorIntegrationSpec defines configuration for the WorkManager Promtheus Integration
+// +k8s:openapi-gen=true
+type KlusterletTopologyCollectorIntegrationSpec struct {
+	Enabled                 bool  `json:"enabled"`
+	CollectorUpdateInterval int32 `json:"updateInterval"`
 }
 
 // KlusterletPrometheusIntegrationSpec defines configuration for the WorkManager Promtheus Integration

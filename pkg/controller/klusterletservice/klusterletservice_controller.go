@@ -11,15 +11,16 @@ package klusterletservice
 import (
 	"context"
 
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/searchcollector"
-
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/workmgr"
 
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/certmgr"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/searchcollector"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/topology"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,8 +35,8 @@ import (
 var log = logf.Log.WithName("controller_klusterletservice")
 
 /**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
+ * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
+ * business logic.  Delete these comments after modifying this file.*
  */
 
 // Add creates a new KlusterletService Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -135,6 +136,11 @@ func (r *ReconcileKlusterletService) Reconcile(request reconcile.Request) (recon
 	}
 
 	err = workmgr.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = topology.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
