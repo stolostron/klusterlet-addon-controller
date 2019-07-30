@@ -10,19 +10,21 @@ package klusterletservice
 
 import (
 	"context"
-
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/workmgr"
+	"time"
 
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
-
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/certmgr"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/searchcollector"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/topology"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/workmgr"
 
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -66,19 +68,39 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// TODO(user): Modify this to be the types you create that are owned by the primary resource
 	// Watch for changes to secondary resource Pods and requeue the owner KlusterletService
-	err = c.Watch(&source.Kind{Type: &klusterletv1alpha1.WorkManager{}}, &handler.EnqueueRequestForOwner{
+	err = c.Watch(&source.Kind{Type: &klusterletv1alpha1.CertManager{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &klusterletv1alpha1.KlusterletService{},
 	})
 	if err != nil {
+		log.Error(err, "Fail to add Watch for CertManager to controller")
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &klusterletv1alpha1.SearchCollector{}}, &handler.EnqueueRequestForOwner{
+	err = c.Watch(&source.Kind{Type: &klusterletv1alpha1.Tiller{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &klusterletv1alpha1.KlusterletService{},
 	})
 	if err != nil {
+		log.Error(err, "Fail to add Watch for Tiller to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &klusterletv1alpha1.ConnectionManager{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &klusterletv1alpha1.KlusterletService{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for ConnectionManager to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &extensionsv1beta1.Deployment{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &klusterletv1alpha1.KlusterletService{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for Deployment to controller")
 		return err
 	}
 
@@ -120,6 +142,11 @@ func (r *ReconcileKlusterletService) Reconcile(request reconcile.Request) (recon
 		return reconcile.Result{}, err
 	}
 
+	err = component.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	err = certmgr.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -148,6 +175,18 @@ func (r *ReconcileKlusterletService) Reconcile(request reconcile.Request) (recon
 	err = searchcollector.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
+	}
+
+	err = r.client.Update(context.TODO(), instance)
+	if err != nil && errors.IsConflict(err) {
+		return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
+	} else if err != nil {
+		log.Error(err, "Fail to UPDATE instance")
+		return reconcile.Result{}, err
+	}
+
+	if instance.GetDeletionTimestamp() != nil {
+		return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
 	}
 
 	return reconcile.Result{}, nil

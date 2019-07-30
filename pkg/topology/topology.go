@@ -8,17 +8,17 @@ package topology
 
 import (
 	"context"
+	"strings"
 
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"strings"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -26,82 +26,118 @@ import (
 
 var log = logf.Log.WithName("topology")
 
-//Reconcile business logic for topology
+// Reconcile Resolves differences in the running state of the connection manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
-	topologyCollector := newTopologyCollectorCR(instance)
-	if !instance.Spec.TopologyIntegration.Enabled {
-		err := client.Delete(context.TODO(), topologyCollector)
-		if err != nil && errors.IsNotFound(err) {
-			log.Info("No existing topology collector found to delete.")
-			return nil
-		}
-		if err != nil {
-			log.Error(err, "Ran into error trying to delete existing topology collector")
-			return err
-		}
-		log.Info("Topology disabled, skip topology reconciling")
-		return nil
-	}
+	reqLogger := log.WithValues("KlusterletService.Namespace", instance.Namespace, "KlusterletService.Name", instance.Name)
+	reqLogger.Info("Reconciling TopologyCollector")
 
-	err := controllerutil.SetControllerReference(instance, topologyCollector, scheme)
+	topologyCollectorCR := newTopologyCollectorCR(instance, client)
+	err := controllerutil.SetControllerReference(instance, topologyCollectorCR, scheme)
 	if err != nil {
-		log.Error(err, "Ran into error trying to set topology controller referenc")
+		log.Error(err, "Error setting controller reference")
 		return err
 	}
 
 	foundTopologyCollector := &klusterletv1alpha1.TopologyCollector{}
-	err = client.Get(context.TODO(), types.NamespacedName{Name: topologyCollector.Name, Namespace: topologyCollector.Namespace}, foundTopologyCollector)
-	if err != nil && errors.IsNotFound(err) {
-		runtime, err := determineRuntime(client)
-		if err != nil {
-			log.Error(err, "Error determining cluster node runtime")
-			return err
-		}
-		topologyCollector.Spec.ContainerRuntime = runtime
-		err = createServiceAccount(client, scheme, instance, topologyCollector)
-		if err != nil {
-			log.Error(err, "Error creating Service Account for topology collector")
-			return err
-		}
-
-		err = client.Create(context.TODO(), topologyCollector)
-		if err != nil {
-			log.Error(err, "Error creating topology collector instance")
-			return err
-		}
-		log.Info("Created topology collector instance successfully")
-		return nil
-	}
-
+	err = client.Get(context.TODO(), types.NamespacedName{Name: topologyCollectorCR.Name, Namespace: topologyCollectorCR.Namespace}, foundTopologyCollector)
 	if err != nil {
-		log.Error(err, "Error retrieving existing topology collector instance")
+		if errors.IsNotFound(err) {
+			// TopologyCollector CR does NOT exist
+			if instance.GetDeletionTimestamp() != nil {
+				//CR existed, so now clean up other resources
+				log.Info("Cleaning up old resources")
+
+				secretsToDeletes := []string{
+					topologyCollectorCR.Name + "-ca-cert",
+					topologyCollectorCR.Name + "-server-secret",
+					topologyCollectorCR.Name + "-client-secret",
+				}
+
+				for _, secretToDelete := range secretsToDeletes {
+					foundSecretToDelete := &corev1.Secret{}
+					err := client.Get(context.TODO(), types.NamespacedName{Name: secretToDelete, Namespace: topologyCollectorCR.Namespace}, foundSecretToDelete)
+					if err == nil {
+						err = client.Delete(context.TODO(), foundSecretToDelete)
+						if err != nil {
+							log.Error(err, "Fail to DELETE TopologyCollector Secret", "Secret.Name", secretToDelete)
+							return err
+						}
+					}
+				}
+
+				for i, finalizer := range instance.Finalizers {
+					if finalizer == topologyCollectorCR.Name {
+						instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
+						break
+					}
+				}
+
+				return nil
+			}
+
+			if instance.Spec.TopologyIntegration.Enabled {
+				err = createServiceAccount(client, scheme, instance, topologyCollectorCR)
+				if err != nil {
+					log.Error(err, "Fail to CREATE ServiceAccount for TopologyCollector", topologyCollectorCR.Name)
+					return err
+				}
+
+				log.Info("Creating a new TopologyCollector", "TopologyCollector.Namespace", topologyCollectorCR.Namespace, "ConnectionManager.Name", topologyCollectorCR.Name)
+				err = client.Create(context.TODO(), topologyCollectorCR)
+				if err != nil {
+					log.Error(err, "Fail to CREATE TopologyCollector CR")
+					return err
+				}
+
+				instance.Finalizers = append(instance.Finalizers, topologyCollectorCR.Name)
+				reqLogger.Info("Successfully Reconciled TopologyCollector")
+				return nil
+			}
+			reqLogger.Info("Successfully Reconciled TopologyCollector")
+			return nil
+		}
+
+		log.Error(err, "Unexpected ERROR")
 		return err
 	}
 
-	foundTopologyCollector.Spec = topologyCollector.Spec        //for now we will update using new spec
-	err = client.Update(context.TODO(), foundTopologyCollector) //update existing
-	if err != nil {
-		log.Error(err, "Error updating existing topology collector")
-		return err
+	if foundTopologyCollector.GetDeletionTimestamp() == nil {
+		if instance.GetDeletionTimestamp() != nil || !instance.Spec.TopologyIntegration.Enabled {
+			err = client.Delete(context.TODO(), topologyCollectorCR)
+			if err != nil {
+				log.Error(err, "Fail to DELETE TopologyCollector CR")
+				return err
+			}
+
+			reqLogger.Info("Successfully Reconciled TopologyCollector")
+			return nil
+		}
+
+		// KlusterletService NOT in deletion state AND found, update
+		foundTopologyCollector.Spec = topologyCollectorCR.Spec
+		err = client.Update(context.TODO(), foundTopologyCollector)
+		if err != nil {
+			log.Error(err, "Fail to UPDATE TopologyCollector CR")
+			return nil
+		}
 	}
-	log.Info("Successfully updated topology collector instance")
+
+	reqLogger.Info("Successfully Reconciled TopologyCollector")
 	return nil
 }
 
-func determineRuntime(kubeclient client.Client) (string, error) {
+func determineRuntime(kubeclient client.Client) string {
 	nodelist := &corev1.NodeList{}
-	//ops.Namespace = ""
 	err := kubeclient.List(context.TODO(), &client.ListOptions{}, nodelist)
 	if err != nil {
-		log.Error(err, "Error listing nodes in cluster")
-		return "", err
+		log.Error(err, "Error listing nodes in cluster, assuming ContainerRuntime is docker")
+		return "docker"
 	}
 	runtime := nodelist.Items[0].Status.NodeInfo.ContainerRuntimeVersion
-	return strings.Split(runtime, ":")[0], nil //format of container runtime in node info is runtime://version
-
+	return strings.Split(runtime, ":")[0] //format of container runtime in node info is runtime://version
 }
 
-func newTopologyCollectorCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.TopologyCollector {
+func newTopologyCollectorCR(cr *klusterletv1alpha1.KlusterletService, client client.Client) *klusterletv1alpha1.TopologyCollector {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
@@ -118,7 +154,7 @@ func newTopologyCollectorCR(cr *klusterletv1alpha1.KlusterletService) *klusterle
 			ClusterName:       cr.Spec.ClusterName,
 			ClusterNamespace:  cr.Spec.ClusterNamespace,
 			ConnectionManager: cr.Name + "-connmgr",
-			ContainerRuntime:  "", //"docker",
+			ContainerRuntime:  determineRuntime(client),
 			Enabled:           true,
 			UpdateInterval:    cr.Spec.TopologyIntegration.CollectorUpdateInterval,
 			CACertIssuer:      cr.Name + "-self-signed",

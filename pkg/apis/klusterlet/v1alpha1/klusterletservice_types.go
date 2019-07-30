@@ -18,33 +18,45 @@ type KlusterletServiceSpec struct {
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
 
 	// +kubebuilder:validation:MinLength=1
-	Registry string `json:"registry"`
-	// +kubebuilder:validation:MinLength=1
 	Version string `json:"version"`
 
 	// +kubebuilder:validation:MinLength=1
+	ImageRegistry string `json:"imageRegistry"`
+
+	// +kubebuilder:validation:MinLength=1
+	ImagePullSecret string `json:"imagePullSecret"`
+
+	// +kubebuilder:validation:MinLength=1
 	Namespace string `json:"namespace"`
+
 	// +kubebuilder:validation:MinLength=1
 	ClusterName string `json:"clusterName"`
+
 	// +kubebuilder:validation:MinLength=1
 	ClusterNamespace string `json:"clusterNamespace"`
 
 	ClusterLabels map[string]string `json:"clusterLabels"`
 
-	// CertificateManager CertificateManager `json:"certManager"`
-	// ConnectionManager KlusterletConnectionManagerSpec `json:"connectionManager"`
-	// CertificateIssuer CertificateIssuer `json:"certificateIssuer"`
-	// Search            Search            `json:"search,omitempty"`
-	// WorkManager       WorkManager       `json:"workManager,omitempty"`
-	// PolicyController  PolicyController  `json:"policyController,omitempty"`
-	// ServiceRegistry   ServiceRegistry   `json:"serviceRegistry,omitempty"`
-	// TopologyCollector TopologyCollector `json:"topologyCollector,omitempty"`
-	//	MongoDB           mongodb.MongoDB           `json:"mongodb,omitempty"`
 	BootStrapConfig       map[string]string                          `json:"bootstrapConfig"`
 	TillerIntegration     KlusterletTillerIntegrationSpec            `json:"tillerIntegration"`
 	PrometheusIntegration KlusterletPrometheusIntegrationSpec        `json:"prometheusIntegration"`
 	TopologyIntegration   KlusterletTopologyCollectorIntegrationSpec `json:"topologyIntegration"`
 	SearchCollectorConfig KlusterletSearchCollectorSpec              `json:"searchCollector"`
+
+	Override KlusterletOverride `json:"override,omitempty"`
+}
+
+// KlusterletOverride defines configuration override for all components
+// +k8s:openapi-gen=true
+type KlusterletOverride struct {
+	CertManager       CertManager       `json:"certManager"`
+	ConnectionManager ConnectionManager `json:"connectionManager"`
+	// PolicyController  PolicyController  `json:"policyController,omitempty"`
+	SearchCollector SearchCollector `json:"searchCollector,omitempty"`
+	// ServiceRegistry   ServiceRegistry   `json:"serviceRegistry,omitempty"`
+	WorkManager       WorkManager       `json:"workManager,omitempty"`
+	Tiller            Tiller            `json:"tiller"`
+	TopologyCollector TopologyCollector `json:"topologyCollector,omitempty"`
 }
 
 // KlusterletSearchCollectorSpec defines configuration for the SearchCollector component

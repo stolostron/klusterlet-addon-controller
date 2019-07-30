@@ -7,6 +7,9 @@ spec:
   clusterName: CLUSTER_NAME
   clusterNamespace: CLUSTER_NAMESPACE
 
+  version: 3.2.0
+  imagePullSecret: IMAGE_PULL_SECRET
+
   clusterLabels:
     cloud: "IBM"
     vendor: "ICP"
@@ -14,6 +17,7 @@ spec:
     region: "US"
     datacenter: "toronto"
     owner: "marketing"
+    
   bootstrapConfig:
     hub0: multicluster-endpoint/klusterlet-bootstrap
 
@@ -24,8 +28,8 @@ spec:
     enabled: true
 
   topologyIntegration:
-    enabled: false
+    enabled: true
     updateInterval: 16
     
   searchCollector:
-    enabled: false
+    enabled: true

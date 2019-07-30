@@ -119,7 +119,13 @@ swagger\:diff:
 	@echo "Running api-diff ..."
 	@$(BUILD_DIR)/api-diff.sh $(SWAGGER_API_DIR) $(RELEASED_API_VERSION)
 
-# ### OPERATOR SDK #######################
+.PHONY: helpz
+helpz:
+ifndef build-harness
+	$(eval MAKEFILE_LIST := Makefile build-harness/modules/go/Makefile)
+endif
+
+### OPERATOR SDK #######################
 .PHONY: operator\:tools
 operator\:tools: $(GOPATH)/bin/operator-sdk
 
@@ -134,11 +140,13 @@ operator\:build: deps
 
 .PHONY: operator\:run
 operator\:run:
-	operator-sdk up local --namespace="" --operator-flags="--zap-encoder=console"
+	operator-sdk up local --namespace="" --operator-flags="--zap-devel=true"
 
-.PHONY: helpz
-helpz:
-ifndef build-harness
-	$(eval MAKEFILE_LIST := Makefile build-harness/modules/go/Makefile)
-endif
+### HELPER UTILS #######################
+.PHONY: utils\:crds\:install
+utils\:crds\:install:
+	kubectl apply -f deploy/crds/klusterlet_v1alpha1_klusterletservice_crd.yaml
 
+.PHONY: utils\:crds\:uninstall
+utils\:crds\:uninstall:
+	kubectl delete -f deploy/crds/klusterlet_v1alpha1_klusterletservice_crd.yaml

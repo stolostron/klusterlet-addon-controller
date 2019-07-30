@@ -13,35 +13,43 @@ import (
 
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
+
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
+
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
-	apiextensionv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 )
 
 var log = logf.Log.WithName("certmgr")
 
 // Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
+	reqLogger := log.WithValues("KlusterletService.Namespace", instance.Namespace, "KlusterletService.Name", instance.Name)
+	reqLogger.Info("Reconciling CertManager")
+
+	var err error
+
 	// ICP CertManager
+	log.V(5).Info("Looking for ICP CertManager Deployment", "Deployment.Name", "cert-manager-ibm-cert-manager", "Deployment.Namespace", "cert-manager")
 	findICPCertMgr := &extensionsv1beta1.Deployment{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "cert-manager-ibm-cert-manager", Namespace: "cert-manager"}, findICPCertMgr)
+	err = client.Get(context.TODO(), types.NamespacedName{Name: "cert-manager-ibm-cert-manager", Namespace: "cert-manager"}, findICPCertMgr)
 	if err == nil {
 		err = createSelfSignClusterIssuer(client, scheme, instance)
 		if err != nil {
-			return nil
+			log.Error(err, "Unable to CREATE SelfSigned ClusterIssuer.")
+			return err
 		}
 
-		log.Info("Found ICP CertManager, skip CertManagerCR Reconcile.")
+		log.V(1).Info("Found ICP CertManager, skip CertManagerCR Reconcile.")
 		return nil
 	}
 
@@ -49,40 +57,97 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	certMgr := newCertManagerCR(instance)
 	err = controllerutil.SetControllerReference(instance, certMgr, scheme)
 	if err != nil {
+		log.Error(err, "Unable to SetControllerReference")
 		return err
 	}
 
 	foundCertManager := &klusterletv1alpha1.CertManager{}
+	log.V(5).Info("Looking for CertManager CR", "CertManager.Name", certMgr.Name, "CertManager.Namespace", certMgr.Namespace)
 	err = client.Get(context.TODO(), types.NamespacedName{Name: certMgr.Name, Namespace: certMgr.Namespace}, foundCertManager)
-	if err != nil && errors.IsNotFound(err) {
-		err := installCRDs(client)
-		if err != nil {
-			return err
-		}
-
-		err = createServiceAccount(client, scheme, instance, certMgr)
-		if err != nil {
-			return err
-		}
-
-		log.Info("Creating a new CertManager", "CertManager.Namespace", certMgr.Namespace, "CertManager.Name", certMgr.Name)
-		err = client.Create(context.TODO(), certMgr)
-		if err != nil {
-			return err
-		}
-
-		err = createSelfSignClusterIssuer(client, scheme, instance)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-
 	if err != nil {
-		return err
+		if errors.IsNotFound(err) {
+			// CertManager CR does NOT exist
+			if instance.GetDeletionTimestamp() == nil {
+				// KlusterletService NOT in deletion state
+				err = createServiceAccount(client, scheme, instance, certMgr)
+				if err != nil {
+					log.Error(err, "Fail to CREATE ServiceAccount")
+					return err
+				}
+
+				log.Info("Creating a new CertManager CR", "CertManager.Namespace", certMgr.Namespace, "CertManager.Name", certMgr.Name)
+				err = client.Create(context.TODO(), certMgr)
+				if err != nil {
+					log.Error(err, "Fail to CREATE CertManager CR")
+					return err
+				}
+
+				// Create SelfSigned ClusterIssuer
+				err = createSelfSignClusterIssuer(client, scheme, instance)
+				if err != nil {
+					log.Error(err, "Fail to CREATE SelfSigned ClusterIssuer")
+					return err
+				}
+
+				// Adding Finalizer to KlusterletService instance
+				instance.Finalizers = append(instance.Finalizers, certMgr.Name)
+			} else {
+				// Delete cert-manager-controller ConfigMap
+				foundConfigMap := &corev1.ConfigMap{}
+				err = client.Get(context.TODO(), types.NamespacedName{Name: "cert-manager-controller", Namespace: certMgr.Namespace}, foundConfigMap)
+				if err == nil {
+					err = client.Delete(context.TODO(), foundConfigMap)
+					if err != nil {
+						log.Error(err, "Fail to DELETE ConnectionManager Secret", "Secret.Name", foundConfigMap)
+						return err
+					}
+				}
+
+				// Delete SelfSigned ClusterIssuer
+				err = deleteSelfSignClusterIssuer(client, scheme, instance)
+				if err != nil {
+					log.Error(err, "Fail to DELETE SelfSigned ClusterIssuer")
+					return err
+				}
+
+				// Remove finalizer
+				for i, finalizer := range instance.Finalizers {
+					if finalizer == certMgr.Name {
+						instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
+						break
+					}
+				}
+			}
+		} else {
+			log.Error(err, "Unexpected ERROR")
+			return err
+		}
+	} else {
+		if foundCertManager.GetDeletionTimestamp() == nil {
+			// CertManager CR does exist
+			if instance.GetDeletionTimestamp() == nil {
+				// KlusterletService NOT in deletion state
+				foundCertManager.Spec = certMgr.Spec
+				err = client.Update(context.TODO(), foundCertManager)
+				if err != nil && !errors.IsConflict(err) {
+					log.Error(err, "Fail to UPDATE CertManager CR")
+					return err
+				}
+			} else {
+				// KlusterletService in deletion state
+				if foundCertManager.GetDeletionTimestamp() == nil {
+					// Delete CertManager CR
+					err = client.Delete(context.TODO(), foundCertManager)
+					if err != nil {
+						log.Error(err, "Fail to DELETE CertManager CR")
+						return err
+					}
+				}
+			}
+		}
 	}
 
+	reqLogger.Info("Successfully Reconciled CertManager")
 	return nil
 }
 
@@ -104,9 +169,37 @@ func createSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, c
 
 	foundClusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: clusterIssuer.Name}, foundClusterIssuer)
+
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating SelfSigned ClusterIssuer")
 		return client.Create(context.TODO(), clusterIssuer)
+	}
+
+	return err
+}
+
+func deleteSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, cr *klusterletv1alpha1.KlusterletService) error {
+	clusterIssuer := &certmanagerv1alpha1.ClusterIssuer{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: cr.Name + "-self-signed",
+		},
+		Spec: certmanagerv1alpha1.IssuerSpec{
+			IssuerConfig: certmanagerv1alpha1.IssuerConfig{
+				SelfSigned: &certmanagerv1alpha1.SelfSignedIssuer{},
+			},
+		},
+	}
+	err := controllerutil.SetControllerReference(cr, clusterIssuer, scheme)
+	if err != nil {
+		return err
+	}
+
+	foundClusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
+	err = client.Get(context.TODO(), types.NamespacedName{Name: clusterIssuer.Name}, foundClusterIssuer)
+
+	if err == nil {
+		log.Info("Deleting SelfSigned ClusterIssuer")
+		return client.Delete(context.TODO(), foundClusterIssuer)
 	}
 
 	return nil
@@ -152,31 +245,6 @@ func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance
 	return nil
 }
 
-func installCRDs(client client.Client) error {
-	err := installCertificateCRD(client)
-	if err != nil {
-		return err
-	}
-	err = installIssuerCRD(client)
-	if err != nil {
-		return err
-	}
-	err = installClusterIssuerCRD(client)
-	if err != nil {
-		return err
-	}
-	err = installOrderCRD(client)
-	if err != nil {
-		return err
-	}
-	err = installChallengeCRD(client)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.CertManager {
 	labels := map[string]string{
 		"app": cr.Name,
@@ -201,243 +269,3 @@ func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alp
 		},
 	}
 }
-
-func installCertificateCRD(client client.Client) error {
-	log.Info("Installing certificates.certmanager.k8s.io CRD")
-
-	certificatesCRD := &apiextensionv1beta1.CustomResourceDefinition{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "certificates.certmanager.k8s.io", Namespace: ""}, certificatesCRD)
-	if err != nil && errors.IsNotFound(err) {
-		certificatesCRD = &apiextensionv1beta1.CustomResourceDefinition{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "certificates.certmanager.k8s.io",
-			},
-			Spec: apiextensionv1beta1.CustomResourceDefinitionSpec{
-				Scope:   "Namespaced",
-				Group:   "certmanager.k8s.io",
-				Version: "v1alpha1",
-				Names: apiextensionv1beta1.CustomResourceDefinitionNames{
-					Kind:       "Certificate",
-					Plural:     "certificates",
-					ShortNames: []string{"cert", "certs"},
-				},
-				AdditionalPrinterColumns: []apiextensionv1beta1.CustomResourceColumnDefinition{
-					{
-						Name:     "Ready",
-						Type:     "string",
-						JSONPath: ".status.conditions[?(@.type==\"Ready\")].status",
-					},
-					{
-						Name:     "Secret",
-						Type:     "string",
-						JSONPath: ".spec.secretName",
-					},
-					{
-						Name:     "Issuer",
-						Type:     "string",
-						JSONPath: ".spec.issuerRef.name",
-						Priority: 1,
-					},
-					{
-						Name:     "Status",
-						Type:     "string",
-						JSONPath: ".status.conditions[?(@.type==\"Ready\")].message",
-						Priority: 1,
-					},
-					{
-						Name:     "Age",
-						Type:     "date",
-						JSONPath: ".metadata.creationTimestamp",
-					},
-					{
-						Name:     "Expiration",
-						Type:     "string",
-						JSONPath: ".status.notAfter",
-					},
-				},
-			},
-		}
-		return client.Create(context.TODO(), certificatesCRD)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func installIssuerCRD(client client.Client) error {
-	log.Info("Installing issuers.certmanager.k8s.io CRD")
-
-	issuerCRD := &apiextensionv1beta1.CustomResourceDefinition{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "issuers.certmanager.k8s.io", Namespace: ""}, issuerCRD)
-	if err != nil && errors.IsNotFound(err) {
-		issuerCRD = &apiextensionv1beta1.CustomResourceDefinition{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "issuers.certmanager.k8s.io",
-			},
-			Spec: apiextensionv1beta1.CustomResourceDefinitionSpec{
-				Scope:   "Namespaced",
-				Group:   "certmanager.k8s.io",
-				Version: "v1alpha1",
-				Names: apiextensionv1beta1.CustomResourceDefinitionNames{
-					Kind:   "Issuer",
-					Plural: "issuers",
-				},
-			},
-		}
-		return client.Create(context.TODO(), issuerCRD)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func installClusterIssuerCRD(client client.Client) error {
-	log.Info("Installing clusterissuers.certmanager.k8s.io CRD")
-
-	clusterIssuerCRD := &apiextensionv1beta1.CustomResourceDefinition{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "clusterissuers.certmanager.k8s.io", Namespace: ""}, clusterIssuerCRD)
-	if err != nil && errors.IsNotFound(err) {
-		clusterIssuerCRD = &apiextensionv1beta1.CustomResourceDefinition{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "clusterissuers.certmanager.k8s.io",
-			},
-			Spec: apiextensionv1beta1.CustomResourceDefinitionSpec{
-				Scope:   "Cluster",
-				Group:   "certmanager.k8s.io",
-				Version: "v1alpha1",
-				Names: apiextensionv1beta1.CustomResourceDefinitionNames{
-					Kind:   "ClusterIssuer",
-					Plural: "clusterissuers",
-				},
-			},
-		}
-		return client.Create(context.TODO(), clusterIssuerCRD)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func installOrderCRD(client client.Client) error {
-	log.Info("Installing orders.certmanager.k8s.io CRD")
-
-	orderCRD := &apiextensionv1beta1.CustomResourceDefinition{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "orders.certmanager.k8s.io", Namespace: ""}, orderCRD)
-	if err != nil && errors.IsNotFound(err) {
-		orderCRD = &apiextensionv1beta1.CustomResourceDefinition{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "orders.certmanager.k8s.io",
-			},
-			Spec: apiextensionv1beta1.CustomResourceDefinitionSpec{
-				Scope:   "Namespaced",
-				Group:   "certmanager.k8s.io",
-				Version: "v1alpha1",
-				Names: apiextensionv1beta1.CustomResourceDefinitionNames{
-					Kind:   "Order",
-					Plural: "orders",
-				},
-				AdditionalPrinterColumns: []apiextensionv1beta1.CustomResourceColumnDefinition{
-					{
-						Name:     "State",
-						Type:     "string",
-						JSONPath: ".status.state",
-					},
-					{
-						Name:     "Issuer",
-						Type:     "string",
-						JSONPath: ".spec.issuerRef.name",
-						Priority: 1,
-					},
-					{
-						Name:     "Reason",
-						Type:     "string",
-						JSONPath: ".status.reason",
-						Priority: 1,
-					},
-					{
-						Name:     "Age",
-						Type:     "date",
-						JSONPath: ".metadata.creationTimestamp",
-					},
-				},
-			},
-		}
-		return client.Create(context.TODO(), orderCRD)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func installChallengeCRD(client client.Client) error {
-	log.Info("Installing challenges.certmanager.k8s.io CRD")
-
-	challengeCRD := &apiextensionv1beta1.CustomResourceDefinition{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "challenges.certmanager.k8s.io", Namespace: ""}, challengeCRD)
-	if err != nil && errors.IsNotFound(err) {
-		challengeCRD = &apiextensionv1beta1.CustomResourceDefinition{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "challenges.certmanager.k8s.io",
-			},
-			Spec: apiextensionv1beta1.CustomResourceDefinitionSpec{
-				Scope:   "Namespaced",
-				Group:   "certmanager.k8s.io",
-				Version: "v1alpha1",
-				Names: apiextensionv1beta1.CustomResourceDefinitionNames{
-					Kind:   "Challenge",
-					Plural: "challenges",
-				},
-				AdditionalPrinterColumns: []apiextensionv1beta1.CustomResourceColumnDefinition{
-					{
-						Name:     "State",
-						Type:     "string",
-						JSONPath: ".status.state",
-					},
-					{
-						Name:     "Domain",
-						Type:     "string",
-						JSONPath: "..spec.dnsName",
-						Priority: 1,
-					},
-					{
-						Name:     "Reason",
-						Type:     "string",
-						JSONPath: ".status.reason",
-						Priority: 1,
-					},
-					{
-						Name:     "Age",
-						Type:     "date",
-						JSONPath: ".metadata.creationTimestamp",
-					},
-				},
-			},
-		}
-		return client.Create(context.TODO(), challengeCRD)
-	}
-
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// WARNING: Marked as unused by the linter (pkg/certmgr/certmgr.go:408:6:warning: func addServiceAccountToSCC is unused (U1000) (staticcheck))
-// func addServiceAccountToSCC(client client.Client, sa *corev1.ServiceAccount, scc *openshiftsecurityv1.SecurityContextConstraints) error {
-// 	user := "system:serviceaccount:" + sa.Namespace + ":" + sa.Name
-// 	log.Info("Add ServiceAccount to SecurityContextConstraints", "user", user, "scc.Name", scc.Name)
-// 	scc.Users = append(scc.Users, user)
-// 	return client.Update(context.TODO(), scc)
-// }

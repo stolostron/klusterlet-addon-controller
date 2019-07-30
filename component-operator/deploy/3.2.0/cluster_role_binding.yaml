@@ -1,0 +1,12 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: klusterlet-component-operator
+subjects:
+- kind: ServiceAccount
+  name: klusterlet-component-operator
+  namespace: multicluster-endpoint
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io

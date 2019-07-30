@@ -15,9 +15,9 @@ import (
 	"os"
 	"runtime"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component"
 
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	openshiftroutev1 "github.com/openshift/api/route/v1"
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
@@ -25,7 +25,9 @@ import (
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
-	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	crdv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	crdclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -97,6 +99,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Install All Component CRDs
+	log.Info("Install Component.")
+
+	crdClient, err := crdclientset.NewForConfig(cfg)
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := component.InstallComponentCRDs(crdClient); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
@@ -115,7 +131,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := apiextensionsv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
+	if err := crdv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
