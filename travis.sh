@@ -96,7 +96,7 @@ if [[ "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
     export DOCKER_NAMESPACE=ibmcom
     announce make docker:login docker:push
     if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-        export DOCKER_TAG=$DOCKER_TAG-rhel
+        export DOCKER_TAG=$DOCKER_TAG
         announce make docker:push
     fi
     fold_end publish
