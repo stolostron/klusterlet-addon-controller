@@ -1,29 +1,27 @@
+// Package searchcollector provides a reconciler for the search collector
 // IBM Confidential
 // OCO Source Materials
 // 5737-E67
 // (C) Copyright IBM Corporation 2019 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
-
-// Package searchcollector provides a reconciler for the search collector
 package searchcollector
 
 import (
 	"context"
 
+	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
+	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller"
 
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
-
-	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
-
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -48,29 +46,76 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, c client.Client, 
 
 	foundSearchCollectorCR := &klusterletv1alpha1.SearchCollector{}
 	err = c.Get(context.TODO(), types.NamespacedName{Name: searchCollectorCR.Name, Namespace: searchCollectorCR.Namespace}, foundSearchCollectorCR)
-	if err != nil && errors.IsNotFound(err) {
-		if instance.Spec.SearchCollectorConfig.Enabled {
-			searchCollectorCR.Spec.TillerIntegration = newSearchCollectorTillerIntegration(instance, c)
-			log.Info("Creating a new SearchCollector", "SearchCollector.Namespace", searchCollectorCR.Namespace, "SearchCollector.Name", searchCollectorCR.Name)
-			err = c.Create(context.TODO(), searchCollectorCR)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Search Collector does NOT exist
+			if instance.GetDeletionTimestamp() == nil {
+				// Klusterlet Service is NOT being deleted
+				if instance.Spec.SearchCollectorConfig.Enabled {
+					// Search Collector is ENABLED
+					// Create the CR and add the Finalizer to the instance
+					log.Info("Creating a new SearchCollector", "SearchCollector.Namespace", searchCollectorCR.Namespace, "SearchCollector.Name", searchCollectorCR.Name)
+					err = c.Create(context.TODO(), searchCollectorCR)
+					if err != nil {
+						log.Error(err, "Fail to CREATE SearchCollector CR")
+						return err
+					}
 
-	if !instance.Spec.SearchCollectorConfig.Enabled {
-		log.Info("Deleting SearchCollector", "SearchCollector.Namespace", foundSearchCollectorCR.Namespace, "SearchCollector.Name", foundSearchCollectorCR.Name)
-		err = c.Delete(context.TODO(), foundSearchCollectorCR)
-		if err != nil {
+					// Adding Finalizer to KlusterletService instance
+					instance.Finalizers = append(instance.Finalizers, searchCollectorCR.Name)
+				}
+			} else {
+				// Klusterlet Service is being deleted
+				// Cleanup Secrets
+				secretsToDeletes := []string{
+					searchCollectorCR.Name + "-tiller-client-certs",
+				}
+
+				for _, secretToDelete := range secretsToDeletes {
+					foundSecretToDelete := &corev1.Secret{}
+					err = c.Get(context.TODO(), types.NamespacedName{Name: secretToDelete, Namespace: searchCollectorCR.Namespace}, foundSecretToDelete)
+					if err == nil {
+						err = c.Delete(context.TODO(), foundSecretToDelete)
+						if err != nil {
+							log.Error(err, "Fail to DELETE ConnectionManager Secret", "Secret.Name", secretToDelete)
+							return err
+						}
+					}
+				}
+
+				// Remove finalizer
+				for i, finalizer := range instance.Finalizers {
+					if finalizer == searchCollectorCR.Name {
+						instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
+						break
+					}
+				}
+
+			}
+		} else {
+			log.Error(err, "Unexpected ERROR")
 			return err
 		}
-		return nil
-	}
-
-	if err != nil {
-		return err
+	} else {
+		if foundSearchCollectorCR.GetDeletionTimestamp() == nil {
+			//Search Collector DOES exist
+			if instance.GetDeletionTimestamp() == nil && instance.Spec.SearchCollectorConfig.Enabled {
+				// KlusterletService NOT in deletion state and Search Collector is ENABLED
+				foundSearchCollectorCR.Spec = searchCollectorCR.Spec
+				err = c.Update(context.TODO(), foundSearchCollectorCR)
+				if err != nil && !errors.IsConflict(err) {
+					log.Error(err, "Fail to UPDATE SearchCollector CR")
+					return err
+				}
+			} else {
+				// KlusterletService in deletion state or Search Collector is DISABLED
+				err = c.Delete(context.TODO(), foundSearchCollectorCR)
+				if err != nil {
+					log.Error(err, "Fail to DELETE SearchCollector CR")
+					return err
+				}
+			}
+		}
 	}
 
 	return nil
@@ -91,6 +136,7 @@ func newSearchCollectorCR(cr *klusterletv1alpha1.KlusterletService, client clien
 			ClusterName:       cr.Spec.ClusterName,
 			ClusterNamespace:  cr.Spec.ClusterNamespace,
 			ConnectionManager: cr.Name + "-connmgr",
+			TillerIntegration: newSearchCollectorTillerIntegration(cr, client),
 			Image: image.Image{
 				Repository: "ibmcom/search-collector",
 				Tag:        "3.2.0",

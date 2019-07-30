@@ -12,13 +12,15 @@ import (
 	"context"
 
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
+
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -26,6 +28,9 @@ var log = logf.Log.WithName("connmgr")
 
 // Reconcile Resolves differences in the running state of the connection manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
+	reqLogger := log.WithValues("KlusterletService.Namespace", instance.Namespace, "KlusterletService.Name", instance.Name)
+	reqLogger.Info("Reconciling ConnectionManager")
+
 	connMgrCR := newConnectionManagerCR(instance)
 	err := controllerutil.SetControllerReference(instance, connMgrCR, scheme)
 	if err != nil {
@@ -34,13 +39,74 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 
 	foundConnMgrCR := &klusterletv1alpha1.ConnectionManager{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: connMgrCR.Name, Namespace: connMgrCR.Namespace}, foundConnMgrCR)
-	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating a new ConnectionManager", "ConnectionManager.Namespace", connMgrCR.Namespace, "ConnectionManager.Name", connMgrCR.Name)
-		err := client.Create(context.TODO(), connMgrCR)
-		if err != nil {
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// ConnectionManager CR does NOT exist
+			if instance.GetDeletionTimestamp() == nil {
+				// KlusterletService NOT in deletion state
+				log.Info("Creating a new ConnectionManager", "ConnectionManager.Namespace", connMgrCR.Namespace, "ConnectionManager.Name", connMgrCR.Name)
+				err := client.Create(context.TODO(), connMgrCR)
+				if err != nil {
+					log.Error(err, "Fail to CREATE ConnectionManager CR")
+					return err
+				}
+
+				// Adding Finalizer to KlusterletService instance
+				instance.Finalizers = append(instance.Finalizers, connMgrCR.Name)
+			} else {
+				// Cleanup Secrets
+				secretsToDeletes := []string{
+					connMgrCR.Name + "-cert-store",
+					connMgrCR.Name + "-hub-kubeconfig",
+				}
+
+				for _, secretToDelete := range secretsToDeletes {
+					foundSecretToDelete := &corev1.Secret{}
+					err = client.Get(context.TODO(), types.NamespacedName{Name: secretToDelete, Namespace: connMgrCR.Namespace}, foundSecretToDelete)
+					if err == nil {
+						err = client.Delete(context.TODO(), foundSecretToDelete)
+						if err != nil {
+							log.Error(err, "Fail to DELETE ConnectionManager Secret", "Secret.Name", secretToDelete)
+							return err
+						}
+					}
+				}
+
+				// Remove finalizer
+				for i, finalizer := range instance.Finalizers {
+					if finalizer == connMgrCR.Name {
+						instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
+						break
+					}
+				}
+			}
+		} else {
+			log.Error(err, "Unexpected ERROR")
 			return err
 		}
+	} else {
+		if foundConnMgrCR.GetDeletionTimestamp() == nil {
+			// ConnectionManager CR does exist
+			if instance.GetDeletionTimestamp() == nil {
+				// KlusterletService NOT in deletion state
+				foundConnMgrCR.Spec = connMgrCR.Spec
+				err = client.Update(context.TODO(), foundConnMgrCR)
+				if err != nil && !errors.IsConflict(err) {
+					log.Error(err, "Fail to UPDATE ConnectionManager CR")
+					return err
+				}
+			} else {
+				// KlusterletService in deletion state
+				err = client.Delete(context.TODO(), foundConnMgrCR)
+				if err != nil {
+					log.Error(err, "Fail to DELETE ConnectionManager CR")
+					return err
+				}
+			}
+		}
 	}
+
+	reqLogger.Info("Successfully Reconciled ConnectionManager")
 	return nil
 }
 

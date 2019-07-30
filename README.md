@@ -2,14 +2,12 @@
 Klusterlet operator is a Go operator build with the operator-sdk that's use to manage the Create Update Delete of the component CR in the Klusterlet Component Operator https://github.ibm.com/IBMPrivateCloud/klusterlet-component-operator
 
 ## Running Klusterlet Operator locally for development
-1. Run the klusterlet component operator
-https://github.ibm.com/IBMPrivateCloud/klusterlet-component-operator/README.md
-
-
-2. Install klusterlet CRD
+1. Install klusterlet CRD
 ```
-make install-crd
+make utils:crds:install
 ```
+
+2. Create ImagePullSecret for Artifactory
 
 3. Run Klusterlet Operator 
 ```

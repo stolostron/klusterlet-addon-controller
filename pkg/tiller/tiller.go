@@ -12,19 +12,18 @@ import (
 	"context"
 	"strconv"
 
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
-
+	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 
-	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -32,6 +31,9 @@ var log = logf.Log.WithName("tiller")
 
 // Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
+	reqLogger := log.WithValues("KlusterletService.Namespace", instance.Namespace, "KlusterletService.Name", instance.Name)
+	reqLogger.Info("Reconciling Tiller")
+
 	// No Tiller Integration
 	if !instance.Spec.TillerIntegration.Enabled {
 		log.Info("Tiller Integration disabled, skip Tiller Reconcile.")
@@ -55,13 +57,80 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 
 	foundTillerCR := &klusterletv1alpha1.Tiller{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: tillerCR.Name, Namespace: tillerCR.Namespace}, foundTillerCR)
-	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating a new Tiller", "Tiller.Namespace", tillerCR.Namespace, "Tiller.Name", tillerCR.Name)
-		err = client.Create(context.TODO(), tillerCR)
-		if err != nil {
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Tiller CR does NOT exist
+			if instance.GetDeletionTimestamp() == nil {
+				// KlusterletService NOT in deletion state
+				if instance.Spec.TillerIntegration.Enabled {
+					// Tiller Integration Enabled
+					log.Info("Creating a new Tiller", "Tiller.Namespace", tillerCR.Namespace, "Tiller.Name", tillerCR.Name)
+					err = client.Create(context.TODO(), tillerCR)
+					if err != nil {
+						log.Error(err, "Fail to CREATE Tiller CR")
+						return err
+					}
+
+					// Adding Finalizer to KlusterletService instance
+					instance.Finalizers = append(instance.Finalizers, tillerCR.Name)
+				}
+			} else {
+				// Delete Secrets
+				secretsToDeletes := []string{
+					tillerCR.Name + "-ca-cert",
+					tillerCR.Name + "-server-cert",
+				}
+
+				for _, secretToDelete := range secretsToDeletes {
+					foundSecretToDelete := &corev1.Secret{}
+					err = client.Get(context.TODO(), types.NamespacedName{Name: secretToDelete, Namespace: tillerCR.Namespace}, foundSecretToDelete)
+					if err == nil {
+						err = client.Delete(context.TODO(), foundSecretToDelete)
+						if err != nil {
+							log.Error(err, "Fail to DELETE ConnectionManager Secret", "Secret.Name", secretToDelete)
+							return err
+						}
+					}
+				}
+
+				// Remove finalizer
+				for i, finalizer := range instance.Finalizers {
+					if finalizer == tillerCR.Name {
+						instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
+						break
+					}
+				}
+			}
+		} else {
+			log.Error(err, "Unexpected ERROR")
 			return err
 		}
+	} else {
+		if foundTillerCR.GetDeletionTimestamp() == nil {
+			// Tiller CR does exist
+			if instance.GetDeletionTimestamp() == nil && instance.Spec.TillerIntegration.Enabled {
+				// KlusterletService NOT in deletion state
+				foundTillerCR.Spec = tillerCR.Spec
+				err = client.Update(context.TODO(), foundTillerCR)
+				if err != nil && !errors.IsConflict(err) {
+					log.Error(err, "Fail to UPDATE ConnectionManager CR")
+					return err
+				}
+			} else {
+				// KlusterletService in deletion state or tillerIntegration disabled
+				if foundTillerCR.GetDeletionTimestamp() == nil {
+					// Delete Tiller CR
+					err = client.Delete(context.TODO(), foundTillerCR)
+					if err != nil {
+						log.Error(err, "Fail to DELETE Tiller CR")
+						return err
+					}
+				}
+			}
+		}
 	}
+
+	reqLogger.Info("Successfully Reconciled Tiller")
 	return nil
 }
 
