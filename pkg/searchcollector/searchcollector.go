@@ -11,7 +11,6 @@ import (
 
 	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller"
 
 	corev1 "k8s.io/api/core/v1"
@@ -38,9 +37,14 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, c client.Client, 
 	}
 
 	// Not deployed on hub
-	searchCollectorCR := newSearchCollectorCR(instance, c)
+	searchCollectorCR, err := newSearchCollectorCR(instance, c)
+	if err != nil {
+		log.Error(err, "Fail to generate desired SearchCollector CR")
+		return err
+	}
 	err = controllerutil.SetControllerReference(instance, searchCollectorCR, scheme)
 	if err != nil {
+		log.Error(err, "Unable to SetControllerReference")
 		return err
 	}
 
@@ -121,10 +125,17 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, c client.Client, 
 	return nil
 }
 
-func newSearchCollectorCR(cr *klusterletv1alpha1.KlusterletService, client client.Client) *klusterletv1alpha1.SearchCollector {
+func newSearchCollectorCR(cr *klusterletv1alpha1.KlusterletService, client client.Client) (*klusterletv1alpha1.SearchCollector, error) {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
+
+	image, err := cr.GetImage("search-collector")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "search-collector")
+		return nil, err
+	}
+
 	return &klusterletv1alpha1.SearchCollector{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name + "-search",
@@ -137,13 +148,10 @@ func newSearchCollectorCR(cr *klusterletv1alpha1.KlusterletService, client clien
 			ClusterNamespace:  cr.Spec.ClusterNamespace,
 			ConnectionManager: cr.Name + "-connmgr",
 			TillerIntegration: newSearchCollectorTillerIntegration(cr, client),
-			Image: image.Image{
-				Repository: "ibmcom/search-collector",
-				Tag:        "3.2.0",
-				PullPolicy: "IfNotPresent",
-			},
+			Image:             image,
+			ImagePullSecret:   cr.Spec.ImagePullSecret,
 		},
-	}
+	}, err
 }
 
 func newSearchCollectorTillerIntegration(cr *klusterletv1alpha1.KlusterletService, client client.Client) klusterletv1alpha1.SearchCollectorTillerIntegration {

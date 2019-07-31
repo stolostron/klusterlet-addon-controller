@@ -9,9 +9,8 @@
 package v1alpha1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -33,7 +32,8 @@ type TillerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	DefaultAdminUser string `json:"tiller_default_admin_user"`
 
-	Image image.Image `json:"image,omitempty"`
+	Image           image.Image `json:"image,omitempty,omitempty"`
+	ImagePullSecret string      `json:"imagePullSecret,omitempty"`
 }
 
 // TillerStatus defines the observed state of Tiller

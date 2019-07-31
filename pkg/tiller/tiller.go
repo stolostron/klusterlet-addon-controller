@@ -10,13 +10,10 @@ package tiller
 
 import (
 	"context"
-	"strconv"
 
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 
 	corev1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,9 +46,15 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	}
 
 	// No ICP Tiller
-	tillerCR := newTillerCR(instance)
+	tillerCR, err := newTillerCR(instance)
+	if err != nil {
+		log.Error(err, "Fail to generate desired Tiller CR")
+		return err
+	}
+
 	err = controllerutil.SetControllerReference(instance, tillerCR, scheme)
 	if err != nil {
+		log.Error(err, "Unable to SetControllerReference")
 		return err
 	}
 
@@ -134,10 +137,17 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	return nil
 }
 
-func newTillerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.Tiller {
+func newTillerCR(cr *klusterletv1alpha1.KlusterletService) (*klusterletv1alpha1.Tiller, error) {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
+
+	image, err := cr.GetImage("tiller")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "tiller")
+		return nil, err
+	}
+
 	return &klusterletv1alpha1.Tiller{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name + "-tiller",
@@ -148,54 +158,8 @@ func newTillerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.T
 			FullNameOverride: cr.Name + "-tiller",
 			CACertIssuer:     cr.Name + "-self-signed",
 			DefaultAdminUser: cr.Name + "-admin",
-			Image: image.Image{
-				Repository: "ibmcom/tiller",
-				Tag:        "v2.12.3-icp-3.2.0",
-				PullPolicy: "IfNotPresent",
-			},
+			Image:            image,
+			ImagePullSecret:  cr.Spec.ImagePullSecret,
 		},
-	}
-}
-
-// GetICPTillerDefaultAdminUser gets the ICP tiller default admin user
-func GetICPTillerDefaultAdminUser(client client.Client) string {
-	findICPTillerDeployment := &extensionsv1beta1.Deployment{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, findICPTillerDeployment)
-	if err != nil {
-		return "admin"
-	}
-
-	for _, container := range findICPTillerDeployment.Spec.Template.Spec.Containers {
-		if container.Name == "tiller" {
-			for _, env := range container.Env {
-				if env.Name == "default_admin_user" {
-					return env.Value
-				}
-			}
-		}
-	}
-
-	return "admin"
-}
-
-// GetICPTillerServiceEndpoint gets the ICP tiller endpoint
-func GetICPTillerServiceEndpoint(client client.Client) string {
-	foundICPTillerService := &corev1.Service{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, foundICPTillerService)
-	if err != nil {
-		return ""
-	}
-	if err == nil {
-		tillerServiceHostname := foundICPTillerService.Name + "." + foundICPTillerService.Namespace
-		var tillerServicePort int32
-
-		for _, port := range foundICPTillerService.Spec.Ports {
-			if port.Name == "grpc" && port.Protocol == "TCP" {
-				tillerServicePort = port.Port
-			}
-		}
-
-		return tillerServiceHostname + ":" + strconv.FormatInt(int64(tillerServicePort), 10)
-	}
-	return ""
+	}, nil
 }

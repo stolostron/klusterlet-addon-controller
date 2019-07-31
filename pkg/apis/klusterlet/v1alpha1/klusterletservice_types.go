@@ -7,6 +7,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -21,15 +22,6 @@ type KlusterletServiceSpec struct {
 	Version string `json:"version"`
 
 	// +kubebuilder:validation:MinLength=1
-	ImageRegistry string `json:"imageRegistry"`
-
-	// +kubebuilder:validation:MinLength=1
-	ImagePullSecret string `json:"imagePullSecret"`
-
-	// +kubebuilder:validation:MinLength=1
-	Namespace string `json:"namespace"`
-
-	// +kubebuilder:validation:MinLength=1
 	ClusterName string `json:"clusterName"`
 
 	// +kubebuilder:validation:MinLength=1
@@ -37,13 +29,22 @@ type KlusterletServiceSpec struct {
 
 	ClusterLabels map[string]string `json:"clusterLabels"`
 
-	BootStrapConfig       map[string]string                          `json:"bootstrapConfig"`
-	TillerIntegration     KlusterletTillerIntegrationSpec            `json:"tillerIntegration"`
-	PrometheusIntegration KlusterletPrometheusIntegrationSpec        `json:"prometheusIntegration"`
-	TopologyIntegration   KlusterletTopologyCollectorIntegrationSpec `json:"topologyIntegration"`
-	SearchCollectorConfig KlusterletSearchCollectorSpec              `json:"searchCollector"`
+	BootStrapConfig         map[string]string                   `json:"bootstrapConfig"`
+	TillerIntegration       KlusterletTillerIntegrationSpec     `json:"tillerIntegration"`
+	PrometheusIntegration   KlusterletPrometheusIntegrationSpec `json:"prometheusIntegration"`
+	TopologyCollectorConfig KlusterletTopologyCollectorSpec     `json:"topologyCollector"`
+	SearchCollectorConfig   KlusterletSearchCollectorSpec       `json:"searchCollector"`
 
-	Override KlusterletOverride `json:"override,omitempty"`
+	// +kubebuilder:validation:MinLength=1
+	ImageRegistry string `json:"imageRegistry"`
+
+	// +kubebuilder:validation:MinLength=1
+	ImagePullSecret string `json:"imagePullSecret"`
+
+	// +kubebuilder:validation:Enum=Always,Never,IfNotPresent
+	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
+
+	// Override KlusterletOverride `json:"override,omitempty"`
 }
 
 // KlusterletOverride defines configuration override for all components
@@ -71,9 +72,9 @@ type KlusterletWorkManagerSpec struct {
 	ClusterLabels map[string]string `json:"clusterLabels"`
 }
 
-// KlusterletTopologyCollectorIntegrationSpec defines configuration for the WorkManager Promtheus Integration
+// KlusterletTopologyCollectorSpec defines configuration for the WorkManager Promtheus Integration
 // +k8s:openapi-gen=true
-type KlusterletTopologyCollectorIntegrationSpec struct {
+type KlusterletTopologyCollectorSpec struct {
 	Enabled                 bool  `json:"enabled"`
 	CollectorUpdateInterval int32 `json:"updateInterval"`
 }

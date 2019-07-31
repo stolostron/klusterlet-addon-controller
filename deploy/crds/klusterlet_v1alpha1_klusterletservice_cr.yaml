@@ -9,6 +9,7 @@ spec:
 
   version: 3.2.0
   imagePullSecret: IMAGE_PULL_SECRET
+  imageRegistry: IMAGE_REGISTRY
 
   clusterLabels:
     cloud: "IBM"
@@ -17,7 +18,7 @@ spec:
     region: "US"
     datacenter: "toronto"
     owner: "marketing"
-    
+
   bootstrapConfig:
     hub0: multicluster-endpoint/klusterlet-bootstrap
 
@@ -27,9 +28,9 @@ spec:
   prometheusIntegration:
     enabled: true
 
-  topologyIntegration:
+  topologyCollector:
     enabled: true
     updateInterval: 16
-    
+
   searchCollector:
     enabled: true

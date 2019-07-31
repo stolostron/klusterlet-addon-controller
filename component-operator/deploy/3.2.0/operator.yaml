@@ -16,7 +16,7 @@ spec:
       containers:
         - name: klusterlet-component-operator
           # Replace this with the built image name
-          image: hyc-cloud-private-scratch-docker-local.artifactory.swg-devops.com/ibmcom/klusterlet-component-operator:liuhao
+          image: ibmcom/klusterlet-component-operator:3.2.0
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE

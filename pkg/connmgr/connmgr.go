@@ -31,9 +31,15 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	reqLogger := log.WithValues("KlusterletService.Namespace", instance.Namespace, "KlusterletService.Name", instance.Name)
 	reqLogger.Info("Reconciling ConnectionManager")
 
-	connMgrCR := newConnectionManagerCR(instance)
-	err := controllerutil.SetControllerReference(instance, connMgrCR, scheme)
+	connMgrCR, err := newConnectionManagerCR(instance)
 	if err != nil {
+		log.Error(err, "Fail to generate desired ConnectionManager CR")
+		return err
+	}
+
+	err = controllerutil.SetControllerReference(instance, connMgrCR, scheme)
+	if err != nil {
+		log.Error(err, "Unable to SetControllerReference")
 		return err
 	}
 
@@ -110,10 +116,17 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	return nil
 }
 
-func newConnectionManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.ConnectionManager {
+func newConnectionManagerCR(cr *klusterletv1alpha1.KlusterletService) (*klusterletv1alpha1.ConnectionManager, error) {
+	image, err := cr.GetImage("connection-manager")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "connection-manager")
+		return nil, err
+	}
+
 	labels := map[string]string{
 		"app": cr.Name,
 	}
+
 	return &klusterletv1alpha1.ConnectionManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name + "-connmgr",
@@ -125,6 +138,8 @@ func newConnectionManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterle
 			ClusterNamespace: cr.Spec.ClusterNamespace,
 			BootStrapConfig:  cr.Spec.BootStrapConfig,
 			FullNameOverride: cr.Name + "-connmgr",
+			Image:            image,
+			ImagePullSecret:  cr.Spec.ImagePullSecret,
 		},
-	}
+	}, nil
 }

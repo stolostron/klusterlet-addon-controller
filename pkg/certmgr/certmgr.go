@@ -15,7 +15,6 @@ import (
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
 
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -54,7 +53,12 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	}
 
 	// No ICP CertManager
-	certMgr := newCertManagerCR(instance)
+	certMgr, err := newCertManagerCR(instance)
+	if err != nil {
+		log.Error(err, "Fail to generate desired CertManager CR")
+		return err
+	}
+
 	err = controllerutil.SetControllerReference(instance, certMgr, scheme)
 	if err != nil {
 		log.Error(err, "Unable to SetControllerReference")
@@ -211,6 +215,11 @@ func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance
 			Name:      certmgr.Spec.ServiceAccount.Name,
 			Namespace: certmgr.Namespace,
 		},
+		ImagePullSecrets: []corev1.LocalObjectReference{
+			corev1.LocalObjectReference{
+				Name: instance.Spec.ImagePullSecret,
+			},
+		},
 	}
 	err := controllerutil.SetControllerReference(instance, serviceAccount, scheme)
 	if err != nil {
@@ -245,10 +254,17 @@ func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance
 	return nil
 }
 
-func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.CertManager {
+func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) (*klusterletv1alpha1.CertManager, error) {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
+
+	image, err := cr.GetImage("cert-manager-controller")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "cert-manager-controller")
+		return nil, err
+	}
+
 	return &klusterletv1alpha1.CertManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name + "-certmgr",
@@ -261,11 +277,7 @@ func newCertManagerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alp
 			ServiceAccount: klusterletv1alpha1.CertManagerServiceAccount{
 				Name: cr.Name + "-certmgr",
 			},
-			Image: image.Image{
-				Repository: "ibmcom/icp-cert-manager-controller",
-				Tag:        "0.7.0",
-				PullPolicy: "IfNotPresent",
-			},
+			Image: image,
 		},
-	}
+	}, nil
 }

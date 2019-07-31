@@ -31,8 +31,13 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	reqLogger := log.WithValues("KlusterletService.Namespace", instance.Namespace, "KlusterletService.Name", instance.Name)
 	reqLogger.Info("Reconciling TopologyCollector")
 
-	topologyCollectorCR := newTopologyCollectorCR(instance, client)
-	err := controllerutil.SetControllerReference(instance, topologyCollectorCR, scheme)
+	topologyCollectorCR, err := newTopologyCollectorCR(instance, client)
+	if err != nil {
+		log.Error(err, "Fail to generate desired TopologyCollector CR")
+		return err
+	}
+
+	err = controllerutil.SetControllerReference(instance, topologyCollectorCR, scheme)
 	if err != nil {
 		log.Error(err, "Error setting controller reference")
 		return err
@@ -75,7 +80,7 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 				return nil
 			}
 
-			if instance.Spec.TopologyIntegration.Enabled {
+			if instance.Spec.TopologyCollectorConfig.Enabled {
 				err = createServiceAccount(client, scheme, instance, topologyCollectorCR)
 				if err != nil {
 					log.Error(err, "Fail to CREATE ServiceAccount for TopologyCollector", topologyCollectorCR.Name)
@@ -102,7 +107,7 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	}
 
 	if foundTopologyCollector.GetDeletionTimestamp() == nil {
-		if instance.GetDeletionTimestamp() != nil || !instance.Spec.TopologyIntegration.Enabled {
+		if instance.GetDeletionTimestamp() != nil || !instance.Spec.TopologyCollectorConfig.Enabled {
 			err = client.Delete(context.TODO(), topologyCollectorCR)
 			if err != nil {
 				log.Error(err, "Fail to DELETE TopologyCollector CR")
@@ -126,20 +131,27 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	return nil
 }
 
-func determineRuntime(kubeclient client.Client) string {
-	nodelist := &corev1.NodeList{}
-	err := kubeclient.List(context.TODO(), &client.ListOptions{}, nodelist)
-	if err != nil {
-		log.Error(err, "Error listing nodes in cluster, assuming ContainerRuntime is docker")
-		return "docker"
-	}
-	runtime := nodelist.Items[0].Status.NodeInfo.ContainerRuntimeVersion
-	return strings.Split(runtime, ":")[0] //format of container runtime in node info is runtime://version
-}
-
-func newTopologyCollectorCR(cr *klusterletv1alpha1.KlusterletService, client client.Client) *klusterletv1alpha1.TopologyCollector {
+func newTopologyCollectorCR(cr *klusterletv1alpha1.KlusterletService, client client.Client) (*klusterletv1alpha1.TopologyCollector, error) {
 	labels := map[string]string{
 		"app": cr.Name,
+	}
+
+	weaveImage, err := cr.GetImage("weave")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "weave")
+		return nil, err
+	}
+
+	collectorImage, err := cr.GetImage("collector")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "collector")
+		return nil, err
+	}
+
+	routerImage, err := cr.GetImage("router")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "routers")
+		return nil, err
 	}
 
 	return &klusterletv1alpha1.TopologyCollector{
@@ -149,20 +161,34 @@ func newTopologyCollectorCR(cr *klusterletv1alpha1.KlusterletService, client cli
 			Labels:    labels,
 		},
 		Spec: klusterletv1alpha1.TopologyCollectorSpec{
-
 			FullNameOverride:  cr.Name + "-topology",
 			ClusterName:       cr.Spec.ClusterName,
 			ClusterNamespace:  cr.Spec.ClusterNamespace,
 			ConnectionManager: cr.Name + "-connmgr",
 			ContainerRuntime:  determineRuntime(client),
 			Enabled:           true,
-			UpdateInterval:    cr.Spec.TopologyIntegration.CollectorUpdateInterval,
+			UpdateInterval:    cr.Spec.TopologyCollectorConfig.CollectorUpdateInterval,
 			CACertIssuer:      cr.Name + "-self-signed",
 			ServiceAccount: klusterletv1alpha1.TopologyCollectorServiceAccount{
 				Name: cr.Name + "-topology-collector",
 			},
+			WeaveImage:      weaveImage,
+			CollectorImage:  collectorImage,
+			RouterImage:     routerImage,
+			ImagePullSecret: cr.Spec.ImagePullSecret,
 		},
+	}, nil
+}
+
+func determineRuntime(kubeclient client.Client) string {
+	nodelist := &corev1.NodeList{}
+	err := kubeclient.List(context.TODO(), &client.ListOptions{}, nodelist)
+	if err != nil {
+		log.Error(err, "Error listing nodes in cluster, assuming ContainerRuntime is docker")
+		return "docker"
 	}
+	runtime := nodelist.Items[0].Status.NodeInfo.ContainerRuntimeVersion
+	return strings.Split(runtime, ":")[0] //format of container runtime in node info is runtime://version
 }
 
 func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance *klusterletv1alpha1.KlusterletService, topology *klusterletv1alpha1.TopologyCollector) error {

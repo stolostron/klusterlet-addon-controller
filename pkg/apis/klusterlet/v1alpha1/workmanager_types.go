@@ -8,9 +8,8 @@
 package v1alpha1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -44,8 +43,10 @@ type WorkManagerSpec struct {
 	Service WorkManagerService `json:"service"`
 	Ingress WorkManagerIngress `json:"ingress"`
 
-	WorkManagerConfig WorkManagerConfig `json:"workManager"`
-	DeployableConfig  DeployableConfig  `json:"deployable"`
+	WorkManagerConfig WorkManagerConfig `json:"workManager,omitempty"`
+	DeployableConfig  DeployableConfig  `json:"deployable,omitempty"`
+
+	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 }
 
 // WorkManagerConfig defines work-manager container configuration parameters

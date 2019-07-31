@@ -12,7 +12,6 @@ import (
 	openshiftroutev1 "github.com/openshift/api/route/v1"
 
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller"
 
 	corev1 "k8s.io/api/core/v1"
@@ -31,9 +30,15 @@ var log = logf.Log.WithName("workmgr")
 
 // Reconcile Resolves differences in the running state of the connection manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
-	workMgrCR := newWorkManagerCR(instance, client)
-	err := controllerutil.SetControllerReference(instance, workMgrCR, scheme)
+	workMgrCR, err := newWorkManagerCR(instance, client)
 	if err != nil {
+		log.Error(err, "Fail to generate desired WorkManager CR")
+		return err
+	}
+
+	err = controllerutil.SetControllerReference(instance, workMgrCR, scheme)
+	if err != nil {
+		log.Error(err, "Error setting controller reference")
 		return err
 	}
 
@@ -173,9 +178,21 @@ func newWorkManagerPrometheusIntegration(cr *klusterletv1alpha1.KlusterletServic
 	}
 }
 
-func newWorkManagerCR(cr *klusterletv1alpha1.KlusterletService, client client.Client) *klusterletv1alpha1.WorkManager {
+func newWorkManagerCR(cr *klusterletv1alpha1.KlusterletService, client client.Client) (*klusterletv1alpha1.WorkManager, error) {
 	labels := map[string]string{
 		"app": cr.Name,
+	}
+
+	workMgrImage, err := cr.GetImage("work-manager")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "work-manager")
+		return nil, err
+	}
+
+	deployableImage, err := cr.GetImage("deployable")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "deployable")
+		return nil, err
 	}
 
 	return &klusterletv1alpha1.WorkManager{
@@ -200,23 +217,17 @@ func newWorkManagerCR(cr *klusterletv1alpha1.KlusterletService, client client.Cl
 
 			WorkManagerConfig: klusterletv1alpha1.WorkManagerConfig{
 				Enabled: true,
-				Image: image.Image{
-					Repository: "ibmcom/mcm-klusterlet",
-					Tag:        "3.2.0",
-					PullPolicy: "IfNotPresent",
-				},
+				Image:   workMgrImage,
 			},
 
 			DeployableConfig: klusterletv1alpha1.DeployableConfig{
 				Enabled: true,
-				Image: image.Image{
-					Repository: "ibmcom/deployable",
-					Tag:        "3.2.0",
-					PullPolicy: "IfNotPresent",
-				},
+				Image:   deployableImage,
 			},
+
+			ImagePullSecret: cr.Spec.ImagePullSecret,
 		},
-	}
+	}, nil
 }
 
 func newWorkManagerServiceConfig() klusterletv1alpha1.WorkManagerService {

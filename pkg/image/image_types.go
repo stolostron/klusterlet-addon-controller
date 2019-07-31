@@ -9,7 +9,7 @@
 package image
 
 import (
-	"k8s.io/kubernetes/pkg/apis/core"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // Image defines the image to pull for a container
@@ -20,5 +20,5 @@ type Image struct {
 	// +kubebuilder:validation:MinLength=1
 	Tag string `json:"tag,omitempty"`
 	// +kubebuilder:validation:Enum=Always,Never,IfNotPresent
-	PullPolicy core.PullPolicy `json:"pullPolicy,omitempty"`
+	PullPolicy corev1.PullPolicy `json:"pullPolicy,omitempty"`
 }

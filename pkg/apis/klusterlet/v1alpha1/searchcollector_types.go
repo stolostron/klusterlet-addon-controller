@@ -9,7 +9,6 @@ package v1alpha1
 
 import (
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -37,7 +36,8 @@ type SearchCollectorSpec struct {
 
 	TillerIntegration SearchCollectorTillerIntegration `json:"tillerIntegration"`
 
-	Image image.Image `json:"image"`
+	Image           image.Image `json:"image,omitempty"`
+	ImagePullSecret string      `json:"imagePullSecret,omitempty"`
 }
 
 // SearchCollectorTillerIntegration defines the observed state of SearchCollector
