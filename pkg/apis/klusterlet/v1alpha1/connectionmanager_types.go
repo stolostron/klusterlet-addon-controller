@@ -9,6 +9,7 @@
 package v1alpha1
 
 import (
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,6 +33,9 @@ type ConnectionManagerSpec struct {
 	ClusterNamespace string `json:"clusterNamespace"`
 
 	BootStrapConfig map[string]string `json:"bootstrapConfig"`
+
+	Image           image.Image `json:"image,omitempty"`
+	ImagePullSecret string      `json:"imagePullSecret,omitempty"`
 }
 
 // ConnectionManagerStatus defines the observed state of ConnectionManager

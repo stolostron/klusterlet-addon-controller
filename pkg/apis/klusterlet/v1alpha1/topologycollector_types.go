@@ -7,6 +7,7 @@
 package v1alpha1
 
 import (
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,14 +28,17 @@ type TopologyCollectorSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ContainerRuntime string `json:"containerRuntime"`
 	UpdateInterval   int32  `json:"updateInterval"`
-	// Weave             clusterImage.Image        `json:"weave"`
-	// Collector         clusterImage.Image        `json:"collector"`
-	// Router            clusterImage.Image        `json:"router"`
-	// ImagePullSecret   core.LocalObjectReference `json:"imagePullSecret"`
+
 	FullNameOverride  string                          `json:"fullnameOverride"`
 	ConnectionManager string                          `json:"connectionManager"`
 	CACertIssuer      string                          `json:"caCertIssuer"`
 	ServiceAccount    TopologyCollectorServiceAccount `json:"serviceAccount"`
+
+	WeaveImage     image.Image `json:"weave,omitempty"`
+	CollectorImage image.Image `json:"collector,omitempty"`
+	RouterImage    image.Image `json:"router,omitempty"`
+
+	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 
 	// Affinity     core.Affinity     `json:"affinity"`
 	// NodeSelector core.NodeSelector `json:"nodeSelector"`

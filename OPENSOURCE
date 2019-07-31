@@ -80,7 +80,6 @@ k8s.io/code-generator,c2090bec4d9b1fb25de3812f868accc2bc9ecbae
 k8s.io/gengo,e17681d19d3ac4837a019ece36c2a0ec31ffe985
 k8s.io/klog,d98d8acdac006fb39831f1b25640813fef9c314f
 k8s.io/kube-openapi,0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803
-k8s.io/kubernetes,e8462b5b5dc2584fdcd18e6bcfe9f1e4d970a529
 sigs.k8s.io/controller-runtime,12d98582e72927b6cd0123e2b4e819f9341ce62c
 sigs.k8s.io/controller-tools,950a0e88e4effb864253b3c7504b326cc83b9d11
 sigs.k8s.io/yaml,fd68e9863619f6ec2fdd8625fe1f02e7c877e480

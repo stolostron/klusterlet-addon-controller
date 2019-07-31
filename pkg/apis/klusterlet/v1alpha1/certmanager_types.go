@@ -41,7 +41,7 @@ type CertManagerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ServiceAccount CertManagerServiceAccount `json:"serviceAccount"`
 
-	Image image.Image `json:"image"`
+	Image image.Image `json:"image,omitempty"`
 }
 
 // CertManagerStatus defines the observed state of CertManager

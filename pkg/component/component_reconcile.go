@@ -10,6 +10,7 @@ import (
 	"context"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/ghodss/yaml"
 
@@ -206,10 +207,10 @@ func newDeployment(instance *klusterletv1alpha1.KlusterletService) *extensionsv1
 	deployment.Spec.Template.Labels = deployment.Spec.Selector.MatchLabels
 	deployment.Spec.Template.Spec.ServiceAccountName = deployment.Name
 
-	container := &deployment.Spec.Template.Spec.Containers[0]
+	container := deployment.Spec.Template.Spec.Containers[0]
 	if container.Name == "klusterlet-component-operator" {
-		container.Image = containerImage("klusterlet-component-operator", instance)
-		container.ImagePullPolicy = corev1.PullAlways
+		container.Image = containerImage(container, instance)
+		container.ImagePullPolicy = instance.Spec.ImagePullPolicy
 		container.Args = append(container.Args, "--watches-file="+watchesFile(instance))
 		container.Args = append(container.Args, "--zap-devel")
 		for _, env := range container.Env {
@@ -222,11 +223,16 @@ func newDeployment(instance *klusterletv1alpha1.KlusterletService) *extensionsv1
 		}
 	}
 
+	deployment.Spec.Template.Spec.Containers[0] = container
+
 	return deployment
 }
 
-func containerImage(containerName string, instance *klusterletv1alpha1.KlusterletService) string {
-	return "hyc-cloud-private-scratch-docker-local.artifactory.swg-devops.com/ibmcom/klusterlet-component-operator:liuhao"
+func containerImage(container corev1.Container, instance *klusterletv1alpha1.KlusterletService) string {
+	if instance.Spec.ImageRegistry == "" {
+		return container.Image
+	}
+	return strings.Join([]string{instance.Spec.ImageRegistry, container.Image}, "/")
 }
 
 func watchesFile(instance *klusterletv1alpha1.KlusterletService) string {
