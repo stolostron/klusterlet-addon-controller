@@ -26,6 +26,8 @@ import (
 
 var log = logf.Log.WithName("topology")
 
+// TODO(tonytran): split up weavescope and topology collector
+
 // Reconcile Resolves differences in the running state of the connection manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
 	reqLogger := log.WithValues("KlusterletService.Namespace", instance.Namespace, "KlusterletService.Name", instance.Name)
@@ -83,7 +85,7 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 			if instance.Spec.TopologyCollectorConfig.Enabled {
 				err = createServiceAccount(client, scheme, instance, topologyCollectorCR)
 				if err != nil {
-					log.Error(err, "Fail to CREATE ServiceAccount for TopologyCollector", topologyCollectorCR.Name)
+					log.Error(err, "Fail to CREATE ServiceAccount for TopologyCollector", "TopologyCollector.Name", topologyCollectorCR.Name)
 					return err
 				}
 
@@ -219,7 +221,7 @@ func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance
 	foundPrivilegedSCC := &openshiftsecurityv1.SecurityContextConstraints{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: "privileged", Namespace: ""}, foundPrivilegedSCC)
 	// if client.Get return error that means no privileged SCC in that case skip adding user to scc and ignore error
-	if err != nil {
+	if err == nil {
 		user := "system:serviceaccount:" + serviceAccount.Namespace + ":" + serviceAccount.Name
 		log.Info("Adding User to SCC", "User", user, "SCC", foundPrivilegedSCC.Name)
 		foundPrivilegedSCC.Users = append(foundPrivilegedSCC.Users, user)
