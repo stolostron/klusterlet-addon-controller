@@ -34,3 +34,11 @@ spec:
 
   searchCollector:
     enabled: true
+
+  serviceRegistry:
+    enabled: true
+    coredns:
+      dnsSuffix: "mcm.svc"
+      plugins: "kube-service"
+      clusterProxyIP: ""
+

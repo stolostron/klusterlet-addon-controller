@@ -34,6 +34,7 @@ type KlusterletServiceSpec struct {
 	PrometheusIntegration   KlusterletPrometheusIntegrationSpec `json:"prometheusIntegration"`
 	TopologyCollectorConfig KlusterletTopologyCollectorSpec     `json:"topologyCollector"`
 	SearchCollectorConfig   KlusterletSearchCollectorSpec       `json:"searchCollector"`
+	ServiceRegistryConfig   KlusterletServiceRegistrySpec       `json:"serviceRegistry"`
 
 	// +kubebuilder:validation:MinLength=1
 	ImageRegistry string `json:"imageRegistry"`
@@ -53,11 +54,26 @@ type KlusterletOverride struct {
 	CertManager       CertManager       `json:"certManager"`
 	ConnectionManager ConnectionManager `json:"connectionManager"`
 	// PolicyController  PolicyController  `json:"policyController,omitempty"`
-	SearchCollector SearchCollector `json:"searchCollector,omitempty"`
-	// ServiceRegistry   ServiceRegistry   `json:"serviceRegistry,omitempty"`
+	SearchCollector   SearchCollector   `json:"searchCollector,omitempty"`
+	ServiceRegistry   ServiceRegistry   `json:"serviceRegistry,omitempty"`
 	WorkManager       WorkManager       `json:"workManager,omitempty"`
 	Tiller            Tiller            `json:"tiller"`
 	TopologyCollector TopologyCollector `json:"topologyCollector,omitempty"`
+}
+
+// KlusterletServiceRegistrySpec defines configuration for the ServiceRegistry component
+// +k8s:openapi-gen=true
+type KlusterletServiceRegistrySpec struct {
+	Enabled bool                    `json:"enabled"`
+	CoreDNS KlusterletCoreDNSConfig `json:"coredns"`
+}
+
+// KlusterletCoreDNSConfig defines configuration for the CoreDNS for the ServiceRegistry component
+// +k8s:openapi-gen=true
+type KlusterletCoreDNSConfig struct {
+	DNSSuffix      string `json:"dnsSuffix,omitempty"`
+	Plugins        string `json:"plugins,omitempty"`
+	ClusterProxyIP string `json:"clusterProxyIP,omitempty"`
 }
 
 // KlusterletSearchCollectorSpec defines configuration for the SearchCollector component

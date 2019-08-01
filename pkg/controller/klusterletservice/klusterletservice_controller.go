@@ -12,6 +12,8 @@ import (
 	"context"
 	"time"
 
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/serviceregistry"
+
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/certmgr"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component"
@@ -173,6 +175,11 @@ func (r *ReconcileKlusterletService) Reconcile(request reconcile.Request) (recon
 	}
 
 	err = searchcollector.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = serviceregistry.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
