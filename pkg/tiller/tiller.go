@@ -78,27 +78,26 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 					instance.Finalizers = append(instance.Finalizers, tillerCR.Name)
 				}
 			} else {
-				// Delete Secrets
-				secretsToDeletes := []string{
-					tillerCR.Name + "-ca-cert",
-					tillerCR.Name + "-server-cert",
-				}
-
-				for _, secretToDelete := range secretsToDeletes {
-					foundSecretToDelete := &corev1.Secret{}
-					err = client.Get(context.TODO(), types.NamespacedName{Name: secretToDelete, Namespace: tillerCR.Namespace}, foundSecretToDelete)
-					if err == nil {
-						err = client.Delete(context.TODO(), foundSecretToDelete)
-						if err != nil {
-							log.Error(err, "Fail to DELETE ConnectionManager Secret", "Secret.Name", secretToDelete)
-							return err
-						}
-					}
-				}
-
 				// Remove finalizer
 				for i, finalizer := range instance.Finalizers {
 					if finalizer == tillerCR.Name {
+						// Delete Secrets
+						secretsToDeletes := []string{
+							tillerCR.Name + "-ca-cert",
+							tillerCR.Name + "-server-cert",
+						}
+
+						for _, secretToDelete := range secretsToDeletes {
+							foundSecretToDelete := &corev1.Secret{}
+							err = client.Get(context.TODO(), types.NamespacedName{Name: secretToDelete, Namespace: tillerCR.Namespace}, foundSecretToDelete)
+							if err == nil {
+								err = client.Delete(context.TODO(), foundSecretToDelete)
+								if err != nil {
+									log.Error(err, "Fail to DELETE ConnectionManager Secret", "Secret.Name", secretToDelete)
+									return err
+								}
+							}
+						}
 						instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
 						break
 					}

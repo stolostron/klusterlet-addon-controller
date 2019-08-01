@@ -26,8 +26,6 @@ import (
 
 var log = logf.Log.WithName("topology")
 
-// TODO(tonytran): split up weavescope and topology collector
-
 // Reconcile Resolves differences in the running state of the connection manager services and CRDs.
 func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
 	reqLogger := log.WithValues("KlusterletService.Namespace", instance.Namespace, "KlusterletService.Name", instance.Name)
@@ -44,7 +42,7 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 		log.Error(err, "Error setting controller reference")
 		return err
 	}
-
+	// TODO(tonytran): split up weavescope and topology collector
 	foundTopologyCollector := &klusterletv1alpha1.TopologyCollector{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: topologyCollectorCR.Name, Namespace: topologyCollectorCR.Namespace}, foundTopologyCollector)
 	if err != nil {
@@ -52,33 +50,30 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 			// TopologyCollector CR does NOT exist
 			if instance.GetDeletionTimestamp() != nil {
 				//CR existed, so now clean up other resources
-				log.Info("Cleaning up old resources")
-
-				secretsToDeletes := []string{
-					topologyCollectorCR.Name + "-ca-cert",
-					topologyCollectorCR.Name + "-server-secret",
-					topologyCollectorCR.Name + "-client-secret",
-				}
-
-				for _, secretToDelete := range secretsToDeletes {
-					foundSecretToDelete := &corev1.Secret{}
-					err := client.Get(context.TODO(), types.NamespacedName{Name: secretToDelete, Namespace: topologyCollectorCR.Namespace}, foundSecretToDelete)
-					if err == nil {
-						err = client.Delete(context.TODO(), foundSecretToDelete)
-						if err != nil {
-							log.Error(err, "Fail to DELETE TopologyCollector Secret", "Secret.Name", secretToDelete)
-							return err
-						}
-					}
-				}
-
 				for i, finalizer := range instance.Finalizers {
 					if finalizer == topologyCollectorCR.Name {
+						log.Info("Cleaning up old resources")
+						secretsToDeletes := []string{
+							topologyCollectorCR.Name + "-ca-cert",
+							topologyCollectorCR.Name + "-server-secret",
+							topologyCollectorCR.Name + "-client-secret",
+						}
+						for _, secretToDelete := range secretsToDeletes {
+							foundSecretToDelete := &corev1.Secret{}
+							err := client.Get(context.TODO(), types.NamespacedName{Name: secretToDelete, Namespace: topologyCollectorCR.Namespace}, foundSecretToDelete)
+							if err == nil {
+								err = client.Delete(context.TODO(), foundSecretToDelete)
+								if err != nil {
+									log.Error(err, "Fail to DELETE TopologyCollector Secret", "Secret.Name", secretToDelete)
+									return err
+								}
+							}
+						}
 						instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
 						break
 					}
 				}
-
+				//whether we found the finalizer or not, and there was no error we should just pass through
 				return nil
 			}
 
