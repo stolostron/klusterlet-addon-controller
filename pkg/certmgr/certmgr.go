@@ -96,27 +96,27 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 				// Adding Finalizer to KlusterletService instance
 				instance.Finalizers = append(instance.Finalizers, certMgr.Name)
 			} else {
-				// Delete cert-manager-controller ConfigMap
-				foundConfigMap := &corev1.ConfigMap{}
-				err = client.Get(context.TODO(), types.NamespacedName{Name: "cert-manager-controller", Namespace: certMgr.Namespace}, foundConfigMap)
-				if err == nil {
-					err = client.Delete(context.TODO(), foundConfigMap)
-					if err != nil {
-						log.Error(err, "Fail to DELETE ConnectionManager Secret", "Secret.Name", foundConfigMap)
-						return err
-					}
-				}
-
-				// Delete SelfSigned ClusterIssuer
-				err = deleteSelfSignClusterIssuer(client, scheme, instance)
-				if err != nil {
-					log.Error(err, "Fail to DELETE SelfSigned ClusterIssuer")
-					return err
-				}
-
 				// Remove finalizer
 				for i, finalizer := range instance.Finalizers {
 					if finalizer == certMgr.Name {
+						// Delete cert-manager-controller ConfigMap
+						foundConfigMap := &corev1.ConfigMap{}
+						err = client.Get(context.TODO(), types.NamespacedName{Name: "cert-manager-controller", Namespace: certMgr.Namespace}, foundConfigMap)
+						if err == nil {
+							err = client.Delete(context.TODO(), foundConfigMap)
+							if err != nil {
+								log.Error(err, "Fail to DELETE ConnectionManager Secret", "Secret.Name", foundConfigMap)
+								return err
+							}
+						}
+
+						// Delete SelfSigned ClusterIssuer
+						err = deleteSelfSignClusterIssuer(client, scheme, instance)
+						if err != nil {
+							log.Error(err, "Fail to DELETE SelfSigned ClusterIssuer")
+							return err
+						}
+
 						instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
 						break
 					}
