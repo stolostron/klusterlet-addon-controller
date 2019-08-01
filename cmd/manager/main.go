@@ -15,26 +15,27 @@ import (
 	"os"
 	"runtime"
 
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component"
-
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	openshiftroutev1 "github.com/openshift/api/route/v1"
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
-	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
-	crdv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	crdclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
+
+	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
+
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	crdv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	crdclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -98,6 +99,9 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+
+	// Initialize inspect.Info
+	inspect.InitClusterInfo(cfg)
 
 	// Install All Component CRDs
 	log.Info("Install Component.")
