@@ -26,6 +26,8 @@ var versionComponentImageMap = map[string]map[string]string{
 		"connection-manager":      "ibmcom/mcm-operator",
 		"cert-manager-controller": "ibmcom/icp-cert-manager-controller",
 		"cert-manager-acmesolver": "ibmcom/icp-cert-manager-acmesolver",
+		"service-registry":        "ibmcom/mcm-service-registry",
+		"coredns":                 "ibmcom/coredns",
 	},
 }
 
@@ -41,6 +43,8 @@ var versionComponentTagMap = map[string]map[string]string{
 		"connection-manager":      "3.2.0",
 		"cert-manager-controller": "0.7.0",
 		"cert-manager-acmesolver": "0.7.0",
+		"service-registry":        "3.2.0",
+		"coredns":                 "1.2.6",
 	},
 }
 
