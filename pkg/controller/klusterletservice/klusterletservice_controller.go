@@ -18,6 +18,7 @@ import (
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/certmgr"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/policyctrl"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/searchcollector"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/topology"
@@ -175,6 +176,11 @@ func (r *ReconcileKlusterletService) Reconcile(request reconcile.Request) (recon
 	}
 
 	err = searchcollector.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = policyctrl.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

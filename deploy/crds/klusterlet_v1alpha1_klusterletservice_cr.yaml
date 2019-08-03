@@ -3,7 +3,6 @@ kind: KlusterletService
 metadata:
   name: klusterlet
 spec:
-  # Add fields here
   clusterName: CLUSTER_NAME
   clusterNamespace: CLUSTER_NAMESPACE
 
@@ -20,7 +19,7 @@ spec:
     owner: "marketing"
 
   bootstrapConfig:
-    hub0: multicluster-endpoint/klusterlet-bootstrap
+    hub0: kube-system/klusterlet-bootstrap
 
   tillerIntegration:
     enabled: true
@@ -33,6 +32,9 @@ spec:
     updateInterval: 16
 
   searchCollector:
+    enabled: false
+  
+  policyController:
     enabled: true
 
   serviceRegistry:

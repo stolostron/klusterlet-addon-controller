@@ -54,5 +54,6 @@ rules:
   - connectionmanagers
   - workmanagers
   - searchcollectors
+  - policycontrollers
   verbs:
   - '*'
