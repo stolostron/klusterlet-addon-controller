@@ -34,6 +34,7 @@ type KlusterletServiceSpec struct {
 	PrometheusIntegration   KlusterletPrometheusIntegrationSpec `json:"prometheusIntegration"`
 	TopologyCollectorConfig KlusterletTopologyCollectorSpec     `json:"topologyCollector"`
 	SearchCollectorConfig   KlusterletSearchCollectorSpec       `json:"searchCollector"`
+	PolicyController        KlusterletPolicyCtrlSpec            `json:"policyController"`
 	ServiceRegistryConfig   KlusterletServiceRegistrySpec       `json:"serviceRegistry"`
 
 	// +kubebuilder:validation:MinLength=1
@@ -139,6 +140,11 @@ type KlusterletServiceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []KlusterletService `json:"items"`
+}
+
+// KlusterletPolicyCtrlSpec contains a list of KlusterletService field
+type KlusterletPolicyCtrlSpec struct {
+	Enabled bool `json:"enabled"`
 }
 
 func init() {
