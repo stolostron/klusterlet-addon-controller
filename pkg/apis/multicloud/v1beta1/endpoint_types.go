@@ -41,16 +41,15 @@ type EndpointSpec struct {
 	ServiceRegistryConfig   EndpointServiceRegistrySpec       `json:"serviceRegistry"`
 
 	// +kubebuilder:validation:MinLength=1
-	ImageRegistry string `json:"imageRegistry"`
-
-	// +kubebuilder:validation:MinLength=1
+	ImageRegistry    string `json:"imageRegistry"`
 	ImageNamePostfix string `json:"imageNamePostfix,omitempty"`
-
 	// +kubebuilder:validation:MinLength=1
 	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 
 	// +kubebuilder:validation:Enum=Always,Never,IfNotPresent
 	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
+
+	ComponentOperatorImage string `json:"componentOperatorImage,omitempty"`
 }
 
 // EndpointConnectionManagerSpec defines configuration for the ConnectionManager component
