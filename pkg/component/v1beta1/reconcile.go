@@ -8,11 +8,7 @@ package v1beta1
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
-	"strings"
-
-	"github.com/ghodss/yaml"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 
@@ -20,6 +16,7 @@ import (
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -34,7 +31,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 
 	var err error
 
-	// Create or Update Component Operator ClusteRole
+	// Create Component Operator ClusteRole
 	clusterRole := newClusterRole(instance)
 	err = controllerutil.SetControllerReference(instance, clusterRole, scheme)
 	if err != nil {
@@ -55,7 +52,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		}
 	}
 
-	// Create or Update Component Operator ServiceAccount
+	// Create Component Operator ServiceAccount
 	serviceAccount := newServiceAccount(instance)
 	err = controllerutil.SetControllerReference(instance, serviceAccount, scheme)
 	if err != nil {
@@ -119,6 +116,14 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 			log.Error(err, "Unexpected ERROR")
 			return err
 		}
+	} else {
+		log.Info("Updating Component Operator Deployment")
+		foundDeployment.Spec = deployment.Spec
+		err = client.Update(context.TODO(), foundDeployment)
+		if err != nil {
+			log.Error(err, "Fail to UPDATE Component Operator Deployment")
+			return err
+		}
 	}
 
 	reqLogger.Info("Successfully Reconciled ComponentOperator")
@@ -126,112 +131,146 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 }
 
 func newClusterRoleBinding(instance *multicloudv1beta1.Endpoint) *rbacv1.ClusterRoleBinding {
-	clusteRoleBindingFile := "/opt/component-operator/deploy/" + instance.Spec.Version + "/cluster_role_binding.yaml"
-
-	clusteRoleBindingYAML, err := ioutil.ReadFile(clusteRoleBindingFile)
-	if err != nil {
-		log.Error(err, "Fail to Read cluster_role_binding.yaml", "filename", clusteRoleBindingYAML)
-		return nil
+	labels := map[string]string{
+		"app": instance.Name,
 	}
 
-	clusteRoleBinding := &rbacv1.ClusterRoleBinding{}
-	err = yaml.Unmarshal(clusteRoleBindingYAML, clusteRoleBinding)
-	if err != nil {
-		log.Error(err, "Fail to Unmarshal cluster_role_binding.yaml", "content", clusteRoleBindingYAML)
-		return nil
+	return &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   instance.Name + "-component-operator",
+			Labels: labels,
+		},
+		Subjects: []rbacv1.Subject{
+			rbacv1.Subject{
+				Kind:      "ServiceAccount",
+				Name:      instance.Name + "-component-operator",
+				Namespace: instance.Namespace,
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			Kind: "ClusterRole",
+			Name: instance.Name + "-component-operator",
+		},
 	}
-
-	return clusteRoleBinding
 }
 
 func newClusterRole(instance *multicloudv1beta1.Endpoint) *rbacv1.ClusterRole {
-	clusteRoleFile := "/opt/component-operator/deploy/" + instance.Spec.Version + "/cluster_role.yaml"
-
-	clusteRoleYAML, err := ioutil.ReadFile(clusteRoleFile)
-	if err != nil {
-		log.Error(err, "Fail to Read cluster_role_binding.yaml", "filename", clusteRoleYAML)
-		return nil
+	labels := map[string]string{
+		"app": instance.Name,
 	}
 
-	clusteRole := &rbacv1.ClusterRole{}
-	err = yaml.Unmarshal(clusteRoleYAML, clusteRole)
-	if err != nil {
-		log.Error(err, "Fail to Unmarshal cluster_role_binding.yaml", "content", clusteRoleYAML)
-		return nil
+	return &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   instance.Name + "-component-operator",
+			Labels: labels,
+		},
+		Rules: []rbacv1.PolicyRule{
+			rbacv1.PolicyRule{
+				APIGroups: []string{"*"},
+				Resources: []string{"*"},
+				Verbs:     []string{"*"},
+			},
+			rbacv1.PolicyRule{
+				APIGroups:       nil,
+				NonResourceURLs: []string{"*"},
+				Resources:       []string{},
+				Verbs:           []string{"*"},
+			},
+		},
 	}
-
-	return clusteRole
 }
 
 func newServiceAccount(instance *multicloudv1beta1.Endpoint) *corev1.ServiceAccount {
-	serviceAccountFile := "/opt/component-operator/deploy/" + instance.Spec.Version + "/service_account.yaml"
-
-	serviceAccountYAML, err := ioutil.ReadFile(serviceAccountFile)
-	if err != nil {
-		log.Error(err, "Fail to Read service_account.yaml", "filename", serviceAccountYAML)
-		return nil
+	labels := map[string]string{
+		"app": instance.Name,
 	}
 
-	serviceAccount := &corev1.ServiceAccount{}
-	err = yaml.Unmarshal(serviceAccountYAML, serviceAccount)
-	if err != nil {
-		log.Error(err, "Fail to Unmarshal", "content", serviceAccountYAML)
-		return nil
+	serviceAccount := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instance.Name + "-component-operator",
+			Namespace: instance.Namespace,
+			Labels:    labels,
+		},
 	}
 
-	serviceAccount.ImagePullSecrets = append(serviceAccount.ImagePullSecrets, corev1.LocalObjectReference{Name: instance.Spec.ImagePullSecret})
+	if instance.Spec.ImagePullSecret != "" {
+		serviceAccount.ImagePullSecrets = append(serviceAccount.ImagePullSecrets, corev1.LocalObjectReference{Name: instance.Spec.ImagePullSecret})
+	}
 
 	return serviceAccount
 }
 
 func newDeployment(instance *multicloudv1beta1.Endpoint) *extensionsv1beta1.Deployment {
-	deploymentFile := "/opt/component-operator/deploy/" + instance.Spec.Version + "/operator.yaml"
-
-	deploymentYAML, err := ioutil.ReadFile(deploymentFile)
-	if err != nil {
-		log.Error(err, "Fail to Read operator.yaml", "filename", deploymentFile)
-		return nil
+	labels := map[string]string{
+		"app": instance.Name,
 	}
 
-	deployment := &extensionsv1beta1.Deployment{}
-	err = yaml.Unmarshal(deploymentYAML, deployment)
-	if err != nil {
-		log.Error(err, "Fail to Unmarshal", "content", deploymentYAML)
-		return nil
-	}
-
-	deployment.Namespace = instance.Namespace
-	deployment.Labels = map[string]string{"app": instance.Name}
-	deployment.Spec.Selector.MatchLabels = map[string]string{"name": deployment.Name}
-	deployment.Spec.Template.Labels = deployment.Spec.Selector.MatchLabels
-	deployment.Spec.Template.Spec.ServiceAccountName = deployment.Name
-
-	container := deployment.Spec.Template.Spec.Containers[0]
-	if container.Name == "klusterlet-component-operator" {
-		container.Image = containerImage(container, instance)
-		container.ImagePullPolicy = instance.Spec.ImagePullPolicy
-		container.Args = append(container.Args, "--watches-file="+watchesFile(instance))
-		container.Args = append(container.Args, "--zap-devel")
-		for _, env := range container.Env {
-			switch name := env.Name; name {
-			case "WATCH_NAMESPACE":
-				env.Value = os.Getenv("WATCH_NAMESPACE")
-			case "OPERATOR_NAME":
-				env.Value = deployment.Name
-			}
+	var deploymentImage string
+	if instance.Spec.ComponentOperatorImage != "" {
+		deploymentImage = instance.Spec.ComponentOperatorImage
+	} else {
+		image, err := instance.GetImage("component-operator")
+		if err != nil {
+			return nil
 		}
+		deploymentImage = image.Repository + ":" + image.Tag
 	}
 
-	deployment.Spec.Template.Spec.Containers[0] = container
+	deployment := &extensionsv1beta1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instance.Name + "-component-operator",
+			Namespace: instance.Namespace,
+			Labels:    labels,
+		},
+		Spec: extensionsv1beta1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"name": instance.Name + "-component-operator",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"name": instance.Name + "-component-operator",
+					},
+				},
+				Spec: corev1.PodSpec{
+					ServiceAccountName: instance.Name + "-component-operator",
+					Containers: []corev1.Container{
+						corev1.Container{
+							Name:            "klusterlet-component-opeator",
+							Image:           deploymentImage,
+							ImagePullPolicy: instance.Spec.ImagePullPolicy,
+							Env: []corev1.EnvVar{
+								corev1.EnvVar{
+									Name:  "WATCH_NAMESPACE",
+									Value: os.Getenv("WATCH_NAMESPACE"),
+								},
+								corev1.EnvVar{
+									Name:  "OPERATOR_NAME",
+									Value: "klusterlet-component-opeator",
+								},
+								corev1.EnvVar{
+									Name: "POD_NAME",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.name",
+										},
+									},
+								},
+							},
+							Args: []string{
+								"--watches-file=" + watchesFile(instance),
+								"--zap-devel",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 
 	return deployment
-}
-
-func containerImage(container corev1.Container, instance *multicloudv1beta1.Endpoint) string {
-	if instance.Spec.ImageRegistry == "" {
-		return container.Image
-	}
-	return strings.Join([]string{instance.Spec.ImageRegistry, container.Image}, "/")
 }
 
 func watchesFile(instance *multicloudv1beta1.Endpoint) string {

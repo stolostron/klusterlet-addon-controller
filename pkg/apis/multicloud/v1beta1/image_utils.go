@@ -26,6 +26,7 @@ var versionComponentImageNameMap = map[string]map[string]string{
 		"cert-manager-acmesolver": "icp-cert-manager-acmesolver",
 		"service-registry":        "mcm-service-registry",
 		"coredns":                 "coredns",
+		"component-operator":      "klusterlet-component-operator",
 	},
 }
 
@@ -43,6 +44,7 @@ var versionComponentTagMap = map[string]map[string]string{
 		"cert-manager-acmesolver": "0.7.0",
 		"service-registry":        "3.2.0",
 		"coredns":                 "1.2.6",
+		"component-operator":      "3.2.0",
 	},
 }
 
