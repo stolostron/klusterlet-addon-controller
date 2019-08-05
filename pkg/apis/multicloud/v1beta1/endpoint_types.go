@@ -44,7 +44,10 @@ type EndpointSpec struct {
 	ImageRegistry string `json:"imageRegistry"`
 
 	// +kubebuilder:validation:MinLength=1
-	ImagePullSecret string `json:"imagePullSecret"`
+	ImageNamePostfix string `json:"imageNamePostfix,omitempty"`
+
+	// +kubebuilder:validation:MinLength=1
+	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 
 	// +kubebuilder:validation:Enum=Always,Never,IfNotPresent
 	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
