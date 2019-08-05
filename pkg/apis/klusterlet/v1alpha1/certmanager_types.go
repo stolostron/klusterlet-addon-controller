@@ -16,14 +16,6 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// CertManagerServiceAccount defines service account configuration in the spec
-// +k8s:openapi-gen=true
-// swagger:model
-type CertManagerServiceAccount struct {
-	// +kubebuilder:validation:MinLength=1
-	Name string `json:"name"`
-}
-
 // CertManagerSpec defines the desired state of CertManager
 // +k8s:openapi-gen=true
 // swagger:model
@@ -42,6 +34,14 @@ type CertManagerSpec struct {
 	ServiceAccount CertManagerServiceAccount `json:"serviceAccount"`
 
 	Image image.Image `json:"image,omitempty"`
+}
+
+// CertManagerServiceAccount defines service account configuration in the spec
+// +k8s:openapi-gen=true
+// swagger:model
+type CertManagerServiceAccount struct {
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
 }
 
 // CertManagerStatus defines the observed state of CertManager

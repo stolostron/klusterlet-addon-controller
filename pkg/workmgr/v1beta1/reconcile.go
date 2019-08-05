@@ -1,21 +1,21 @@
-// Package workmgr ....
+//Package v1beta1 of workmgr Defines the Reconciliation logic and required setup for WorkManager CR.
 // IBM Confidential
 // OCO Source Materials
 // 5737-E67
-// (C) Copyright IBM Corporation 2016, 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
-package workmgr
+package v1beta1
 
 import (
 	"context"
 
-	openshiftroutev1 "github.com/openshift/api/route/v1"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller"
+	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
+	tiller "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller/v1beta1"
 
 	corev1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,8 +28,13 @@ import (
 
 var log = logf.Log.WithName("workmgr")
 
+// TODO(liuhao): switch from klusterletv1alpha1 to multicloudv1beta1 for the WorkManager related structs
+
 // Reconcile Resolves differences in the running state of the connection manager services and CRDs.
-func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
+func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
+	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
+	reqLogger.Info("Reconciling Tiller")
+
 	workMgrCR, err := newWorkManagerCR(instance, client)
 	if err != nil {
 		log.Error(err, "Fail to generate desired WorkManager CR")
@@ -46,72 +51,54 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	err = client.Get(context.TODO(), types.NamespacedName{Name: workMgrCR.Name, Namespace: workMgrCR.Namespace}, foundWorkMgrCR)
 	if err != nil {
 		if errors.IsNotFound(err) {
+			log.V(5).Info("WorkManager CR DOES NOT exist")
 			if instance.GetDeletionTimestamp() == nil {
-				log.Info("Creating a new WorkManager", "WorkManager.Namespace", workMgrCR.Namespace, "WorkManager.Name", workMgrCR.Name)
-
-				err := client.Create(context.TODO(), workMgrCR)
+				log.V(5).Info("Instance IS NOT in deletion state")
+				err := create(instance, workMgrCR, client)
 				if err != nil {
-					log.Error(err, "Fail to CREATE WorkManager CR")
+					log.Error(err, "fail to CREATE WorkManager CR")
 					return err
 				}
-
-				// Adding Finalizer to KlusterletService instance
-				instance.Finalizers = append(instance.Finalizers, workMgrCR.Name)
 			} else {
-				// Cleanup Secrets
-				// Remove finalizer
-				for i, finalizer := range instance.Finalizers {
-					if finalizer == workMgrCR.Name {
-						secretsToDeletes := []string{
-							workMgrCR.Name + "-tiller-client-certs",
-						}
-
-						for _, secretToDelete := range secretsToDeletes {
-							foundSecretToDelete := &corev1.Secret{}
-							err = client.Get(context.TODO(), types.NamespacedName{Name: secretToDelete, Namespace: workMgrCR.Namespace}, foundSecretToDelete)
-							if err == nil {
-								err = client.Delete(context.TODO(), foundSecretToDelete)
-								if err != nil {
-									log.Error(err, "Fail to DELETE WorkManager Secret", "Secret.Name", secretToDelete)
-									return err
-								}
-							}
-						}
-						instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
-						break
-					}
+				log.V(5).Info("Instance IS in deletion state")
+				err := finalize(instance, workMgrCR, client)
+				if err != nil {
+					log.Error(err, "fail to FINALIZE WorkManager CR")
+					return err
 				}
-
 			}
 		} else {
 			log.Error(err, "Unexpected ERROR")
 			return err
 		}
 	} else {
+		log.V(5).Info("WorkManager CR DOES exist")
 		if foundWorkMgrCR.GetDeletionTimestamp() == nil {
 			if instance.GetDeletionTimestamp() == nil {
-				// KlusterletService NOT in deletion state
-				foundWorkMgrCR.Spec = workMgrCR.Spec
-				err = client.Update(context.TODO(), foundWorkMgrCR)
-				if err != nil && !errors.IsConflict(err) {
-					log.Error(err, "Fail to UPDATE WorkManager CR")
+				log.V(5).Info("WorkManager CR IS NOT in deletion state")
+				err := update(instance, workMgrCR, foundWorkMgrCR, client)
+				if err != nil {
+					log.Error(err, "fail to UPDATE WorkManager CR")
 					return err
 				}
 			} else {
-				// KlusterletService in deletion state
-				err = client.Delete(context.TODO(), foundWorkMgrCR)
-				if err != nil {
-					log.Error(err, "Fail to DELETE WorkManager CR")
-					return err
+				log.V(5).Info("Instance IS in deletion state")
+				if foundWorkMgrCR.GetDeletionTimestamp() == nil {
+					err := delete(foundWorkMgrCR, client)
+					if err != nil {
+						log.Error(err, "Fail to DELETE WorkManager CR")
+						return err
+					}
 				}
 			}
 		}
 	}
 
+	reqLogger.Info("Successfully Reconciled WorkManager")
 	return nil
 }
 
-func newWorkManagerTillerIntegration(cr *klusterletv1alpha1.KlusterletService, client client.Client) klusterletv1alpha1.WorkManagerTillerIntegration {
+func newWorkManagerTillerIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) klusterletv1alpha1.WorkManagerTillerIntegration {
 	if cr.Spec.TillerIntegration.Enabled {
 		// ICP Tiller
 		icpTillerServiceEndpoint := tiller.GetICPTillerServiceEndpoint(client)
@@ -142,7 +129,7 @@ func newWorkManagerTillerIntegration(cr *klusterletv1alpha1.KlusterletService, c
 	}
 }
 
-func newWorkManagerPrometheusIntegration(cr *klusterletv1alpha1.KlusterletService, client client.Client) klusterletv1alpha1.WorkManagerPrometheusIntegration {
+func newWorkManagerPrometheusIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) klusterletv1alpha1.WorkManagerPrometheusIntegration {
 	if cr.Spec.PrometheusIntegration.Enabled {
 		// OpenShift Prometheus Service
 		foundOpenshiftPrometheusService := &corev1.Service{}
@@ -168,7 +155,7 @@ func newWorkManagerPrometheusIntegration(cr *klusterletv1alpha1.KlusterletServic
 			}
 		}
 
-		//TODO: KlusterletOperator deployed Prometheus
+		//TODO(liuhao): KlusterletOperator deployed Prometheus
 		return klusterletv1alpha1.WorkManagerPrometheusIntegration{
 			Enabled: false,
 		}
@@ -179,7 +166,7 @@ func newWorkManagerPrometheusIntegration(cr *klusterletv1alpha1.KlusterletServic
 	}
 }
 
-func newWorkManagerCR(cr *klusterletv1alpha1.KlusterletService, client client.Client) (*klusterletv1alpha1.WorkManager, error) {
+func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*klusterletv1alpha1.WorkManager, error) {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
@@ -232,37 +219,100 @@ func newWorkManagerCR(cr *klusterletv1alpha1.KlusterletService, client client.Cl
 }
 
 func newWorkManagerServiceConfig() klusterletv1alpha1.WorkManagerService {
-	//TODO: IKS EKS GKE AKS
+	workManagerService := klusterletv1alpha1.WorkManagerService{}
 
-	// Other
-	return klusterletv1alpha1.WorkManagerService{
-		ServiceType: "ClusterIP",
+	switch kubeVendor := inspect.Info.KubeVendor; kubeVendor {
+	case inspect.KubeVendorAKS:
+		fallthrough
+	case inspect.KubeVendorEKS:
+		fallthrough
+	case inspect.KubeVendorGKE:
+		fallthrough
+	case inspect.KubeVendorIKS:
+		workManagerService.ServiceType = "NodePort"
+	default:
+		workManagerService.ServiceType = "ClusterIP"
 	}
+
+	return workManagerService
 }
 
 func newWorkManagerIngressConfig(c client.Client) klusterletv1alpha1.WorkManagerIngress {
-	// OpenShift
-	routeList := &openshiftroutev1.RouteList{}
-	err := c.List(context.TODO(), &client.ListOptions{}, routeList)
-	if err == nil {
-		return klusterletv1alpha1.WorkManagerIngress{
-			IngressType: "Route",
-			//TODO: user specified hostname and port override
-		}
+	workManagerIngress := klusterletv1alpha1.WorkManagerIngress{}
+
+	switch kubeVendor := inspect.Info.KubeVendor; kubeVendor {
+	case inspect.KubeVendorOpenShift:
+		workManagerIngress.IngressType = "Route"
+	case inspect.KubeVendorICP:
+		workManagerIngress.IngressType = "Ingress"
+	default:
+		workManagerIngress.IngressType = "None"
 	}
 
-	// ICP Nginx Ingress
-	foundICPIngressDaemonSet := &extensionsv1beta1.DaemonSet{}
-	err = c.Get(context.TODO(), types.NamespacedName{Name: "nginx-ingress-controller", Namespace: "kube-system"}, foundICPIngressDaemonSet)
-	if err == nil {
-		return klusterletv1alpha1.WorkManagerIngress{
-			IngressType: "Ingress",
-			//TODO: user specified hostname and port override
-		}
+	//TODO(liuhao): user specified hostname and port override
+	return workManagerIngress
+}
+
+func create(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.WorkManager, client client.Client) error {
+	log.Info("Creating a new WorkManager", "WorkManager.Namespace", cr.Namespace, "WorkManager.Name", cr.Name)
+	err := client.Create(context.TODO(), cr)
+	if err != nil {
+		log.Error(err, "Fail to CREATE WorkManager CR")
+		return err
 	}
 
-	// Other
-	return klusterletv1alpha1.WorkManagerIngress{
-		IngressType: "None",
+	// Adding Finalizer to instance
+	instance.Finalizers = append(instance.Finalizers, cr.Name)
+	return nil
+}
+
+func update(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.WorkManager, foundCR *klusterletv1alpha1.WorkManager, client client.Client) error {
+	foundCR.Spec = cr.Spec
+	err := client.Update(context.TODO(), foundCR)
+	if err != nil && !errors.IsConflict(err) {
+		log.Error(err, "Fail to UPDATE WorkManager CR")
+		return err
 	}
+
+	// Adding Finalizer to instance if Finalizer does not exist
+	// NOTE: This is to handle requeue due to failed instance update during creation
+	for _, finalizer := range instance.Finalizers {
+		if finalizer == cr.Name {
+			return nil
+		}
+	}
+	instance.Finalizers = append(instance.Finalizers, cr.Name)
+	return nil
+}
+
+func delete(foundCR *klusterletv1alpha1.WorkManager, client client.Client) error {
+	return client.Delete(context.TODO(), foundCR)
+}
+
+func finalize(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.WorkManager, client client.Client) error {
+	for i, finalizer := range instance.Finalizers {
+		if finalizer == cr.Name {
+			// Deletes Secrets
+			secretsToDeletes := []string{
+				cr.Name + "-tiller-client-certs",
+			}
+
+			for _, secretToDelete := range secretsToDeletes {
+				foundSecretToDelete := &corev1.Secret{}
+				err := client.Get(context.TODO(), types.NamespacedName{Name: secretToDelete, Namespace: cr.Namespace}, foundSecretToDelete)
+				if err == nil {
+					err := client.Delete(context.TODO(), foundSecretToDelete)
+					if err != nil {
+						log.Error(err, "Fail to DELETE WorkManager Secret", "Secret.Name", secretToDelete)
+						return err
+					}
+				}
+			}
+
+			// Remove finalizer
+			instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
+			return nil
+		}
+	}
+	return nil
 }

@@ -1,10 +1,10 @@
-//Package component Defines the Reconciliation logic and required setup for component operator.
+//Package v1beta1 of component Defines the Reconciliation logic and required setup for component operator.
 // IBM Confidential
 // OCO Source Materials
 // 5737-E67
 // (C) Copyright IBM Corporation 2019 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
-package component
+package v1beta1
 
 import (
 	"io/ioutil"
@@ -20,7 +20,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-var log = logf.Log.WithName("component_utils")
+var log = logf.Log.WithName("component")
 
 // InstallComponentCRDs look for the component crd yaml in /opt/components and create/update the CRDs
 func InstallComponentCRDs(cs *crdclientset.Clientset) error {

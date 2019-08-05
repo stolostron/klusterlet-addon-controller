@@ -7,19 +7,29 @@
 package inspect
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 
+	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured/unstructuredscheme"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 var log = logf.Log.WithName("inspect")
+
+// DeployedOnHub checks that: Is this cluster a Hub Cluster?
+func DeployedOnHub(c client.Client) bool {
+	clusterStatusList := &mcmv1alpha1.ClusterStatusList{}
+	err := c.List(context.TODO(), &client.ListOptions{}, clusterStatusList)
+	return err == nil
+}
 
 // InitClusterInfo initialize the global variable Info in the inspec package
 func InitClusterInfo(cfg *rest.Config) error {

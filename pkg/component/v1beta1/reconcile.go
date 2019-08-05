@@ -1,10 +1,10 @@
-//Package component Defines the Reconciliation logic and required setup for component operator.
+//Package v1beta1 of component Defines the Reconciliation logic and required setup for component operator.
 // IBM Confidential
 // OCO Source Materials
 // 5737-E67
 // (C) Copyright IBM Corporation 2019 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
-package component
+package v1beta1
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 
 	"github.com/ghodss/yaml"
 
-	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
+	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -28,7 +28,7 @@ import (
 )
 
 // Reconcile Resolves differences in the running state of the klusterlet-component-operator deployment
-func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
+func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
 	reqLogger := log.WithValues("KlusterletService.Namespace", instance.Namespace, "KlusterletService.Name", instance.Name)
 	reqLogger.Info("Reconciling ComponentOperator")
 
@@ -125,7 +125,7 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	return nil
 }
 
-func newClusterRoleBinding(instance *klusterletv1alpha1.KlusterletService) *rbacv1.ClusterRoleBinding {
+func newClusterRoleBinding(instance *multicloudv1beta1.Endpoint) *rbacv1.ClusterRoleBinding {
 	clusteRoleBindingFile := "/opt/component-operator/deploy/" + instance.Spec.Version + "/cluster_role_binding.yaml"
 
 	clusteRoleBindingYAML, err := ioutil.ReadFile(clusteRoleBindingFile)
@@ -144,7 +144,7 @@ func newClusterRoleBinding(instance *klusterletv1alpha1.KlusterletService) *rbac
 	return clusteRoleBinding
 }
 
-func newClusterRole(instance *klusterletv1alpha1.KlusterletService) *rbacv1.ClusterRole {
+func newClusterRole(instance *multicloudv1beta1.Endpoint) *rbacv1.ClusterRole {
 	clusteRoleFile := "/opt/component-operator/deploy/" + instance.Spec.Version + "/cluster_role.yaml"
 
 	clusteRoleYAML, err := ioutil.ReadFile(clusteRoleFile)
@@ -163,7 +163,7 @@ func newClusterRole(instance *klusterletv1alpha1.KlusterletService) *rbacv1.Clus
 	return clusteRole
 }
 
-func newServiceAccount(instance *klusterletv1alpha1.KlusterletService) *corev1.ServiceAccount {
+func newServiceAccount(instance *multicloudv1beta1.Endpoint) *corev1.ServiceAccount {
 	serviceAccountFile := "/opt/component-operator/deploy/" + instance.Spec.Version + "/service_account.yaml"
 
 	serviceAccountYAML, err := ioutil.ReadFile(serviceAccountFile)
@@ -184,7 +184,7 @@ func newServiceAccount(instance *klusterletv1alpha1.KlusterletService) *corev1.S
 	return serviceAccount
 }
 
-func newDeployment(instance *klusterletv1alpha1.KlusterletService) *extensionsv1beta1.Deployment {
+func newDeployment(instance *multicloudv1beta1.Endpoint) *extensionsv1beta1.Deployment {
 	deploymentFile := "/opt/component-operator/deploy/" + instance.Spec.Version + "/operator.yaml"
 
 	deploymentYAML, err := ioutil.ReadFile(deploymentFile)
@@ -200,7 +200,6 @@ func newDeployment(instance *klusterletv1alpha1.KlusterletService) *extensionsv1
 		return nil
 	}
 
-	deployment.Name = instance.Name + "-component-operator"
 	deployment.Namespace = instance.Namespace
 	deployment.Labels = map[string]string{"app": instance.Name}
 	deployment.Spec.Selector.MatchLabels = map[string]string{"name": deployment.Name}
@@ -228,13 +227,13 @@ func newDeployment(instance *klusterletv1alpha1.KlusterletService) *extensionsv1
 	return deployment
 }
 
-func containerImage(container corev1.Container, instance *klusterletv1alpha1.KlusterletService) string {
+func containerImage(container corev1.Container, instance *multicloudv1beta1.Endpoint) string {
 	if instance.Spec.ImageRegistry == "" {
 		return container.Image
 	}
 	return strings.Join([]string{instance.Spec.ImageRegistry, container.Image}, "/")
 }
 
-func watchesFile(instance *klusterletv1alpha1.KlusterletService) string {
+func watchesFile(instance *multicloudv1beta1.Endpoint) string {
 	return "/opt/helm/versions/" + instance.Spec.Version + "/watches.yaml"
 }

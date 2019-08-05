@@ -1,0 +1,7 @@
+apiVersion: multicloud.ibm.com/v1beta1
+kind: TopologyCollector
+metadata:
+  name: example-topologycollector
+spec:
+  # Add fields here
+  size: 3

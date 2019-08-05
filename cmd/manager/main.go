@@ -27,7 +27,7 @@ import (
 
 	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component"
+	component "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component/v1alpha1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 

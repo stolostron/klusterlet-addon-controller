@@ -1,0 +1,7 @@
+apiVersion: multicloud.ibm.com/v1beta1
+kind: Tiller
+metadata:
+  name: example-tiller
+spec:
+  # Add fields here
+  size: 3

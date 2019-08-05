@@ -1,10 +1,10 @@
-//Package v1alpha1 Defines the API to support Multicluster Endpoints (klusterlets).
-//IBM Confidential
-//OCO Source Materials
-//5737-E67
-//(C) Copyright IBM Corporation 2019 All Rights Reserved
-//The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
-package v1alpha1
+// Package v1beta1 of apis contain the API type definition for the components
+// IBM Confidential
+// OCO Source Materials
+// 5737-E67
+// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+package v1beta1
 
 import (
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
@@ -40,10 +40,6 @@ type TopologyCollectorSpec struct {
 	RouterImage    image.Image `json:"router,omitempty"`
 
 	ImagePullSecret string `json:"imagePullSecret,omitempty"`
-
-	// Affinity     core.Affinity     `json:"affinity"`
-	// NodeSelector core.NodeSelector `json:"nodeSelector"`
-	// Tolerations  []core.Toleration `json:"tolerations"`
 }
 
 // TopologyCollectorServiceAccount defines service account configuration in the spec
