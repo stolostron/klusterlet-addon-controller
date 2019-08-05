@@ -57,3 +57,17 @@ rules:
   - policycontrollers
   verbs:
   - '*'
+- apiGroups:
+  - multicloud.ibm.com
+  resources:
+  - '*'
+  - certmanagers
+  - connectionmanagers
+  - policycontrollers
+  - searchcollectors
+  - serviceregistries
+  - tillers
+  - topologycollectors
+  - workmanagers
+  verbs:
+  - '*'

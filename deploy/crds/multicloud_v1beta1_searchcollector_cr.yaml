@@ -1,0 +1,7 @@
+apiVersion: multicloud.ibm.com/v1beta1
+kind: SearchCollector
+metadata:
+  name: example-searchcollector
+spec:
+  # Add fields here
+  size: 3

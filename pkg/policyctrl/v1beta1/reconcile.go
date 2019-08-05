@@ -1,18 +1,18 @@
-/*
- * IBM Confidential
- * OCO Source Materials
- * 5737-E67
- * (C) Copyright IBM Corporation 2018 All Rights Reserved
- * The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
- */
-
-package policyctrl
+//Package v1beta1 of policyctrl Defines the Reconciliation logic and required setup for PolicyController.
+// IBM Confidential
+// OCO Source Materials
+// 5737-E67
+// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+package v1beta1
 
 import (
 	"context"
 
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
+	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
+
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -24,10 +24,15 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
+// TODO(liuhao): switch from klusterletv1alpha1 to multicloudv1beta1 for the component api
+
 var log = logf.Log.WithName("policyctrl")
 
 // Reconcile the PolicyController Component
-func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Client, scheme *runtime.Scheme) error {
+func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
+	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
+	reqLogger.Info("Reconciling PolicyController")
+
 	policyCtrlCR := newPolicyControllerCR(instance)
 	err := controllerutil.SetControllerReference(instance, policyCtrlCR, scheme)
 	if err != nil {
@@ -47,35 +52,45 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 	isCRFound := err == nil
 
 	if instance.DeletionTimestamp != nil {
+		log.V(5).Info("Instance IS in deletion state")
 		// Klusterlet: deleting
 		if isCRFound {
+			log.V(5).Info("PolicyController CR DOES exist")
 			// Policy CR: Found
 			err = deletePolicyController(instance, client, policyCtrlCR, foundPolicyCtrlCR)
 			if err != nil {
 				log.Info("Failed to delete the PolicyController ", "PolicyController.Name: ", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
 				return err
 			}
+
+			// Policy CR: Not Found
+			reqLogger.Info("Successfully Reconciled PolicyController")
 			return nil
 		}
 
-		// Policy CR: Not Found
+		log.V(5).Info("PolicyController CR DOES NOT exist")
 		err = cleanUpAfterPolicyCRDeletion(instance, client, policyCtrlCR)
 		if err != nil {
-			log.Info("Failed to clean up after  the PolicyController deleting ", "PolicyController.Name: ", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
+			log.Info("Failed to clean up after the PolicyController deleting ", "PolicyController.Name: ", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
 			return err
 		}
 
+		reqLogger.Info("Successfully Reconciled PolicyController")
 		return nil
 	}
 
+	log.V(5).Info("Instance IS NOT in deletion state")
 	// Klusterlet: Not deleting
 	if isCRFound {
-		// Policy CR: Found
+		log.V(5).Info("PolicyController CR DOES exist")
 		if instance.Spec.PolicyController.Enabled {
+			log.V(5).Info("PolicyController ENABLED")
 			//TODO(diane): handle Update
+			reqLogger.Info("Successfully Reconciled PolicyController")
 			return nil
 		}
 
+		log.V(5).Info("PolicyController DISABLED")
 		// Policy: Disabled
 		err = deletePolicyController(instance, client, policyCtrlCR, foundPolicyCtrlCR)
 		if err != nil {
@@ -83,23 +98,28 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 			return err
 		}
 
+		reqLogger.Info("Successfully Reconciled PolicyController")
 		return nil
 	}
 
+	log.V(5).Info("PolicyController CR DOES NOT exist")
 	// Klusterlet: Not deleting
 	// Policy CR: Not found
 	if instance.Spec.PolicyController.Enabled {
+		log.V(5).Info("PolicyController ENABLED")
 		// Policy Component: enabled
-		// create the policy CR
 		err = createPolicyController(instance, client, policyCtrlCR)
 		if err != nil {
 			log.Info("Failed to create the PolicyController: ", "PolicyController.Name: ", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
 			return err
 		}
 		instance.Finalizers = append(instance.Finalizers, policyCtrlCR.Name)
+
+		reqLogger.Info("Successfully Reconciled PolicyController")
 		return nil
 	}
 
+	log.V(5).Info("PolicyController DISABLED")
 	// Klusterlet: Not deleting
 	// Policy CR: Not found
 	// Policy Component: Disable
@@ -113,10 +133,12 @@ func Reconcile(instance *klusterletv1alpha1.KlusterletService, client client.Cli
 		}
 		removePolicyFinalizer(instance, policyCtrlCR)
 	}
+
+	reqLogger.Info("Successfully Reconciled PolicyController")
 	return nil
 }
 
-func createPolicyController(instance *klusterletv1alpha1.KlusterletService, c client.Client, policyCtrlCR *klusterletv1alpha1.PolicyController) error {
+func createPolicyController(instance *multicloudv1beta1.Endpoint, c client.Client, policyCtrlCR *klusterletv1alpha1.PolicyController) error {
 	finalexist := policyFinalizerExists(instance, policyCtrlCR)
 	if finalexist {
 		log.Info("Finalizer " + policyCtrlCR.Name + " is already existed. Exit the Creating Policy Controller CR Process")
@@ -127,7 +149,7 @@ func createPolicyController(instance *klusterletv1alpha1.KlusterletService, c cl
 	return c.Create(context.TODO(), policyCtrlCR)
 }
 
-func deletePolicyController(instance *klusterletv1alpha1.KlusterletService, c client.Client, policyCtrlCR *klusterletv1alpha1.PolicyController, foundPolicyCtrlCR *klusterletv1alpha1.PolicyController) error {
+func deletePolicyController(instance *multicloudv1beta1.Endpoint, c client.Client, policyCtrlCR *klusterletv1alpha1.PolicyController, foundPolicyCtrlCR *klusterletv1alpha1.PolicyController) error {
 	// Check if the finalizer is existed or not. If not, do nothing.
 	if !policyFinalizerExists(instance, policyCtrlCR) {
 		log.Info("Finalizer " + policyCtrlCR.Name + " is not existed. Exit the Deleting Policy Controller Process")
@@ -150,7 +172,7 @@ func deletePolicyController(instance *klusterletv1alpha1.KlusterletService, c cl
 	return err
 }
 
-func newPolicyControllerCR(cr *klusterletv1alpha1.KlusterletService) *klusterletv1alpha1.PolicyController {
+func newPolicyControllerCR(cr *multicloudv1beta1.Endpoint) *klusterletv1alpha1.PolicyController {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
@@ -170,7 +192,7 @@ func newPolicyControllerCR(cr *klusterletv1alpha1.KlusterletService) *klusterlet
 	}
 }
 
-func removePolicyFinalizer(instance *klusterletv1alpha1.KlusterletService, policyCtrlCR *klusterletv1alpha1.PolicyController) {
+func removePolicyFinalizer(instance *multicloudv1beta1.Endpoint, policyCtrlCR *klusterletv1alpha1.PolicyController) {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == policyCtrlCR.Name {
 			instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
@@ -179,7 +201,7 @@ func removePolicyFinalizer(instance *klusterletv1alpha1.KlusterletService, polic
 	}
 }
 
-func cleanUpAfterPolicyCRDeletion(instance *klusterletv1alpha1.KlusterletService, c client.Client, policyCtrlCR *klusterletv1alpha1.PolicyController) error {
+func cleanUpAfterPolicyCRDeletion(instance *multicloudv1beta1.Endpoint, c client.Client, policyCtrlCR *klusterletv1alpha1.PolicyController) error {
 	if !policyFinalizerExists(instance, policyCtrlCR) {
 		// Finalizer: Not exists
 		log.Info("Finalizer " + policyCtrlCR.Name + " is not existed. No need to CleanUp and exit the CleanUp after Deletion Policy Controller Process")
@@ -208,10 +230,12 @@ func cleanUpAfterPolicyCRDeletion(instance *klusterletv1alpha1.KlusterletService
 		if err != nil {
 			log.Info("Failed to delete the existing job " + jobname)
 		}
+
+		removePolicyFinalizer(instance, policyCtrlCR)
+		return nil
 	}
 
 	// Job: Not Existed
-	// var ttl int32 = 1
 	var activesecond int64 = 60
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -223,7 +247,6 @@ func cleanUpAfterPolicyCRDeletion(instance *klusterletv1alpha1.KlusterletService
 		},
 
 		Spec: batchv1.JobSpec{
-			// TTLSecondsAfterFinished: &ttl,
 			ActiveDeadlineSeconds: &activesecond,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
@@ -255,7 +278,7 @@ func cleanUpAfterPolicyCRDeletion(instance *klusterletv1alpha1.KlusterletService
 	return err
 }
 
-func policyFinalizerExists(instance *klusterletv1alpha1.KlusterletService, policyCtrlCR *klusterletv1alpha1.PolicyController) bool {
+func policyFinalizerExists(instance *multicloudv1beta1.Endpoint, policyCtrlCR *klusterletv1alpha1.PolicyController) bool {
 	finalexist := false
 	for _, finalizer := range instance.Finalizers {
 		if finalizer == policyCtrlCR.Name {
