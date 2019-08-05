@@ -12,20 +12,20 @@ import (
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 )
 
-var versionComponentImageMap = map[string]map[string]string{
+var versionComponentImageNameMap = map[string]map[string]string{
 	"3.2.0": map[string]string{
-		"search-collector":        "ibmcom/search-collector",
-		"weave":                   "ibmcom/mcm-weave-scope",
-		"collector":               "ibmcom/weave-collector",
-		"router":                  "ibmcom/icp-management-ingress",
-		"tiller":                  "ibmcom/tiller",
-		"work-manager":            "ibmcom/mcm-klusterlet",
-		"deployable":              "ibmcom/deployable",
-		"connection-manager":      "ibmcom/mcm-operator",
-		"cert-manager-controller": "ibmcom/icp-cert-manager-controller",
-		"cert-manager-acmesolver": "ibmcom/icp-cert-manager-acmesolver",
-		"service-registry":        "ibmcom/mcm-service-registry",
-		"coredns":                 "ibmcom/coredns",
+		"search-collector":        "search-collector",
+		"weave":                   "mcm-weave-scope",
+		"collector":               "weave-collector",
+		"router":                  "icp-management-ingress",
+		"tiller":                  "tiller",
+		"work-manager":            "mcm-klusterlet",
+		"deployable":              "deployable",
+		"connection-manager":      "mcm-operator",
+		"cert-manager-controller": "icp-cert-manager-controller",
+		"cert-manager-acmesolver": "icp-cert-manager-acmesolver",
+		"service-registry":        "mcm-service-registry",
+		"coredns":                 "coredns",
 	},
 }
 
@@ -50,19 +50,22 @@ var versionComponentTagMap = map[string]map[string]string{
 func (instance Endpoint) GetImage(name string) (image.Image, error) {
 	img := image.Image{}
 
-	if componentImageMap, ok := versionComponentImageMap[instance.Spec.Version]; ok {
+	if componentImageMap, ok := versionComponentImageNameMap[instance.Spec.Version]; ok {
 		if imageName, ok := componentImageMap[name]; ok {
 			if instance.Spec.ImageRegistry != "" {
 				img.Repository = instance.Spec.ImageRegistry + "/" + imageName
 			} else {
 				img.Repository = imageName
 			}
-
 		} else {
 			return img, fmt.Errorf("unable to locate image name for component %s", name)
 		}
 	} else {
 		return img, fmt.Errorf("unable to locate image name for version %s", instance.Spec.Version)
+	}
+
+	if instance.Spec.ImageNamePostfix != "" {
+		img.Repository = img.Repository + instance.Spec.ImageNamePostfix
 	}
 
 	if componentTagMap, ok := versionComponentTagMap[instance.Spec.Version]; ok {
