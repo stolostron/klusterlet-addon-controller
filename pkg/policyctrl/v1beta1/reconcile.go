@@ -11,7 +11,6 @@ import (
 
 	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -28,151 +27,90 @@ import (
 
 var log = logf.Log.WithName("policyctrl")
 
-// Reconcile the PolicyController Component
+// Reconcile Resolves differences in the running state of the connection manager services and CRDs.
 func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
-	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
-	reqLogger.Info("Reconciling PolicyController")
+	reqLogger := log.WithValues("KlusterletService.Namespace", instance.Namespace, "KlusterletService.Name", instance.Name)
+	reqLogger.Info("Reconciling ConnectionManager")
 
-	policyCtrlCR := newPolicyControllerCR(instance)
-	err := controllerutil.SetControllerReference(instance, policyCtrlCR, scheme)
+	policyCtrlCR, err := newPolicyControllerCR(instance)
 	if err != nil {
-		log.Info("Failed to set the Reference for the PolicyController: ", "PolicyController.Name: ", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
+		log.Error(err, "Fail to generate desired PolicyController CR")
 		return err
 	}
 
-	policyCtrlCR.Spec.DeployedOnHub = inspect.DeployedOnHub(client)
+	err = controllerutil.SetControllerReference(instance, policyCtrlCR, scheme)
+	if err != nil {
+		log.Error(err, "Unable to SetControllerReference")
+		return err
+	}
 
 	foundPolicyCtrlCR := &klusterletv1alpha1.PolicyController{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: policyCtrlCR.Name, Namespace: policyCtrlCR.Namespace}, foundPolicyCtrlCR)
-
-	if err != nil && !errors.IsNotFound(err) {
-		log.Info("Unexpected error while GET PolicyController CR ", "PolicyController.Name:", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
-		return err
-	}
-	isCRFound := err == nil
-
-	if instance.DeletionTimestamp != nil {
-		log.V(5).Info("Instance IS in deletion state")
-		// Klusterlet: deleting
-		if isCRFound {
-			log.V(5).Info("PolicyController CR DOES exist")
-			// Policy CR: Found
-			err = deletePolicyController(instance, client, policyCtrlCR, foundPolicyCtrlCR)
-			if err != nil {
-				log.Info("Failed to delete the PolicyController ", "PolicyController.Name: ", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
-				return err
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.V(5).Info("PolicyController CR DOES NOT exist")
+			if instance.GetDeletionTimestamp() == nil {
+				log.V(5).Info("Instance IS NOT in deletion state")
+				if instance.Spec.PolicyController.Enabled {
+					log.V(5).Info("PolicyController ENABLED")
+					err := create(instance, policyCtrlCR, client)
+					if err != nil {
+						log.Error(err, "fail to CREATE PolicyController CR")
+						return err
+					}
+				} else {
+					log.V(5).Info("PolicyController DISABLED")
+					err := finalize(instance, policyCtrlCR, client)
+					if err != nil {
+						log.Error(err, "fail to FINALIZE PolicyController CR")
+						return err
+					}
+				}
+			} else {
+				log.V(5).Info("Instance IS in deletion state")
+				err := finalize(instance, policyCtrlCR, client)
+				if err != nil {
+					log.Error(err, "fail to FINALIZE PolicyController CR")
+					return err
+				}
 			}
-
-			// Policy CR: Not Found
-			reqLogger.Info("Successfully Reconciled PolicyController")
-			return nil
-		}
-
-		log.V(5).Info("PolicyController CR DOES NOT exist")
-		err = cleanUpAfterPolicyCRDeletion(instance, client, policyCtrlCR)
-		if err != nil {
-			log.Info("Failed to clean up after the PolicyController deleting ", "PolicyController.Name: ", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
+		} else {
+			log.Error(err, "Unexpected ERROR")
 			return err
 		}
-
-		reqLogger.Info("Successfully Reconciled PolicyController")
-		return nil
-	}
-
-	log.V(5).Info("Instance IS NOT in deletion state")
-	// Klusterlet: Not deleting
-	if isCRFound {
+	} else {
 		log.V(5).Info("PolicyController CR DOES exist")
-		if instance.Spec.PolicyController.Enabled {
-			log.V(5).Info("PolicyController ENABLED")
-			//TODO(diane): handle Update
-			reqLogger.Info("Successfully Reconciled PolicyController")
-			return nil
+		if foundPolicyCtrlCR.GetDeletionTimestamp() == nil {
+			log.V(5).Info("PolicyController CR IS NOT in deletion state")
+			if instance.GetDeletionTimestamp() == nil && instance.Spec.PolicyController.Enabled {
+				log.V(5).Info("Instance IS NOT in deletion state and PolicyController is ENABLED")
+				err := update(instance, policyCtrlCR, foundPolicyCtrlCR, client)
+				if err != nil {
+					log.Error(err, "fail to UPDATE PolicyController CR")
+					return err
+				}
+			} else {
+				log.V(5).Info("Instance IS in deletion state or PolicyController is DISABLED")
+				err := delete(foundPolicyCtrlCR, client)
+				if err != nil {
+					log.Error(err, "fail to DELETE PolicyController CR")
+					return err
+				}
+			}
 		}
-
-		log.V(5).Info("PolicyController DISABLED")
-		// Policy: Disabled
-		err = deletePolicyController(instance, client, policyCtrlCR, foundPolicyCtrlCR)
-		if err != nil {
-			log.Info("Failed to delete the PolicyController: ", "PolicyController.Name: ", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
-			return err
-		}
-
-		reqLogger.Info("Successfully Reconciled PolicyController")
-		return nil
 	}
 
-	log.V(5).Info("PolicyController CR DOES NOT exist")
-	// Klusterlet: Not deleting
-	// Policy CR: Not found
-	if instance.Spec.PolicyController.Enabled {
-		log.V(5).Info("PolicyController ENABLED")
-		// Policy Component: enabled
-		err = createPolicyController(instance, client, policyCtrlCR)
-		if err != nil {
-			log.Info("Failed to create the PolicyController: ", "PolicyController.Name: ", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
-			return err
-		}
-		instance.Finalizers = append(instance.Finalizers, policyCtrlCR.Name)
-
-		reqLogger.Info("Successfully Reconciled PolicyController")
-		return nil
-	}
-
-	log.V(5).Info("PolicyController DISABLED")
-	// Klusterlet: Not deleting
-	// Policy CR: Not found
-	// Policy Component: Disable
-	if policyFinalizerExists(instance, policyCtrlCR) {
-		// Finalizer: Exists
-		// Clean up and remove finalizer
-		err = cleanUpAfterPolicyCRDeletion(instance, client, policyCtrlCR)
-		if err != nil {
-			log.Info("Failed to clean up for PolicyController: ", "PolicyController.Name: ", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
-			return err
-		}
-		removePolicyFinalizer(instance, policyCtrlCR)
-	}
-
-	reqLogger.Info("Successfully Reconciled PolicyController")
+	reqLogger.Info("Successfully Reconciled ConnectionManager")
 	return nil
 }
 
-func createPolicyController(instance *multicloudv1beta1.Endpoint, c client.Client, policyCtrlCR *klusterletv1alpha1.PolicyController) error {
-	finalexist := policyFinalizerExists(instance, policyCtrlCR)
-	if finalexist {
-		log.Info("Finalizer " + policyCtrlCR.Name + " is already existed. Exit the Creating Policy Controller CR Process")
-		return nil
+func newPolicyControllerCR(cr *multicloudv1beta1.Endpoint) (*klusterletv1alpha1.PolicyController, error) {
+	image, err := cr.GetImage("policy-controller")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "policy-controller")
+		return nil, err
 	}
 
-	log.Info("Creating a new PolicyController ", "PolicyController.Name:", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
-	return c.Create(context.TODO(), policyCtrlCR)
-}
-
-func deletePolicyController(instance *multicloudv1beta1.Endpoint, c client.Client, policyCtrlCR *klusterletv1alpha1.PolicyController, foundPolicyCtrlCR *klusterletv1alpha1.PolicyController) error {
-	// Check if the finalizer is existed or not. If not, do nothing.
-	if !policyFinalizerExists(instance, policyCtrlCR) {
-		log.Info("Finalizer " + policyCtrlCR.Name + " is not existed. Exit the Deleting Policy Controller Process")
-		return nil
-	}
-
-	// Check if there is a PolicyControllerCR in the cluster or not.
-	var err error
-
-	// Make sure the found Policy CR is NOT in the state of deleting.
-	if foundPolicyCtrlCR.DeletionTimestamp == nil {
-		log.Info("Deleting the PolicyController ", "PolicyController.Name:", policyCtrlCR.Name, ", PolicyController.Namespace:", policyCtrlCR.Namespace)
-		err = c.Delete(context.TODO(), policyCtrlCR)
-		if err != nil && errors.IsNotFound(err) {
-			log.Info("No existing policy controller found to delete.")
-			return nil
-		}
-	}
-
-	return err
-}
-
-func newPolicyControllerCR(cr *multicloudv1beta1.Endpoint) *klusterletv1alpha1.PolicyController {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
@@ -187,9 +125,46 @@ func newPolicyControllerCR(cr *multicloudv1beta1.Endpoint) *klusterletv1alpha1.P
 			ClusterName:       cr.Spec.ClusterName,
 			ClusterNamespace:  cr.Spec.ClusterNamespace,
 			ConnectionManager: cr.Name + "-connmgr",
-			//TODO(diane): add Image
+			Image:             image,
+			ImagePullSecret:   cr.Spec.ImagePullSecret,
 		},
+	}, nil
+}
+
+func create(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.PolicyController, c client.Client) error {
+	log.Info("Creating a new PolicyController", "PolicyController.Namespace", cr.Namespace, "PolicyController.Name", cr.Name)
+	err := c.Create(context.TODO(), cr)
+	if err != nil {
+		log.Error(err, "Fail to CREATE PolicyController CR")
+		return err
 	}
+
+	// Adding Finalizer to instance
+	instance.Finalizers = append(instance.Finalizers, cr.Name)
+	return nil
+}
+
+func update(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.PolicyController, foundCR *klusterletv1alpha1.PolicyController, client client.Client) error {
+	foundCR.Spec = cr.Spec
+	err := client.Update(context.TODO(), foundCR)
+	if err != nil && !errors.IsConflict(err) {
+		log.Error(err, "fail to UPDATE SearchCollector CR")
+		return err
+	}
+
+	// Adding Finalizer to instance if Finalizer does not exist
+	// NOTE: This is to handle requeue due to failed instance update during creation
+	for _, finalizer := range instance.Finalizers {
+		if finalizer == cr.Name {
+			return nil
+		}
+	}
+	instance.Finalizers = append(instance.Finalizers, cr.Name)
+	return nil
+}
+
+func delete(policyCR *klusterletv1alpha1.PolicyController, c client.Client) error {
+	return c.Delete(context.TODO(), policyCR)
 }
 
 func removePolicyFinalizer(instance *multicloudv1beta1.Endpoint, policyCtrlCR *klusterletv1alpha1.PolicyController) {
@@ -201,79 +176,70 @@ func removePolicyFinalizer(instance *multicloudv1beta1.Endpoint, policyCtrlCR *k
 	}
 }
 
-func cleanUpAfterPolicyCRDeletion(instance *multicloudv1beta1.Endpoint, c client.Client, policyCtrlCR *klusterletv1alpha1.PolicyController) error {
+func finalize(instance *multicloudv1beta1.Endpoint, policyCtrlCR *klusterletv1alpha1.PolicyController, c client.Client) error {
 	if !policyFinalizerExists(instance, policyCtrlCR) {
 		// Finalizer: Not exists
 		log.Info("Finalizer " + policyCtrlCR.Name + " is not existed. No need to CleanUp and exit the CleanUp after Deletion Policy Controller Process")
 		return nil
 	}
 
-	// Finalizer: Not exists
+	// Finalizer: Exists
 	jobname := policyCtrlCR.Name + "-post-delete"
 	existedJob := &batchv1.Job{}
 	err := c.Get(context.TODO(), types.NamespacedName{Name: jobname, Namespace: policyCtrlCR.Namespace}, existedJob)
 
-	if err != nil && !errors.IsNotFound(err) {
-		return err
-	}
-
-	// Job: Existed
 	if err == nil {
 		log.Info("The job for Job is existed. Deleting the existed Job")
-		// Status: Not Successed - Not Finished
-		if existedJob.Status.Succeeded == 0 {
-			return nil
-		}
+		// Status:  Successed
+		if existedJob.Status.Succeeded == 1 {
+			err = c.Delete(context.TODO(), existedJob)
+			if err != nil {
+				log.Info("Failed to delete the existing job " + jobname)
+			}
 
-		// Status: Successed
-		err = c.Delete(context.TODO(), existedJob)
-		if err != nil {
-			log.Info("Failed to delete the existing job " + jobname)
+			removePolicyFinalizer(instance, policyCtrlCR)
 		}
-
-		removePolicyFinalizer(instance, policyCtrlCR)
+		// else requeue
 		return nil
 	}
 
-	// Job: Not Existed
-	var activesecond int64 = 60
-	job := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      policyCtrlCR.Name + "-post-delete",
-			Namespace: policyCtrlCR.Namespace,
-			Labels: map[string]string{
-				"app": instance.Name,
-			},
-		},
-
-		Spec: batchv1.JobSpec{
-			ActiveDeadlineSeconds: &activesecond,
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: policyCtrlCR.Name + "-post-delete",
-					Labels: map[string]string{
-						"name": policyCtrlCR.Name + "-post-delete",
-					},
+	if errors.IsNotFound(err) {
+		//var activesecond int64 = 60
+		job := &batchv1.Job{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      policyCtrlCR.Name + "-post-delete",
+				Namespace: policyCtrlCR.Namespace,
+				Labels: map[string]string{
+					"app": instance.Name,
 				},
-				Spec: corev1.PodSpec{
-					RestartPolicy: "Never",
-					Containers: []corev1.Container{
-						{
-							//TODO(diane): use image_util to generate image information
-							Name:            "policy-post-delete-job",
-							Image:           "ibmcom/mcm-compliance:3.2.0",
-							ImagePullPolicy: "IfNotPresent",
-							Command:         []string{"uninstall-crd"},
-							Args:            []string{"--removelist=compliances,policies,alerttargets"},
+			},
+
+			Spec: batchv1.JobSpec{
+				//ActiveDeadlineSeconds: &activesecond,
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: policyCtrlCR.Name + "-post-delete",
+						Labels: map[string]string{
+							"name": policyCtrlCR.Name + "-post-delete",
+						},
+					},
+					Spec: corev1.PodSpec{
+						RestartPolicy: "Never",
+						Containers: []corev1.Container{
+							{
+								//TODO(diane): use image_util to generate image information
+								Name:            "policy-post-delete-job",
+								Image:           "ibmcom/mcm-compliance:3.2.0",
+								ImagePullPolicy: "IfNotPresent",
+								Command:         []string{"uninstall-crd"},
+								Args:            []string{"--removelist=compliances,policies,alerttargets"},
+							},
 						},
 					},
 				},
 			},
-		},
-	}
-	err = c.Create(context.TODO(), job)
-	if err == nil {
-		removePolicyFinalizer(instance, policyCtrlCR)
+		}
+		return c.Create(context.TODO(), job)
 	}
 	return err
 }
