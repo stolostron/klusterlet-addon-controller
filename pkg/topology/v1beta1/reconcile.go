@@ -144,9 +144,9 @@ func newTopologyCollectorCR(cr *multicloudv1beta1.Endpoint, client client.Client
 		return nil, err
 	}
 
-	collectorImage, err := cr.GetImage("collector")
+	collectorImage, err := cr.GetImage("topology-collector")
 	if err != nil {
-		log.Error(err, "Fail to get Image", "Component.Name", "collector")
+		log.Error(err, "Fail to get Image", "Component.Name", "topology-collector")
 		return nil, err
 	}
 
