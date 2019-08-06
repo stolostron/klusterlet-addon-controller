@@ -32,7 +32,8 @@ type PolicyControllerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	DeployedOnHub bool `json:"deployedOnHub,omitempty"`
 	//Image information for the PolicyController
-	Image image.Image `json:"image,omitempty"`
+	Image           image.Image `json:"image,omitempty"`
+	ImagePullSecret string      `json:"imagePullSecret,omitempty"`
 }
 
 // PolicyControllerStatus defines the observed state of PolicyController

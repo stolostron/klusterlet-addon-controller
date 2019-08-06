@@ -91,8 +91,9 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 			return err
 		}
 	} else {
+		log.V(5).Info("SearchCollector CR DOES exist")
 		if foundSearchCollectorCR.GetDeletionTimestamp() == nil {
-			log.V(5).Info("SearchCollector CR DOES exist")
+			log.V(5).Info("SearchCollector IS NOT in deletion state")
 			if instance.GetDeletionTimestamp() == nil && instance.Spec.SearchCollectorConfig.Enabled {
 				log.V(5).Info("Instance IS NOT in deletion state and Search Collector is ENABLED")
 				err := update(instance, searchCollectorCR, foundSearchCollectorCR, client)
