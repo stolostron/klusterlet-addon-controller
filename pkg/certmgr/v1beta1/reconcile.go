@@ -12,7 +12,6 @@ import (
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
 
-	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -66,7 +65,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		return err
 	}
 
-	foundCertManager := &klusterletv1alpha1.CertManager{}
+	foundCertManager := &multicloudv1beta1.CertManager{}
 	log.V(5).Info("Looking for CertManager CR", "CertManager.Name", certMgr.Name, "CertManager.Namespace", certMgr.Namespace)
 	err = client.Get(context.TODO(), types.NamespacedName{Name: certMgr.Name, Namespace: certMgr.Namespace}, foundCertManager)
 	if err != nil {
@@ -210,7 +209,7 @@ func deleteSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, c
 	return nil
 }
 
-func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance *multicloudv1beta1.Endpoint, certmgr *klusterletv1alpha1.CertManager) error {
+func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance *multicloudv1beta1.Endpoint, certmgr *multicloudv1beta1.CertManager) error {
 	serviceAccount := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      certmgr.Spec.ServiceAccount.Name,
@@ -255,7 +254,7 @@ func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance
 	return nil
 }
 
-func newCertManagerCR(cr *multicloudv1beta1.Endpoint) (*klusterletv1alpha1.CertManager, error) {
+func newCertManagerCR(cr *multicloudv1beta1.Endpoint) (*multicloudv1beta1.CertManager, error) {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
@@ -266,19 +265,22 @@ func newCertManagerCR(cr *multicloudv1beta1.Endpoint) (*klusterletv1alpha1.CertM
 		return nil, err
 	}
 
-	return &klusterletv1alpha1.CertManager{
+	return &multicloudv1beta1.CertManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name + "-certmgr",
 			Namespace: cr.Namespace,
 			Labels:    labels,
 		},
-		Spec: klusterletv1alpha1.CertManagerSpec{
+		Spec: multicloudv1beta1.CertManagerSpec{
 			FullNameOverride:         cr.Name + "-certmgr",
 			ClusterResourceNamespace: cr.Namespace,
-			ServiceAccount: klusterletv1alpha1.CertManagerServiceAccount{
+			ServiceAccount: multicloudv1beta1.CertManagerServiceAccount{
 				Name: cr.Name + "-certmgr",
 			},
 			Image: image,
+			PolicyController: multicloudv1beta1.CertManagerPolicyControllerSpec{
+				Enabled: false,
+			},
 		},
 	}, nil
 }

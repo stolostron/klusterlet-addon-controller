@@ -30,7 +30,15 @@ type CertManagerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ServiceAccount CertManagerServiceAccount `json:"serviceAccount"`
 
-	Image image.Image `json:"image,omitempty"`
+	Image            image.Image                     `json:"image,omitempty"`
+	PolicyController CertManagerPolicyControllerSpec `json:"policy-controller"`
+}
+
+// CertManagerPolicyControllerSpec defines policy-controller enabledment in ICP certmanager chart
+// +k8s:openapi-gen=true
+type CertManagerPolicyControllerSpec struct {
+	// +kubebuilder:validation:MinLength=1
+	Enabled bool `json:"enabled"`
 }
 
 // CertManagerServiceAccount defines service account configuration in the spec
