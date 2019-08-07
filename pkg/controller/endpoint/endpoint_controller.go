@@ -12,7 +12,6 @@ import (
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 	certmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/certmgr/v1beta1"
-	component "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component/v1beta1"
 	connmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr/v1beta1"
 	metering "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/metering/v1beta1"
 	policyctrl "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/policyctrl/v1beta1"
@@ -113,10 +112,10 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 		return reconcile.Result{}, err
 	}
 
-	err = component.Reconcile(instance, r.client, r.scheme)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
+	// err = component.Reconcile(instance, r.client, r.scheme)
+	// if err != nil {
+	// 	return reconcile.Result{}, err
+	// }
 
 	err = certmgr.Reconcile(instance, r.client, r.scheme)
 	if err != nil {

@@ -1,7 +1,46 @@
 apiVersion: multicloud.ibm.com/v1beta1
 kind: Endpoint
 metadata:
-  name: example-endpoint
+  name: endpoint
 spec:
-  # Add fields here
-  size: 3
+  clusterName: aks-thicc-one
+  clusterNamespace: aks-thicc-one
+  version: 3.2.0
+  imagePullSecret: tony-pull
+  imageRegistry: hyc-cloud-private-integration-docker-local.artifactory.swg-devops.com/ibmcom
+  imageNamePostfix: -amd64
+  imagePullPolicy: Always
+
+  clusterLabels:
+    cloud: "IBM"
+    vendor: "ICP"
+    environment: "Dev"
+    region: "US"
+    datacenter: "toronto"
+    owner: "marketing"
+
+  bootstrapConfig:
+    hub0: multicluster-endpoint/klusterlet-bootstrap
+
+  tillerIntegration:
+    enabled: true
+
+  prometheusIntegration:
+    enabled: false
+
+  topologyCollector:
+    enabled: false
+    updateInterval: 16
+
+  searchCollector:
+    enabled: false
+
+  policyController:
+    enabled: false
+
+  serviceRegistry:
+    enabled: false
+    coredns:
+      dnsSuffix: "mcm.svc"
+      plugins: "kube-service"
+      clusterProxyIP: ""
