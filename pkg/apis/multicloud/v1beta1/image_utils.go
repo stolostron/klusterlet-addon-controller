@@ -90,7 +90,7 @@ var versionComponentTagMap = map[string]map[string]string{
 		"weave":                   "3.2.0",
 		"topology-collector":      "3.2.0",
 		"router":                  "2.3.0",
-		"tiller":                  "v2.12.3-icp-latest",
+		"tiller":                  "v2.12.3-icp-3.2.0",
 		"work-manager":            "3.2.0",
 		"deployable":              "3.2.0",
 		"connection-manager":      "3.2.0",
