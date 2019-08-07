@@ -32,8 +32,16 @@ type ConnectionManagerSpec struct {
 
 	BootStrapConfig map[string]string `json:"bootstrapConfig"`
 
-	Image           image.Image `json:"image,omitempty"`
-	ImagePullSecret string      `json:"imagePullSecret,omitempty"`
+	Image           image.Image                     `json:"image,omitempty"`
+	ImagePullSecret string                          `json:"imagePullSecret,omitempty"`
+	GlobalView      ConnectionManagerGlobalViewSpec `json:"globalView"`
+}
+
+// ConnectionManagerGlobalViewSpec defines the spec for connection manager global view
+// +k8s:openapi-gen=true
+type ConnectionManagerGlobalViewSpec struct {
+	Enabled         bool   `json:"enabled"`
+	CollectorLabels string `json:"collectorLabels"`
 }
 
 // ConnectionManagerStatus defines the observed state of ConnectionManager

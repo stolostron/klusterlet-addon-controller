@@ -20,7 +20,7 @@ spec:
     owner: "marketing"
 
   bootstrapConfig:
-    hub0: multicluster-endpoint/klusterlet-bootstrap
+    hubSecret: multicluster-endpoint/klusterlet-bootstrap
 
   tillerIntegration:
     enabled: true
