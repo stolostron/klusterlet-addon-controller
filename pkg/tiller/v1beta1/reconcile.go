@@ -9,7 +9,6 @@ package v1beta1
 import (
 	"context"
 
-	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -53,7 +52,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		return err
 	}
 
-	foundTillerCR := &klusterletv1alpha1.Tiller{}
+	foundTillerCR := &multicloudv1beta1.Tiller{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: tillerCR.Name, Namespace: tillerCR.Namespace}, foundTillerCR)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -116,7 +115,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 }
 
 // TODO(liuhao): the following method need to be refactored as instance method of Tiller struct
-func newTillerCR(instance *multicloudv1beta1.Endpoint) (*klusterletv1alpha1.Tiller, error) {
+func newTillerCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1beta1.Tiller, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
@@ -127,23 +126,24 @@ func newTillerCR(instance *multicloudv1beta1.Endpoint) (*klusterletv1alpha1.Till
 		return nil, err
 	}
 
-	return &klusterletv1alpha1.Tiller{
+	return &multicloudv1beta1.Tiller{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-tiller",
 			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
-		Spec: klusterletv1alpha1.TillerSpec{
+		Spec: multicloudv1beta1.TillerSpec{
 			FullNameOverride: instance.Name + "-tiller",
 			CACertIssuer:     instance.Name + "-self-signed",
 			DefaultAdminUser: instance.Name + "-admin",
 			Image:            image,
 			ImagePullSecret:  instance.Spec.ImagePullSecret,
+			KubeClusterType:  "noticp",
 		},
 	}, nil
 }
 
-func create(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.Tiller, client client.Client) error {
+func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Tiller, client client.Client) error {
 	log.Info("Creating a new Tiller", "Tiller.Namespace", cr.Namespace, "Tiller.Name", cr.Name)
 	err := client.Create(context.TODO(), cr)
 	if err != nil {
@@ -156,7 +156,7 @@ func create(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.Tiller,
 	return nil
 }
 
-func update(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.Tiller, foundCR *klusterletv1alpha1.Tiller, client client.Client) error {
+func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Tiller, foundCR *multicloudv1beta1.Tiller, client client.Client) error {
 	foundCR.Spec = cr.Spec
 	err := client.Update(context.TODO(), foundCR)
 	if err != nil && !errors.IsConflict(err) {
@@ -175,11 +175,11 @@ func update(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.Tiller,
 	return nil
 }
 
-func delete(foundCR *klusterletv1alpha1.Tiller, client client.Client) error {
+func delete(foundCR *multicloudv1beta1.Tiller, client client.Client) error {
 	return client.Delete(context.TODO(), foundCR)
 }
 
-func finalize(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.Tiller, client client.Client) error {
+func finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Tiller, client client.Client) error {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == cr.Name {
 			// Delete Secrets

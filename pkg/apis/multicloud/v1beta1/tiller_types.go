@@ -32,6 +32,7 @@ type TillerSpec struct {
 
 	Image           image.Image `json:"image,omitempty,omitempty"`
 	ImagePullSecret string      `json:"imagePullSecret,omitempty"`
+	KubeClusterType string      `json:"kubernetes_cluster_type"`
 }
 
 // TillerStatus defines the observed state of Tiller
