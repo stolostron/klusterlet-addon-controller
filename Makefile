@@ -20,9 +20,17 @@ GO111MODULE := off
 GOPACKAGES=$(shell go list ./... | grep -v /vendor/ | grep -v /internal | grep -v /build | grep -v /test | grep -v /i18n/resources)
 GOOS = $(shell go env GOOS)
 
+ARCH ?= $(shell uname -m)
+ifeq ($(ARCH), x86_64)
+	ARCH = amd64
+endif
+
+ARCH_TYPE = $(ARCH)
+
 DOCKER_FILE = build/Dockerfile
 DOCKER_BUILD_PATH = .build-docker
 DOCKER_IMAGE ?= icp-multicluster-endpoint-operator
+DOCKER_IMAGE_ARCH = $(DOCKER_IMAGE)-$(ARCH)
 ## WARNING: OPERATOR IMAGE_DESCRIPTION VAR MUST NOT CONTAIN SPACES.
 IMAGE_DESCRIPTION ?= IBM_Multicloud_Operator
 DOCKER_REGISTRY ?= hyc-cloud-private-integration-docker-local.artifactory.swg-devops.com
@@ -35,20 +43,6 @@ VCS_REF = $(if $(WORKING_CHANGES),$(GIT_COMMIT)-$(BUILD_DATE),$(GIT_COMMIT))
 GIT_REMOTE_URL = "git@github.ibm.com:IBMPrivateCloud/ibm-klusterlet-operator.git"
 SWAGGER_API_DIR = "api/multicluster-endpoint-api"
 RELEASED_API_VERSION = 3.2.1
-
-ARCH ?= $(shell uname -m)
-ARCH_TYPE = $(ARCH)
-
-ifeq ($(ARCH), x86_64)
-	ARCH_TYPE = amd64
-endif
-
-ifeq ($(GOOS), darwin)
-	OPERATOR_SDK_DOWNLOAD_URL = https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-apple-darwin
-endif
-ifeq ($(GOOS), linux)
-	OPERATOR_SDK_DOWNLOAD_URL = https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu
-endif
 
 BEFORE_SCRIPT := $(shell ./build/before-make-script.sh)
 
@@ -127,16 +121,13 @@ endif
 
 ### OPERATOR SDK #######################
 .PHONY: operator\:tools
-operator\:tools: $(GOPATH)/bin/operator-sdk
-
-$(GOPATH)/bin/operator-sdk:
-	@curl -Lo $(GOPATH)/bin/operator-sdk $(OPERATOR_SDK_DOWNLOAD_URL) 
-	@chmod +x $(GOPATH)/bin/operator-sdk
+operator\:tools: 
+	./build/install-operator-sdk.sh
 
 .PHONY: operator\:build
 operator\:build: deps
 	## WARNING: DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES.
-	operator-sdk build $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE):$(DOCKER_TAG) --image-build-args "$(DOCKER_BUILD_OPTS)"
+	operator-sdk build $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE_ARCH):$(DOCKER_TAG) --image-build-args "$(DOCKER_BUILD_OPTS)"
 
 .PHONY: operator\:run
 operator\:run:

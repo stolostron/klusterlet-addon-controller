@@ -51,6 +51,7 @@ function fold_end() {
 
 echo TARGET=$TARGET
 echo OS=$OS
+echo TRAVIS_OS_NAME=$TRAVIS_OS_NAME
 echo ARCH=$ARCH
 echo COMMIT=$COMMIT
 
@@ -64,40 +65,39 @@ fold_start build "Build"
 announce make build
 fold_end build
 
-if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-    fold_start check "Check"
-    announce make check
-    fold_end check
-fi
+fold_start check "Check"
+announce make check
+fold_end check
 
-if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-    fold_start api "API"
-    make swagger:diff
-    fold_end api
-fi
+fold_start api "API"
+announce make swagger:diff
+fold_end api
 
-if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-    fold_start test "Test"
-    make test
-    fold_end test
-fi
+fold_start test "Test"
+announce make test
+fold_end test
+
+fold_start tools "Operator SDK Install"
+announce make operator:tools
+fold_end tools
 
 fold_start image "Image"
-announce make operator:tools
 announce make image
 fold_end image
 
 if [[ "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
-    fold_start publish "Publish"
-    # publish to Artifactory
-    export DOCKER_REGISTRY=hyc-cloud-private-integration-docker-local.artifactory.swg-devops.com
-    export DOCKER_USER=$ARTIFACTORY_USER
-    export DOCKER_PASS=$ARTIFACTORY_KEY
-    export DOCKER_NAMESPACE=ibmcom
-    announce make docker:login docker:push
-    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-        export DOCKER_TAG=$DOCKER_TAG
-        announce make docker:push
-    fi
-    fold_end publish
+  fold_start publish "Publish"
+  # publish to Artifactory
+  export DOCKER_REGISTRY=hyc-cloud-private-integration-docker-local.artifactory.swg-devops.com
+  export DOCKER_USER=$ARTIFACTORY_USER
+  export DOCKER_PASS=$ARTIFACTORY_KEY
+  export DOCKER_NAMESPACE=ibmcom
+  announce make docker:login
+  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      export DOCKER_TAG=$DOCKER_TAG
+      announce make docker:push-arch
+  fi
+  fold_end publish
+else
+  echo "Not pushing image on pull request"
 fi
