@@ -69,5 +69,7 @@ rules:
   - tillers
   - topologycollectors
   - workmanagers
+  - meterings
+  - mongodbs
   verbs:
   - '*'

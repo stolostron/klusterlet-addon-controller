@@ -123,7 +123,7 @@ func newTillerCR(instance *multicloudv1beta1.Endpoint) (*klusterletv1alpha1.Till
 
 	image, err := instance.GetImage("tiller")
 	if err != nil {
-		log.Error(err, "ail to get Image", "Component.Name", "tiller")
+		log.Error(err, "Fail to get Image", "Component.Name", "tiller")
 		return nil, err
 	}
 
