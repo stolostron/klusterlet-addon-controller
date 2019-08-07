@@ -1,0 +1,50 @@
+apiVersion: multicloud.ibm.com/v1beta1
+kind: Endpoint
+metadata:
+  name: endpoint
+spec:
+  clusterName: working-on-saturday
+  clusterNamespace: working-on-saturday
+
+  version: 3.2.0
+  imagePullSecret: hao-artifactory
+  imageRegistry: hyc-cloud-private-edge-docker-local.artifactory.swg-devops.com/ibmcom-amd64
+  imagePullPolicy: Always
+  componentOperatorImage: hyc-cloud-private-scratch-docker-local.artifactory.swg-devops.com/ibmcom/klusterlet-component-operator-amd64:metering
+
+  clusterLabels:
+    cloud: "IBM"
+    vendor: "ICP"
+    environment: "Dev"
+    region: "US"
+    datacenter: "toronto"
+    owner: "marketing"
+
+  bootstrapConfig:
+    hub0: multicluster-endpoint/klusterlet-bootstrap
+
+  tillerIntegration:
+    enabled: false
+
+  prometheusIntegration:
+    enabled: false
+
+  topologyCollector:
+    enabled: false
+    updateInterval: 16
+
+  searchCollector:
+    enabled: false
+
+  policyController:
+    enabled: false
+
+  metering:
+    enabled: true
+
+  serviceRegistry:
+    enabled: false
+    coredns:
+      dnsSuffix: "mcm.svc"
+      plugins: "kube-service"
+      clusterProxyIP: ""

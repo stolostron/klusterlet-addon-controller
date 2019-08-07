@@ -44,6 +44,13 @@ var versionComponentImageNameMap = map[string]map[string]string{
 		"coredns":                 "coredns",
 		"component-operator":      "klusterlet-component-operator",
 		"policy-controller":       "mcm-compliance",
+		"metering-reader":         "metering-data-manager",
+		"metering-sender":         "metering-data-manager",
+		"metering-dm":             "metering-data-manager",
+		"curl":                    "curl",
+		"mongodb":                 "icp-mongodb",
+		"mongodb-install":         "icp-mongodb-install",
+		"mongodb-metrics":         "icp-mongodb-exporter",
 	},
 }
 
@@ -63,6 +70,13 @@ var versionComponentTagMap = map[string]map[string]string{
 		"coredns":                 "1.2.6",
 		"policy-controller":       "3.2.0",
 		"component-operator":      "3.2.0",
+		"metering-reader":         "latest",
+		"metering-sender":         "latest",
+		"metering-dm":             "latest",
+		"curl":                    "4.2.0-f3",
+		"mongodb":                 "4.0.6-f1",
+		"mongodb-install":         "latest",
+		"mongodb-metrics":         "latest",
 	},
 	"latest": map[string]string{
 		"search-collector":        "latest",

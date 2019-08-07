@@ -1,0 +1,7 @@
+apiVersion: multicloud.ibm.com/v1beta1
+kind: Metering
+metadata:
+  name: example-metering
+spec:
+  # Add fields here
+  size: 3

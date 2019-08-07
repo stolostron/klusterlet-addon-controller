@@ -77,7 +77,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	} else {
 		log.V(5).Info("ServiceRegisry CR DOES exist")
 		if foundServiceRegisryCR.GetDeletionTimestamp() == nil {
-			log.V(5).Info("ServiceRegisry CR DOES exist")
+			log.V(5).Info("ServiceRegisry CR is not in deletion state")
 			if instance.GetDeletionTimestamp() == nil && instance.Spec.ServiceRegistryConfig.Enabled {
 				log.Info("Instance IS NOT in deletion state and ServiceRegistry ENABLED")
 				err := update(instance, serviceRegisryCR, foundServiceRegisryCR, client)
