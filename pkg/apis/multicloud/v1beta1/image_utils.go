@@ -110,6 +110,7 @@ var versionComponentTagMap = map[string]map[string]string{
 		"mongodb":                 "4.0.6-f1",
 		"mongodb-install":         "3.2.0",
 		"mongodb-metrics":         "3.2.0",
+		"subscription":            "3.2.0",
 	},
 	"3.2.1": map[string]string{
 		"search-collector":        "3.2.1",
