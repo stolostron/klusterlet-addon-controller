@@ -86,6 +86,7 @@ jobs:
         - echo "TRAVIS_EVENT_TYPE = $TRAVIS_EVENT_TYPE"
         - |
           if [[ "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
+            make init
             make docker:login
             make docker:manifest-tool
             make docker:multi-arch
