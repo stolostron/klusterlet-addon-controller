@@ -11,7 +11,6 @@ import (
 
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 
-	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 	tiller "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller/v1beta1"
 
@@ -47,7 +46,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		return false, err
 	}
 
-	foundWorkMgrCR := &klusterletv1alpha1.WorkManager{}
+	foundWorkMgrCR := &multicloudv1beta1.WorkManager{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: workMgrCR.Name, Namespace: workMgrCR.Namespace}, foundWorkMgrCR)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -99,12 +98,12 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-func newWorkManagerTillerIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) klusterletv1alpha1.WorkManagerTillerIntegration {
+func newWorkManagerTillerIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) multicloudv1beta1.WorkManagerTillerIntegration {
 	if cr.Spec.TillerIntegration.Enabled {
 		// ICP Tiller
 		icpTillerServiceEndpoint := tiller.GetICPTillerServiceEndpoint(client)
 		if icpTillerServiceEndpoint != "" {
-			return klusterletv1alpha1.WorkManagerTillerIntegration{
+			return multicloudv1beta1.WorkManagerTillerIntegration{
 				Enabled:           true,
 				HelmReleasePrefix: "md",
 				Endpoint:          icpTillerServiceEndpoint,
@@ -115,7 +114,7 @@ func newWorkManagerTillerIntegration(cr *multicloudv1beta1.Endpoint, client clie
 		}
 
 		// KlusterletOperator deployed Tiller
-		return klusterletv1alpha1.WorkManagerTillerIntegration{
+		return multicloudv1beta1.WorkManagerTillerIntegration{
 			Enabled:           true,
 			HelmReleasePrefix: "md",
 			Endpoint:          cr.Name + "-tiller" + ":44134",
@@ -125,18 +124,18 @@ func newWorkManagerTillerIntegration(cr *multicloudv1beta1.Endpoint, client clie
 		}
 	}
 
-	return klusterletv1alpha1.WorkManagerTillerIntegration{
+	return multicloudv1beta1.WorkManagerTillerIntegration{
 		Enabled: false,
 	}
 }
 
-func newWorkManagerPrometheusIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) klusterletv1alpha1.WorkManagerPrometheusIntegration {
+func newWorkManagerPrometheusIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) multicloudv1beta1.WorkManagerPrometheusIntegration {
 	if cr.Spec.PrometheusIntegration.Enabled {
 		// OpenShift Prometheus Service
 		foundOpenshiftPrometheusService := &corev1.Service{}
 		err := client.Get(context.TODO(), types.NamespacedName{Name: "prometheus-k8s", Namespace: "openshift-monitoring"}, foundOpenshiftPrometheusService)
 		if err == nil { //found OpenShift Prometheus
-			return klusterletv1alpha1.WorkManagerPrometheusIntegration{
+			return multicloudv1beta1.WorkManagerPrometheusIntegration{
 				Enabled:        true,
 				Service:        "openshift-monitoring/prometheus-k8s",
 				Secret:         "",
@@ -148,7 +147,7 @@ func newWorkManagerPrometheusIntegration(cr *multicloudv1beta1.Endpoint, client 
 		foundICPPrometheusService := &corev1.Service{}
 		err = client.Get(context.TODO(), types.NamespacedName{Name: "prometheus-k8s", Namespace: "openshift-monitoring"}, foundICPPrometheusService)
 		if err == nil { //found ICP Prometheus
-			return klusterletv1alpha1.WorkManagerPrometheusIntegration{
+			return multicloudv1beta1.WorkManagerPrometheusIntegration{
 				Enabled:        true,
 				Service:        "kube-system/monitoring-prometheus",
 				Secret:         "kube-system/monitoring-monitoring-client-certs",
@@ -157,17 +156,17 @@ func newWorkManagerPrometheusIntegration(cr *multicloudv1beta1.Endpoint, client 
 		}
 
 		//TODO(liuhao): KlusterletOperator deployed Prometheus
-		return klusterletv1alpha1.WorkManagerPrometheusIntegration{
+		return multicloudv1beta1.WorkManagerPrometheusIntegration{
 			Enabled: false,
 		}
 	}
 
-	return klusterletv1alpha1.WorkManagerPrometheusIntegration{
+	return multicloudv1beta1.WorkManagerPrometheusIntegration{
 		Enabled: false,
 	}
 }
 
-func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*klusterletv1alpha1.WorkManager, error) {
+func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*multicloudv1beta1.WorkManager, error) {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
@@ -178,19 +177,13 @@ func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*kl
 		return nil, err
 	}
 
-	deployableImage, err := cr.GetImage("deployable")
-	if err != nil {
-		log.Error(err, "Fail to get Image", "Component.Name", "deployable")
-		return nil, err
-	}
-
-	return &klusterletv1alpha1.WorkManager{
+	return &multicloudv1beta1.WorkManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name + "-workmgr",
 			Namespace: cr.Namespace,
 			Labels:    labels,
 		},
-		Spec: klusterletv1alpha1.WorkManagerSpec{
+		Spec: multicloudv1beta1.WorkManagerSpec{
 			FullNameOverride: cr.Name + "-workmgr",
 
 			ClusterName:      cr.Spec.ClusterName,
@@ -204,14 +197,9 @@ func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*kl
 			Service:               newWorkManagerServiceConfig(),
 			Ingress:               newWorkManagerIngressConfig(client),
 
-			WorkManagerConfig: klusterletv1alpha1.WorkManagerConfig{
+			WorkManagerConfig: multicloudv1beta1.WorkManagerConfig{
 				Enabled: true,
 				Image:   workMgrImage,
-			},
-
-			DeployableConfig: klusterletv1alpha1.DeployableConfig{
-				Enabled: true,
-				Image:   deployableImage,
 			},
 
 			ImagePullSecret: cr.Spec.ImagePullSecret,
@@ -219,8 +207,8 @@ func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*kl
 	}, nil
 }
 
-func newWorkManagerServiceConfig() klusterletv1alpha1.WorkManagerService {
-	workManagerService := klusterletv1alpha1.WorkManagerService{}
+func newWorkManagerServiceConfig() multicloudv1beta1.WorkManagerService {
+	workManagerService := multicloudv1beta1.WorkManagerService{}
 
 	switch kubeVendor := inspect.Info.KubeVendor; kubeVendor {
 	case inspect.KubeVendorAKS:
@@ -238,8 +226,8 @@ func newWorkManagerServiceConfig() klusterletv1alpha1.WorkManagerService {
 	return workManagerService
 }
 
-func newWorkManagerIngressConfig(c client.Client) klusterletv1alpha1.WorkManagerIngress {
-	workManagerIngress := klusterletv1alpha1.WorkManagerIngress{}
+func newWorkManagerIngressConfig(c client.Client) multicloudv1beta1.WorkManagerIngress {
+	workManagerIngress := multicloudv1beta1.WorkManagerIngress{}
 
 	switch kubeVendor := inspect.Info.KubeVendor; kubeVendor {
 	case inspect.KubeVendorOpenShift:
@@ -254,7 +242,7 @@ func newWorkManagerIngressConfig(c client.Client) klusterletv1alpha1.WorkManager
 	return workManagerIngress
 }
 
-func create(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.WorkManager, client client.Client) error {
+func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.WorkManager, client client.Client) error {
 	log.Info("Creating a new WorkManager", "WorkManager.Namespace", cr.Namespace, "WorkManager.Name", cr.Name)
 	err := client.Create(context.TODO(), cr)
 	if err != nil {
@@ -267,7 +255,7 @@ func create(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.WorkMan
 	return nil
 }
 
-func update(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.WorkManager, foundCR *klusterletv1alpha1.WorkManager, client client.Client) error {
+func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.WorkManager, foundCR *multicloudv1beta1.WorkManager, client client.Client) error {
 	foundCR.Spec = cr.Spec
 	err := client.Update(context.TODO(), foundCR)
 	if err != nil && !errors.IsConflict(err) {
@@ -286,11 +274,11 @@ func update(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.WorkMan
 	return nil
 }
 
-func delete(foundCR *klusterletv1alpha1.WorkManager, client client.Client) error {
+func delete(foundCR *multicloudv1beta1.WorkManager, client client.Client) error {
 	return client.Delete(context.TODO(), foundCR)
 }
 
-func finalize(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.WorkManager, client client.Client) error {
+func finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.WorkManager, client client.Client) error {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == cr.Name {
 			// Deletes Secrets
