@@ -43,7 +43,6 @@ type WorkManagerSpec struct {
 	Ingress WorkManagerIngress `json:"ingress"`
 
 	WorkManagerConfig WorkManagerConfig `json:"workManager,omitempty"`
-	DeployableConfig  DeployableConfig  `json:"deployable,omitempty"`
 
 	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 }
@@ -51,13 +50,6 @@ type WorkManagerSpec struct {
 // WorkManagerConfig defines work-manager container configuration parameters
 // +k8s:openapi-gen=true
 type WorkManagerConfig struct {
-	Enabled bool        `json:"enabled"`
-	Image   image.Image `json:"image"`
-}
-
-// DeployableConfig defines deployable container configuration parameters
-// +k8s:openapi-gen=true
-type DeployableConfig struct {
 	Enabled bool        `json:"enabled"`
 	Image   image.Image `json:"image"`
 }

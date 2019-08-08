@@ -190,9 +190,9 @@ func newMeteringSenderCRForICP(instance *multicloudv1beta1.Endpoint) (*multiclou
 		"app": instance.Name,
 	}
 
-	senderImage, err := instance.GetImage("metering")
+	senderImage, err := instance.GetImage("metering-sender")
 	if err != nil {
-		log.Error(err, "Fail to get Image", "Component.Name", "metering")
+		log.Error(err, "Fail to get Image", "Component.Name", "metering-sender")
 		return nil, err
 	}
 
