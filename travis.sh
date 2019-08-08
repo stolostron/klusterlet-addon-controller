@@ -93,10 +93,8 @@ if [[ "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
   export DOCKER_PASS=$ARTIFACTORY_KEY
   export DOCKER_NAMESPACE=ibmcom
   announce make docker:login
-  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      export DOCKER_TAG=$DOCKER_TAG
-      announce make docker:push-arch
-  fi
+  export DOCKER_TAG=$DOCKER_TAG
+  announce make docker:push-arch
   fold_end publish
 else
   echo "Not pushing image on pull request"
