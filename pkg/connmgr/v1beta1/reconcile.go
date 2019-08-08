@@ -27,20 +27,20 @@ import (
 var log = logf.Log.WithName("connmgr")
 
 // Reconcile Resolves differences in the running state of the connection manager services and CRDs.
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
+func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
 	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
 	reqLogger.Info("Reconciling ConnectionManager")
 
 	connMgrCR, err := newConnectionManagerCR(instance)
 	if err != nil {
 		log.Error(err, "Fail to generate desired ConnectionManager CR")
-		return err
+		return false, err
 	}
 
 	err = controllerutil.SetControllerReference(instance, connMgrCR, scheme)
 	if err != nil {
 		log.Error(err, "Unable to SetControllerReference")
-		return err
+		return false, err
 	}
 
 	foundConnMgrCR := &multicloudv1beta1.ConnectionManager{}
@@ -49,50 +49,55 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		if errors.IsNotFound(err) {
 			log.V(5).Info("ConnectionManager CR DOES NOT exist")
 			if instance.GetDeletionTimestamp() == nil {
-				log.V(5).Info("Instance IS NOT in deletion state")
+				log.V(5).Info("instance IS NOT in deletion state")
 				err := create(instance, connMgrCR, client)
 				if err != nil {
 					log.Error(err, "fail to CREATE ConnectionManager CR")
-					return err
+					return false, err
 				}
 			} else {
-				log.V(5).Info("Instance IS in deletion state")
+				log.V(5).Info("instance IS in deletion state")
 				err := finalize(instance, connMgrCR, client)
 				if err != nil {
 					log.Error(err, "fail to FINALIZE ConnectionManager CR")
-					return err
+					return false, err
 				}
 			}
 		} else {
 			log.Error(err, "Unexpected ERROR")
-			return err
+			return false, err
 		}
 	} else {
 		log.V(5).Info("ConnectionManager CR DOES exist")
 		if foundConnMgrCR.GetDeletionTimestamp() == nil {
 			log.V(5).Info("ConnectionManager CR IS NOT in deletion state")
 			if instance.GetDeletionTimestamp() == nil {
-				log.Info("Instance IS NOT in deletion state")
+				log.V(5).Info("instance IS NOT in deletion state")
 				err := update(instance, connMgrCR, foundConnMgrCR, client)
 				if err != nil {
 					log.Error(err, "fail to UPDATE ConnectionManager CR")
-					return err
+					return false, err
 				}
 			} else {
-				log.V(5).Info("Instance IS in deletion state")
+				log.V(5).Info("instance IS in deletion state")
 				if foundConnMgrCR.GetDeletionTimestamp() == nil {
-					err := delete(foundConnMgrCR, client)
+					err = delete(foundConnMgrCR, client)
 					if err != nil {
 						log.Error(err, "Fail to DELETE ConnectionManager CR")
-						return err
+						return false, err
 					}
+					reqLogger.Info("Requeueing Reconcile for ConnectionManager")
+					return true, err
 				}
 			}
+		} else {
+			reqLogger.Info("Requeueing Reconcile for ConnectionManager")
+			return true, err
 		}
 	}
 
 	reqLogger.Info("Successfully Reconciled ConnectionManager")
-	return nil
+	return false, nil
 }
 
 func newConnectionManagerCR(cr *multicloudv1beta1.Endpoint) (*multicloudv1beta1.ConnectionManager, error) {

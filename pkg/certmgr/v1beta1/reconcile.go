@@ -31,8 +31,8 @@ import (
 var log = logf.Log.WithName("certmgr")
 
 // Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
-	reqLogger := log.WithValues("KlusterletService.Namespace", instance.Namespace, "KlusterletService.Name", instance.Name)
+func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
+	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
 	reqLogger.Info("Reconciling CertManager")
 
 	var err error
@@ -45,24 +45,24 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		err = createSelfSignClusterIssuer(client, scheme, instance)
 		if err != nil {
 			log.Error(err, "Unable to CREATE SelfSigned ClusterIssuer.")
-			return err
+			return false, err
 		}
 
 		log.V(1).Info("Found ICP CertManager, skip CertManagerCR Reconcile.")
-		return nil
+		return false, nil
 	}
 
 	// No ICP CertManager
 	certMgr, err := newCertManagerCR(instance)
 	if err != nil {
 		log.Error(err, "Fail to generate desired CertManager CR")
-		return err
+		return false, err
 	}
 
 	err = controllerutil.SetControllerReference(instance, certMgr, scheme)
 	if err != nil {
 		log.Error(err, "Unable to SetControllerReference")
-		return err
+		return false, err
 	}
 
 	foundCertManager := &multicloudv1beta1.CertManager{}
@@ -76,21 +76,21 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 				err = createServiceAccount(client, scheme, instance, certMgr)
 				if err != nil {
 					log.Error(err, "Fail to CREATE ServiceAccount")
-					return err
+					return false, err
 				}
 
 				log.Info("Creating a new CertManager CR", "CertManager.Namespace", certMgr.Namespace, "CertManager.Name", certMgr.Name)
 				err = client.Create(context.TODO(), certMgr)
 				if err != nil {
 					log.Error(err, "Fail to CREATE CertManager CR")
-					return err
+					return false, err
 				}
 
 				// Create SelfSigned ClusterIssuer
-				err = createSelfSignClusterIssuer(client, scheme, instance)
+				createSelfSignClusterIssuer(client, scheme, instance)
 				if err != nil {
 					log.Error(err, "Fail to CREATE SelfSigned ClusterIssuer")
-					return err
+					return false, err
 				}
 
 				// Adding Finalizer to KlusterletService instance
@@ -106,7 +106,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 							err = client.Delete(context.TODO(), foundConfigMap)
 							if err != nil {
 								log.Error(err, "Fail to DELETE ConnectionManager Secret", "Secret.Name", foundConfigMap)
-								return err
+								return false, err
 							}
 						}
 
@@ -114,45 +114,48 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 						err = deleteSelfSignClusterIssuer(client, scheme, instance)
 						if err != nil {
 							log.Error(err, "Fail to DELETE SelfSigned ClusterIssuer")
-							return err
+							return false, err
 						}
 
 						instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
-						break
+						return true, err
 					}
 				}
 			}
 		} else {
 			log.Error(err, "Unexpected ERROR")
-			return err
+			return false, err
 		}
 	} else {
 		if foundCertManager.GetDeletionTimestamp() == nil {
 			// CertManager CR does exist
 			if instance.GetDeletionTimestamp() == nil {
-				// KlusterletService NOT in deletion state
+				// Endpoint NOT in deletion state
 				foundCertManager.Spec = certMgr.Spec
 				err = client.Update(context.TODO(), foundCertManager)
 				if err != nil && !errors.IsConflict(err) {
 					log.Error(err, "Fail to UPDATE CertManager CR")
-					return err
+					return false, err
 				}
 			} else {
-				// KlusterletService in deletion state
-				if foundCertManager.GetDeletionTimestamp() == nil {
-					// Delete CertManager CR
-					err = client.Delete(context.TODO(), foundCertManager)
-					if err != nil {
-						log.Error(err, "Fail to DELETE CertManager CR")
-						return err
-					}
+				// Endpoint in deletion state
+				// Delete CertManager CR
+				err = client.Delete(context.TODO(), foundCertManager)
+				if err != nil {
+					log.Error(err, "Fail to DELETE CertManager CR")
+					return false, err
 				}
+				reqLogger.Info("Requeueing Reconcile for CertManager")
+				return true, err
 			}
+		} else {
+			reqLogger.Info("Requeueing Reconcile for CertManager")
+			return true, nil
 		}
 	}
 
 	reqLogger.Info("Successfully Reconciled CertManager")
-	return nil
+	return false, nil
 }
 
 func createSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, cr *multicloudv1beta1.Endpoint) error {

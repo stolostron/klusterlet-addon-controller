@@ -24,20 +24,20 @@ import (
 var log = logf.Log.WithName("serviceregistry")
 
 // Reconcile reconciles the service registry
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
+func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
 	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
 	reqLogger.Info("Reconciling ServiceRegistry")
 
 	serviceRegisryCR, err := newServiceRegistryCR(instance)
 	if err != nil {
 		log.Error(err, "Fail to generate desired ServiceRegisry CR")
-		return err
+		return false, err
 	}
 
 	err = controllerutil.SetControllerReference(instance, serviceRegisryCR, scheme)
 	if err != nil {
 		log.Error(err, "Error setting controller reference")
-		return err
+		return false, err
 	}
 
 	foundServiceRegisryCR := &klusterletv1alpha1.ServiceRegistry{}
@@ -46,33 +46,33 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		if errors.IsNotFound(err) {
 			log.V(5).Info("ServiceRegistry CR DOES NOT exist")
 			if instance.GetDeletionTimestamp() == nil {
-				log.V(5).Info("Instance IS NOT in deletion state")
+				log.V(5).Info("instance IS NOT in deletion state")
 				if instance.Spec.ServiceRegistryConfig.Enabled {
 					log.V(5).Info("ServiceRegistry ENABLED")
-					err := create(instance, serviceRegisryCR, client)
+					err = create(instance, serviceRegisryCR, client)
 					if err != nil {
 						log.Error(err, "fail to CREATE ServiceRegistry CR")
-						return err
+						return false, err
 					}
 				} else {
 					log.V(5).Info("ServiceRegistry DISABLED")
-					err := finalize(instance, serviceRegisryCR, client)
+					err = finalize(instance, serviceRegisryCR, client)
 					if err != nil {
 						log.Error(err, "fail to FINALIZE ServiceRegistry CR")
-						return err
+						return false, err
 					}
 				}
 			} else {
-				log.V(5).Info("Instance IS in deletion state")
-				err := finalize(instance, serviceRegisryCR, client)
+				log.V(5).Info("instance IS in deletion state")
+				err = finalize(instance, serviceRegisryCR, client)
 				if err != nil {
 					log.Error(err, "fail to FINALIZE ServiceRegistry CR")
-					return err
+					return false, err
 				}
 			}
 		} else {
 			log.Error(err, "Unexpected ERROR")
-			return err
+			return false, err
 		}
 	} else {
 		log.V(5).Info("ServiceRegisry CR DOES exist")
@@ -83,23 +83,26 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 				err := update(instance, serviceRegisryCR, foundServiceRegisryCR, client)
 				if err != nil {
 					log.Error(err, "fail to UPDATE ServiceRegisry CR")
-					return err
+					return false, err
 				}
 			} else {
-				log.V(5).Info("Instance IS in deletion state or ServiceRegistry DISABLED")
-				if foundServiceRegisryCR.GetDeletionTimestamp() == nil {
-					err := delete(foundServiceRegisryCR, client)
-					if err != nil {
-						log.Error(err, "Fail to DELETE ServiceRegistry CR")
-						return err
-					}
+				log.V(5).Info("instance IS in deletion state or ServiceRegistry DISABLED")
+				err = delete(foundServiceRegisryCR, client)
+				if err != nil {
+					log.Error(err, "Fail to DELETE ServiceRegistry CR")
+					return false, err
 				}
+				reqLogger.Info("Requeueing Reconcile for ConnectionManager")
+				return true, err
 			}
+		} else {
+			reqLogger.Info("Requeueing Reconcile for ConnectionManager")
+			return true, nil
 		}
 	}
 
 	reqLogger.Info("Successfully Reconciled ServiceRegisry")
-	return nil
+	return false, nil
 }
 
 // TODO(liuhao): the following method need to be refactored as instance method of ServiceRegistry struct
@@ -149,7 +152,7 @@ func create(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.Service
 		return err
 	}
 
-	// Adding Finalizer to Instance
+	// Adding Finalizer to instance
 	instance.Finalizers = append(instance.Finalizers, cr.Name)
 	return nil
 }
@@ -162,7 +165,7 @@ func update(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.Service
 		return err
 	}
 
-	// Adding Finalizer to Instance if Finalizer does not exist
+	// Adding Finalizer to instance if Finalizer does not exist
 	// NOTE: This is to handle requeue due to failed instance update during creation
 	for _, finalizer := range instance.Finalizers {
 		if finalizer == cr.Name {

@@ -97,6 +97,7 @@ type ReconcileEndpoint struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	requeue := false
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling Endpoint")
 
@@ -114,50 +115,59 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 		return reconcile.Result{}, err
 	}
 
+	var tempRequeue bool
 	err = component.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	err = certmgr.Reconcile(instance, r.client, r.scheme)
+	tempRequeue, err = certmgr.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	requeue = requeue || tempRequeue
 
-	err = tiller.Reconcile(instance, r.client, r.scheme)
+	tempRequeue, err = tiller.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	requeue = requeue || tempRequeue
 
-	err = connmgr.Reconcile(instance, r.client, r.scheme)
+	tempRequeue, err = connmgr.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	requeue = requeue || tempRequeue
 
-	err = workmgr.Reconcile(instance, r.client, r.scheme)
+	tempRequeue, err = workmgr.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	requeue = requeue || tempRequeue
 
-	err = searchcollector.Reconcile(instance, r.client, r.scheme)
+	tempRequeue, err = searchcollector.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	requeue = requeue || tempRequeue
 
-	err = policyctrl.Reconcile(instance, r.client, r.scheme)
+	tempRequeue, err = policyctrl.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	requeue = requeue || tempRequeue
 
-	err = serviceregistry.Reconcile(instance, r.client, r.scheme)
+	tempRequeue, err = serviceregistry.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	requeue = requeue || tempRequeue
 
-	err = topology.Reconcile(instance, r.client, r.scheme)
+	tempRequeue, err = topology.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	requeue = requeue || tempRequeue
 
 	err = metering.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
@@ -177,7 +187,7 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 		return reconcile.Result{}, err
 	}
 
-	if instance.GetDeletionTimestamp() != nil {
+	if instance.GetDeletionTimestamp() != nil || requeue {
 		return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
 	}
 

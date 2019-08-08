@@ -30,20 +30,20 @@ import (
 var log = logf.Log.WithName("topology")
 
 // Reconcile Resolves differences in the running state of the connection manager services and CRDs.
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
+func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
 	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
 	reqLogger.Info("Reconciling TopologyCollector")
 
 	topologyCollectorCR, err := newTopologyCollectorCR(instance, client)
 	if err != nil {
 		log.Error(err, "Fail to generate desired TopologyCollector CR")
-		return err
+		return false, err
 	}
 
 	err = controllerutil.SetControllerReference(instance, topologyCollectorCR, scheme)
 	if err != nil {
 		log.Error(err, "Error setting controller reference")
-		return err
+		return false, err
 	}
 
 	// TODO(tonytran): split up weavescope and TopologyCollector
@@ -53,15 +53,15 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		if errors.IsNotFound(err) {
 			log.V(5).Info("TopologyCollector CR DOES NOT exist")
 			if instance.GetDeletionTimestamp() != nil {
-				log.V(5).Info("Instance IS in deletion state")
-				err := finalize(instance, topologyCollectorCR, client)
+				log.V(5).Info("instance IS in deletion state")
+				err = finalize(instance, topologyCollectorCR, client)
 				if err != nil {
 					log.Error(err, "fail to FINALIZE TopologyCollector CR")
-					return err
+					return false, err
 				}
 
 				reqLogger.Info("Successfully Reconciled TopologyCollector")
-				return nil
+				return false, nil
 			}
 
 			if instance.Spec.TopologyCollectorConfig.Enabled {
@@ -69,34 +69,34 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 				err = createServiceAccount(client, scheme, instance, topologyCollectorCR)
 				if err != nil {
 					log.Error(err, "Fail to CREATE ServiceAccount for TopologyCollector", "TopologyCollector.Name", topologyCollectorCR.Name)
-					return err
+					return false, err
 				}
 
 				log.Info("Creating a new TopologyCollector", "TopologyCollector.Namespace", topologyCollectorCR.Namespace, "ConnectionManager.Name", topologyCollectorCR.Name)
 				err = client.Create(context.TODO(), topologyCollectorCR)
 				if err != nil {
 					log.Error(err, "Fail to CREATE TopologyCollector CR")
-					return err
+					return false, err
 				}
 
 				instance.Finalizers = append(instance.Finalizers, topologyCollectorCR.Name)
 				reqLogger.Info("Successfully Reconciled TopologyCollector")
-				return nil
+				return false, nil
 			}
 
 			log.V(5).Info("TopologyCollector DISABLED")
-			err := finalize(instance, topologyCollectorCR, client)
+			err = finalize(instance, topologyCollectorCR, client)
 			if err != nil {
 				log.Error(err, "fail to FINALIZE TopologyCollector CR")
-				return err
+				return false, err
 			}
 
 			reqLogger.Info("Successfully Reconciled TopologyCollector")
-			return nil
+			return false, nil
 		}
 
 		log.Error(err, "Unexpected ERROR")
-		return err
+		return false, err
 	}
 
 	if foundTopologyCollector.GetDeletionTimestamp() == nil {
@@ -104,11 +104,11 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 			err = client.Delete(context.TODO(), topologyCollectorCR)
 			if err != nil {
 				log.Error(err, "Fail to DELETE TopologyCollector CR")
-				return err
+				return false, err
 			}
 
-			reqLogger.Info("Successfully Reconciled TopologyCollector")
-			return nil
+			reqLogger.Info("Requeueing Reconcile for TopologyCollector")
+			return true, nil
 		}
 
 		// Endpoint NOT in deletion state AND found, update
@@ -116,21 +116,24 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		err = client.Update(context.TODO(), foundTopologyCollector)
 		if err != nil {
 			log.Error(err, "Fail to UPDATE TopologyCollector CR")
-			return nil
+			return false, nil
 		}
 
-		// Adding Finalizer to Instance if Finalizer does not exist
+		// Adding Finalizer to instance if Finalizer does not exist
 		// NOTE: This is to handle requeue due to failed instance update during creation
 		for _, finalizer := range instance.Finalizers {
 			if finalizer == topologyCollectorCR.Name {
-				return nil
+				return false, nil
 			}
 		}
 		instance.Finalizers = append(instance.Finalizers, topologyCollectorCR.Name)
+	} else {
+		reqLogger.Info("Requeueing Reconcile for TopologyCollector")
+		return true, nil
 	}
 
 	reqLogger.Info("Successfully Reconciled TopologyCollector")
-	return nil
+	return false, nil
 }
 
 func newTopologyCollectorCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*klusterletv1alpha1.TopologyCollector, error) {
