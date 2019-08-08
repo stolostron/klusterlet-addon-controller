@@ -32,14 +32,15 @@ type EndpointSpec struct {
 
 	ClusterLabels map[string]string `json:"clusterLabels"`
 
-	BootStrapConfig         map[string]string                 `json:"bootstrapConfig"`
-	TillerIntegration       EndpointTillerIntegrationSpec     `json:"tillerIntegration"`
-	PrometheusIntegration   EndpointPrometheusIntegrationSpec `json:"prometheusIntegration"`
-	TopologyCollectorConfig EndpointTopologyCollectorSpec     `json:"topologyCollector"`
-	SearchCollectorConfig   EndpointSearchCollectorSpec       `json:"searchCollector"`
-	PolicyController        EndpointPolicyControllerSpec      `json:"policyController"`
-	ServiceRegistryConfig   EndpointServiceRegistrySpec       `json:"serviceRegistry"`
-	EndpointMeteringConfig  EndpointMeteringSpec              `json:"metering"`
+	BootStrapConfig          map[string]string                 `json:"bootstrapConfig"`
+	TillerIntegration        EndpointTillerIntegrationSpec     `json:"tillerIntegration"`
+	PrometheusIntegration    EndpointPrometheusIntegrationSpec `json:"prometheusIntegration"`
+	TopologyCollectorConfig  EndpointTopologyCollectorSpec     `json:"topologyCollector"`
+	SearchCollectorConfig    EndpointSearchCollectorSpec       `json:"searchCollector"`
+	PolicyController         EndpointPolicyControllerSpec      `json:"policyController"`
+	ServiceRegistryConfig    EndpointServiceRegistrySpec       `json:"serviceRegistry"`
+	EndpointMeteringConfig   EndpointMeteringSpec              `json:"metering"`
+	ApplicationManagerConfig EndpointApplicationManagerSpec    `json:"applicationManager"`
 
 	// +kubebuilder:validation:MinLength=1
 	ImageRegistry    string `json:"imageRegistry"`
@@ -51,6 +52,12 @@ type EndpointSpec struct {
 	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
 
 	ComponentOperatorImage string `json:"componentOperatorImage,omitempty"`
+}
+
+// EndpointApplicationManagerSpec defines configuration for the ApplicationManager component
+// +k8s:openapi-gen=true
+type EndpointApplicationManagerSpec struct {
+	Enabled bool `json:"enabled"`
 }
 
 // EndpointMeteringSpec defines configuration for the Metering component

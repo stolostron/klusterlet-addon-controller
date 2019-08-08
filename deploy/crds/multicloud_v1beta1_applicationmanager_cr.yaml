@@ -1,0 +1,7 @@
+apiVersion: multicloud.ibm.com/v1beta1
+kind: ApplicationManager
+metadata:
+  name: example-applicationmanager
+spec:
+  # Add fields here
+  size: 3

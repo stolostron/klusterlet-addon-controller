@@ -11,6 +11,7 @@ import (
 	"time"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
+	appmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/appmgr/v1beta1"
 	certmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/certmgr/v1beta1"
 	component "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component/v1beta1"
 	connmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr/v1beta1"
@@ -159,6 +160,11 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	err = metering.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	_, err = appmgr.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

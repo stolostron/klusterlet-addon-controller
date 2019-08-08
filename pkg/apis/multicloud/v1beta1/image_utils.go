@@ -35,6 +35,7 @@ var versionComponentImageNameMap = map[string]map[string]string{
 		"mongodb":                 "icp-mongodb",
 		"mongodb-install":         "icp-mongodb-install",
 		"mongodb-metrics":         "icp-mongodb-exporter",
+		"subscription":            "subscription",
 	},
 	"3.2.1": map[string]string{
 		"search-collector":        "search-collector",
@@ -58,6 +59,7 @@ var versionComponentImageNameMap = map[string]map[string]string{
 		"mongodb":                 "icp-mongodb",
 		"mongodb-install":         "icp-mongodb-install",
 		"mongodb-metrics":         "icp-mongodb-exporter",
+		"subscription":            "subscription",
 	},
 	"latest": map[string]string{
 		"search-collector":        "search-collector",
@@ -81,6 +83,7 @@ var versionComponentImageNameMap = map[string]map[string]string{
 		"mongodb":                 "icp-mongodb",
 		"mongodb-install":         "icp-mongodb-install",
 		"mongodb-metrics":         "icp-mongodb-exporter",
+		"subscription":            "subscription",
 	},
 }
 
@@ -130,6 +133,7 @@ var versionComponentTagMap = map[string]map[string]string{
 		"mongodb":                 "4.0.6-f1",
 		"mongodb-install":         "3.2.1",
 		"mongodb-metrics":         "3.2.1",
+		"subscription":            "3.2.1",
 	},
 	"latest": map[string]string{
 		"search-collector":        "latest",
@@ -153,6 +157,7 @@ var versionComponentTagMap = map[string]map[string]string{
 		"mongodb":                 "4.0.6-f1",
 		"mongodb-install":         "latest",
 		"mongodb-metrics":         "latest",
+		"subscription":            "latest",
 	},
 }
 
