@@ -33,27 +33,27 @@ import (
 var log = logf.Log.WithName("searchcollector")
 
 // Reconcile reconciles the search collector
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
+func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
 	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
 	reqLogger.Info("Reconciling SearchCollector")
 
 	// Deployed on hub
 	if inspect.DeployedOnHub(client) {
 		log.Info("Found clusterstatus.mcm.ibm.com, this is a hub cluster, skip SearchCollector Reconcile.")
-		return nil
+		return false, nil
 	}
 
 	// Not deployed on hub
 	searchCollectorCR, err := newSearchCollectorCR(instance, client)
 	if err != nil {
 		log.Error(err, "Fail to generate desired SearchCollector CR")
-		return err
+		return false, err
 	}
 
 	err = controllerutil.SetControllerReference(instance, searchCollectorCR, scheme)
 	if err != nil {
 		log.Error(err, "Unable to SetControllerReference")
-		return err
+		return false, err
 	}
 
 	foundSearchCollectorCR := &klusterletv1alpha1.SearchCollector{}
@@ -62,58 +62,63 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		if errors.IsNotFound(err) {
 			log.V(5).Info("SearchCollector DOES NOT exist")
 			if instance.GetDeletionTimestamp() == nil {
-				log.V(5).Info("Instance IS NOT in deletion state")
+				log.V(5).Info("instance IS NOT in deletion state")
 				if instance.Spec.SearchCollectorConfig.Enabled {
 					log.V(5).Info("SearchCollector ENABLED")
 					err := create(instance, searchCollectorCR, client)
 					if err != nil {
 						log.Error(err, "fail to CREATE SearchCollector CR")
-						return err
+						return false, err
 					}
 				} else {
 					log.V(5).Info("SearchCollector DISABLED")
 					err := finalize(instance, searchCollectorCR, client)
 					if err != nil {
 						log.Error(err, "fail to FINALIZE SearchCollector CR")
-						return err
+						return false, err
 					}
 				}
 			} else {
-				log.V(5).Info("Instance IS in deletion state")
+				log.V(5).Info("instance IS in deletion state")
 				err := finalize(instance, searchCollectorCR, client)
 				if err != nil {
 					log.Error(err, "fail to FINALIZE SearchCollector CR")
-					return err
+					return false, err
 				}
 			}
 		} else {
 			log.Error(err, "Unexpected ERROR")
-			return err
+			return false, err
 		}
 	} else {
 		log.V(5).Info("SearchCollector CR DOES exist")
 		if foundSearchCollectorCR.GetDeletionTimestamp() == nil {
 			log.V(5).Info("SearchCollector IS NOT in deletion state")
 			if instance.GetDeletionTimestamp() == nil && instance.Spec.SearchCollectorConfig.Enabled {
-				log.V(5).Info("Instance IS NOT in deletion state and Search Collector is ENABLED")
+				log.V(5).Info("instance IS NOT in deletion state and Search Collector is ENABLED")
 				err := update(instance, searchCollectorCR, foundSearchCollectorCR, client)
 				if err != nil {
 					log.Error(err, "fail to UPDATE SearchCollector CR")
-					return err
+					return false, err
 				}
 			} else {
-				log.V(5).Info("Instance IS in deletion state or Search Collector is DISABLED")
+				log.V(5).Info("instance IS in deletion state or Search Collector is DISABLED")
 				err := delete(foundSearchCollectorCR, client)
 				if err != nil {
 					log.Error(err, "fail to DELETE SearchCollector CR")
-					return err
+					return false, err
 				}
+				reqLogger.Info("Requeueing Reconcile for SearchCollector")
+				return true, err
 			}
+		} else {
+			reqLogger.Info("Requeueing Reconcile for SearchCollector")
+			return true, err
 		}
 	}
 
 	reqLogger.Info("Successfully Reconciled SearchCollector")
-	return nil
+	return false, nil
 }
 
 // TODO(liuhao): the following method need to be refactored as instance method of SearchCollector struct

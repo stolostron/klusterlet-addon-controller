@@ -31,20 +31,20 @@ var log = logf.Log.WithName("workmgr")
 // TODO(liuhao): switch from klusterletv1alpha1 to multicloudv1beta1 for the WorkManager related structs
 
 // Reconcile Resolves differences in the running state of the connection manager services and CRDs.
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
+func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
 	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
 	reqLogger.Info("Reconciling Tiller")
 
 	workMgrCR, err := newWorkManagerCR(instance, client)
 	if err != nil {
 		log.Error(err, "Fail to generate desired WorkManager CR")
-		return err
+		return false, err
 	}
 
 	err = controllerutil.SetControllerReference(instance, workMgrCR, scheme)
 	if err != nil {
 		log.Error(err, "Error setting controller reference")
-		return err
+		return false, err
 	}
 
 	foundWorkMgrCR := &klusterletv1alpha1.WorkManager{}
@@ -53,49 +53,50 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		if errors.IsNotFound(err) {
 			log.V(5).Info("WorkManager CR DOES NOT exist")
 			if instance.GetDeletionTimestamp() == nil {
-				log.V(5).Info("Instance IS NOT in deletion state")
-				err := create(instance, workMgrCR, client)
+				log.V(5).Info("instance IS NOT in deletion state")
+				err = create(instance, workMgrCR, client)
 				if err != nil {
 					log.Error(err, "fail to CREATE WorkManager CR")
-					return err
+					return false, err
 				}
 			} else {
-				log.V(5).Info("Instance IS in deletion state")
-				err := finalize(instance, workMgrCR, client)
+				log.V(5).Info("instance IS in deletion state")
+				err = finalize(instance, workMgrCR, client)
 				if err != nil {
 					log.Error(err, "fail to FINALIZE WorkManager CR")
-					return err
+					return false, err
 				}
 			}
 		} else {
 			log.Error(err, "Unexpected ERROR")
-			return err
+			return false, err
 		}
 	} else {
 		log.V(5).Info("WorkManager CR DOES exist")
 		if foundWorkMgrCR.GetDeletionTimestamp() == nil {
 			if instance.GetDeletionTimestamp() == nil {
 				log.V(5).Info("WorkManager CR IS NOT in deletion state")
-				err := update(instance, workMgrCR, foundWorkMgrCR, client)
-				if err != nil {
+				if err = update(instance, workMgrCR, foundWorkMgrCR, client); err != nil {
 					log.Error(err, "fail to UPDATE WorkManager CR")
-					return err
+					return false, err
 				}
 			} else {
-				log.V(5).Info("Instance IS in deletion state")
-				if foundWorkMgrCR.GetDeletionTimestamp() == nil {
-					err := delete(foundWorkMgrCR, client)
-					if err != nil {
-						log.Error(err, "Fail to DELETE WorkManager CR")
-						return err
-					}
+				log.V(5).Info("instance IS in deletion state")
+				err = delete(foundWorkMgrCR, client)
+				if err != nil {
+					log.Error(err, "Fail to DELETE WorkManager CR")
+					return false, err
 				}
+				reqLogger.Info("Requeueing Reconcile for WorkManager")
+				return true, err
 			}
+		} else {
+			reqLogger.Info("Requeueing Reconcile for WorkManager")
+			return true, err
 		}
 	}
-
 	reqLogger.Info("Successfully Reconciled WorkManager")
-	return nil
+	return false, nil
 }
 
 func newWorkManagerTillerIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) klusterletv1alpha1.WorkManagerTillerIntegration {

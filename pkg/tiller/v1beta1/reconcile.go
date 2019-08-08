@@ -27,7 +27,7 @@ import (
 var log = logf.Log.WithName("tiller")
 
 // Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
+func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
 	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
 	reqLogger.Info("Reconciling Tiller")
 
@@ -36,20 +36,20 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, foundICPTillerService)
 	if err == nil {
 		log.Info("Found ICP Tiller, skip TillerCR Reconcile.")
-		return nil
+		return false, nil
 	}
 
 	// No ICP Tiller
 	tillerCR, err := newTillerCR(instance)
 	if err != nil {
 		log.Error(err, "Fail to generate desired Tiller CR")
-		return err
+		return false, err
 	}
 
 	err = controllerutil.SetControllerReference(instance, tillerCR, scheme)
 	if err != nil {
 		log.Error(err, "Unable to SetControllerReference")
-		return err
+		return false, err
 	}
 
 	foundTillerCR := &multicloudv1beta1.Tiller{}
@@ -58,60 +58,63 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		if errors.IsNotFound(err) {
 			log.V(5).Info("Tiller CR DOES NOT exist")
 			if instance.GetDeletionTimestamp() == nil {
-				log.V(5).Info("Instance IS NOT in deletion state")
+				log.V(5).Info("instance IS NOT in deletion state")
 				if instance.Spec.TillerIntegration.Enabled {
 					log.V(5).Info("TillerIntegration ENABLED")
-					err := create(instance, tillerCR, client)
+					err = create(instance, tillerCR, client)
 					if err != nil {
 						log.Error(err, "fail to CREATE Tiller CR")
-						return err
+						return false, err
 					}
 				} else {
 					log.V(5).Info("TillerIntegration DISABLED")
-					err := finalize(instance, tillerCR, client)
+					err = finalize(instance, tillerCR, client)
 					if err != nil {
 						log.Error(err, "fail to FINALIZE Tiller CR")
-						return err
+						return false, err
 					}
 				}
 			} else {
-				log.V(5).Info("Instance IS in deletion state")
-				err := finalize(instance, tillerCR, client)
+				log.V(5).Info("instance IS in deletion state")
+				err = finalize(instance, tillerCR, client)
 				if err != nil {
 					log.Error(err, "fail to FINALIZE Tiller CR")
-					return err
+					return false, err
 				}
 			}
 		} else {
 			log.Error(err, "Unexpected ERROR")
-			return err
+			return false, err
 		}
 	} else {
 		log.V(5).Info("Tiller CR DOES exist")
 		if foundTillerCR.GetDeletionTimestamp() == nil {
 			log.V(5).Info("Tiller CR IS NOT in deletion state")
 			if instance.GetDeletionTimestamp() == nil && instance.Spec.TillerIntegration.Enabled {
-				log.Info("Instance IS NOT in deletion state and TillerIntegration ENABLED")
-				err := update(instance, tillerCR, foundTillerCR, client)
+				log.Info("instance IS NOT in deletion state and TillerIntegration ENABLED")
+				err = update(instance, tillerCR, foundTillerCR, client)
 				if err != nil {
 					log.Error(err, "fail to UPDATE Tiller CR")
-					return err
+					return false, err
 				}
 			} else {
-				log.V(5).Info("Instance IS in deletion state or TillerIntegration DISABLED")
-				if foundTillerCR.GetDeletionTimestamp() == nil {
-					err := delete(foundTillerCR, client)
-					if err != nil {
-						log.Error(err, "Fail to DELETE Tiller CR")
-						return err
-					}
+				log.V(5).Info("instance IS in deletion state or TillerIntegration DISABLED")
+				err = delete(foundTillerCR, client)
+				if err != nil {
+					log.Error(err, "Fail to DELETE Tiller CR")
+					return false, err
 				}
+				reqLogger.Info("Requeueing Reconcile for Tiller")
+				return true, nil
 			}
+		} else {
+			reqLogger.Info("Requeueing Reconcile for Tiller")
+			return true, nil
 		}
 	}
 
 	reqLogger.Info("Successfully Reconciled Tiller")
-	return nil
+	return false, nil
 }
 
 // TODO(liuhao): the following method need to be refactored as instance method of Tiller struct
@@ -151,7 +154,7 @@ func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Tiller, 
 		return err
 	}
 
-	// Adding Finalizer to Instance
+	// Adding Finalizer to instance
 	instance.Finalizers = append(instance.Finalizers, cr.Name)
 	return nil
 }
@@ -164,7 +167,7 @@ func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Tiller, 
 		return err
 	}
 
-	// Adding Finalizer to Instance if Finalizer does not exist
+	// Adding Finalizer to instance if Finalizer does not exist
 	// NOTE: This is to handle requeue due to failed instance update during creation
 	for _, finalizer := range instance.Finalizers {
 		if finalizer == cr.Name {
