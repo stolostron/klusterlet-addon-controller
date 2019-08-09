@@ -9,7 +9,6 @@ package v1beta1
 import (
 	"context"
 
-	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -40,7 +39,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		return false, err
 	}
 
-	foundServiceRegisryCR := &klusterletv1alpha1.ServiceRegistry{}
+	foundServiceRegisryCR := &multicloudv1beta1.ServiceRegistry{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: serviceRegisryCR.Name, Namespace: serviceRegisryCR.Namespace}, foundServiceRegisryCR)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -106,7 +105,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 }
 
 // TODO(liuhao): the following method need to be refactored as instance method of ServiceRegistry struct
-func newServiceRegistryCR(instance *multicloudv1beta1.Endpoint) (*klusterletv1alpha1.ServiceRegistry, error) {
+func newServiceRegistryCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1beta1.ServiceRegistry, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
@@ -121,19 +120,19 @@ func newServiceRegistryCR(instance *multicloudv1beta1.Endpoint) (*klusterletv1al
 		return nil, err
 	}
 
-	return &klusterletv1alpha1.ServiceRegistry{
+	return &multicloudv1beta1.ServiceRegistry{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-service-registry",
 			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
-		Spec: klusterletv1alpha1.ServiceRegistrySpec{
+		Spec: multicloudv1beta1.ServiceRegistrySpec{
 			FullNameOverride: instance.Name + "-service-registry",
 			Enabled:          instance.Spec.ServiceRegistryConfig.Enabled,
-			ServiceRegistry: klusterletv1alpha1.ServiceRegistryImage{
+			ServiceRegistry: multicloudv1beta1.ServiceRegistryImage{
 				Image: serviceRegistryImage,
 			},
-			CoreDNS: klusterletv1alpha1.CoreDNS{
+			CoreDNS: multicloudv1beta1.CoreDNS{
 				Image:          coreDNSImage,
 				DNSSuffix:      instance.Spec.ServiceRegistryConfig.CoreDNS.DNSSuffix,
 				Plugins:        instance.Spec.ServiceRegistryConfig.CoreDNS.Plugins,
@@ -144,7 +143,7 @@ func newServiceRegistryCR(instance *multicloudv1beta1.Endpoint) (*klusterletv1al
 	}, nil
 }
 
-func create(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.ServiceRegistry, client client.Client) error {
+func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.ServiceRegistry, client client.Client) error {
 	log.Info("Creating a new ServiceRegistry", "ServiceRegistry.Namespace", cr.Namespace, "ServiceRegistry.Name", cr.Name)
 	err := client.Create(context.TODO(), cr)
 	if err != nil {
@@ -157,7 +156,7 @@ func create(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.Service
 	return nil
 }
 
-func update(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.ServiceRegistry, foundCR *klusterletv1alpha1.ServiceRegistry, client client.Client) error {
+func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.ServiceRegistry, foundCR *multicloudv1beta1.ServiceRegistry, client client.Client) error {
 	foundCR.Spec = cr.Spec
 	err := client.Update(context.TODO(), foundCR)
 	if err != nil && !errors.IsConflict(err) {
@@ -176,11 +175,11 @@ func update(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.Service
 	return nil
 }
 
-func delete(foundCR *klusterletv1alpha1.ServiceRegistry, client client.Client) error {
+func delete(foundCR *multicloudv1beta1.ServiceRegistry, client client.Client) error {
 	return client.Delete(context.TODO(), foundCR)
 }
 
-func finalize(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.ServiceRegistry, client client.Client) error {
+func finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.ServiceRegistry, client client.Client) error {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == cr.Name {
 			// Remove finalizer

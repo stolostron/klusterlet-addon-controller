@@ -9,7 +9,6 @@ package searchcollector
 import (
 	"context"
 
-	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 	tiller "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller/v1beta1"
@@ -56,7 +55,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		return false, err
 	}
 
-	foundSearchCollectorCR := &klusterletv1alpha1.SearchCollector{}
+	foundSearchCollectorCR := &multicloudv1beta1.SearchCollector{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: searchCollectorCR.Name, Namespace: searchCollectorCR.Namespace}, foundSearchCollectorCR)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -122,7 +121,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 }
 
 // TODO(liuhao): the following method need to be refactored as instance method of SearchCollector struct
-func newSearchCollectorCR(instance *multicloudv1beta1.Endpoint, client client.Client) (*klusterletv1alpha1.SearchCollector, error) {
+func newSearchCollectorCR(instance *multicloudv1beta1.Endpoint, client client.Client) (*multicloudv1beta1.SearchCollector, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
@@ -133,13 +132,13 @@ func newSearchCollectorCR(instance *multicloudv1beta1.Endpoint, client client.Cl
 		return nil, err
 	}
 
-	return &klusterletv1alpha1.SearchCollector{
+	return &multicloudv1beta1.SearchCollector{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-search",
 			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
-		Spec: klusterletv1alpha1.SearchCollectorSpec{
+		Spec: multicloudv1beta1.SearchCollectorSpec{
 			FullNameOverride:  instance.Name + "-search",
 			ClusterName:       instance.Spec.ClusterName,
 			ClusterNamespace:  instance.Spec.ClusterNamespace,
@@ -151,12 +150,12 @@ func newSearchCollectorCR(instance *multicloudv1beta1.Endpoint, client client.Cl
 	}, err
 }
 
-func newSearchCollectorTillerIntegration(instance *multicloudv1beta1.Endpoint, client client.Client) klusterletv1alpha1.SearchCollectorTillerIntegration {
+func newSearchCollectorTillerIntegration(instance *multicloudv1beta1.Endpoint, client client.Client) multicloudv1beta1.SearchCollectorTillerIntegration {
 	if instance.Spec.TillerIntegration.Enabled {
 		// ICP Tiller
 		icpTillerServiceEndpoint := tiller.GetICPTillerServiceEndpoint(client)
 		if icpTillerServiceEndpoint != "" {
-			return klusterletv1alpha1.SearchCollectorTillerIntegration{
+			return multicloudv1beta1.SearchCollectorTillerIntegration{
 				Enabled:       true,
 				Endpoint:      icpTillerServiceEndpoint,
 				CertIssuer:    "icp-ca-issuer",
@@ -166,7 +165,7 @@ func newSearchCollectorTillerIntegration(instance *multicloudv1beta1.Endpoint, c
 		}
 
 		// KlusterletOperator deployed Tiller
-		return klusterletv1alpha1.SearchCollectorTillerIntegration{
+		return multicloudv1beta1.SearchCollectorTillerIntegration{
 			Enabled:       true,
 			Endpoint:      instance.Name + "-tiller" + ":44134",
 			CertIssuer:    instance.Name + "-tiller",
@@ -175,12 +174,12 @@ func newSearchCollectorTillerIntegration(instance *multicloudv1beta1.Endpoint, c
 		}
 	}
 
-	return klusterletv1alpha1.SearchCollectorTillerIntegration{
+	return multicloudv1beta1.SearchCollectorTillerIntegration{
 		Enabled: false,
 	}
 }
 
-func create(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.SearchCollector, client client.Client) error {
+func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.SearchCollector, client client.Client) error {
 	// Create the CR and add the Finalizer to the instance
 	log.Info("Creating a new SearchCollector", "SearchCollector.Namespace", cr.Namespace, "SearchCollector.Name", cr.Name)
 	err := client.Create(context.TODO(), cr)
@@ -194,7 +193,7 @@ func create(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.SearchC
 	return nil
 }
 
-func update(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.SearchCollector, foundCR *klusterletv1alpha1.SearchCollector, client client.Client) error {
+func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.SearchCollector, foundCR *multicloudv1beta1.SearchCollector, client client.Client) error {
 	foundCR.Spec = cr.Spec
 	err := client.Update(context.TODO(), foundCR)
 	if err != nil && !errors.IsConflict(err) {
@@ -213,11 +212,11 @@ func update(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.SearchC
 	return nil
 }
 
-func delete(foundCR *klusterletv1alpha1.SearchCollector, client client.Client) error {
+func delete(foundCR *multicloudv1beta1.SearchCollector, client client.Client) error {
 	return client.Delete(context.TODO(), foundCR)
 }
 
-func finalize(instance *multicloudv1beta1.Endpoint, searchCollectorCR *klusterletv1alpha1.SearchCollector, client client.Client) error {
+func finalize(instance *multicloudv1beta1.Endpoint, searchCollectorCR *multicloudv1beta1.SearchCollector, client client.Client) error {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == searchCollectorCR.Name {
 			secretsToDeletes := []string{
