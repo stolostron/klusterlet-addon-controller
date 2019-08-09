@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
-	klusterletv1alpha1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/klusterlet/v1alpha1"
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -47,7 +46,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	}
 
 	// TODO(tonytran): split up weavescope and TopologyCollector
-	foundTopologyCollector := &klusterletv1alpha1.TopologyCollector{}
+	foundTopologyCollector := &multicloudv1beta1.TopologyCollector{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: topologyCollectorCR.Name, Namespace: topologyCollectorCR.Namespace}, foundTopologyCollector)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -136,7 +135,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-func newTopologyCollectorCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*klusterletv1alpha1.TopologyCollector, error) {
+func newTopologyCollectorCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*multicloudv1beta1.TopologyCollector, error) {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
@@ -159,13 +158,13 @@ func newTopologyCollectorCR(cr *multicloudv1beta1.Endpoint, client client.Client
 		return nil, err
 	}
 
-	return &klusterletv1alpha1.TopologyCollector{
+	return &multicloudv1beta1.TopologyCollector{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name + "-topology",
 			Namespace: cr.Namespace,
 			Labels:    labels,
 		},
-		Spec: klusterletv1alpha1.TopologyCollectorSpec{
+		Spec: multicloudv1beta1.TopologyCollectorSpec{
 			FullNameOverride:  cr.Name + "-topology",
 			ClusterName:       cr.Spec.ClusterName,
 			ClusterNamespace:  cr.Spec.ClusterNamespace,
@@ -174,7 +173,7 @@ func newTopologyCollectorCR(cr *multicloudv1beta1.Endpoint, client client.Client
 			Enabled:           true,
 			UpdateInterval:    cr.Spec.TopologyCollectorConfig.CollectorUpdateInterval,
 			CACertIssuer:      cr.Name + "-self-signed",
-			ServiceAccount: klusterletv1alpha1.TopologyCollectorServiceAccount{
+			ServiceAccount: multicloudv1beta1.TopologyCollectorServiceAccount{
 				Name: cr.Name + "-topology-collector",
 			},
 			WeaveImage:      weaveImage,
@@ -196,7 +195,7 @@ func determineRuntime(kubeclient client.Client) string {
 	return strings.Split(runtime, ":")[0] //format of container runtime in node info is runtime://version
 }
 
-func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance *multicloudv1beta1.Endpoint, topology *klusterletv1alpha1.TopologyCollector) error {
+func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance *multicloudv1beta1.Endpoint, topology *multicloudv1beta1.TopologyCollector) error {
 	serviceAccount := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      topology.Spec.ServiceAccount.Name,
@@ -236,7 +235,7 @@ func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance
 	return nil
 }
 
-func finalize(instance *multicloudv1beta1.Endpoint, cr *klusterletv1alpha1.TopologyCollector, client client.Client) error {
+func finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.TopologyCollector, client client.Client) error {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == cr.Name {
 			// Delete Secrets
