@@ -33,7 +33,7 @@ DOCKER_IMAGE ?= icp-multicluster-endpoint-operator
 DOCKER_IMAGE_ARCH = $(DOCKER_IMAGE)-$(ARCH)
 ## WARNING: OPERATOR IMAGE_DESCRIPTION VAR MUST NOT CONTAIN SPACES.
 IMAGE_DESCRIPTION ?= IBM_Multicloud_Operator
-DOCKER_REGISTRY ?= hyc-cloud-private-integration-docker-local.artifactory.swg-devops.com
+DOCKER_REGISTRY ?= hyc-cloud-private-scratch-docker-local.artifactory.swg-devops.com
 DOCKER_NAMESPACE ?= ibmcom
 DOCKER_BUILD_TAG ?= latest
 DOCKER_TAG ?= $(shell whoami)
@@ -127,7 +127,10 @@ operator\:tools:
 .PHONY: operator\:build
 operator\:build: deps
 	## WARNING: DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES.
-	operator-sdk build $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE_ARCH):$(DOCKER_TAG) --image-build-args "$(DOCKER_BUILD_OPTS)"
+	$(info Building operator)
+	$(info --IMAGE: $(DOCKER_IMAGE))
+	$(info --TAG: $(DOCKER_BUILD_TAG))
+	operator-sdk build $(DOCKER_IMAGE):$(DOCKER_BUILD_TAG) --image-build-args "$(DOCKER_BUILD_OPTS)"
 
 .PHONY: operator\:run
 operator\:run:

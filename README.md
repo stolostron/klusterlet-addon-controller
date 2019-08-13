@@ -18,3 +18,9 @@ make operator:run
 To create a klusterlet deployment with the klusterlet operator u need to create the klusterlet CR
 
 Example of Klusterlet CR `/deploy/crds/klusterlet_v1alpha1_klusterletservice_cr.yaml`
+
+## Build and publish a personal build to scratch artifactory
+- `make init`
+- `make operator:build`
+- `make docker:tag`
+- `make docker:push`

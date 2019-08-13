@@ -93,8 +93,14 @@ if [[ "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
   export DOCKER_PASS=$ARTIFACTORY_KEY
   export DOCKER_NAMESPACE=ibmcom
   announce make docker:login
-  export DOCKER_TAG=$DOCKER_TAG
+  announce make docker:tag-arch
   announce make docker:push-arch
+  if [[ "$ARCH" == "amd64" ]]; then
+    # publish -rhel tagged image to Artifactory
+    export DOCKER_TAG=$DOCKER_TAG-rhel
+    announce make docker:tag-arch
+    announce make docker:push-arch
+  fi
   fold_end publish
 else
   echo "Not pushing image on pull request"

@@ -22,3 +22,10 @@ echo TRAVIS_BRANCH=$TRAVIS_BRANCH
 echo TRAVIS_TAG=$TRAVIS_TAG
 echo DOCKER_TAG="$DOCKER_TAG"
 echo COMMIT="$COMMIT"
+
+export ARCH=$(uname -m)
+if [ "$ARCH" = "x86_64" ]; then
+	export ARCH="amd64"
+fi
+
+echo ARCH="$ARCH"
