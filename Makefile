@@ -139,8 +139,8 @@ operator\:run:
 ### HELPER UTILS #######################
 .PHONY: utils\:crds\:install
 utils\:crds\:install:
-	kubectl apply -f deploy/crds/klusterlet_v1alpha1_klusterletservice_crd.yaml
+	kubectl apply -f deploy/crds/multicloud_v1beta1_endpoint_crd.yaml.yaml
 
 .PHONY: utils\:crds\:uninstall
 utils\:crds\:uninstall:
-	kubectl delete -f deploy/crds/klusterlet_v1alpha1_klusterletservice_crd.yaml
+	kubectl delete -f deploy/crds/multicloud_v1beta1_endpoint_crd.yaml.yaml
