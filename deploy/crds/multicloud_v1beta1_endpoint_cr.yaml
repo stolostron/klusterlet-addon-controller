@@ -3,10 +3,10 @@ kind: Endpoint
 metadata:
   name: endpoint
 spec:
-  clusterName: aks-thicc-one
-  clusterNamespace: aks-thicc-one
-  version: 3.2.0
-  imagePullSecret: tony-pull
+  clusterName: cluster-name
+  clusterNamespace: cluster-namespace
+  version: latest
+  imagePullSecret: multicluster-endpoint-operator-pull-secret
   imageRegistry: hyc-cloud-private-integration-docker-local.artifactory.swg-devops.com/ibmcom
   imageNamePostfix: -amd64
   imagePullPolicy: Always
@@ -26,17 +26,20 @@ spec:
     enabled: true
 
   prometheusIntegration:
-    enabled: false
+    enabled: true
 
   topologyCollector:
-    enabled: false
+    enabled: true
     updateInterval: 16
 
+  applicationManager:
+    enabled: true
+
   searchCollector:
-    enabled: false
+    enabled: true
 
   policyController:
-    enabled: false
+    enabled: true
 
   serviceRegistry:
     enabled: false
