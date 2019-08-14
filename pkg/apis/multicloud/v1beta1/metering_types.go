@@ -30,11 +30,12 @@ type MeteringSpec struct {
 	Reader           MeteringSpecReader      `json:"reader,omitempty"`
 	Sender           MeteringSpecSender      `json:"sender,omitempty"`
 
-	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
+	ImagePullSecrets []string          `json:"imagePullSecrets,omitempty"`
+	Mongo            MeteringSpecMongo `json:"mongo,omitempty"`
 
 	ServiceAccountNameEnabled bool `json:"serviceAccountNameEnabled"`
-
-	Mongo MeteringSpecMongo `json:"mongo,omitempty"`
+	ClusterRoleEnabled        bool `json:"clusterRoleEnabled"`
+	NodeSelectorEnabled       bool `json:"nodeSelectorEnabled"`
 }
 
 // MeteringSpecSender defines the Sender configuration in the the metering spec

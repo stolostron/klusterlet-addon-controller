@@ -25,7 +25,7 @@ import (
 // ReconcileSender Resolves differences in the running state of the MeteringSender services and CRDs.
 func reconcileMetering(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
 	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
-	reqLogger.Info("Reconciling Metering Sender")
+	reqLogger.Info("Reconciling Metering")
 
 	var err error
 	var meteringSenderCR *multicloudv1beta1.Metering
@@ -38,7 +38,7 @@ func reconcileMetering(instance *multicloudv1beta1.Endpoint, client client.Clien
 	}
 
 	if err != nil {
-		log.Error(err, "Fail to generate desired Metering CR for Sender")
+		log.Error(err, "Fail to generate desired Metering CR")
 		return err
 	}
 
@@ -167,8 +167,7 @@ func newMeteringSenderCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1bet
 				PriorityClassNameEnabled: false,
 			},
 
-			ImagePullSecrets:          []string{instance.Spec.ImagePullSecret},
-			ServiceAccountNameEnabled: true,
+			ImagePullSecrets: []string{instance.Spec.ImagePullSecret},
 			Mongo: multicloudv1beta1.MeteringSpecMongo{
 				ClusterCertsSecret: instance.Name + "-metering-ca-cert",
 				ClientCertsSecret:  instance.Name + "-metering-mongodb-client-cert",
@@ -181,6 +180,8 @@ func newMeteringSenderCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1bet
 					Key:    "password",
 				},
 			},
+			ServiceAccountNameEnabled: true,
+			ClusterRoleEnabled:        true,
 		},
 	}, nil
 }
@@ -220,8 +221,7 @@ func newMeteringSenderCRForICP(instance *multicloudv1beta1.Endpoint) (*multiclou
 				PriorityClassNameEnabled: true,
 			},
 
-			ImagePullSecrets:          []string{instance.Spec.ImagePullSecret},
-			ServiceAccountNameEnabled: true,
+			ImagePullSecrets: []string{instance.Spec.ImagePullSecret},
 			Mongo: multicloudv1beta1.MeteringSpecMongo{
 				ClusterCertsSecret: "cluster-ca-cert",
 				ClientCertsSecret:  "icp-mongodb-client-cert",
@@ -234,6 +234,8 @@ func newMeteringSenderCRForICP(instance *multicloudv1beta1.Endpoint) (*multiclou
 					Key:    "password",
 				},
 			},
+			ServiceAccountNameEnabled: false,
+			ClusterRoleEnabled:        false,
 		},
 	}, nil
 }

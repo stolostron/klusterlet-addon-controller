@@ -20,22 +20,24 @@ type MongoDBSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
-	FullNameOverride          string                      `json:"fullnameOverride,omitempty"`
-	Auth                      MongoDBSpecAuth             `json:"auth,omitempty"`
-	Curl                      MongoDBSpecCurl             `json:"curl,omitempty"`
-	Image                     image.Image                 `json:"image,omitempty"`
-	InstallImage              image.Image                 `json:"installImage,omitempty"`
-	Metrics                   MongoDBSpecMetrics          `json:"metrics,omitempty"`
-	PersistentVolume          MongoDBSpecPersistentVolume `json:"persistentVolume,omitempty"`
-	Replicas                  int                         `json:"replicas,omitempty"`
-	TLS                       MongoDBSpecTLS              `json:"tls,omitempty"`
-	ImagePullSecrets          []string                    `json:"imagePullSecrets,omitempty"`
-	PriorityClassNameEnabled  bool                        `json:"priorityClassNameEnabled"`
-	ServiceAccountNameEnabled bool                        `json:"serviceAccountNameEnabled"`
-	LivenessProbe             MongoDBSpecProbe            `json:"livenessProbe,omitempty"`
-	ReadinessProbe            MongoDBSpecProbe            `json:"readinessProbe,omitempty"`
-	Resources                 MongoDBSpecResources        `json:"resources,omitempty"`
-	NodeSelectorEnabled       bool                        `json:"nodeSelectorEnabled"`
+	FullNameOverride string                      `json:"fullnameOverride,omitempty"`
+	Auth             MongoDBSpecAuth             `json:"auth,omitempty"`
+	Curl             MongoDBSpecCurl             `json:"curl,omitempty"`
+	Image            image.Image                 `json:"image,omitempty"`
+	InstallImage     image.Image                 `json:"installImage,omitempty"`
+	Metrics          MongoDBSpecMetrics          `json:"metrics,omitempty"`
+	PersistentVolume MongoDBSpecPersistentVolume `json:"persistentVolume,omitempty"`
+	Replicas         int                         `json:"replicas,omitempty"`
+	TLS              MongoDBSpecTLS              `json:"tls,omitempty"`
+	ImagePullSecrets []string                    `json:"imagePullSecrets,omitempty"`
+	LivenessProbe    MongoDBSpecProbe            `json:"livenessProbe,omitempty"`
+	ReadinessProbe   MongoDBSpecProbe            `json:"readinessProbe,omitempty"`
+	Resources        MongoDBSpecResources        `json:"resources,omitempty"`
+
+	PriorityClassNameEnabled  bool `json:"priorityClassNameEnabled"`
+	ServiceAccountNameEnabled bool `json:"serviceAccountNameEnabled"`
+	NodeSelectorEnabled       bool `json:"nodeSelectorEnabled"`
+	ClusterRoleEnabled        bool `json:"clusterRoleEnabled"`
 }
 
 // MongoDBSpecResources defines the configuration of Resources in spec
