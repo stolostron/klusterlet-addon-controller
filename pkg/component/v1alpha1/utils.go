@@ -36,7 +36,7 @@ func InstallComponentCRDs(cs *crdclientset.Clientset) error {
 	for _, file := range files {
 		if !file.IsDir() && strings.Contains(file.Name(), "crd.yaml") {
 			crdFilePath := componentCRDDirPath + "/" + file.Name()
-			log.V(1).Info("Found Component CRD Yaml", "file", crdFilePath)
+			log.V(5).Info("Found Component CRD Yaml", "file", crdFilePath)
 			crdYaml, err := ioutil.ReadFile(crdFilePath)
 			if err != nil {
 				log.Error(err, "Fail to ReadFile", "filename", crdFilePath)
@@ -57,7 +57,7 @@ func InstallComponentCRDs(cs *crdclientset.Clientset) error {
 func createOrUpdateCRD(crd *crdv1beta1.CustomResourceDefinition, cs *crdclientset.Clientset) error {
 	log.Info("Create or Update component CRD", "CRD.Name", crd.Name)
 
-	log.V(1).Info("Looking for CRD", "CRD.Name", crd.Name)
+	log.V(5).Info("Looking for CRD", "CRD.Name", crd.Name)
 	foundCRD, err := cs.ApiextensionsV1beta1().CustomResourceDefinitions().Get(crd.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -76,7 +76,7 @@ func createOrUpdateCRD(crd *crdv1beta1.CustomResourceDefinition, cs *crdclientse
 		// 	However this does present a problem for when rolling back the version of klusterlet operator...
 		//  If the newer version have a newer API than if we rollback to older version and it try to call Update
 		//  the Update will fail
-		log.V(1).Info("Updating CRD", "CRD.Name", crd.Name)
+		log.V(5).Info("Updating CRD", "CRD.Name", crd.Name)
 		foundCRD.Spec = crd.Spec
 		_, err = cs.ApiextensionsV1beta1().CustomResourceDefinitions().Update(foundCRD)
 		if err != nil {
