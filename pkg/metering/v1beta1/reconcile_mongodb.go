@@ -222,9 +222,7 @@ func newMeteringMongoDBCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1be
 				IssuerKind: "ClusterIssuer",
 				Enabled:    true,
 			},
-			ImagePullSecrets:          []string{instance.Spec.ImagePullSecret},
-			PriorityClassNameEnabled:  false,
-			ServiceAccountNameEnabled: true,
+			ImagePullSecrets: []string{instance.Spec.ImagePullSecret},
 			LivenessProbe: multicloudv1beta1.MongoDBSpecProbe{
 				FailureThreshold:    60,
 				InitialDelaySeconds: 30,
@@ -247,7 +245,10 @@ func newMeteringMongoDBCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1be
 					Memory: "4Gi",
 				},
 			},
-			NodeSelectorEnabled: false,
+			NodeSelectorEnabled:       false,
+			PriorityClassNameEnabled:  false,
+			ServiceAccountNameEnabled: true,
+			ClusterRoleEnabled:        true,
 		},
 	}, nil
 }
