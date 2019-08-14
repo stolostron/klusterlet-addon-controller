@@ -81,16 +81,11 @@ type EndpointSearchCollectorSpec struct {
 // EndpointServiceRegistrySpec defines configuration for the ServiceRegistry component
 // +k8s:openapi-gen=true
 type EndpointServiceRegistrySpec struct {
-	Enabled bool                  `json:"enabled"`
-	CoreDNS EndpointCoreDNSConfig `json:"coredns"`
-}
-
-// EndpointCoreDNSConfig defines configuration for the CoreDNS for the ServiceRegistry component
-// +k8s:openapi-gen=true
-type EndpointCoreDNSConfig struct {
-	DNSSuffix      string `json:"dnsSuffix,omitempty"`
-	Plugins        string `json:"plugins,omitempty"`
-	ClusterProxyIP string `json:"clusterProxyIP,omitempty"`
+	Enabled                            bool   `json:"enabled"`
+	DNSSuffix                          string `json:"dnsSuffix,omitempty"`
+	Plugins                            string `json:"plugins,omitempty"`
+	IstioIngressGateway                string `json:"istioIngressGateway,omitempty"`
+	IstioserviceEntryRegistryNamespace string `json:"istioserviceEntryRegistryNamespace,omitempty"`
 }
 
 // EndpointWorkManagerSpec defines configuration for the WorkManager component
