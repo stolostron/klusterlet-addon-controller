@@ -21,10 +21,15 @@ type ServiceRegistrySpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
 	FullNameOverride string               `json:"fullnameOverride"`
-	Enabled          bool                 `json:"enabled"`
 	ServiceRegistry  ServiceRegistryImage `json:"serviceRegistry"`
-	CoreDNS          CoreDNS              `json:"coredns"`
+	CoreDNS          CoreDNSImage         `json:"coredns"`
 	ImagePullSecret  string               `json:"imagePullSecret,omitempty"`
+
+	ConnectionManager                  string `json:"connectionManager"`
+	DNSSuffix                          string `json:"dnsSuffix,omitempty"`
+	Plugins                            string `json:"plugins,omitempty"`
+	IstioIngressGateway                string `json:"istioIngressGateway,omitempty"`
+	IstioServiceEntryRegistryNamespace string `json:"istioServiceEntryRegistryNamespace,omitempty"`
 }
 
 // ServiceRegistryImage defines service registry configuration in the spec
@@ -33,13 +38,10 @@ type ServiceRegistryImage struct {
 	Image image.Image `json:"image"`
 }
 
-// CoreDNS defines CoreDNS configuration in the spec
+// CoreDNSImage defines CoreDNSImage configuration in the spec
 // +k8s:openapi-gen=true
-type CoreDNS struct {
-	Image          image.Image `json:"image,omitempty"`
-	DNSSuffix      string      `json:"dnsSuffix,omitempty"`
-	Plugins        string      `json:"plugins,omitempty"`
-	ClusterProxyIP string      `json:"clusterProxyIP,omitempty"`
+type CoreDNSImage struct {
+	Image image.Image `json:"image,omitempty"`
 }
 
 // ServiceRegistryStatus defines the observed state of ServiceRegistry

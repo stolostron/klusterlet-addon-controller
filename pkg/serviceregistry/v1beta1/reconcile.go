@@ -104,7 +104,6 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-// TODO(liuhao): the following method need to be refactored as instance method of ServiceRegistry struct
 func newServiceRegistryCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1beta1.ServiceRegistry, error) {
 	labels := map[string]string{
 		"app": instance.Name,
@@ -122,23 +121,24 @@ func newServiceRegistryCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1be
 
 	return &multicloudv1beta1.ServiceRegistry{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-service-registry",
+			Name:      instance.Name + "-svcreg",
 			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
 		Spec: multicloudv1beta1.ServiceRegistrySpec{
-			FullNameOverride: instance.Name + "-service-registry",
-			Enabled:          instance.Spec.ServiceRegistryConfig.Enabled,
+			FullNameOverride: instance.Name + "-svcreg",
 			ServiceRegistry: multicloudv1beta1.ServiceRegistryImage{
 				Image: serviceRegistryImage,
 			},
-			CoreDNS: multicloudv1beta1.CoreDNS{
-				Image:          coreDNSImage,
-				DNSSuffix:      instance.Spec.ServiceRegistryConfig.CoreDNS.DNSSuffix,
-				Plugins:        instance.Spec.ServiceRegistryConfig.CoreDNS.Plugins,
-				ClusterProxyIP: instance.Spec.ServiceRegistryConfig.CoreDNS.ClusterProxyIP,
+			CoreDNS: multicloudv1beta1.CoreDNSImage{
+				Image: coreDNSImage,
 			},
-			ImagePullSecret: instance.Spec.ImagePullSecret,
+			ConnectionManager:                  instance.Name + "-connmgr",
+			DNSSuffix:                          instance.Spec.ServiceRegistryConfig.DNSSuffix,
+			Plugins:                            instance.Spec.ServiceRegistryConfig.Plugins,
+			IstioIngressGateway:                instance.Spec.ServiceRegistryConfig.IstioIngressGateway,
+			IstioServiceEntryRegistryNamespace: instance.Spec.ServiceRegistryConfig.IstioserviceEntryRegistryNamespace,
+			ImagePullSecret:                    instance.Spec.ImagePullSecret,
 		},
 	}, nil
 }
