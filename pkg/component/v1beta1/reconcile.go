@@ -73,7 +73,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		}
 	}
 
-	// Create or Update Component Operator ClusterRoleBinding
+	// Create Component Operator ClusterRoleBinding
 	clusterRoleBinding := newClusterRoleBinding(instance)
 	err = controllerutil.SetControllerReference(instance, clusterRoleBinding, scheme)
 	if err != nil {
@@ -193,10 +193,6 @@ func newServiceAccount(instance *multicloudv1beta1.Endpoint) *corev1.ServiceAcco
 		},
 	}
 
-	if instance.Spec.ImagePullSecret != "" {
-		serviceAccount.ImagePullSecrets = append(serviceAccount.ImagePullSecrets, corev1.LocalObjectReference{Name: instance.Spec.ImagePullSecret})
-	}
-
 	return serviceAccount
 }
 
@@ -268,6 +264,14 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) *extensionsv1beta1.Depl
 				},
 			},
 		},
+	}
+
+	if instance.Spec.ImagePullSecret != "" {
+		deployment.Spec.Template.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+			corev1.LocalObjectReference{
+				Name: instance.Spec.ImagePullSecret,
+			},
+		}
 	}
 
 	return deployment

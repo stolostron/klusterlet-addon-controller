@@ -73,7 +73,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 			// CertManager CR does NOT exist
 			if instance.GetDeletionTimestamp() == nil {
 				// KlusterletService NOT in deletion state
-				err = createServiceAccount(client, scheme, instance, certMgr)
+				err = createOrUpdateServiceAccount(client, scheme, instance, certMgr)
 				if err != nil {
 					log.Error(err, "Fail to CREATE ServiceAccount")
 					return false, err
@@ -131,6 +131,11 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 			// CertManager CR does exist
 			if instance.GetDeletionTimestamp() == nil {
 				// Endpoint NOT in deletion state
+				err = createOrUpdateServiceAccount(client, scheme, instance, certMgr)
+				if err != nil {
+					log.Error(err, "Fail to Update ServiceAccount")
+					return false, err
+				}
 				foundCertManager.Spec = certMgr.Spec
 				err = client.Update(context.TODO(), foundCertManager)
 				if err != nil && !errors.IsConflict(err) {
@@ -212,18 +217,16 @@ func deleteSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, c
 	return nil
 }
 
-func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance *multicloudv1beta1.Endpoint, certmgr *multicloudv1beta1.CertManager) error {
+func createOrUpdateServiceAccount(client client.Client, scheme *runtime.Scheme, instance *multicloudv1beta1.Endpoint, certmgr *multicloudv1beta1.CertManager) error {
 	serviceAccount := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      certmgr.Spec.ServiceAccount.Name,
 			Namespace: certmgr.Namespace,
 		},
-		ImagePullSecrets: []corev1.LocalObjectReference{
-			corev1.LocalObjectReference{
-				Name: instance.Spec.ImagePullSecret,
-			},
-		},
 	}
+
+	imagePullSecret := corev1.LocalObjectReference{Name: instance.Spec.ImagePullSecret}
+
 	err := controllerutil.SetControllerReference(instance, serviceAccount, scheme)
 	if err != nil {
 		return err
@@ -231,14 +234,38 @@ func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance
 
 	foundServiceAccount := &corev1.ServiceAccount{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: serviceAccount.Name, Namespace: serviceAccount.Namespace}, foundServiceAccount)
-	if err != nil && errors.IsNotFound(err) {
-		log.Info("Creating ServiceAccount", "Name", serviceAccount.Name, "Namespace", serviceAccount.Namespace)
-		err = client.Create(context.TODO(), serviceAccount)
-		if err != nil {
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.Info("Creating ServiceAccount", "Name", serviceAccount.Name, "Namespace", serviceAccount.Namespace)
+			if instance.Spec.ImagePullSecret != "" {
+				serviceAccount.ImagePullSecrets = append(serviceAccount.ImagePullSecrets, imagePullSecret)
+			}
+			err = client.Create(context.TODO(), serviceAccount)
+			if err != nil {
+				return err
+			}
+		} else {
 			return err
 		}
-	} else if err != nil {
-		return err
+	} else {
+		if instance.Spec.ImagePullSecret != "" {
+			foundImagePullSecret := false
+			for _, secret := range foundServiceAccount.ImagePullSecrets {
+				if secret.Name == imagePullSecret.Name {
+					foundImagePullSecret = true
+					break
+				}
+			}
+
+			if !foundImagePullSecret {
+				foundServiceAccount.ImagePullSecrets = append(foundServiceAccount.ImagePullSecrets, imagePullSecret)
+				log.Info("Updating ServiceAccount", "Name", serviceAccount.Name, "Namespace", serviceAccount.Namespace)
+				err = client.Update(context.TODO(), foundServiceAccount)
+				if err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	foundPrivilegedSCC := &openshiftsecurityv1.SecurityContextConstraints{}

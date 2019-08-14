@@ -23,7 +23,6 @@ import (
 	topology "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/topology/v1beta1"
 	workmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/workmgr/v1beta1"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -69,13 +68,114 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// TODO(user): Modify this to be the types you create that are owned by the primary resource
 	// Watch for changes to secondary resource Pods and requeue the owner Endpoint
-	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.ApplicationManager{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &multicloudv1beta1.Endpoint{},
 	})
 	if err != nil {
+		log.Error(err, "Fail to add Watch for ApplicationManager to controller")
 		return err
 	}
+
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.CertManager{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &multicloudv1beta1.Endpoint{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for CertManager to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.ConnectionManager{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &multicloudv1beta1.Endpoint{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for ConnectionManager to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.Metering{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &multicloudv1beta1.Endpoint{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for Metering to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.MongoDB{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &multicloudv1beta1.Endpoint{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for MongoDB to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.PolicyController{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &multicloudv1beta1.Endpoint{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for PolicyController to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.SearchCollector{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &multicloudv1beta1.Endpoint{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for SearchCollector to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.ServiceRegistry{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &multicloudv1beta1.Endpoint{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for ServiceRegistry to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.Tiller{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &multicloudv1beta1.Endpoint{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for Tiller to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.TopologyCollector{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &multicloudv1beta1.Endpoint{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for TopologyCollector to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.WorkManager{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &multicloudv1beta1.Endpoint{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for WorkManager to controller")
+		return err
+	}
+
+	// NOTE(liuhao): for some reason this cause infinite requeue of reconcile request
+	// err = c.Watch(&source.Kind{Type: &extensionsv1beta1.Deployment{}}, &handler.EnqueueRequestForOwner{
+	// 	IsController: true,
+	// 	OwnerType:    &multicloudv1beta1.Endpoint{},
+	// })
+	// if err != nil {
+	// 	log.Error(err, "Fail to add Watch for Deployment to controller")
+	// 	return err
+	// }
 
 	return nil
 }
