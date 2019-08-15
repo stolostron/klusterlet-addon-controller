@@ -47,3 +47,28 @@ spec:
       dnsSuffix: "mcm.svc"
       plugins: "kube-service"
       clusterProxyIP: ""
+
+  monitoring:
+    enabled: true
+    mode: standard
+    imagePullSecrets: "regcred"
+    tls:
+      enabled: true
+      issuer: klusterlet-tiller
+      ca:
+        secretName: klusterlet-tiller-ca-cert
+    prometheus:
+      etcdTarget:
+        enabled: false
+    alertmanager:
+      enabled: false
+    grafana:
+      enabled: false
+    kubeStateMetrics:
+      enabled: false
+    nodeExporter:
+      enabled: false
+    collectdExporter:
+      enabled: false
+    elasticsearchExporter:
+      enabled: false

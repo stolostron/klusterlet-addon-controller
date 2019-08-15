@@ -132,9 +132,8 @@ func newWorkManagerTillerIntegration(cr *multicloudv1beta1.Endpoint, client clie
 func newWorkManagerPrometheusIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) multicloudv1beta1.WorkManagerPrometheusIntegration {
 	if cr.Spec.PrometheusIntegration.Enabled {
 		// OpenShift Prometheus Service
-		foundOpenshiftPrometheusService := &corev1.Service{}
-		err := client.Get(context.TODO(), types.NamespacedName{Name: "prometheus-k8s", Namespace: "openshift-monitoring"}, foundOpenshiftPrometheusService)
-		if err == nil { //found OpenShift Prometheus
+		found := inspect.OpenshiftPrometheusService(client)
+		if found { //found OpenShift Prometheus
 			return multicloudv1beta1.WorkManagerPrometheusIntegration{
 				Enabled:        true,
 				Service:        "openshift-monitoring/prometheus-k8s",
@@ -144,9 +143,8 @@ func newWorkManagerPrometheusIntegration(cr *multicloudv1beta1.Endpoint, client 
 		}
 
 		// ICP Prometheus Service
-		foundICPPrometheusService := &corev1.Service{}
-		err = client.Get(context.TODO(), types.NamespacedName{Name: "prometheus-k8s", Namespace: "openshift-monitoring"}, foundICPPrometheusService)
-		if err == nil { //found ICP Prometheus
+		found = inspect.ICPPrometheusService(client)
+		if found { //found ICP Prometheus
 			return multicloudv1beta1.WorkManagerPrometheusIntegration{
 				Enabled:        true,
 				Service:        "kube-system/monitoring-prometheus",

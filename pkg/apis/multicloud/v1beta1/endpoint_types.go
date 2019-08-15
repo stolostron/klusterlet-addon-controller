@@ -40,6 +40,7 @@ type EndpointSpec struct {
 	PolicyController         EndpointPolicyControllerSpec      `json:"policyController"`
 	ServiceRegistryConfig    EndpointServiceRegistrySpec       `json:"serviceRegistry"`
 	EndpointMeteringConfig   EndpointMeteringSpec              `json:"metering"`
+	MonitoringConfig         EndpointMonitoringSpec            `json:"monitoring"`
 	ApplicationManagerConfig EndpointApplicationManagerSpec    `json:"applicationManager"`
 
 	// +kubebuilder:validation:MinLength=1
@@ -52,6 +53,12 @@ type EndpointSpec struct {
 	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
 
 	ComponentOperatorImage string `json:"componentOperatorImage,omitempty"`
+}
+
+// EndpointMonitoringSpec defines configuration for the Monitoring component
+// +k8s:openapi-gen=true
+type EndpointMonitoringSpec struct {
+	Enabled bool `json:"enabled"`
 }
 
 // EndpointApplicationManagerSpec defines configuration for the ApplicationManager component

@@ -123,7 +123,7 @@ func createRootCACert(instance *multicloudv1beta1.Endpoint, client client.Client
 			Namespace: instance.Namespace,
 		},
 		Spec: certmanagerv1alpha1.CertificateSpec{
-			CommonName: instance.Name + "metering",
+			CommonName: instance.Name + "-metering",
 			IssuerRef: certmanagerv1alpha1.ObjectReference{
 				Name: instance.Name + "-self-signed",
 				Kind: "ClusterIssuer",

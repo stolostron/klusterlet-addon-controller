@@ -16,6 +16,7 @@ import (
 	component "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component/v1beta1"
 	connmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr/v1beta1"
 	metering "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/metering/v1beta1"
+	monitoring "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/monitoring/v1beta1"
 	policyctrl "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/policyctrl/v1beta1"
 	searchcollector "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/searchcollector/v1beta1"
 	serviceregistry "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/serviceregistry/v1beta1"
@@ -264,6 +265,12 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 	requeue = requeue || tempRequeue
 
 	tempRequeue, err = topology.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	requeue = requeue || tempRequeue
+
+	tempRequeue, err = monitoring.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
