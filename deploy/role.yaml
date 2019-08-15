@@ -55,6 +55,7 @@ rules:
   - workmanagers
   - searchcollectors
   - policycontrollers
+  - monitorings
   verbs:
   - '*'
 - apiGroups:
@@ -71,6 +72,7 @@ rules:
   - workmanagers
   - meterings
   - mongodbs
+  - monitorings
   - applicationmanagers
   verbs:
   - '*'

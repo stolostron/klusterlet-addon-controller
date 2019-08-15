@@ -15,6 +15,7 @@ import (
 	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured/unstructuredscheme"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
 
@@ -28,6 +29,20 @@ var log = logf.Log.WithName("inspect")
 func DeployedOnHub(c client.Client) bool {
 	clusterStatusList := &mcmv1alpha1.ClusterStatusList{}
 	err := c.List(context.TODO(), &client.ListOptions{}, clusterStatusList)
+	return err == nil
+}
+
+// OpenshiftPrometheusService check: Is the cluster have the openshift prometheus service?
+func OpenshiftPrometheusService(client client.Client) bool {
+	foundOpenshiftPrometheusService := &corev1.Service{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "prometheus-k8s", Namespace: "openshift-monitoring"}, foundOpenshiftPrometheusService)
+	return err == nil
+}
+
+// ICPPrometheusService check: Is the cluster have the openshift prometheus service?
+func ICPPrometheusService(client client.Client) bool {
+	foundICPPrometheusService := &corev1.Service{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "monitoring-prometheus", Namespace: "kube-system"}, foundICPPrometheusService)
 	return err == nil
 }
 
