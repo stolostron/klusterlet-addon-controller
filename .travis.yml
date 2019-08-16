@@ -4,7 +4,7 @@ cache:
   - apt: true
 
 go:
-  - "1.12"
+  - "1.12.x"
 
 services:
   - docker
@@ -24,6 +24,7 @@ jobs:
 
       before_install:
         - echo Go version is $TRAVIS_GO_VERSION
+        - go version
         - source travis-env.sh
 
       script:
@@ -42,6 +43,7 @@ jobs:
 
       before_install:
         - echo Go version is $TRAVIS_GO_VERSION
+        - go version
         - source travis-env.sh
 
       script:
@@ -80,6 +82,7 @@ jobs:
 
       before_install:
         - echo Go version is $TRAVIS_GO_VERSION
+        - go version
         - source travis-env.sh
 
       script:
