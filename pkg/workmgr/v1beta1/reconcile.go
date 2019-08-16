@@ -155,7 +155,10 @@ func newWorkManagerPrometheusIntegration(cr *multicloudv1beta1.Endpoint, client 
 
 		//TODO(liuhao): KlusterletOperator deployed Prometheus
 		return multicloudv1beta1.WorkManagerPrometheusIntegration{
-			Enabled: false,
+			Enabled:        cr.Spec.PrometheusIntegration.Enabled,
+			Service:        cr.Namespace + "/monitoring-prometheus",
+			Secret:         cr.Namespace + "/monitoring-monitoring-client-certs",
+			UseBearerToken: false,
 		}
 	}
 
@@ -216,7 +219,7 @@ func newWorkManagerServiceConfig() multicloudv1beta1.WorkManagerService {
 	case inspect.KubeVendorGKE:
 		fallthrough
 	case inspect.KubeVendorIKS:
-		workManagerService.ServiceType = "NodePort"
+		workManagerService.ServiceType = "LoadBalancer"
 	default:
 		workManagerService.ServiceType = "ClusterIP"
 	}

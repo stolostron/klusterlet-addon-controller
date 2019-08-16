@@ -65,7 +65,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 			log.V(5).Info("Monitoring CR DOES NOT exist")
 			if instance.GetDeletionTimestamp() == nil {
 				log.V(5).Info("instance IS NOT in deletion state")
-				if instance.Spec.MonitoringConfig.Enabled {
+				if instance.Spec.PrometheusIntegration.Enabled {
 					log.V(5).Info("Monitoring ENABLED")
 					err = createClusteRolesForMonitoring(instance, client, scheme)
 					if err != nil {
@@ -109,7 +109,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		log.V(5).Info("Monitoring CR DOES exist")
 		if foundMonitoringCR.GetDeletionTimestamp() == nil {
 			log.V(5).Info("Monitoring CR IS NOT in deletion state")
-			if instance.GetDeletionTimestamp() == nil && instance.Spec.MonitoringConfig.Enabled {
+			if instance.GetDeletionTimestamp() == nil && instance.Spec.PrometheusIntegration.Enabled {
 				log.Info("instance IS NOT in deletion state and Monitoring ENABLED")
 				err = update(instance, monitoringCR, foundMonitoringCR, client)
 				if err != nil {
@@ -429,7 +429,7 @@ func newMonitoringCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1beta1.M
 		},
 		Spec: multicloudv1beta1.MonitoringSpec{
 			FullNameOverride:           instance.Name + "-monitoring",
-			Enabled:                    instance.Spec.MonitoringConfig.Enabled,
+			Enabled:                    instance.Spec.PrometheusIntegration.Enabled,
 			Mode:                       "standard",
 			ImagePullSecret:            instance.Spec.ImagePullSecret,
 			MonitoringFullnameOverride: "monitoring-monitoring",
