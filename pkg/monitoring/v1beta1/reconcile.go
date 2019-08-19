@@ -590,7 +590,7 @@ func deleteRootCACert(instance *multicloudv1beta1.Endpoint, client client.Client
 	foundCertificate := &certmanagerv1alpha1.Certificate{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-monitoring-ca-cert", Namespace: instance.Namespace}, foundCertificate)
 	if err == nil {
-		log.Info("Creating Monitoring CA Certificate")
+		log.Info("Deleting Monitoring CA Certificate")
 		return client.Delete(context.TODO(), foundCertificate)
 	}
 
@@ -601,7 +601,7 @@ func deleteClusterIssuer(instance *multicloudv1beta1.Endpoint, client client.Cli
 	foundClusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-monitoring"}, foundClusterIssuer)
 	if err == nil {
-		log.Info("Creating Monitoring ClusterIssuer")
+		log.Info("Deleting Monitoring ClusterIssuer")
 		return client.Delete(context.TODO(), foundClusterIssuer)
 	}
 

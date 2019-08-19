@@ -31,6 +31,7 @@ import (
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 
+	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	crdv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	crdclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -161,6 +162,11 @@ func main() {
 	}
 
 	if err := mcmv1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := corev1.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
