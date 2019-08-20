@@ -32,16 +32,14 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	reqLogger.Info("Reconciling Monitoring")
 
 	// Openshift Monitoring
-	found := inspect.OpenshiftPrometheusService(client)
-	if found {
-		log.Info("Found Openshift Monitoring, skip MonitoringCR Reconcile.")
+	if inspect.Info.KubeVendor == inspect.KubeVendorOpenShift {
+		log.Info("On Openshift, skip MonitoringCR Reconcile.")
 		return false, nil
 	}
 
 	// ICP Monitoring
-	found = inspect.ICPPrometheusService(client)
-	if found {
-		log.Info("Found ICP Monitoring, skip MonitoringCR Reconcile.")
+	if inspect.Info.KubeVendor == inspect.KubeVendorICP {
+		log.Info("On ICP, skip MonitoringCR Reconcile.")
 		return false, nil
 	}
 
@@ -369,7 +367,6 @@ func createClusteRoles(client client.Client, clusterRole *rbacv1.ClusterRole) er
 	return err
 }
 
-// TODO(liuhao): the following method need to be refactored as instance method of Monitoring struct
 func newMonitoringCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1beta1.Monitoring, error) {
 	labels := map[string]string{
 		"app": instance.Name,
@@ -573,13 +570,19 @@ func deleteClusterRole(instance *multicloudv1beta1.Endpoint, client client.Clien
 	for _, clusterRoleToDelete := range clusterRolesToDelete {
 		foundClusterRoleToDelete := &rbacv1.ClusterRole{}
 		err := client.Get(context.TODO(), types.NamespacedName{Name: clusterRoleToDelete, Namespace: ""}, foundClusterRoleToDelete)
-		if err == nil && instance.APIVersion == foundClusterRoleToDelete.OwnerReferences[0].APIVersion &&
-			instance.Kind == foundClusterRoleToDelete.OwnerReferences[0].Kind &&
-			instance.Name == foundClusterRoleToDelete.OwnerReferences[0].Name {
-			err := client.Delete(context.TODO(), foundClusterRoleToDelete)
-			if err != nil {
-				log.Error(err, "Fail to DELETE ConnectionManager Secret", "Secret.Name", clusterRoleToDelete)
-				return err
+
+		if err == nil {
+			for _, ownerReference := range foundClusterRoleToDelete.OwnerReferences {
+				if instance.APIVersion == ownerReference.APIVersion &&
+					instance.Kind == ownerReference.Kind &&
+					instance.Name == ownerReference.Name {
+					err := client.Delete(context.TODO(), foundClusterRoleToDelete)
+					if err != nil {
+						log.Error(err, "Fail to DELETE Monitoring Cluster Role", "ClusterRole.Name", clusterRoleToDelete)
+						return err
+					}
+					break
+				}
 			}
 		}
 	}
