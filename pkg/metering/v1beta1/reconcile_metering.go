@@ -9,9 +9,9 @@ package v1beta1
 import (
 	"context"
 
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
-
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
+	//"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -96,7 +96,7 @@ func reconcileMetering(instance *multicloudv1beta1.Endpoint, client client.Clien
 			} else {
 				log.V(5).Info("Instance IS in deletion state or Metering DISABLED")
 				if foundMeteringSenderCR.GetDeletionTimestamp() == nil {
-					err := delete(foundMeteringSenderCR, client)
+					err := delete(instance, foundMeteringSenderCR, client)
 					if err != nil {
 						log.Error(err, "Fail to DELETE Metering CR for Sender")
 						return err
