@@ -138,7 +138,8 @@ func createClusteRolesForMonitoring(instance *multicloudv1beta1.Endpoint, client
 	var err error
 
 	labels := map[string]string{
-		"app":                                instance.Name,
+		"app": instance.Name,
+
 		"kubernetes.io/bootstrapping":        "rbac-defaults",
 		"rbac.icp.com/aggregate-to-icp-view": "true",
 	}
