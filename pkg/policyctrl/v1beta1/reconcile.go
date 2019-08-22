@@ -114,12 +114,13 @@ func newPolicyControllerCR(cr *multicloudv1beta1.Endpoint) (*multicloudv1beta1.P
 			Labels:    labels,
 		},
 		Spec: multicloudv1beta1.PolicyControllerSpec{
-			FullNameOverride:  cr.Name + "-policyctrl",
-			ClusterName:       cr.Spec.ClusterName,
-			ClusterNamespace:  cr.Spec.ClusterNamespace,
-			ConnectionManager: cr.Name + "-connmgr",
-			Image:             image,
-			ImagePullSecret:   cr.Spec.ImagePullSecret,
+			FullNameOverride:            cr.Name + "-policyctrl",
+			ClusterName:                 cr.Spec.ClusterName,
+			ClusterNamespace:            cr.Spec.ClusterNamespace,
+			ConnectionManager:           cr.Name + "-connmgr",
+			Image:                       image,
+			ImagePullSecret:             cr.Spec.ImagePullSecret,
+			PostDeleteJobServiceAccount: cr.Name + "-component-operator",
 		},
 	}, nil
 }
