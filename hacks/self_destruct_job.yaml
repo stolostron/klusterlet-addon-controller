@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: self-destruct
+spec:
+  template:
+    spec:
+      serviceAccountName: ibm-multicluster-endpoint-operator
+      imagePullSecrets:
+      - name: hao-artifactory
+      containers:
+      - name: self-destruct
+        image: hyc-cloud-private-scratch-docker-local.artifactory.swg-devops.com/ibmcom/icp-multicluster-endpoint-operator:liuhao
+        command: ["self-destruct.sh"]
+      restartPolicy: Never
+  backoffLimit: 4
