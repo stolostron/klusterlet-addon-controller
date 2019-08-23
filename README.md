@@ -46,9 +46,11 @@ NOTE: this will use the amd64 version of the operator
 ## Installing Klusterlet using Klusterlet Operator 
 To create a klusterlet deployment with the klusterlet operator u need to create the klusterlet CR
 
-Example of Klusterlet CR `/deploy/crds/klusterlet_v1alpha1_klusterletservice_cr.yaml`
+Example of Klusterlet CR `/deploy/crds/multicloud_v1beta1_endpoint_cr.yaml`
 
 ## Build and publish a personal build to scratch artifactory
+- `export GITHUB_USER=<GITHUB_USER>`
+- `export GITHUB_TOKEN=<GITHUB_TOKEN>`
 - `make init`
 - `make operator:build`
 - `make docker:tag`
