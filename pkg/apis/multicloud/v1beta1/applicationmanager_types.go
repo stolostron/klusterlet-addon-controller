@@ -33,8 +33,10 @@ type ApplicationManagerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ConnectionManager string `json:"connectionManager"`
 
-	DeployableSpec   ApplicationManagerDeployableSpec   `json:"deployable"`
-	SubscriptionSpec ApplicationManagerSubscriptionSpec `json:"subscription"`
+	DeployableSpec                 ApplicationManagerDeployableSpec                 `json:"deployable"`
+	SubscriptionSpec               ApplicationManagerSubscriptionSpec               `json:"subscription"`
+	HelmCRDSpec                    ApplicationManagerHelmCRDSpec                    `json:"helmcrd"`
+	HelmCRDAdmissionControllerSpec ApplicationManagerHelmCRDAdmissionControllerSpec `json:"helmcrd_admission_controller"`
 
 	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 }
@@ -49,6 +51,21 @@ type ApplicationManagerDeployableSpec struct {
 // +k8s:openapi-gen=true
 type ApplicationManagerSubscriptionSpec struct {
 	Image image.Image `json:"image"`
+}
+
+// ApplicationManagerHelmCRDSpec defines configuration for HelmCRD in ApplicationManager
+// +k8s:openapi-gen=true
+type ApplicationManagerHelmCRDSpec struct {
+	Image    image.Image `json:"image"`
+	IP       string      `json:"ip"`
+	Hostname string      `json:"hostname"`
+}
+
+// ApplicationManagerHelmCRDAdmissionControllerSpec defines configuration for HelmCRDAdmissionController in ApplicationManager
+// +k8s:openapi-gen=true
+type ApplicationManagerHelmCRDAdmissionControllerSpec struct {
+	Image    image.Image `json:"image"`
+	CABundle string      `json:"ca_bundle"`
 }
 
 // ApplicationManagerStatus defines the observed state of ApplicationManager

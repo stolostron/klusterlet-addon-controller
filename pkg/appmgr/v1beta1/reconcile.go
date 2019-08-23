@@ -8,16 +8,22 @@ package v1beta1
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
+	"net"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	corev1 "k8s.io/api/core/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 )
 
 // Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
@@ -25,7 +31,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
 	reqLogger.Info("Reconciling ApplicationManager")
 
-	appMgrCR, err := newApplicationManagerCR(instance)
+	appMgrCR, err := newApplicationManagerCR(instance, client)
 	if err != nil {
 		log.Error(err, "Fail to generate desired ApplicationManager CR")
 		return false, err
@@ -40,7 +46,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	foundAppMgrCR := &multicloudv1beta1.ApplicationManager{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: appMgrCR.Name, Namespace: appMgrCR.Namespace}, foundAppMgrCR)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if kerrors.IsNotFound(err) {
 			log.V(5).Info("ApplicationManager CR DOES NOT exist")
 			if instance.GetDeletionTimestamp() == nil {
 				log.V(5).Info("instance IS NOT in deletion state")
@@ -98,7 +104,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1beta1.ApplicationManager, error) {
+func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client.Client) (*multicloudv1beta1.ApplicationManager, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
@@ -114,6 +120,63 @@ func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint) (*multicloudv
 		log.Error(err, "Fail to get Image", "Component.Name", "subscription")
 		return nil, err
 	}
+
+	helmCRDImage, err := instance.GetImage("helmcrd")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "helmcrd")
+		return nil, err
+	}
+
+	helmCRDAdmissionControllerImage, err := instance.GetImage("helmcrd_admission_controller")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "helmcrd_admission_controller")
+		return nil, err
+	}
+
+	clusterCADomain := "mycluster.icp"
+	ipStr := "0.0.0.0"
+	if inspect.Info.KubeVendor == inspect.KubeVendorICP {
+		clusterInfoCM := &corev1.ConfigMap{}
+		err = client.Get(context.TODO(), types.NamespacedName{Name: "ibmcloud-cluster-info", Namespace: "kube-public"}, clusterInfoCM)
+		if err != nil {
+			log.Error(err, "Unexpected ERROR")
+			return nil, err
+		}
+
+		clusterCADomain = clusterInfoCM.Data["cluster_ca_domain"]
+		clusterAddress := clusterInfoCM.Data["cluster_address"]
+
+		ip := net.ParseIP(clusterAddress)
+		ipStr = ip.String()
+		if ip == nil {
+			log.Info("cluster_address is a FQDN, looking up the IP")
+			ipArr, err := net.LookupIP(clusterAddress)
+			if err != nil {
+				log.Error(err, "Failed to look up IP for cluster_address")
+				return nil, err
+			}
+			if len(ipArr) > 0 {
+				ipStr = ipArr[0].String()
+			} else {
+				log.Info("Could not resolve IPs for hostname, using default value")
+			}
+		}
+	}
+
+	caBundleCM := &corev1.ConfigMap{}
+	err = client.Get(context.TODO(), types.NamespacedName{Name: "extension-apiserver-authentication", Namespace: "kube-system"}, caBundleCM)
+	if err != nil {
+		log.Error(err, "Unexpected ERROR")
+		return nil, err
+	}
+
+	caBundle := caBundleCM.Data["client-ca-file"]
+	if len(caBundle) == 0 {
+		err = errors.New("kube ca bundle not found")
+		log.Error(err, "ca bundle not found")
+		return nil, err
+	}
+	caBundleBase64 := base64.StdEncoding.EncodeToString([]byte(caBundle))
 
 	return &multicloudv1beta1.ApplicationManager{
 		ObjectMeta: metav1.ObjectMeta{
@@ -131,6 +194,15 @@ func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint) (*multicloudv
 			},
 			SubscriptionSpec: multicloudv1beta1.ApplicationManagerSubscriptionSpec{
 				Image: subscriptionImage,
+			},
+			HelmCRDSpec: multicloudv1beta1.ApplicationManagerHelmCRDSpec{
+				Image:    helmCRDImage,
+				Hostname: clusterCADomain,
+				IP:       ipStr,
+			},
+			HelmCRDAdmissionControllerSpec: multicloudv1beta1.ApplicationManagerHelmCRDAdmissionControllerSpec{
+				Image:    helmCRDAdmissionControllerImage,
+				CABundle: caBundleBase64,
 			},
 			ImagePullSecret: instance.Spec.ImagePullSecret,
 		},
