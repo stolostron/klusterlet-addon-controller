@@ -68,6 +68,7 @@ build: %build:
 
 .PHONY: image
 image:: deps
+	@$(BUILD_DIR)/download-kubectl.sh
 	$(MAKE) operator:build
 
 .PHONY: test

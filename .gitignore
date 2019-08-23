@@ -27,3 +27,7 @@ api/multicluster-endpoint-api/openapi.json
 
 #Scratch 
 scratch
+build/kubectl-darwin-amd64
+build/kubectl-linux-amd64
+build/kubectl-linux-ppc64le
+build/kubectl-linux-s390x
