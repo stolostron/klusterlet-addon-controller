@@ -83,4 +83,4 @@ k8s.io/kube-openapi,0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803
 sigs.k8s.io/controller-runtime,12d98582e72927b6cd0123e2b4e819f9341ce62c
 sigs.k8s.io/controller-tools,950a0e88e4effb864253b3c7504b326cc83b9d11
 sigs.k8s.io/yaml,fd68e9863619f6ec2fdd8625fe1f02e7c877e480
-https://hub.docker.com/_/registry.access.redhat.com/ubi7/ubi-minimal,7.6
+https://hub.docker.com/_/registry.access.redhat.com/ubi7/ubi-minimal,7.7-98
