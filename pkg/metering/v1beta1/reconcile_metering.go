@@ -161,7 +161,7 @@ func newMeteringSenderCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1bet
 				Enabled:                  true,
 				ClusterName:              instance.Spec.ClusterName,
 				ClusterNamespace:         instance.Spec.ClusterNamespace,
-				HubKubeConfigSecret:      instance.Name + "-connmgr-hub-kubeconfig",
+				HubKubeConfigSecret:      instance.Name + "-connmgr-cert-store",
 				Image:                    senderImage,
 				NodeSelectorEnabled:      false,
 				PriorityClassNameEnabled: false,
