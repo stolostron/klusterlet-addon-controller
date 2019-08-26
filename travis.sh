@@ -82,8 +82,6 @@ announce make operator:tools
 fold_end tools
 
 fold_start image "Image"
-export GOOS=linux
-export GOARCH=$ARCH
 announce make image
 fold_end image
 
