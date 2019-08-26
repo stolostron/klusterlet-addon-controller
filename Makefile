@@ -25,6 +25,7 @@ ifeq ($(ARCH), x86_64)
 	ARCH = amd64
 endif
 
+GOARCH = $(ARCH)
 ARCH_TYPE = $(ARCH)
 
 DOCKER_FILE = build/Dockerfile
@@ -129,8 +130,11 @@ operator\:tools:
 operator\:build: deps
 	## WARNING: DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES.
 	$(info Building operator)
+	$(info GOOS: $(GOOS))
+	$(info GOARCH: $(GOARCH))
 	$(info --IMAGE: $(DOCKER_IMAGE))
 	$(info --TAG: $(DOCKER_BUILD_TAG))
+	$(info --DOCKER_BUILD_OPTS: $(DOCKER_BUILD_OPTS))
 	operator-sdk build $(DOCKER_IMAGE):$(DOCKER_BUILD_TAG) --image-build-args "$(DOCKER_BUILD_OPTS)"
 
 .PHONY: operator\:run
