@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
@@ -71,13 +72,10 @@ func InitClusterInfo(cfg *rest.Config) error {
 		Info.KubeVendor = KubeVendorICP
 	} else if strings.Contains(gitVersion, string(KubeVendorGKE)) {
 		Info.KubeVendor = KubeVendorGKE
+	} else if isOpenshift(kubeRESTClient) {
+		Info.KubeVendor = KubeVendorOpenShift
 	} else {
-		Info.OpenShiftVersion = getOpenShiftVersion(kubeRESTClient)
-		if Info.OpenShiftVersion.GitVersion != "" {
-			Info.KubeVendor = KubeVendorOpenShift
-		} else {
-			Info.KubeVendor = KubeVendorOther
-		}
+		Info.KubeVendor = KubeVendorOther
 	}
 
 	// Set CloudVendor from KubeVendor
@@ -140,20 +138,24 @@ func getKubeVersion(client *rest.RESTClient) version.Info {
 	return kubeVersion
 }
 
-func getOpenShiftVersion(client *rest.RESTClient) version.Info {
-	openshiftVersion := version.Info{}
-
-	openShiftVersionBody, err := client.Get().AbsPath("/version/openshift").Do().Raw()
+func isOpenshift(client *rest.RESTClient) bool {
+	resourceListRaw, err := client.Get().AbsPath("/api/v1").Do().Raw()
 	if err != nil {
-		log.Error(err, "fail to GET /version/openshift, assuming not OpenShift")
-		return version.Info{}
+		log.Error(err, "fail to GET /api/v1")
+		return false
 	}
 
-	err = json.Unmarshal(openShiftVersionBody, &openshiftVersion)
+	resourseList := metav1.APIResourceList{}
+	err = json.Unmarshal(resourceListRaw, &resourseList)
 	if err != nil {
-		log.Error(fmt.Errorf("fail to Unmarshal, got '%s': %v", string(openShiftVersionBody), err), "")
-		return version.Info{}
+		log.Error(fmt.Errorf("fail to Unmarshal, got '%s': %v", string(resourceListRaw), err), "")
+		return false
 	}
 
-	return openshiftVersion
+	for _, resource := range resourseList.APIResources {
+		if resource.Name == "securitycontextconstraints" && resource.Group == "" {
+			return true
+		}
+	}
+	return false
 }

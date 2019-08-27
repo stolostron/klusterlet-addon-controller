@@ -15,10 +15,9 @@ var Info ClusterInfo
 
 // ClusterInfo contains information about the Kubernetes Cluster
 type ClusterInfo struct {
-	KubeVersion      version.Info
-	OpenShiftVersion version.Info
-	KubeVendor       KubeVendor
-	CloudVendor      CloudVendor
+	KubeVersion version.Info
+	KubeVendor  KubeVendor
+	CloudVendor CloudVendor
 }
 
 // KubeVendor describe the kubernetes provider of the cluster
