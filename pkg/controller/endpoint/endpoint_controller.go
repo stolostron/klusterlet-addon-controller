@@ -298,5 +298,5 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 		return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
 	}
 
-	return reconcile.Result{}, nil
+	return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Minute}, nil
 }

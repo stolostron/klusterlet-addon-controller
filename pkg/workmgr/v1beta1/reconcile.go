@@ -75,6 +75,11 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		if foundWorkMgrCR.GetDeletionTimestamp() == nil {
 			if instance.GetDeletionTimestamp() == nil {
 				log.V(5).Info("WorkManager CR IS NOT in deletion state")
+				err = tiller.CheckDependency(instance, client, foundWorkMgrCR.Name)
+				if err != nil {
+					log.Error(err, "fail to check dependency for WorkManager CR")
+					return false, err
+				}
 				if err = update(instance, workMgrCR, foundWorkMgrCR, client); err != nil {
 					log.Error(err, "fail to UPDATE WorkManager CR")
 					return false, err
