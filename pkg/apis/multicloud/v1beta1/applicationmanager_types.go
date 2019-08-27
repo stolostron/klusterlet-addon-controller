@@ -33,6 +33,8 @@ type ApplicationManagerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ConnectionManager string `json:"connectionManager"`
 
+	TillerIntegration ApplicationManagerTillerIntegration `json:"tillerIntegration"`
+
 	DeployableSpec                 ApplicationManagerDeployableSpec                 `json:"deployable"`
 	SubscriptionSpec               ApplicationManagerSubscriptionSpec               `json:"subscription"`
 	HelmCRDSpec                    ApplicationManagerHelmCRDSpec                    `json:"helmcrd"`
@@ -45,6 +47,16 @@ type ApplicationManagerSpec struct {
 // +k8s:openapi-gen=true
 type ApplicationManagerDeployableSpec struct {
 	Image image.Image `json:"image"`
+}
+
+// ApplicationManagerTillerIntegration defines tiller integration parameters
+// +k8s:openapi-gen=true
+type ApplicationManagerTillerIntegration struct {
+	Enabled       bool   `json:"enabled"`
+	Endpoint      string `json:"endpoint"`
+	CertIssuer    string `json:"certIssuer"`
+	AutoGenSecret bool   `json:"autoGenSecret"`
+	User          string `json:"user"`
 }
 
 // ApplicationManagerSubscriptionSpec defines configuration for Subscription in ApplicationManager

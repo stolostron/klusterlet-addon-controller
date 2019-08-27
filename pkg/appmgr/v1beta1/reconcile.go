@@ -13,6 +13,7 @@ import (
 	"net"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
+	tiller "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller/v1beta1"
 
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -104,6 +105,35 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
+func newApplicationManagerTillerIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) multicloudv1beta1.ApplicationManagerTillerIntegration {
+	if cr.Spec.TillerIntegration.Enabled {
+		// ICP Tiller
+		icpTillerServiceEndpoint := tiller.GetICPTillerServiceEndpoint(client)
+		if icpTillerServiceEndpoint != "" {
+			return multicloudv1beta1.ApplicationManagerTillerIntegration{
+				Enabled:       true,
+				Endpoint:      icpTillerServiceEndpoint,
+				CertIssuer:    "icp-ca-issuer",
+				AutoGenSecret: true,
+				User:          tiller.GetICPTillerDefaultAdminUser(client),
+			}
+		}
+
+		// KlusterletOperator deployed Tiller
+		return multicloudv1beta1.ApplicationManagerTillerIntegration{
+			Enabled:       true,
+			Endpoint:      cr.Name + "-tiller" + ":44134",
+			CertIssuer:    cr.Name + "-tiller",
+			AutoGenSecret: true,
+			User:          cr.Name + "-admin",
+		}
+	}
+
+	return multicloudv1beta1.ApplicationManagerTillerIntegration{
+		Enabled: false,
+	}
+}
+
 func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client.Client) (*multicloudv1beta1.ApplicationManager, error) {
 	labels := map[string]string{
 		"app": instance.Name,
@@ -189,6 +219,7 @@ func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client
 			ConnectionManager: instance.Name + "-connmgr",
 			ClusterName:       instance.Spec.ClusterName,
 			ClusterNamespace:  instance.Spec.ClusterNamespace,
+			TillerIntegration: newApplicationManagerTillerIntegration(instance, client),
 			DeployableSpec: multicloudv1beta1.ApplicationManagerDeployableSpec{
 				Image: deployableImage,
 			},
