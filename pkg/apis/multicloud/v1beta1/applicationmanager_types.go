@@ -38,7 +38,7 @@ type ApplicationManagerSpec struct {
 	DeployableSpec                 ApplicationManagerDeployableSpec                 `json:"deployable"`
 	SubscriptionSpec               ApplicationManagerSubscriptionSpec               `json:"subscription"`
 	HelmCRDSpec                    ApplicationManagerHelmCRDSpec                    `json:"helmcrd"`
-	HelmCRDAdmissionControllerSpec ApplicationManagerHelmCRDAdmissionControllerSpec `json:"helmcrd_admission_controller"`
+	HelmCRDAdmissionControllerSpec ApplicationManagerHelmCRDAdmissionControllerSpec `json:"helmCRDAdmissionController"`
 
 	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 }
@@ -77,7 +77,7 @@ type ApplicationManagerHelmCRDSpec struct {
 // +k8s:openapi-gen=true
 type ApplicationManagerHelmCRDAdmissionControllerSpec struct {
 	Image    image.Image `json:"image"`
-	CABundle string      `json:"ca_bundle"`
+	CABundle string      `json:"caBundle"`
 }
 
 // ApplicationManagerStatus defines the observed state of ApplicationManager

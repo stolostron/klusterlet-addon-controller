@@ -105,7 +105,7 @@ func CheckDependency(instance *multicloudv1beta1.Endpoint, c client.Client, comp
 	}
 
 	//cannot find tiller pod and component pod means do not need to make any action
-	if tillerPodName == "" && componentPodName == "" {
+	if tillerPodName == "" || componentPodName == "" {
 		log.V(5).Info("Tiller or component pods are not found or not ready, will ignore the check", "Component.Name", componentName)
 		return nil
 	}

@@ -81,6 +81,11 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 			log.V(5).Info("ApplicationManager CR IS NOT in deletion state")
 			if instance.GetDeletionTimestamp() == nil && instance.Spec.ApplicationManagerConfig.Enabled {
 				log.Info("instance IS NOT in deletion state and ApplicationManager ENABLED")
+				err = tiller.CheckDependency(instance, client, foundAppMgrCR.Name)
+				if err != nil {
+					log.Error(err, "fail to check dependency for ApplicationManager CR")
+					return false, err
+				}
 				err = update(instance, appMgrCR, foundAppMgrCR, client)
 				if err != nil {
 					log.Error(err, "fail to UPDATE ApplicationManager CR")
@@ -157,9 +162,9 @@ func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client
 		return nil, err
 	}
 
-	helmCRDAdmissionControllerImage, err := instance.GetImage("helmcrd_admission_controller")
+	helmCRDAdmissionControllerImage, err := instance.GetImage("helmcrd-admission-controller")
 	if err != nil {
-		log.Error(err, "Fail to get Image", "Component.Name", "helmcrd_admission_controller")
+		log.Error(err, "Fail to get Image", "Component.Name", "helmcrd-admission-controller")
 		return nil, err
 	}
 

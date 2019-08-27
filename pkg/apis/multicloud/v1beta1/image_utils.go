@@ -70,7 +70,7 @@ var versionComponentImageNameMap = map[string]map[string]string{
 		"prometheus-config-reloader":     "prometheus-config-reloader-amd64",
 		"subscription":                   "subscription",
 		"helmcrd":                        "helm-crd-controller",
-		"helmcrd_admission_controller":   "helm-crd-admission-controller",
+		"helmcrd-admission-controller":   "helm-crd-admission-controller",
 	},
 	"latest": map[string]string{
 		"search-collector":               "search-collector",
@@ -102,7 +102,7 @@ var versionComponentImageNameMap = map[string]map[string]string{
 		"prometheus-config-reloader":     "prometheus-config-reloader",
 		"subscription":                   "subscription",
 		"helmcrd":                        "helm-crd-controller",
-		"helmcrd_admission_controller":   "helm-crd-admission-controller",
+		"helmcrd-admission-controller":   "helm-crd-admission-controller",
 	},
 }
 
@@ -131,7 +131,7 @@ var versionComponentTagMap = map[string]map[string]string{
 		"mongodb-metrics":              "3.2.0",
 		"subscription":                 "3.2.0",
 		"helmcrd":                      "3.2.0",
-		"helmcrd_admission_controller": "3.2.0",
+		"helmcrd-admission-controller": "3.2.0",
 	},
 	"3.2.1": map[string]string{
 		"search-collector":               "3.2.1",
@@ -163,7 +163,7 @@ var versionComponentTagMap = map[string]map[string]string{
 		"prometheus-config-reloader":     "v0.31",
 		"subscription":                   "3.2.1",
 		"helmcrd":                        "3.2.1",
-		"helmcrd_admission_controller":   "3.2.1",
+		"helmcrd-admission-controller":   "3.2.1",
 	},
 	"latest": map[string]string{
 		"search-collector":               "latest",
@@ -195,7 +195,7 @@ var versionComponentTagMap = map[string]map[string]string{
 		"prometheus-config-reloader":     "v0.31",
 		"subscription":                   "latest",
 		"helmcrd":                        "latest",
-		"helmcrd_admission_controller":   "latest",
+		"helmcrd-admission-controller":   "latest",
 	},
 }
 
