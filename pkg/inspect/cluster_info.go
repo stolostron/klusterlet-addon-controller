@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
@@ -139,23 +138,20 @@ func getKubeVersion(client *rest.RESTClient) version.Info {
 }
 
 func isOpenshift(client *rest.RESTClient) bool {
-	resourceListRaw, err := client.Get().AbsPath("/api/v1").Do().Raw()
-	if err != nil {
-		log.Error(err, "fail to GET /api/v1")
-		return false
+	//check whether the cluster is openshift or not for openshift version 3.11 and before
+	_, err := client.Get().AbsPath("/version/openshift").Do().Raw()
+	if err == nil {
+		log.Info("Found openshift version from /version/openshift")
+		return true
 	}
 
-	resourseList := metav1.APIResourceList{}
-	err = json.Unmarshal(resourceListRaw, &resourseList)
-	if err != nil {
-		log.Error(fmt.Errorf("fail to Unmarshal, got '%s': %v", string(resourceListRaw), err), "")
-		return false
+	//check whether the cluster is openshift or not for openshift version 4.1
+	_, err = client.Get().AbsPath("/apis/config.openshift.io/v1/clusterversions").Do().Raw()
+	if err == nil {
+		log.Info("Found openshift version from /apis/config.openshift.io/v1/clusterversions")
+		return true
 	}
 
-	for _, resource := range resourseList.APIResources {
-		if resource.Name == "securitycontextconstraints" && resource.Group == "" {
-			return true
-		}
-	}
+	log.Error(err, "fail to GET openshift version, assuming not OpenShift")
 	return false
 }
