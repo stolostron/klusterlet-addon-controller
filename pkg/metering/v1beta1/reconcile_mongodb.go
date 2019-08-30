@@ -30,8 +30,20 @@ func reconcileMongoDB(instance *multicloudv1beta1.Endpoint, client client.Client
 	reqLogger.Info("Reconciling Metering MongoDB")
 
 	if inspect.Info.KubeVendor == inspect.KubeVendorICP {
-		//TODO(liuhao): add ICP on OpenShift
+		log.V(5).Info("The kubernetes vendor is ICP")
 		return nil
+	}
+
+	foundConfigMapICP := &corev1.ConfigMap{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "ibmcloud-cluster-info", Namespace: "kube-public"}, foundConfigMapICP)
+
+	if err == nil {
+		log.V(5).Info("found the config map in ICP")
+		return nil
+	}
+	if !errors.IsNotFound(err) {
+		log.Error(err, "Unexpected ERROR")
+		return err
 	}
 
 	// Not on ICP
