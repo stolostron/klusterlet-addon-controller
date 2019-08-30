@@ -12,6 +12,7 @@ import (
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,14 +32,30 @@ func reconcileMetering(instance *multicloudv1beta1.Endpoint, client client.Clien
 
 	if inspect.Info.KubeVendor == inspect.KubeVendorICP {
 		meteringSenderCR, err = newMeteringSenderCRForICP(instance)
-		//TODO(liuhao): add ICP on OpenShift
+		if err != nil {
+			log.Error(err, "Fail to generate desired Metering CR")
+			return err
+		}
 	} else {
-		meteringSenderCR, err = newMeteringSenderCR(instance)
-	}
-
-	if err != nil {
-		log.Error(err, "Fail to generate desired Metering CR")
-		return err
+		foundConfigMapICP := &corev1.ConfigMap{}
+		err = client.Get(context.TODO(), types.NamespacedName{Name: "ibmcloud-cluster-info", Namespace: "kube-public"}, foundConfigMapICP)
+		if err == nil {
+			meteringSenderCR, err = newMeteringSenderCRForICP(instance)
+			if err != nil {
+				log.Error(err, "Fail to generate desired Metering CR")
+				return err
+			}
+		} else {
+			if errors.IsNotFound(err) {
+				meteringSenderCR, err = newMeteringSenderCR(instance)
+				if err != nil {
+					log.Error(err, "Fail to generate desired Metering CR")
+					return err
+				}
+			} else {
+				log.Error(err, "Unexpected ERROR")
+			}
+		}
 	}
 
 	err = controllerutil.SetControllerReference(instance, meteringSenderCR, scheme)
