@@ -102,7 +102,7 @@ func finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Meteri
 }
 
 func checkAndCreateSecretForMetering(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Metering, client client.Client) error {
-	if len(cr.Spec.ImagePullSecrets) < 1 || cr.Spec.ImagePullSecrets[0] == "" {
+	if len(cr.Spec.ImagePullSecrets) == 0 || cr.Spec.ImagePullSecrets[0] == "" {
 		log.Info("There is no secret name for metering, cannot operate secret creation.")
 		return nil
 	}
@@ -130,6 +130,7 @@ func checkAndCreateSecretForMetering(instance *multicloudv1beta1.Endpoint, cr *m
 					Namespace: cr.Namespace,
 				},
 				Data: foundSecretInInstanceNameSpace.Data,
+				Type: corev1.SecretTypeDockerConfigJson,
 			}
 
 			log.Info("Create Secret: ", "Secret.Namespace", cr.Namespace, "Secret.Name", secretNameForICP)
@@ -158,7 +159,7 @@ func checkAndDeleteSecretForMetering(instance *multicloudv1beta1.Endpoint, cr *m
 			log.Info("There is no secret for metering, no need to operate secret deletion.")
 			return nil
 		}
-		log.Info("Unexpect Err.")
+		log.Info("Unexpect ERROR")
 		return err
 	}
 
@@ -183,29 +184,54 @@ func checkAndUpdateSecretForMetering(instance *multicloudv1beta1.Endpoint, cr *m
 	}
 	pullSecretNameForEndpoint := instance.Spec.ImagePullSecret
 
-	pullSecretForMetering := &corev1.Secret{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: pullSecretNameForMetering, Namespace: cr.Namespace}, pullSecretForMetering)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			log.Info("There is no image pull secret specific for metering.")
-		}
-		log.Info("Unexpect Err.")
-		return err
-	}
-
 	pullSecretForEndpoint := &corev1.Secret{}
-	err = client.Get(context.TODO(), types.NamespacedName{Name: pullSecretNameForEndpoint, Namespace: instance.Namespace}, pullSecretForEndpoint)
+	err := client.Get(context.TODO(), types.NamespacedName{Name: pullSecretNameForEndpoint, Namespace: instance.Namespace}, pullSecretForEndpoint)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Info("There is no image pull secret for Endpoint")
 			return nil
 		}
-		log.Info("Unexpect Err.")
+		log.Info("Unexpect ERROR")
 		return err
 	}
 
+	pullSecretForMetering := &corev1.Secret{}
+	err = client.Get(context.TODO(), types.NamespacedName{Name: pullSecretNameForMetering, Namespace: cr.Namespace}, pullSecretForMetering)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			log.Info("There is no image pull secret specific for metering.")
+			//create the secret
+			secretToCreate := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      pullSecretForEndpoint.Name,
+					Namespace: cr.Namespace,
+				},
+				Data: pullSecretForEndpoint.Data,
+				Type: corev1.SecretTypeDockerConfigJson,
+			}
+
+			log.Info("Create Secret: ", "Secret.Namespace", cr.Namespace, "Secret.Name", pullSecretForEndpoint.Name)
+			err = client.Create(context.TODO(), secretToCreate)
+			if err != nil {
+				log.Info("Failed to create Secret", "Secret.Namespace", cr.Namespace, "Secret.Name", pullSecretForEndpoint.Name)
+				return nil
+			}
+		}
+		log.Info("Unexpect ERROR")
+		return err
+	}
+
+	doUpdate := false
 	if !bytes.Equal(pullSecretForMetering.Data[".dockerconfigjson"], pullSecretForEndpoint.Data[".dockerconfigjson"]) {
 		pullSecretForMetering.Data[".dockerconfigjson"] = pullSecretForEndpoint.Data[".dockerconfigjson"]
+		doUpdate = true
+	}
+
+	if pullSecretForMetering.Type != pullSecretForEndpoint.Type {
+		pullSecretForMetering.Type = pullSecretForEndpoint.Type
+	}
+
+	if doUpdate {
 		err = client.Update(context.TODO(), pullSecretForMetering)
 		if err != nil {
 			log.Info("Failed to update Metering Secret.")
