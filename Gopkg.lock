@@ -528,6 +528,14 @@
   version = "v1.0.3"
 
 [[projects]]
+  branch = "master"
+  digest = "1:d4cebf513edbd9ae44dbb6e3c1820f1cb8e92e7a89fb8beba9d2283fbeb9965c"
+  name = "github.ibm.com/IBMMulticloudPlatform/helm-crd"
+  packages = ["pkg/apis/helm.bitnami.com/v1"]
+  pruneopts = "NT"
+  revision = "f9e966ebdcca78f5d0f5d2620935e9f33c865ff8"
+
+[[projects]]
   digest = "1:ef9ef93a8bdc395a787857d5927cebbe904b75982175bc8bf10255b48734de73"
   name = "github.ibm.com/IBMPrivateCloud/hcm-api"
   packages = [
@@ -1145,7 +1153,9 @@
     "github.com/operator-framework/operator-sdk/pkg/metrics",
     "github.com/operator-framework/operator-sdk/version",
     "github.com/spf13/pflag",
+    "github.ibm.com/IBMMulticloudPlatform/helm-crd/pkg/apis/helm.bitnami.com/v1",
     "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1",
+    "k8s.io/api/apps/v1",
     "k8s.io/api/batch/v1",
     "k8s.io/api/core/v1",
     "k8s.io/api/extensions/v1beta1",
