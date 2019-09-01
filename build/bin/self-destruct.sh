@@ -12,10 +12,10 @@ kubectl delete deployment ibm-multicluster-endpoint-operator -n ${OPERATOR_NAMES
 
 # Force delete all component CRDs if they still exist 
 component_crds=(
+	helmreleases.helm.bitnami.com
 	applicationmanagers.multicloud.ibm.com
 	certmanagers.multicloud.ibm.com
 	connectionmanagers.multicloud.ibm.com
-	helmreleases.helm.bitnami.com
 	meterings.multicloud.ibm.com
 	mongodbs.multicloud.ibm.com
 	monitorings.multicloud.ibm.com
@@ -25,15 +25,27 @@ component_crds=(
 	tillers.multicloud.ibm.com
 	topologycollectors.multicloud.ibm.com
 	workmanagers.multicloud.ibm.com
+	endpoints.multicloud.ibm.com
 )
 
+# TODO(feng) loop through all namespaces and delete all helmreleases.helm.bitnami.com CRD resources
+
+# special case for meterings.multicloud.ibm.com
+for resource in `kubectl get meterings.multicloud.ibm.com -n kube-system -o name`; do 
+	kubectl delete ${resource} -n kube-system --timeout=60s
+	kubectl patch ${resource} -n kube-system --type="json" -p '[{"op": "remove", "path":"/metadata/finalizers"}]'
+done
+
 for crd in "${component_crds[@]}"; do
-	for resource in `kubectl get ${crd} -o name -n multicluser-endpoint`; do
-		# attemp to delete the component resource
-		kubectl delete ${resource} -n multicluster-endpoint --timeout=60s
-		# force remove the component resource by removing finalizer
+	echo "force delete all CustomResourceDefination ${crd} resources..."
+	for resource in `kubectl get ${crd} -o name -n ${OPERATOR_NAMESPACE}`; do
+		echo "attemp to delete ${crd} resource ${resource}..."
+		kubectl delete ${resource} -n ${OPERATOR_NAMESPACE} --timeout=60s
+		echo "force remove ${crd} resource ${resource}..."
 		kubectl patch ${resource} --type="json" -p '[{"op": "remove", "path":"/metadata/finalizers"}]'
 	done
+	echo "force delete all CustomResourceDefination ${crd} resources..."
+	kubectl delete ${crd}
 done
 
 kubectl delete namespace ${OPERATOR_NAMESPACE}
