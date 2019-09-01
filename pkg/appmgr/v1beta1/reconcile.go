@@ -7,24 +7,32 @@
 package v1beta1
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/base64"
-	"errors"
+	"encoding/pem"
+	"math/big"
 	"net"
+	"time"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 	tiller "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller/v1beta1"
 
-	corev1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	crdv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 )
 
 // Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
@@ -53,6 +61,12 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 				log.V(5).Info("instance IS NOT in deletion state")
 				if instance.Spec.ApplicationManagerConfig.Enabled {
 					log.V(5).Info("ApplicationManager ENABLED")
+
+					caBundle, err := checkAndGenerateSecret(instance, client)
+					if err != nil {
+						return false, err
+					}
+					appMgrCR.Spec.HelmCRDAdmissionControllerSpec.CABundle = caBundle
 					if err = create(instance, appMgrCR, client); err != nil {
 						log.Error(err, "fail to CREATE ApplicationManager CR")
 						return false, err
@@ -81,10 +95,53 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 			log.V(5).Info("ApplicationManager CR IS NOT in deletion state")
 			if instance.GetDeletionTimestamp() == nil && instance.Spec.ApplicationManagerConfig.Enabled {
 				log.Info("instance IS NOT in deletion state and ApplicationManager ENABLED")
-				err = tiller.CheckDependency(instance, client, foundAppMgrCR.Name)
-				if err != nil {
-					log.Error(err, "fail to check dependency for ApplicationManager CR")
-					return false, err
+
+				if !appMgrCR.Spec.TillerIntegration.Enabled {
+					foundAppMgrDeploy := &appsv1.Deployment{}
+					err = client.Get(context.TODO(), types.NamespacedName{Name: "endpoint-appmgr-helm-crd", Namespace: appMgrCR.Namespace}, foundAppMgrDeploy)
+					if err != nil {
+						if kerrors.IsNotFound(err) {
+							log.Info("Application Manger deploy not found. Clean up CRs")
+
+							foundHelmCRD := &crdv1beta1.CustomResourceDefinition{}
+							err := client.Get(context.TODO(), types.NamespacedName{Name: "helmreleases.helm.bitnami.com", Namespace: ""}, foundHelmCRD)
+							if err != nil {
+								if kerrors.IsNotFound(err) {
+									log.Info("HelmCRD not found, skipping delete")
+								} else {
+									log.Error(err, "Unexpected ERROR")
+									return false, err
+								}
+							} else {
+								err = cleanUpHelmCRs(client)
+								if err != nil {
+									log.Error(err, "Failed to clean up Helm CRs")
+									return false, err
+								}
+							}
+
+							err = cleanUpSecret(instance, client, appMgrCR)
+							if err != nil {
+								return false, err
+							}
+						} else {
+							log.Error(err, "Unexpected ERROR")
+							return false, err
+						}
+					} else {
+						log.Info("Application Manager deploy still exists, trying clean up later")
+					}
+				} else {
+					caBundle, err := checkAndGenerateSecret(instance, client)
+					if err != nil {
+						return false, err
+					}
+					appMgrCR.Spec.HelmCRDAdmissionControllerSpec.CABundle = caBundle
+					err = tiller.CheckDependency(instance, client, foundAppMgrCR.Name)
+					if err != nil {
+						log.Error(err, "fail to check dependency for ApplicationManager CR")
+						return false, err
+					}
 				}
 				err = update(instance, appMgrCR, foundAppMgrCR, client)
 				if err != nil {
@@ -172,7 +229,7 @@ func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client
 	ipStr := "0.0.0.0"
 	if inspect.Info.KubeVendor == inspect.KubeVendorICP {
 		clusterInfoCM := &corev1.ConfigMap{}
-		err = client.Get(context.TODO(), types.NamespacedName{Name: "ibmcloud-cluster-info", Namespace: "kube-public"}, clusterInfoCM)
+		err := client.Get(context.TODO(), types.NamespacedName{Name: "ibmcloud-cluster-info", Namespace: "kube-public"}, clusterInfoCM)
 		if err != nil {
 			log.Error(err, "Unexpected ERROR")
 			return nil, err
@@ -198,21 +255,6 @@ func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client
 		}
 	}
 
-	caBundleCM := &corev1.ConfigMap{}
-	err = client.Get(context.TODO(), types.NamespacedName{Name: "extension-apiserver-authentication", Namespace: "kube-system"}, caBundleCM)
-	if err != nil {
-		log.Error(err, "Unexpected ERROR")
-		return nil, err
-	}
-
-	caBundle := caBundleCM.Data["client-ca-file"]
-	if len(caBundle) == 0 {
-		err = errors.New("kube ca bundle not found")
-		log.Error(err, "ca bundle not found")
-		return nil, err
-	}
-	caBundleBase64 := base64.StdEncoding.EncodeToString([]byte(caBundle))
-
 	return &multicloudv1beta1.ApplicationManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-appmgr",
@@ -237,10 +279,189 @@ func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client
 				IP:       ipStr,
 			},
 			HelmCRDAdmissionControllerSpec: multicloudv1beta1.ApplicationManagerHelmCRDAdmissionControllerSpec{
-				Image:    helmCRDAdmissionControllerImage,
-				CABundle: caBundleBase64,
+				Image: helmCRDAdmissionControllerImage,
 			},
 			ImagePullSecret: instance.Spec.ImagePullSecret,
 		},
 	}, nil
+}
+
+func generateCert(instance *multicloudv1beta1.Endpoint, client client.Client) ([]byte, []byte, []byte, error) {
+	log.Info("Generating CA")
+	cn := "helm-crd-admission-controller-svc"
+	// Create Certificate Authority
+	ca := &x509.Certificate{
+		SerialNumber: big.NewInt(2019),
+		Subject: pkix.Name{
+			Organization: []string{"helm-crd"},
+			CommonName:   cn,
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0),
+		IsCA:                  true,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		BasicConstraintsValid: true,
+	}
+
+	caPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		log.Error(err, "Failed to generate CA key")
+		return nil, nil, nil, err
+	}
+
+	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivKey.PublicKey, caPrivKey)
+	if err != nil {
+		log.Error(err, "Failed to generate CA cert")
+		return nil, nil, nil, err
+	}
+
+	caPEM := new(bytes.Buffer)
+	pem.Encode(caPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: caBytes,
+	})
+
+	caPrivKeyPEM := new(bytes.Buffer)
+	pem.Encode(caPrivKeyPEM, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(caPrivKey),
+	})
+
+	cert := &x509.Certificate{
+		SerialNumber: big.NewInt(1658),
+		Subject: pkix.Name{
+			Organization: []string{"helm-crd"},
+			CommonName:   cn,
+		},
+		DNSNames: []string{
+			cn,
+			cn + "." + instance.Namespace,
+			cn + "." + instance.Namespace + ".svc",
+		},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().AddDate(10, 0, 0),
+		SubjectKeyId: []byte{1, 2, 3, 4, 6},
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+	}
+
+	certPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		log.Error(err, "Failed to generate server key")
+		return nil, nil, nil, err
+	}
+
+	certBytes, err := x509.CreateCertificate(rand.Reader, cert, ca, &certPrivKey.PublicKey, caPrivKey)
+	if err != nil {
+		log.Error(err, "Failed to generate server cert using ca")
+		return nil, nil, nil, err
+	}
+
+	certPEM := new(bytes.Buffer)
+	pem.Encode(certPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certBytes,
+	})
+
+	certPrivKeyPEM := new(bytes.Buffer)
+	pem.Encode(certPrivKeyPEM, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(certPrivKey),
+	})
+
+	return caPEM.Bytes(), certPEM.Bytes(), certPrivKeyPEM.Bytes(), nil
+}
+
+func secretExists(instance *multicloudv1beta1.Endpoint, client client.Client, secretName string) (*corev1.Secret, error) {
+	log.Info("Check secret")
+	secret := &corev1.Secret{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: secretName, Namespace: instance.Namespace}, secret)
+	if err != nil {
+		if kerrors.IsNotFound(err) {
+			log.Info("Secret not found")
+			return nil, nil
+		}
+		log.Error(err, "Unexpected ERROR")
+		return nil, err
+	}
+
+	log.Info("Found secret " + secret.Name)
+	return secret, nil
+}
+
+func checkAndGenerateSecret(instance *multicloudv1beta1.Endpoint, client client.Client) (string, error) {
+	foundSecret, err := secretExists(instance, client, "helm-crd-admission-controller-certs")
+	if err != nil {
+		log.Error(err, "Unexpected ERROR")
+		return "", err
+	}
+
+	if foundSecret == nil {
+		caCertBytes, serverCertBytes, serverKeyBytes, err := generateCert(instance, client)
+		if err != nil {
+			return "", err
+		}
+
+		newSecret := &corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				Kind: "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "helm-crd-admission-controller-certs",
+				Namespace: instance.Namespace,
+			},
+			Data: map[string][]byte{
+				"ca.crt":  caCertBytes,
+				"tls.crt": serverCertBytes,
+				"tls.key": serverKeyBytes,
+			},
+			Type: corev1.SecretTypeOpaque,
+		}
+
+		err = client.Create(context.TODO(), newSecret)
+		if err != nil {
+			return "", err
+		}
+
+		caCertBase64 := base64.StdEncoding.EncodeToString(caCertBytes)
+		return caCertBase64, nil
+	}
+
+	foundCACertBase64 := base64.StdEncoding.EncodeToString(foundSecret.Data["ca.crt"])
+	return foundCACertBase64, nil
+}
+
+func cleanUpSecret(instance *multicloudv1beta1.Endpoint, client client.Client, cr *multicloudv1beta1.ApplicationManager) error {
+	foundSecret, err := secretExists(instance, client, "helm-crd-admission-controller-certs")
+	if err != nil {
+		log.Error(err, "Unexpected ERROR")
+		return err
+	}
+
+	if foundSecret != nil {
+		log.Info("Deleting secret " + foundSecret.Name)
+		err = client.Delete(context.TODO(), foundSecret)
+		if err != nil {
+			log.Error(err, "Failed to DELETE secret")
+			return err
+		}
+	}
+
+	foundSecret, err = secretExists(instance, client, cr.Spec.FullNameOverride+"-tiller-client-certs")
+	if err != nil {
+		log.Error(err, "Unexpected ERROR")
+		return err
+	}
+
+	if foundSecret != nil {
+		log.Info("Deleting secret " + foundSecret.Name)
+		err = client.Delete(context.TODO(), foundSecret)
+		if err != nil {
+			log.Error(err, "Failed to DELETE secret")
+			return err
+		}
+	}
+
+	return nil
 }

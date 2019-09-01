@@ -15,6 +15,7 @@ component_crds=(
 	applicationmanagers.multicloud.ibm.com
 	certmanagers.multicloud.ibm.com
 	connectionmanagers.multicloud.ibm.com
+	helmreleases.helm.bitnami.com
 	meterings.multicloud.ibm.com
 	mongodbs.multicloud.ibm.com
 	monitorings.multicloud.ibm.com

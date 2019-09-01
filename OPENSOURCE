@@ -52,6 +52,7 @@ github.com/prometheus/procfs,3f98efb27840a48a7a2898ec80be07674d19f9c8
 github.com/rogpeppe/go-internal,438578804ca6f31be148c27683afc419ce47c06e
 github.com/spf13/afero,588a75ec4f32903aa5e39a2619ba6a4631e28424
 github.com/spf13/pflag,298182f68c66c05229eb03ac171abe6e309ee79a
+github.ibm.com/IBMMulticloudPlatform/helm-crd,f9e966ebdcca78f5d0f5d2620935e9f33c865ff8
 github.ibm.com/IBMPrivateCloud/hcm-api,35250ec8a1beba9b11b55999bbc1475e05746af3
 go.opencensus.io,43463a80402d8447b7fce0d2c58edf1687ff0b58
 go.uber.org/atomic,df976f2515e274675050de7b3f42545de80594fd
