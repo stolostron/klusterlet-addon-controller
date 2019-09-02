@@ -65,8 +65,10 @@ func InitClusterInfo(cfg *rest.Config) error {
 	gitVersion := strings.ToUpper(Info.KubeVersion.GitVersion)
 	if strings.Contains(gitVersion, string(KubeVendorIKS)) {
 		Info.KubeVendor = KubeVendorIKS
+		Info.CloudVendor = CloudVendorIBM
 	} else if strings.Contains(gitVersion, string(KubeVendorEKS)) {
 		Info.KubeVendor = KubeVendorEKS
+		Info.CloudVendor = CloudVendorAWS
 	} else if strings.Contains(gitVersion, string(KubeVendorICP)) {
 		Info.KubeVendor = KubeVendorICP
 	} else if strings.Contains(gitVersion, string(KubeVendorGKE)) {
@@ -79,8 +81,6 @@ func InitClusterInfo(cfg *rest.Config) error {
 
 	// Set CloudVendor from KubeVendor
 	switch kubeVendor := Info.KubeVendor; kubeVendor {
-	case KubeVendorAKS:
-		Info.CloudVendor = CloudVendorAzure
 	case KubeVendorEKS:
 		Info.CloudVendor = CloudVendorAWS
 	case KubeVendorGKE:
@@ -89,6 +89,10 @@ func InitClusterInfo(cfg *rest.Config) error {
 		Info.CloudVendor = CloudVendorIBM
 	default:
 		Info.CloudVendor = cloudVendorFromNodeProviderID(kubeRESTClient)
+	}
+
+	if Info.CloudVendor == CloudVendorAzure && Info.KubeVendor == KubeVendorOther {
+		Info.KubeVendor = KubeVendorAKS
 	}
 
 	log.Info("", "Info.KubeVendor", Info.KubeVendor)
@@ -110,10 +114,18 @@ func cloudVendorFromNodeProviderID(client *rest.RESTClient) CloudVendor {
 		return CloudVendorOther
 	}
 
-	if len(nodeList.Items) != 0 {
-		if strings.Contains(nodeList.Items[0].Spec.ProviderID, "ibm") {
-			return CloudVendorIBM
-		}
+	if len(nodeList.Items) == 0 {
+		return CloudVendorOther
+	}
+
+	if strings.Contains(nodeList.Items[0].Spec.ProviderID, "ibm") {
+		return CloudVendorIBM
+	} else if strings.Contains(nodeList.Items[0].Spec.ProviderID, "azure") {
+		return CloudVendorAzure
+	} else if strings.Contains(nodeList.Items[0].Spec.ProviderID, "aws") {
+		return CloudVendorAWS
+	} else if strings.Contains(nodeList.Items[0].Spec.ProviderID, "gce") {
+		return CloudVendorGoogle
 	}
 
 	return CloudVendorOther
