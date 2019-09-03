@@ -17,6 +17,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 )
 
 // TODO(liuhao): switch from klusterletv1alpha1 to multicloudv1beta1 for the component api
@@ -28,7 +30,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
 	reqLogger.Info("Reconciling Policy Controller")
 
-	policyCtrlCR, err := newPolicyControllerCR(instance)
+	policyCtrlCR, err := newPolicyControllerCR(instance, client)
 	if err != nil {
 		log.Error(err, "Fail to generate desired PolicyController CR")
 		return false, err
@@ -97,7 +99,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-func newPolicyControllerCR(cr *multicloudv1beta1.Endpoint) (*multicloudv1beta1.PolicyController, error) {
+func newPolicyControllerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*multicloudv1beta1.PolicyController, error) {
 	image, err := cr.GetImage("policy-controller")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "policy-controller")
@@ -120,6 +122,7 @@ func newPolicyControllerCR(cr *multicloudv1beta1.Endpoint) (*multicloudv1beta1.P
 			ConnectionManager:           cr.Name + "-connmgr",
 			Image:                       image,
 			ImagePullSecret:             cr.Spec.ImagePullSecret,
+			DeployedOnHub:               inspect.DeployedOnHub(client),
 			PostDeleteJobServiceAccount: cr.Name + "-component-operator",
 		},
 	}, nil
