@@ -20,19 +20,20 @@ type MongoDBSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
-	FullNameOverride string                      `json:"fullnameOverride,omitempty"`
-	Auth             MongoDBSpecAuth             `json:"auth,omitempty"`
-	Curl             MongoDBSpecCurl             `json:"curl,omitempty"`
-	Image            image.Image                 `json:"image,omitempty"`
-	InstallImage     image.Image                 `json:"installImage,omitempty"`
-	Metrics          MongoDBSpecMetrics          `json:"metrics,omitempty"`
-	PersistentVolume MongoDBSpecPersistentVolume `json:"persistentVolume,omitempty"`
-	Replicas         int                         `json:"replicas,omitempty"`
-	TLS              MongoDBSpecTLS              `json:"tls,omitempty"`
-	ImagePullSecrets []string                    `json:"imagePullSecrets,omitempty"`
-	LivenessProbe    MongoDBSpecProbe            `json:"livenessProbe,omitempty"`
-	ReadinessProbe   MongoDBSpecProbe            `json:"readinessProbe,omitempty"`
-	Resources        MongoDBSpecResources        `json:"resources,omitempty"`
+	FullNameOverride      string                      `json:"fullnameOverride,omitempty"`
+	Auth                  MongoDBSpecAuth             `json:"auth,omitempty"`
+	Curl                  MongoDBSpecCurl             `json:"curl,omitempty"`
+	Image                 image.Image                 `json:"image,omitempty"`
+	InstallImage          image.Image                 `json:"installImage,omitempty"`
+	Metrics               MongoDBSpecMetrics          `json:"metrics,omitempty"`
+	PersistentVolume      MongoDBSpecPersistentVolume `json:"persistentVolume,omitempty"`
+	Replicas              int                         `json:"replicas,omitempty"`
+	TLS                   MongoDBSpecTLS              `json:"tls,omitempty"`
+	ImagePullSecrets      []string                    `json:"imagePullSecrets,omitempty"`
+	LivenessProbe         MongoDBSpecProbe            `json:"livenessProbe,omitempty"`
+	ReadinessProbe        MongoDBSpecProbe            `json:"readinessProbe,omitempty"`
+	Resources             MongoDBSpecResources        `json:"resources,omitempty"`
+	WiredTigerCacheSizeGb float32                     `json:"wiredTigerCacheSizeGb,omitempty"`
 
 	PriorityClassNameEnabled  bool `json:"priorityClassNameEnabled"`
 	ServiceAccountNameEnabled bool `json:"serviceAccountNameEnabled"`
@@ -81,9 +82,10 @@ type MongoDBSpecTLS struct {
 // MongoDBSpecPersistentVolume defines the configuration of Metrics in spec
 // +k8s:openapi-gen=true
 type MongoDBSpecPersistentVolume struct {
-	Enabled     bool     `json:"enabled"`
-	AccessModes []string `json:"accessModes,omitempty"`
-	Size        string   `json:"size,omitempty"`
+	Enabled      bool     `json:"enabled"`
+	AccessModes  []string `json:"accessModes,omitempty"`
+	Size         string   `json:"size,omitempty"`
+	StorageClass string   `json:"storageClass,omitempty"`
 }
 
 // MongoDBSpecMetrics defines the configuration of Metrics in spec

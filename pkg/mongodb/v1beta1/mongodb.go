@@ -11,7 +11,9 @@ import (
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -62,10 +64,27 @@ func Delete(foundCR *multicloudv1beta1.MongoDB, client client.Client) error {
 func Finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.MongoDB, client client.Client) error {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == cr.Name {
+			// Delete PersistVolumeClaim
+			err := deletePersistVolumeClaim(instance, cr, client)
+			if err != nil {
+				log.Error(err, "Fail to delete PersistVolumeClaim for mongodb")
+				return err
+			}
 			// Remove finalizer
 			instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
 			return nil
 		}
 	}
 	return nil
+}
+
+func deletePersistVolumeClaim(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.MongoDB, client client.Client) error {
+	foundPersistVolumeClaim := &corev1.PersistentVolumeClaim{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "mongodbdir-" + cr.Name + "-0", Namespace: instance.Namespace}, foundPersistVolumeClaim)
+	if err == nil {
+		log.Info("Deleting MongoDB Persist Volume Claim")
+		return client.Delete(context.TODO(), foundPersistVolumeClaim)
+	}
+
+	return err
 }
