@@ -28,7 +28,17 @@ component_crds=(
 	endpoints.multicloud.ibm.com
 )
 
-# TODO(feng) loop through all namespaces and delete all helmreleases.helm.bitnami.com CRD resources
+# Loop through all namespaces and delete all helmreleases.helm.bitnami.com CRD resources (backup in case operator fails)
+for namespace in `kubectl get namespaces -o name`; do
+    ns=`echo $namespace | cut -d "/" -f 2`
+    echo "Processing namespace ${ns}"
+    for cr in `kubectl get helmrelease -n ${ns} -o name`; do
+        echo "Attempt to remove finalizer for CR ${cr}"
+        kubectl patch ${cr} --type="json" -p '[{"op": "remove", "path":"/metadata/finalizers"}]'
+        echo "Attempt to delete CR ${cr} in namespace ${ns}"
+        kubectl delete ${cr} -n ${ns}
+    done
+done
 
 # special case for meterings.multicloud.ibm.com
 for resource in `kubectl get meterings.multicloud.ibm.com -n kube-system -o name`; do 
