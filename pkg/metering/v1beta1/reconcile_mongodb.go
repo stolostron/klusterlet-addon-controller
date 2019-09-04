@@ -53,6 +53,10 @@ func reconcileMongoDB(instance *multicloudv1beta1.Endpoint, client client.Client
 		return err
 	}
 
+	if inspect.Info.KubeVendor == inspect.KubeVendorIKS {
+		meteringMongoDBCR.Spec.PersistentVolume.StorageClass = "ibmc-file-gold"
+	}
+
 	err = controllerutil.SetControllerReference(instance, meteringMongoDBCR, scheme)
 	if err != nil {
 		log.Error(err, "Unable to SetControllerReference")
@@ -272,12 +276,13 @@ func newMeteringMongoDBCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1be
 			},
 			Resources: multicloudv1beta1.MongoDBSpecResources{
 				Limits: multicloudv1beta1.MongoDBSpecResourcesLimit{
-					Memory: "4Gi",
+					Memory: "1Gi",
 				},
 				Requests: multicloudv1beta1.MongoDBSpecResourcesRequest{
-					Memory: "4Gi",
+					Memory: "512Mi",
 				},
 			},
+			WiredTigerCacheSizeGb:     0.3,
 			NodeSelectorEnabled:       false,
 			PriorityClassNameEnabled:  false,
 			ServiceAccountNameEnabled: true,
