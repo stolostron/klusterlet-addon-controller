@@ -598,6 +598,11 @@ func deleteRootCACert(instance *multicloudv1beta1.Endpoint, client client.Client
 		return client.Delete(context.TODO(), foundCertificate)
 	}
 
+	if errors.IsNotFound(err) {
+		log.Info("Cannot find Monitoring CA Certificate, igore the deletion")
+		return nil
+	}
+
 	return err
 }
 
@@ -607,6 +612,11 @@ func deleteClusterIssuer(instance *multicloudv1beta1.Endpoint, client client.Cli
 	if err == nil {
 		log.Info("Deleting Monitoring ClusterIssuer")
 		return client.Delete(context.TODO(), foundClusterIssuer)
+	}
+
+	if errors.IsNotFound(err) {
+		log.Info("Cannot find Monitoring ClusterIssuer, igore the deletion")
+		return nil
 	}
 
 	return err
