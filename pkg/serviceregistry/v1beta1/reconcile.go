@@ -232,7 +232,7 @@ func finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Servic
 			// Delete CoreDNSConfigmap
 			err := deleteCoreDNSConfigmap(instance, client)
 			if err != nil {
-				log.Error(err, "Fail to delete clusterrole for monitoring")
+				log.Error(err, "Fail to delete CoreDNSConfigmap for serviceReistry")
 				return err
 			}
 
@@ -248,8 +248,13 @@ func deleteCoreDNSConfigmap(instance *multicloudv1beta1.Endpoint, client client.
 	foundCoreDNSConfigmap := &corev1.ConfigMap{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-svcreg-coredns", Namespace: instance.Namespace}, foundCoreDNSConfigmap)
 	if err == nil {
-		log.Info("Deleting Monitoring CoreDNSConfigmap")
+		log.Info("Deleting serviceReistry CoreDNSConfigmap")
 		return client.Delete(context.TODO(), foundCoreDNSConfigmap)
+	}
+
+	if errors.IsNotFound(err) {
+		log.Info("Cannot find serviceReistry CoreDNSConfigmap, igore the deletion")
+		return nil
 	}
 
 	return err
