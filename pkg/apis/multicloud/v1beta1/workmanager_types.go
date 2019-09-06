@@ -71,6 +71,7 @@ type WorkManagerPrometheusIntegration struct {
 	Enabled        bool   `json:"enabled"`
 	Service        string `json:"service"`
 	Secret         string `json:"secret"`
+	ScrapeTarget   string `json:"scrapeTarget"`
 	UseBearerToken bool   `json:"useBearerToken"`
 }
 
