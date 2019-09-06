@@ -142,6 +142,7 @@ func newWorkManagerPrometheusIntegration(cr *multicloudv1beta1.Endpoint, client 
 			return multicloudv1beta1.WorkManagerPrometheusIntegration{
 				Enabled:        true,
 				Service:        "openshift-monitoring/prometheus-k8s",
+				ScrapeTarget:   "kubelet",
 				Secret:         "",
 				UseBearerToken: true,
 			}
@@ -154,6 +155,7 @@ func newWorkManagerPrometheusIntegration(cr *multicloudv1beta1.Endpoint, client 
 				Enabled:        true,
 				Service:        "kube-system/monitoring-prometheus",
 				Secret:         "kube-system/monitoring-monitoring-client-certs",
+				ScrapeTarget:   "kubernetes-cadvisor",
 				UseBearerToken: false,
 			}
 		}

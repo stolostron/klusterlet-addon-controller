@@ -32,7 +32,8 @@ type EndpointSpec struct {
 
 	ClusterLabels map[string]string `json:"clusterLabels"`
 
-	BootStrapConfig          map[string]string                 `json:"bootstrapConfig"`
+	BootStrapConfig map[string]string `json:"bootstrapConfig,omitempty"`
+
 	TillerIntegration        EndpointTillerIntegrationSpec     `json:"tillerIntegration"`
 	PrometheusIntegration    EndpointPrometheusIntegrationSpec `json:"prometheusIntegration"`
 	TopologyCollectorConfig  EndpointTopologyCollectorSpec     `json:"topologyCollector"`
