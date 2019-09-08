@@ -9,6 +9,7 @@ package v1beta1
 import (
 	"context"
 	"os"
+	"strings"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 
@@ -26,7 +27,7 @@ import (
 
 // Reconcile Resolves differences in the running state of the klusterlet-component-operator deployment
 func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
-	reqLogger := log.WithValues("KlusterletService.Namespace", instance.Namespace, "KlusterletService.Name", instance.Name)
+	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
 	reqLogger.Info("Reconciling ComponentOperator")
 
 	var err error
@@ -95,7 +96,11 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	}
 
 	// Create or Update Component Operator Deployment
-	deployment := newDeployment(instance)
+	deployment, err := newDeployment(instance)
+	if err != nil {
+		log.Error(err, "Fail to desired component operator deployment")
+		return err
+	}
 	err = controllerutil.SetControllerReference(instance, deployment, scheme)
 	if err != nil {
 		log.Error(err, "Unable to SetControllerReference")
@@ -196,7 +201,7 @@ func newServiceAccount(instance *multicloudv1beta1.Endpoint) *corev1.ServiceAcco
 	return serviceAccount
 }
 
-func newDeployment(instance *multicloudv1beta1.Endpoint) *extensionsv1beta1.Deployment {
+func newDeployment(instance *multicloudv1beta1.Endpoint) (*extensionsv1beta1.Deployment, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
@@ -207,7 +212,7 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) *extensionsv1beta1.Depl
 	} else {
 		image, err := instance.GetImage("component-operator")
 		if err != nil {
-			return nil
+			return nil, err
 		}
 		deploymentImage = image.Repository + ":" + image.Tag
 	}
@@ -274,9 +279,10 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) *extensionsv1beta1.Depl
 		}
 	}
 
-	return deployment
+	return deployment, nil
 }
 
 func watchesFile(instance *multicloudv1beta1.Endpoint) string {
-	return "/opt/helm/versions/" + instance.Spec.Version + "/watches.yaml"
+	versionSplit := strings.Split(instance.Spec.Version, "-")
+	return "/opt/helm/versions/" + versionSplit[0] + "/watches.yaml"
 }

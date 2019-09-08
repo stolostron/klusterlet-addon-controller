@@ -22,6 +22,7 @@ type EndpointSpec struct {
 	// Add custom validation using kubebuilder tags: https://book.kubebuilder.io/beyond_basics/generating_crd.html
 
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Enum=3.2.1,3.2.1-rhel,latest-rhel
 	Version string `json:"version"`
 
 	// +kubebuilder:validation:MinLength=1

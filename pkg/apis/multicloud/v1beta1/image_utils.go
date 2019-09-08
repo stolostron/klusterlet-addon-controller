@@ -8,6 +8,7 @@ package v1beta1
 
 import (
 	"fmt"
+	"strings"
 
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 )
@@ -203,7 +204,12 @@ var versionComponentTagMap = map[string]map[string]string{
 func (instance Endpoint) GetImage(name string) (image.Image, error) {
 	img := image.Image{}
 
-	if componentImageMap, ok := versionComponentImageNameMap[instance.Spec.Version]; ok {
+	versionSplit := strings.Split(instance.Spec.Version, "-")
+	if len(versionSplit) == 0 || len(versionSplit) > 2 {
+		return img, fmt.Errorf("invalid version %s", instance.Spec.Version)
+	}
+
+	if componentImageMap, ok := versionComponentImageNameMap[versionSplit[0]]; ok {
 		if imageName, ok := componentImageMap[name]; ok {
 			if instance.Spec.ImageRegistry != "" {
 				img.Repository = instance.Spec.ImageRegistry + "/" + imageName
@@ -214,25 +220,28 @@ func (instance Endpoint) GetImage(name string) (image.Image, error) {
 			return img, fmt.Errorf("unable to locate image name for component %s", name)
 		}
 	} else {
-		return img, fmt.Errorf("unable to locate image name for version %s", instance.Spec.Version)
+		return img, fmt.Errorf("unable to locate image name for version %s", versionSplit[0])
 	}
 
 	if instance.Spec.ImageNamePostfix != "" {
 		img.Repository = img.Repository + instance.Spec.ImageNamePostfix
 	}
 
-	if componentTagMap, ok := versionComponentTagMap[instance.Spec.Version]; ok {
+	if componentTagMap, ok := versionComponentTagMap[versionSplit[0]]; ok {
 		if tag, ok := componentTagMap[name]; ok {
 			img.Tag = tag
 		} else {
 			return img, fmt.Errorf("unable to locate image tag for component %s", name)
 		}
 	} else {
-		return img, fmt.Errorf("unable to locate image name for version %s", instance.Spec.Version)
+		return img, fmt.Errorf("unable to locate image name for version %s", versionSplit[0])
+	}
+
+	if len(versionSplit) == 2 {
+		img.Tag = img.Tag + "-" + versionSplit[1]
 	}
 
 	img.PullPolicy = instance.Spec.ImagePullPolicy
 
 	return img, nil
-
 }
