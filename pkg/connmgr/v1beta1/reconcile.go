@@ -106,6 +106,15 @@ func newConnectionManagerCR(cr *multicloudv1beta1.Endpoint) (*multicloudv1beta1.
 		log.Error(err, "Fail to get Image", "Component.Name", "connection-manager")
 		return nil, err
 	}
+	// if BootStrapConfig is empty, adds default value
+
+	_, ok := cr.Spec.BootStrapConfig["hubSecret"]
+	if !ok {
+		if cr.Spec.BootStrapConfig == nil {
+			cr.Spec.BootStrapConfig = make(map[string]string)
+		}
+		cr.Spec.BootStrapConfig["hubSecret"] = cr.Namespace + "/klusterlet-bootstrap"
+	}
 
 	labels := map[string]string{
 		"app": cr.Name,
