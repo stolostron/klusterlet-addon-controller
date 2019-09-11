@@ -185,6 +185,17 @@ func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*mu
 		return nil, err
 	}
 
+	clusterLabels := cr.Spec.ClusterLabels
+	if clusterLabels != nil {
+		if clusterLabels["cloud"] == "auto-detect" {
+			clusterLabels["cloud"] = string(inspect.Info.CloudVendor)
+		}
+
+		if clusterLabels["vendor"] == "auto-detect" {
+			clusterLabels["vendor"] = string(inspect.Info.KubeVendor)
+		}
+	}
+
 	return &multicloudv1beta1.WorkManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name + "-workmgr",
@@ -196,7 +207,7 @@ func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*mu
 
 			ClusterName:      cr.Spec.ClusterName,
 			ClusterNamespace: cr.Spec.ClusterNamespace,
-			ClusterLabels:    cr.Spec.ClusterLabels,
+			ClusterLabels:    clusterLabels,
 
 			ConnectionManager: cr.Name + "-connmgr",
 
