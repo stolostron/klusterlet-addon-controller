@@ -43,7 +43,14 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		return false, nil
 	}
 
-	//No ICP and Openshift Tiller
+	// 3.2.0 non-ICP klusterlet monitoring
+	found := inspect.ICPPrometheusService(client)
+	if found { //found ICP Prometheus
+		log.Info("Found ICP prometheus service, skip MonitoringCR Reconcile.")
+		return false, nil
+	}
+
+	//No ICP and Openshift Monitoring
 	monitoringCR, err := newMonitoringCR(instance)
 	if err != nil {
 		log.Error(err, "Fail to generate desired Monitoring CR")

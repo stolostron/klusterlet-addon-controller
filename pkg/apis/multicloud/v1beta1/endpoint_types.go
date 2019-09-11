@@ -44,6 +44,8 @@ type EndpointSpec struct {
 	EndpointMeteringConfig   EndpointMeteringSpec              `json:"metering"`
 	ApplicationManagerConfig EndpointApplicationManagerSpec    `json:"applicationManager"`
 
+	Migration bool `json:"migrateFrom320,omitempty"`
+
 	// +kubebuilder:validation:MinLength=1
 	ImageRegistry    string `json:"imageRegistry"`
 	ImageNamePostfix string `json:"imageNamePostfix,omitempty"`
