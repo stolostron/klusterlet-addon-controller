@@ -8,6 +8,7 @@ package endpoint
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
@@ -16,6 +17,7 @@ import (
 	component "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component/v1beta1"
 	connmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr/v1beta1"
 	metering "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/metering/v1beta1"
+	migration "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/migration/v1beta1"
 	monitoring "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/monitoring/v1beta1"
 	policyctrl "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/policyctrl/v1beta1"
 	searchcollector "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/searchcollector/v1beta1"
@@ -217,6 +219,18 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	var tempRequeue bool
+
+	log.Info(strconv.FormatBool(instance.Spec.Migration))
+	// Migration from 3.2.0 to 3.2.1
+	if instance.Spec.Migration {
+
+		tempRequeue, err = migration.Reconcile(instance, r.client)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		requeue = requeue || tempRequeue
+	}
+
 	err = component.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
