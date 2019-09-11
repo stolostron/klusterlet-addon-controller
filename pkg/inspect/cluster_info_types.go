@@ -37,7 +37,7 @@ const (
 	// KubeVendorIKS IBM Kubernetes Service
 	KubeVendorIKS KubeVendor = "IKS"
 	// KubeVendorOther other (unable to auto detect)
-	KubeVendorOther KubeVendor = "other"
+	KubeVendorOther KubeVendor = "Other"
 )
 
 // CloudVendor describe the cloud provider for the cluster
@@ -53,5 +53,5 @@ const (
 	// CloudVendorGoogle Google
 	CloudVendorGoogle CloudVendor = "Google"
 	// CloudVendorOther other (unable to auto detect)
-	CloudVendorOther CloudVendor = "other"
+	CloudVendorOther CloudVendor = "Other"
 )
