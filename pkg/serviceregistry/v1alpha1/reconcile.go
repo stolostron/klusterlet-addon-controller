@@ -121,6 +121,8 @@ func newServiceRegistryCR(cr *klusterletv1alpha1.KlusterletService) (*klusterlet
 			Labels:    labels,
 		},
 		Spec: klusterletv1alpha1.ServiceRegistrySpec{
+			ClusterName:      cr.Spec.ClusterName,
+			ClusterNamespace: cr.Spec.ClusterNamespace,
 			FullNameOverride: cr.Name + "-service-registry",
 			Enabled:          cr.Spec.ServiceRegistryConfig.Enabled,
 			ServiceRegistry: klusterletv1alpha1.ServiceRegistryImage{

@@ -173,6 +173,8 @@ func newServiceRegistryCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1be
 			Labels:    labels,
 		},
 		Spec: multicloudv1beta1.ServiceRegistrySpec{
+			ClusterName:      instance.Spec.ClusterName,
+			ClusterNamespace: instance.Spec.ClusterNamespace,
 			FullNameOverride: instance.Name + "-svcreg",
 			ServiceRegistry: multicloudv1beta1.ServiceRegistryImage{
 				Image: serviceRegistryImage,
