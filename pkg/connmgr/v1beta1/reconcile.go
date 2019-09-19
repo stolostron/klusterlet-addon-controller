@@ -134,8 +134,8 @@ func newConnectionManagerCR(cr *multicloudv1beta1.Endpoint) (*multicloudv1beta1.
 			Image:            image,
 			ImagePullSecret:  cr.Spec.ImagePullSecret,
 			GlobalView: multicloudv1beta1.ConnectionManagerGlobalViewSpec{
-				Enabled:         false,
-				CollectorLabels: "",
+				Enabled:         cr.Spec.ConnectionManagerConfig.EnabledGlobalView,
+				CollectorLabels: "mcm.ibm.com/globalview=true",
 			},
 		},
 	}, nil
