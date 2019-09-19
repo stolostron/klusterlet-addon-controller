@@ -43,6 +43,7 @@ type EndpointSpec struct {
 	ServiceRegistryConfig    EndpointServiceRegistrySpec       `json:"serviceRegistry"`
 	EndpointMeteringConfig   EndpointMeteringSpec              `json:"metering"`
 	ApplicationManagerConfig EndpointApplicationManagerSpec    `json:"applicationManager"`
+	ConnectionManagerConfig  EndpointConnectionManagerSpec     `json:"connectionManager"`
 
 	Migration bool `json:"migrateFrom320,omitempty"`
 
@@ -58,6 +59,12 @@ type EndpointSpec struct {
 	ComponentOperatorImage string `json:"componentOperatorImage,omitempty"`
 }
 
+// EndpointConnectionManagerSpec defines configuration for the ConnectionManager component
+// +k8s:openapi-gen=true
+type EndpointConnectionManagerSpec struct {
+	EnabledGlobalView bool `json:"enabledGlobalView"`
+}
+
 // EndpointApplicationManagerSpec defines configuration for the ApplicationManager component
 // +k8s:openapi-gen=true
 type EndpointApplicationManagerSpec struct {
@@ -68,12 +75,6 @@ type EndpointApplicationManagerSpec struct {
 // +k8s:openapi-gen=true
 type EndpointMeteringSpec struct {
 	Enabled bool `json:"enabled"`
-}
-
-// EndpointConnectionManagerSpec defines configuration for the ConnectionManager component
-// +k8s:openapi-gen=true
-type EndpointConnectionManagerSpec struct {
-	BootStrapConfig map[string]string `json:"bootstrapConfig"`
 }
 
 // EndpointSearchCollectorSpec defines configuration for the SearchCollector component
