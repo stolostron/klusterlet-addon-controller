@@ -21,7 +21,7 @@ func IsReady(instance *multicloudv1beta1.Endpoint, c client.Client) (bool, error
 	var svcregIsReady, coreDNSIsReady bool
 
 	foundSvcRegDeployment := &extensionsv1beta1.Deployment{}
-	err := c.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-search", Namespace: instance.Namespace}, foundSvcRegDeployment)
+	err := c.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-svcreg", Namespace: instance.Namespace}, foundSvcRegDeployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.V(5).Info("Cannot find the svcreg deployment")
@@ -38,7 +38,7 @@ func IsReady(instance *multicloudv1beta1.Endpoint, c client.Client) (bool, error
 	}
 
 	foundSvcRegCoreDNSDeployment := &extensionsv1beta1.Deployment{}
-	err = c.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-search", Namespace: instance.Namespace}, foundSvcRegCoreDNSDeployment)
+	err = c.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-svcreg-coredns", Namespace: instance.Namespace}, foundSvcRegCoreDNSDeployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.V(5).Info("Cannot find the svcreg coreDNS deployment")
