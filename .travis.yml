@@ -12,6 +12,7 @@ services:
 branches:
   only:
     - master
+    - dev
     - /^[0-9]+\..*$/
     - /^v[0-9]+\..*$/
     - /^release-[0-9]+\..*$/
@@ -21,72 +22,43 @@ jobs:
     - stage: "Build Images"
 
       os: linux
-
       before_install:
         - echo Go version is $TRAVIS_GO_VERSION
         - go version
         - source travis-env.sh
-
       script:
         - ./travis.sh
-
       after_script:
-        - echo "TRAVIS_PULL_REQUEST = $TRAVIS_PULL_REQUEST"
-        - |
-          if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
-            ./build/slack-notification.sh
-          else
-            echo "Slack notification not sent"
-          fi
+        - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"
 
     - os: linux-ppc64le
-
       before_install:
         - echo Go version is $TRAVIS_GO_VERSION
         - go version
         - source travis-env.sh
-
       script:
         - ./travis.sh
-
       after_script:
-        - echo "TRAVIS_PULL_REQUEST = $TRAVIS_PULL_REQUEST"
-        - |
-          if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
-            ./build/slack-notification.sh
-          else
-            echo "Slack notification not sent"
-          fi
+        - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"
 
     - os: linux-s390
-
       before_install:
         - echo Go version is $TRAVIS_GO_VERSION
         - source travis-env.sh
-
       script:
         - ./travis.sh
-
       after_script:
-        - echo "TRAVIS_PULL_REQUEST = $TRAVIS_PULL_REQUEST"
-        - |
-          if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
-            ./build/slack-notification.sh
-          else
-            echo "Slack notification not sent"
-          fi
+        - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"
 
     - stage: "Build Multi-Arch Image"
-      
       os: linux
-
       before_install:
         - echo Go version is $TRAVIS_GO_VERSION
         - go version
         - source travis-env.sh
-
       script:
         - echo "TRAVIS_EVENT_TYPE = $TRAVIS_EVENT_TYPE"
+        - export DOCKER_REGISTRY=hyc-cloud-private-integration-docker-local.artifactory.swg-devops.com
         - |
           if [[ "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
             make init
@@ -96,12 +68,5 @@ jobs:
           else
             echo "Not building multi-arch image on a pull request"
           fi
-
       after_script:
-        - echo "TRAVIS_PULL_REQUEST = $TRAVIS_PULL_REQUEST"
-        - |
-          if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
-            ./build/slack-notification.sh
-          else
-            echo "Slack notification not sent"
-          fi
+        - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"
