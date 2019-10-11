@@ -1,4 +1,4 @@
-// Package v1beta1 of mongodb provides a methods for the mongodb compont
+// Package v1beta1 of mongodb provides a methods for the mongodb component
 // IBM Confidential
 // OCO Source Materials
 // 5737-E67
@@ -9,14 +9,13 @@ package v1beta1
 import (
 	"context"
 
-	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+
+	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 )
 
 var log = logf.Log.WithName("mongodb")

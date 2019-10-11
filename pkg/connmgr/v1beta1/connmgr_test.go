@@ -1,4 +1,4 @@
-// Package v1beta1 of connmgrs Defines the Reconciliation logic and required setup for component operator.
+// Package v1beta1 of connmgr Defines the Reconciliation logic and required setup for component operator.
 // IBM Confidential
 // OCO Source Materials
 // 5737-E67

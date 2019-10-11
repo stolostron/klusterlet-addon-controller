@@ -24,25 +24,23 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
+	helmcrd "github.ibm.com/IBMMulticloudPlatform/helm-crd/pkg/apis/helm.bitnami.com/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-
-	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis"
-	component "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component/v1alpha1"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
-
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	crdv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	crdclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
-	helmcrd "github.ibm.com/IBMMulticloudPlatform/helm-crd/pkg/apis/helm.bitnami.com/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+
+	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis"
+	component "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component/v1beta1"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 )
 
 // Change below variables to serve metrics on different host or port.

@@ -1,4 +1,4 @@
-// Package v1beta1 of component Defines the Reconciliation logic and required setup for migration.
+// Package v1beta1 of migration Defines the Reconciliation logic and required setup for component operator.
 // IBM Confidential
 // OCO Source Materials
 // 5737-E67
@@ -12,6 +12,13 @@ import (
 	"strings"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 	appmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/appmgr/v1beta1"
 	connmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr/v1beta1"
@@ -20,13 +27,6 @@ import (
 	serviceregistry "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/serviceregistry/v1beta1"
 	topology "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/topology/v1beta1"
 	workmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/workmgr/v1beta1"
-
-	corev1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 var log = logf.Log.WithName("migration")

@@ -1,4 +1,4 @@
-// Package v1beta1 of serviceregistry provides a reconciler for the search collector
+// Package v1beta1 of serviceregistry provides a reconciler for the serviceregistry
 // IBM Confidential
 // OCO Source Materials
 // 5737-E67
@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,6 +19,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+
+	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 )
 
 var log = logf.Log.WithName("serviceregistry")

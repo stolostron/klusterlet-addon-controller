@@ -10,16 +10,15 @@ import (
 	"bytes"
 	"context"
 
-	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
-
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-
-	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+
+	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 )
 
 var log = logf.Log.WithName("metering")

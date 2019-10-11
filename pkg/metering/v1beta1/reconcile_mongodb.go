@@ -10,18 +10,17 @@ import (
 	"context"
 
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
-	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
-	mongodb "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/mongodb/v1beta1"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
+	mongodb "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/mongodb/v1beta1"
 )
 
 // reconcileMongoDB Resolves differences in the running state of the MongoDB services for metering.
