@@ -72,12 +72,6 @@ image:: deps
 	@$(BUILD_DIR)/download-kubectl.sh
 	$(MAKE) operator:build
 
-.PHONY: test
-## Run all project tests
-# test: %test: %i18n:resources %go:test
-test: %test: 
-	@echo "WARNING: THERE IS NO TESTING OF THIS COMPONENT. LET'S ADD SOME TESTS, PLEASE. FIX IN ISSUE IBMPrivateCloud/roadmap#28411"
-
 .PHONY: clean
 ## Clean build-harness and remove Go generated build and test files
 clean:: %clean: %go:clean

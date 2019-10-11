@@ -79,7 +79,7 @@ announce make swagger:diff
 fold_end api
 
 fold_start test "Test"
-announce make test
+announce make go:test
 fold_end test
 
 fold_start tools "Operator SDK Install"
