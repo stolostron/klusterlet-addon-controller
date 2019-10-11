@@ -1,4 +1,4 @@
-// Package v1beta1 of component Defines the Reconciliation logic and required setup for migration.
+// Package v1beta1 of migration Defines the Reconciliation logic and required setup for component operator.
 // IBM Confidential
 // OCO Source Materials
 // 5737-E67

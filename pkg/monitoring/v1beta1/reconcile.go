@@ -1,4 +1,4 @@
-// Package v1beta1 of monitoring provides a reconciler for the search collector
+// Package v1beta1 of monitoring provides a reconciler for the monitoring component
 // IBM Confidential
 // OCO Source Materials
 // 5737-E67
@@ -10,9 +10,6 @@ import (
 	"context"
 
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
-	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
-
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -22,6 +19,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+
+	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
 )
 
 var log = logf.Log.WithName("monitoring")

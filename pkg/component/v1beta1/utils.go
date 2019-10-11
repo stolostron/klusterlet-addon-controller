@@ -11,12 +11,10 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-
 	crdv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	crdclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
