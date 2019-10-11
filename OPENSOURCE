@@ -10,6 +10,7 @@ github.com/coreos/prometheus-operator,7a25bf6b6bb2347dacb235659b73bc210117acc7
 github.com/davecgh/go-spew,8991bc29aa16c548c550c7ff78260e27b9ab7c73
 github.com/dgrijalva/jwt-go,06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
 github.com/emicklei/go-restful,6ac3b8eb89d325e5c750d77f344a6870464d03c3
+github.com/evanphx/json-patch,026c730a0dcc5d11f93f1cf1cc65b01247ea7b6f
 github.com/ghodss/yaml,0ca9ea5df5451ffdf184b4428c902747c2c11cd7
 github.com/go-logr/logr,9fb12b3b21c5415d16ac18dc5cd42c1cfdd40c4e
 github.com/go-logr/zapr,03f06a783fbb7dfaf3f629c7825480e43a7105e6
@@ -45,6 +46,7 @@ github.com/pborman/uuid,adf5a7427709b9deb95d29d3fa8a2bf9cfd388f1
 github.com/petar/GoLLRB,33fb24c13b99c46c93183c291836c573ac382536
 github.com/peterbourgon/diskv,0be1b92a6df0e4f5cb0a5d15fb7f643d0ad93ce6
 github.com/pkg/errors,ba968bfe8b2f7e042a574c888954fccecfa385b4
+github.com/pmezard/go-difflib,792786c7400a136282c1664665ae0a8db921c6c2
 github.com/prometheus/client_golang,2641b987480bca71fb39738eb8c8b0d577cb1d76
 github.com/prometheus/client_model,fd36f4220a901265f90734c3183c5f0c91daa0b8
 github.com/prometheus/common,31bed53e4047fd6c510e43a941f90cb31be0972a
@@ -52,6 +54,7 @@ github.com/prometheus/procfs,3f98efb27840a48a7a2898ec80be07674d19f9c8
 github.com/rogpeppe/go-internal,438578804ca6f31be148c27683afc419ce47c06e
 github.com/spf13/afero,588a75ec4f32903aa5e39a2619ba6a4631e28424
 github.com/spf13/pflag,298182f68c66c05229eb03ac171abe6e309ee79a
+github.com/stretchr/testify,221dbe5ed46703ee255b1da0dec05086f5035f62
 github.ibm.com/IBMMulticloudPlatform/helm-crd,f9e966ebdcca78f5d0f5d2620935e9f33c865ff8
 github.ibm.com/IBMPrivateCloud/hcm-api,35250ec8a1beba9b11b55999bbc1475e05746af3
 go.opencensus.io,43463a80402d8447b7fce0d2c58edf1687ff0b58
