@@ -21,6 +21,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
+	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/utils"
 )
 
 // TODO(liuhao): switch from klusterletv1alpha1 to multicloudv1beta1 for the component api
@@ -226,6 +227,7 @@ func createServiceAccount(client client.Client, scheme *runtime.Scheme, instance
 		user := "system:serviceaccount:" + serviceAccount.Namespace + ":" + serviceAccount.Name
 		log.Info("Adding User to SCC", "User", user, "SCC", foundPrivilegedSCC.Name)
 		foundPrivilegedSCC.Users = append(foundPrivilegedSCC.Users, user)
+		foundPrivilegedSCC.Users = utils.UniqueStringSlice(foundPrivilegedSCC.Users)
 		err = client.Update(context.TODO(), foundPrivilegedSCC)
 		if err != nil {
 			return err
