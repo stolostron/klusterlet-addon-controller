@@ -157,8 +157,9 @@ func newSearchCollectorCR(instance *multicloudv1beta1.Endpoint, client client.Cl
 func newSearchCollectorTillerIntegration(instance *multicloudv1beta1.Endpoint, client client.Client) multicloudv1beta1.SearchCollectorTillerIntegration {
 	if instance.Spec.TillerIntegration.Enabled {
 		// ICP Tiller
-		icpTillerServiceEndpoint := tiller.GetICPTillerServiceEndpoint(client)
-		if icpTillerServiceEndpoint != "" {
+		useExistingICPTiller := tiller.UseExistingICPTiller(client)
+		if useExistingICPTiller {
+			icpTillerServiceEndpoint := tiller.GetICPTillerServiceEndpoint(client)
 			return multicloudv1beta1.SearchCollectorTillerIntegration{
 				Enabled:       true,
 				Endpoint:      icpTillerServiceEndpoint,
