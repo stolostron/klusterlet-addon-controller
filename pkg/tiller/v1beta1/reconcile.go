@@ -31,14 +31,13 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	reqLogger.Info("Reconciling Tiller")
 
 	// ICP Tiller
-	foundICPTillerService := &corev1.Service{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, foundICPTillerService)
-	if err == nil {
+	useExistingICPTiller := UseExistingICPTiller(client)
+	if useExistingICPTiller {
 		log.Info("Found ICP Tiller, skip TillerCR Reconcile.")
 		return false, nil
 	}
 
-	// No ICP Tiller
+	log.V(5).Info("ICP-Tiller DOES NOT exist")
 	tillerCR, err := newTillerCR(instance)
 	if err != nil {
 		log.Error(err, "Fail to generate desired Tiller CR")

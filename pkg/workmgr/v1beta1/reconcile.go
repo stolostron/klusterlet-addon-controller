@@ -104,8 +104,9 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 func newWorkManagerTillerIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) multicloudv1beta1.WorkManagerTillerIntegration {
 	if cr.Spec.TillerIntegration.Enabled {
 		// ICP Tiller
-		icpTillerServiceEndpoint := tiller.GetICPTillerServiceEndpoint(client)
-		if icpTillerServiceEndpoint != "" {
+		useExistingICPTiller := tiller.UseExistingICPTiller(client)
+		if useExistingICPTiller {
+			icpTillerServiceEndpoint := tiller.GetICPTillerServiceEndpoint(client)
 			return multicloudv1beta1.WorkManagerTillerIntegration{
 				Enabled:           true,
 				HelmReleasePrefix: "md",

@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,9 +58,10 @@ func GetICPTillerServiceEndpoint(client client.Client) string {
 				tillerServicePort = port.Port
 			}
 		}
-
+		log.V(5).Info("There is a Tiller Endpoint in the namespace Kube-System:", tillerServiceHostname)
 		return tillerServiceHostname + ":" + strconv.FormatInt(int64(tillerServicePort), 10)
 	}
+	log.V(5).Info("There is no Tiller Endpoint in the namespace Kube-System.")
 	return ""
 }
 
@@ -121,4 +123,28 @@ func CheckDependency(instance *multicloudv1beta1.Endpoint, c client.Client, comp
 	}
 
 	return nil
+}
+
+// ICPCAIssuerExists check if an ICP CA Issuer exists
+func ICPCAIssuerExists(client client.Client) bool {
+	foundICPTillerIssuer := &certmanagerv1alpha1.ClusterIssuer{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "icp-ca-issuer"}, foundICPTillerIssuer)
+	if err == nil {
+		log.V(5).Info("There is an ICP CA issuer in the cluster.")
+		return true
+	}
+	log.V(5).Info("There is no ICP CA issuer in the cluster.")
+	return false
+}
+
+// UseExistingICPTiller check if an Tiller is in kube-system and CA issuer exists
+func UseExistingICPTiller(client client.Client) bool {
+	foundICPTillerService := &corev1.Service{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "tiller-deploy", Namespace: "kube-system"}, foundICPTillerService)
+	if err == nil && ICPCAIssuerExists(client) {
+		log.V(5).Info("Use the existing ICP Tiller.")
+		return true
+	}
+	log.V(5).Info("There is no existing ICP Tiller or ICP-CA-ISSUER, So NOT use existing ICP Tiller.")
+	return false
 }
