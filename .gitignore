@@ -19,13 +19,12 @@ build/_output
 build-harness/
 .build-docker/
 .build/*.jar
-api/multicluster-endpoint-api/openapi.json
-
+.idea
 .dev-env.template
 .build-harness
 .vendor-new
 
-#Scratch 
+#Scratch
 scratch
 build/kubectl-darwin-amd64
 build/kubectl-linux-amd64

@@ -66,17 +66,9 @@ git config --global url.git@github.ibm.com:.insteadOf https://github.ibm.com/
 announce make deps
 fold_end deps
 
-fold_start build "Build"
-announce make build
-fold_end build
-
 fold_start check "Check"
 announce make check
 fold_end check
-
-fold_start api "API"
-announce make swagger:diff
-fold_end api
 
 fold_start test "Test"
 announce make go:test
@@ -92,15 +84,13 @@ fold_end image
 
 if [[ "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
   fold_start publish "Publish"
-  # publish to Artifactory
-  export DOCKER_REGISTRY=hyc-cloud-private-integration-docker-local.artifactory.swg-devops.com
-  export DOCKER_USER=$ARTIFACTORY_USER
-  export DOCKER_PASS=$ARTIFACTORY_KEY
-  export DOCKER_NAMESPACE=ibmcom
+  export DOCKER_TAG=$(make semver:show-version)
+
   announce make docker:login
   announce make docker:tag-arch
   announce make docker:push-arch
-  if [[ "$ARCH" == "amd64" ]]; then
+
+  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     # publish -rhel tagged image to Artifactory
     export DOCKER_TAG=$DOCKER_TAG-rhel
     announce make docker:tag-arch
