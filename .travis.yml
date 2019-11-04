@@ -25,7 +25,6 @@ jobs:
       before_install:
         - echo Go version is $TRAVIS_GO_VERSION
         - go version
-        - source travis-env.sh
       script:
         - ./travis.sh
       after_script:
@@ -35,7 +34,6 @@ jobs:
       before_install:
         - echo Go version is $TRAVIS_GO_VERSION
         - go version
-        - source travis-env.sh
       script:
         - ./travis.sh
       after_script:
@@ -44,29 +42,28 @@ jobs:
     - os: linux-s390
       before_install:
         - echo Go version is $TRAVIS_GO_VERSION
-        - source travis-env.sh
       script:
         - ./travis.sh
       after_script:
         - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"
 
-    - stage: "Build Multi-Arch Image"
-      os: linux
-      before_install:
-        - echo Go version is $TRAVIS_GO_VERSION
-        - go version
-        - source travis-env.sh
-      script:
-        - echo "TRAVIS_EVENT_TYPE = $TRAVIS_EVENT_TYPE"
-        - export DOCKER_REGISTRY=hyc-cloud-private-integration-docker-local.artifactory.swg-devops.com
-        - |
-          if [[ "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
-            make init
-            make docker:login
-            make docker:manifest-tool
-            make docker:multi-arch
-          else
-            echo "Not building multi-arch image on a pull request"
-          fi
-      after_script:
-        - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"
+        # TODO - to re-enable we need to accound for new semver changes
+    # - stage: "Build Multi-Arch Image"
+    #   os: linux
+    #   before_install:
+    #     - echo Go version is $TRAVIS_GO_VERSION
+    #     - go version
+    #   script:
+    #     - echo "TRAVIS_EVENT_TYPE = $TRAVIS_EVENT_TYPE"
+    #     - export DOCKER_REGISTRY=hyc-cloud-private-integration-docker-local.artifactory.swg-devops.com
+    #     - |
+    #       if [[ "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
+    #         make init
+    #         make docker:login
+    #         make docker:manifest-tool
+    #         make docker:multi-arch
+    #       else
+    #         echo "Not building multi-arch image on a pull request"
+    #       fi
+    #   after_script:
+    #     - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"
