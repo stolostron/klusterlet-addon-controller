@@ -283,5 +283,9 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) (*extensionsv1beta1.Dep
 
 func watchesFile(instance *multicloudv1beta1.Endpoint) string {
 	versionSplit := strings.Split(instance.Spec.Version, "-")
-	return "/opt/helm/versions/" + versionSplit[0] + "/watches.yaml"
+	version := versionSplit[0]
+	if version == "3.2.1.1910" {
+		version = "3.2.1"
+	}
+	return "/opt/helm/versions/" + version + "/watches.yaml"
 }
