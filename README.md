@@ -1,6 +1,5 @@
 ## Intro 
-Klusterlet operator is a Go operator build with the operator-sdk that's use to manage the Create Update Delete of the component CR in the Klusterlet Component Operator https://github.ibm.com/IBMPrivateCloud/klusterlet-component-operator
-
+Klusterlet operator is a Go operator build with the operator-sdk that's use to manage the Create Update Delete of the component CR in the Klusterlet Component Operator 
 
 ## Prepare your cluster 
 1. Create namespace

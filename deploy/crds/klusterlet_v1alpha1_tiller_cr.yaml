@@ -1,7 +1,0 @@
-apiVersion: klusterlet.mcm.ibm.com/v1alpha1
-kind: Tiller
-metadata:
-  name: example-tiller
-spec:
-  # Add fields here
-  size: 3

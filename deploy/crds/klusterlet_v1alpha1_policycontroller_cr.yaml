@@ -1,7 +1,0 @@
-apiVersion: klusterlet.mcm.ibm.com/v1alpha1
-kind: PolicyController
-metadata:
-  name: example-policycontroller
-spec:
-  # Add fields here
-  size: 3
