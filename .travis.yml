@@ -52,8 +52,8 @@ jobs:
       script:
         - |
           if [[ "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
-            export DOCKER_TAG=$(make semver:show-version)
             make init
+            export DOCKER_TAG=$(make semver:show-version)
             make docker:login
             make docker:manifest-tool
             make docker:multi-arch
