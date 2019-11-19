@@ -12,7 +12,7 @@ import (
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
 )
 
-var componentImageNameMap = map[string]string{
+var componentImageNameMap32x = map[string]string{
 	"search-collector":             "search-collector",
 	"weave":                        "mcm-weave-scope",
 	"topology-collector":           "weave-collector",
@@ -39,10 +39,37 @@ var componentImageNameMap = map[string]string{
 	"helmcrd-admission-controller": "helm-crd-admission-controller",
 }
 
+var componentImageNameMap = map[string]string{
+	"search-collector":             "search-collector",
+	"weave":                        "mcm-weave-scope",
+	"topology-collector":           "weave-collector",
+	"router":                       "icp-management-ingress",
+	"tiller":                       "tiller",
+	"work-manager":                 "mcm-klusterlet",
+	"deployable":                   "deployable",
+	"connection-manager":           "mcm-operator",
+	"cert-manager-controller":      "icp-cert-manager-controller",
+	"cert-manager-acmesolver":      "icp-cert-manager-acmesolver",
+	"service-registry":             "mcm-service-registry",
+	"coredns":                      "coredns",
+	"component-operator":           "klusterlet-component-operator",
+	"policy-controller":            "mcm-compliance",
+	"metering-reader":              "metering-data-manager",
+	"metering-sender":              "metering-data-manager",
+	"metering-dm":                  "metering-data-manager",
+	"curl":                         "curl",
+	"mongodb":                      "ibm-mongodb",
+	"mongodb-install":              "ibm-mongodb-install",
+	"mongodb-metrics":              "ibm-mongodb-exporter",
+	"subscription":                 "subscription",
+	"helmcrd":                      "helm-crd-controller",
+	"helmcrd-admission-controller": "helm-crd-admission-controller",
+}
+
 var versionComponentImageNameMap = map[string]map[string]string{
-	"3.2.0":      componentImageNameMap,
-	"3.2.1":      componentImageNameMap,
-	"3.2.1.1910": componentImageNameMap,
+	"3.2.0":      componentImageNameMap32x,
+	"3.2.1":      componentImageNameMap32x,
+	"3.2.1.1910": componentImageNameMap32x,
 	"3.3.0":      componentImageNameMap,
 	"latest":     componentImageNameMap,
 }
