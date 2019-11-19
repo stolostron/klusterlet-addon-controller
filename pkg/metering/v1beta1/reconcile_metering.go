@@ -167,8 +167,9 @@ func newMeteringSenderCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1bet
 			},
 
 			Reader: multicloudv1beta1.MeteringSpecReader{
-				Enabled: true,
-				Image:   readerImage,
+				Enabled:       true,
+				Image:         readerImage,
+				ClusterIssuer: instance.Name + "-metering",
 			},
 
 			Sender: multicloudv1beta1.MeteringSpecSender{
