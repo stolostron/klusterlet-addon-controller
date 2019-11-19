@@ -74,8 +74,9 @@ type MeteringSpecDataManager struct {
 
 // MeteringSpecReader defines the Reader configuration in the the metering spec
 type MeteringSpecReader struct {
-	Enabled bool        `json:"enabled"`
-	Image   image.Image `json:"image,omitempty"`
+	Enabled       bool        `json:"enabled"`
+	Image         image.Image `json:"image,omitempty"`
+	ClusterIssuer string      `json:"clusterIssuer,omitempty"`
 }
 
 // MeteringSpecMongo defines the mongo configuration in the the metering spec
