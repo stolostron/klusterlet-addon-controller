@@ -4,13 +4,13 @@ if [ -z "${OPERATOR_NAMESPACE}" ]; then
 	OPERATOR_NAMESPACE="multicluster-endpoint"
 fi
 
-# Delete all endpoints.multicloud.ibm.com 
+# Delete all endpoints.multicloud.ibm.com
 kubectl delete endpoints.multicloud.ibm.com -n ${OPERATOR_NAMESPACE}  --all --timeout=60s
 
 # Delete Deployment
 kubectl delete deployment ibm-multicluster-endpoint-operator -n ${OPERATOR_NAMESPACE}
 
-# Force delete all component CRDs if they still exist 
+# Force delete all component CRDs if they still exist
 component_crds=(
 	helmreleases.helm.bitnami.com
 	applicationmanagers.multicloud.ibm.com
@@ -55,7 +55,7 @@ for crd in "${component_crds[@]}"; do
 		kubectl patch ${resource} -n ${OPERATOR_NAMESPACE} --type="json" -p '[{"op": "remove", "path":"/metadata/finalizers"}]'
 	done
 	echo "force delete all CustomResourceDefination ${crd} resources..."
-	kubectl delete ${crd}
+	kubectl delete crd ${crd}
 done
 
 kubectl delete namespace ${OPERATOR_NAMESPACE}
