@@ -292,23 +292,29 @@ func newMeteringMongoDBCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1be
 func deleteClusterCertificate(instance *multicloudv1beta1.Endpoint, client client.Client) error {
 	foundClusterIssuer := &certmanagerv1alpha1.Certificate{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-metering-ca-cert", Namespace: instance.Namespace}, foundClusterIssuer)
-	if err == nil {
-		log.Info("Deleting Metering Certificate")
-		return client.Delete(context.TODO(), foundClusterIssuer)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
 	}
 
-	return err
+	log.Info("Deleting Metering Certificate")
+	return client.Delete(context.TODO(), foundClusterIssuer)
 }
 
 func deleteClusterIssuer(instance *multicloudv1beta1.Endpoint, client client.Client) error {
 	foundClusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-metering"}, foundClusterIssuer)
-	if err == nil {
-		log.Info("Deleting Metering ClusterIssuer")
-		return client.Delete(context.TODO(), foundClusterIssuer)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
 	}
 
-	return err
+	log.Info("Deleting Metering ClusterIssuer")
+	return client.Delete(context.TODO(), foundClusterIssuer)
 }
 
 func deleteSecrets(instance *multicloudv1beta1.Endpoint, client client.Client) error {
