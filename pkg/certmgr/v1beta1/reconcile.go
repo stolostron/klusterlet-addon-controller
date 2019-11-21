@@ -85,7 +85,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 				}
 
 				// Create SelfSigned ClusterIssuer
-				createSelfSignClusterIssuer(client, scheme, instance)
+				err = createSelfSignClusterIssuer(client, scheme, instance)
 				if err != nil {
 					log.Error(err, "Fail to CREATE SelfSigned ClusterIssuer")
 					return false, err
@@ -138,6 +138,13 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 				err = client.Update(context.TODO(), foundCertManager)
 				if err != nil && !errors.IsConflict(err) {
 					log.Error(err, "Fail to UPDATE CertManager CR")
+					return false, err
+				}
+				// Create SelfSigned ClusterIssuer
+				// TODO(liuhao): figure out why selfsigned cluster issuer is being deleted
+				err = createSelfSignClusterIssuer(client, scheme, instance)
+				if err != nil {
+					log.Error(err, "Fail to CREATE SelfSigned ClusterIssuer")
 					return false, err
 				}
 			} else {
