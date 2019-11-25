@@ -37,7 +37,6 @@ type MonitoringSpec struct {
 	ElasticsearchExporter        MonitoringElasticsearchExporter        `json:"elasticsearchExporter"`
 	ConfigmapReload              MonitoringConfigmapReload              `json:"configmapReload"`
 	Router                       MonitoringRouter                       `json:"router"`
-	AlertruleController          MonitoringAlertruleController          `json:"alertruleController"`
 	PrometheusOperatorController MonitoringPrometheusOperatorController `json:"prometheusOperatorController"`
 	PrometheusOperator           MonitoringPrometheusOperator           `json:"prometheusOperator"`
 	PrometheusConfigReloader     MonitoringPrometheusConfigReloader     `json:"prometheusConfigReloader"`

@@ -389,15 +389,9 @@ func newMonitoringCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1beta1.M
 		return nil, err
 	}
 
-	alertruleControllerImage, err := instance.GetImage("alertrule-controller")
-	if err != nil {
-		log.Error(err, "Fail to get Image", "Component.Name", "alertruleController")
-		return nil, err
-	}
-
 	routerImage, err := instance.GetImage("router")
 	if err != nil {
-		log.Error(err, "Fail to get Image", "Component.Name", "prometheusOperatorController")
+		log.Error(err, "Fail to get Image", "Component.Name", "router")
 		return nil, err
 	}
 
@@ -409,7 +403,7 @@ func newMonitoringCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1beta1.M
 
 	prometheusOperatorImage, err := instance.GetImage("prometheus-operator")
 	if err != nil {
-		log.Error(err, "Fail to get Image", "Component.Name", "prometheusOperatorController")
+		log.Error(err, "Fail to get Image", "Component.Name", "prometheusOperator")
 		return nil, err
 	}
 
@@ -421,7 +415,7 @@ func newMonitoringCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1beta1.M
 
 	curlImage, err := instance.GetImage("curl")
 	if err != nil {
-		log.Error(err, "Fail to get Image", "Component.Name", "prometheusConfigReloader")
+		log.Error(err, "Fail to get Image", "Component.Name", "curl")
 		return nil, err
 	}
 
@@ -475,9 +469,6 @@ func newMonitoringCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1beta1.M
 			},
 			Router: multicloudv1beta1.MonitoringRouter{
 				Image: routerImage,
-			},
-			AlertruleController: multicloudv1beta1.MonitoringAlertruleController{
-				Image: alertruleControllerImage,
 			},
 			PrometheusOperatorController: multicloudv1beta1.MonitoringPrometheusOperatorController{
 				Image: prometheusOperatorControllerImage,
