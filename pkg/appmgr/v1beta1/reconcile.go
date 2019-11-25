@@ -93,14 +93,12 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 			log.V(5).Info("ApplicationManager CR IS NOT in deletion state")
 			if instance.GetDeletionTimestamp() == nil && instance.Spec.ApplicationManagerConfig.Enabled {
 				log.Info("instance IS NOT in deletion state and ApplicationManager ENABLED")
-
 				if !appMgrCR.Spec.TillerIntegration.Enabled {
 					foundAppMgrDeploy := &appsv1.Deployment{}
 					err = client.Get(context.TODO(), types.NamespacedName{Name: "endpoint-appmgr-helm-crd", Namespace: appMgrCR.Namespace}, foundAppMgrDeploy)
 					if err != nil {
 						if kerrors.IsNotFound(err) {
 							log.Info("Application Manger deploy not found. Clean up CRs")
-
 							foundHelmCRD := &crdv1beta1.CustomResourceDefinition{}
 							err := client.Get(context.TODO(), types.NamespacedName{Name: "helmreleases.helm.bitnami.com", Namespace: ""}, foundHelmCRD)
 							if err != nil {
