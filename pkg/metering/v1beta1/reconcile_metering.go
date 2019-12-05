@@ -28,7 +28,7 @@ func reconcileMetering(instance *multicloudv1beta1.Endpoint, client client.Clien
 	var err error
 	var meteringSenderCR *multicloudv1beta1.Metering
 
-	if inspect.Info.KubeVendor == inspect.KubeVendorICP {
+	if inspect.ICPMeteringService(client) {
 		meteringSenderCR, err = newMeteringSenderCRForICP(instance)
 		if err != nil {
 			log.Error(err, "Fail to generate desired Metering CR")

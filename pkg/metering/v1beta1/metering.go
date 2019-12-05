@@ -26,7 +26,7 @@ func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Metering
 	log.Info("Creating a new Metering", "Metering.Namespace", cr.Namespace, "Metering.Name", cr.Name)
 
 	//Create image pull secret for metering if it is in ICP
-	if inspect.Info.KubeVendor == inspect.KubeVendorICP {
+	if inspect.ICPMeteringService(client) {
 		err := checkAndCreateSecretForMetering(instance, cr, client)
 		if err != nil {
 			return err
@@ -52,7 +52,7 @@ func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Metering
 		return err
 	}
 
-	if inspect.Info.KubeVendor == inspect.KubeVendorICP {
+	if inspect.ICPMeteringService(client) {
 		err = checkAndUpdateSecretForMetering(instance, cr, client)
 		if err != nil {
 			log.Error(err, "Fail to UPDATE image pull SECRET for metering")
@@ -78,7 +78,7 @@ func delete(instance *multicloudv1beta1.Endpoint, foundCR *multicloudv1beta1.Met
 	}
 
 	// delete the secret for metering
-	if inspect.Info.KubeVendor == inspect.KubeVendorICP {
+	if inspect.ICPMeteringService(client) {
 		err = checkAndDeleteSecretForMetering(instance, foundCR, client)
 		if err != nil {
 			log.Error(err, "Fail to DELETE image pull SECRET for metering")

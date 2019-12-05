@@ -45,6 +45,27 @@ func ICPPrometheusService(client client.Client) bool {
 	return err == nil
 }
 
+// ICPMeteringService check: Is the cluster have the ICP metering-server service
+func ICPMeteringService(client client.Client) bool {
+	foundICPPrometheusService := &corev1.Service{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "metering-server", Namespace: "kube-system"}, foundICPPrometheusService)
+	return err == nil
+}
+
+// ICPMongoDBService check: Is the cluster have the ICP icp-mongodb service
+func ICPMongoDBService(client client.Client) bool {
+	foundICPMongoDBService := &corev1.Service{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "icp-mongodb", Namespace: "kube-system"}, foundICPMongoDBService)
+	return err == nil
+}
+
+// IBMCloudClusterInfoConfigMapExist check if the cluster have ibmcloud-cluster-info configmap
+func IBMCloudClusterInfoConfigMapExist(client client.Client) bool {
+	foundConfigMap := &corev1.ConfigMap{}
+	err := client.Get(context.TODO(), types.NamespacedName{Name: "ibmcloud-cluster-info", Namespace: "kube-public"}, foundConfigMap)
+	return err == nil
+}
+
 // InitClusterInfo initialize the global variable Info in the inspec package
 func InitClusterInfo(cfg *rest.Config) error {
 	// Initialize RESTClient
