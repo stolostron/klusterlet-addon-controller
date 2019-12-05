@@ -37,7 +37,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	}
 
 	// ICP Monitoring
-	if inspect.Info.KubeVendor == inspect.KubeVendorICP {
+	if inspect.ICPMeteringService(client) {
 		log.Info("On ICP, skip MonitoringCR Reconcile.")
 		return false, nil
 	}
