@@ -112,6 +112,16 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 }
 
 func createCoreDNSConfigmap(instance *multicloudv1beta1.Endpoint, client client.Client, cr *multicloudv1beta1.ServiceRegistry, scheme *runtime.Scheme) error {
+	configMapNamespacedName := types.NamespacedName{
+		Name:      instance.Name + "-svcreg-coredns",
+		Namespace: instance.Namespace,
+	}
+
+	foundCoreDNSConfigmap := &corev1.ConfigMap{}
+	if err := client.Get(context.TODO(), configMapNamespacedName, foundCoreDNSConfigmap); err == nil {
+		return nil
+	}
+
 	labels := map[string]string{
 		"app": instance.Name,
 	}
