@@ -1,0 +1,45 @@
+DOCKER_SERVER ?= hyc-cloud-private-scratch-docker-local.artifactory.swg-devops.com
+DOCKER_USERNAME ?= token
+DOCKER_PASSWORD ?=
+IMAGE_NAME = icp-multicluster-endpoint-operator
+IMAGE_VERSION := $(shell git rev-parse --short HEAD)
+IMAGE_SUMMARY = Klusterlet_Operator
+SCRATCH_REPO ?= hyc-cloud-private-scratch-docker-local.artifactory.swg-devops.com/ibmcom
+SCRATCH_TAG ?= $(shell whoami)
+IMAGE_REPO ?= hyc-cloud-private-integration-docker-local.artifactory.swg-devops.com/ibmcom
+RELEASE_TAG ?= latest
+ARCH = $(shell uname -m)
+VCS_REF ?= $(DOCKER_TAG)
+
+#New additions for the UBI image
+#Variables for redhat required labels
+IMAGE_DISPLAY_NAME=KlusterletOperator
+IMAGE_MAINTAINER=klusterletSquad
+IMAGE_VENDOR=IBM
+IMAGE_SUMMARY=$(IMAGE_DESCRIPTION)
+IMAGE_OPENSHIFT_TAGS=ibm_klusterlet_operator
+
+ifeq ($(ARCH), x86_64)
+	IMAGE_NAME_ARCH = $(IMAGE_NAME)-amd64
+else
+	IMAGE_NAME_ARCH = $(IMAGE_NAME)-$(ARCH)
+endif
+
+ARCH       ?= $(shell uname -m)
+ARCH_TYPE  = $(if $(patsubst x86_64,,$(ARCH)),$(ARCH),amd64)
+
+#For build harness docker:build
+DOCKER_BUILD_OPTS=--build-arg "VCS_REF=$(VCS_REF)" \
+	--build-arg "VCS_URL=$(GIT_REMOTE_URL)" \
+	--build-arg "IMAGE_NAME=$(IMAGE_NAME)" \
+	--build-arg "IMAGE_DESCRIPTION=$(IMAGE_DESCRIPTION)" \
+	--build-arg "IMAGE_DISPLAY_NAME=$(IMAGE_DISPLAY_NAME)" \
+	--build-arg "IMAGE_NAME_ARCH=$(IMAGE_NAME_ARCH)" \
+	--build-arg "IMAGE_MAINTAINER=$(IMAGE_MAINTAINER)" \
+	--build-arg "IMAGE_VENDOR=$(IMAGE_VENDOR)" \
+	--build-arg "IMAGE_VERSION=$(IMAGE_VERSION)" \
+	--build-arg "IMAGE_DESCRIPTION=$(IMAGE_DESCRIPTION)" \
+	--build-arg "IMAGE_SUMMARY=$(IMAGE_SUMMARY)" \
+	--build-arg "IMAGE_OPENSHIFT_TAGS=$(IMAGE_OPENSHIFT_TAGS)" \
+    --build-arg "ARCH_TYPE=$(ARCH_TYPE)"
+    
