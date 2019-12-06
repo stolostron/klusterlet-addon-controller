@@ -260,7 +260,6 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) (*extensionsv1beta1.Dep
 							},
 							Args: []string{
 								"--watches-file=" + watchesFile(instance),
-								"--zap-devel",
 							},
 						},
 					},
