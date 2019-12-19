@@ -14,9 +14,6 @@ BIN_DIR           = $(PROJECT_DIR)/bin
 VENDOR_DIR        = $(PROJECT_DIR)/vendor
 I18N_DIR          = $(PROJECT_DIR)/pkg/i18n
 DOCKER_BUILD_PATH = $(PROJECT_DIR)/.build-docker
-
-ARCH       ?= $(shell uname -m)
-ARCH_TYPE  = $(if $(patsubst x86_64,,$(ARCH)),$(ARCH),amd64)
 BUILD_DATE = $(shell date +%m/%d@%H:%M:%S)
 VCS_REF    = $(if $(shell git status --porcelain),$(GIT_COMMIT)-$(BUILD_DATE),$(GIT_COMMIT))
 
@@ -35,12 +32,21 @@ DOCKER_NAMESPACE  ?= ibmcom
 DOCKER_IMAGE      ?= icp-multicluster-endpoint-operator
 DOCKER_BUILD_TAG  ?= latest
 DOCKER_TAG        ?= $(shell whoami)
-DOCKER_BUILD_OPTS = --build-arg VCS_REF=$(VCS_REF) --build-arg VCS_URL=$(GIT_REMOTE_URL) --build-arg IMAGE_NAME=$(DOCKER_IMAGE) --build-arg IMAGE_DESCRIPTION=$(IMAGE_DESCRIPTION) --build-arg ARCH_TYPE=$(ARCH_TYPE)
 
 BEFORE_SCRIPT := $(shell ./build/before-make-script.sh)
 
 -include $(shell curl -fso .build-harness -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3.raw" "https://raw.github.ibm.com/ICP-DevOps/build-harness/master/templates/Makefile.build-harness"; echo .build-harness)
 
+ARCH       ?= $(shell uname -m)
+ARCH_TYPE  = $(if $(patsubst x86_64,,$(ARCH)),$(ARCH),amd64)
+
+#For operator-sdk build 
+DOCKER_BUILD_OPTS=--build-arg "VCS_REF=$(VCS_REF)" \
+	--build-arg "VCS_URL=$(GIT_REMOTE_URL)" \
+	--build-arg "IMAGE_NAME=$(DOCKER_IMAGE)" \
+	--build-arg "IMAGE_DESCRIPTION=$(IMAGE_DESCRIPTION)" \
+	--build-arg "IMAGE_VERSION=$(SEMVERSION)" \
+	--build-arg "ARCH_TYPE=$(ARCH_TYPE)" 
 
 .PHONY: deps
 ## Download all project dependencies
