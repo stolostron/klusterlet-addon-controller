@@ -1,5 +1,5 @@
 language: go
-dist: xenial
+
 cache:
   - apt: true
 
