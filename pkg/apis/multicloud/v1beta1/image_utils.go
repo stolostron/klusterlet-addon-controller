@@ -270,14 +270,21 @@ func (instance Endpoint) GetImage(name string) (image.Image, error) {
 		img.Repository = img.Repository + instance.Spec.ImageNamePostfix
 	}
 
-	if componentTagMap, ok := versionComponentTagMap[versionSplit[0]]; ok {
-		if tag, ok := componentTagMap[name]; ok {
+	if instance.Spec.ComponentsImagesTag != nil {
+		if tag, ok := instance.Spec.ComponentsImagesTag[name]; ok {
 			img.Tag = tag
-		} else {
-			return img, fmt.Errorf("unable to locate image tag for component %s", name)
 		}
-	} else {
-		return img, fmt.Errorf("unable to locate image name for version %s", versionSplit[0])
+	}
+	if img.Tag == "" {
+		if componentTagMap, ok := versionComponentTagMap[versionSplit[0]]; ok {
+			if tag, ok := componentTagMap[name]; ok {
+				img.Tag = tag
+			} else {
+				return img, fmt.Errorf("unable to locate image tag for component %s", name)
+			}
+		} else {
+			return img, fmt.Errorf("unable to locate image name for version %s", versionSplit[0])
+		}
 	}
 
 	if len(versionSplit) == 2 {

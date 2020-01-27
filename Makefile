@@ -18,10 +18,10 @@ BUILD_DATE = $(shell date +%m/%d@%H:%M:%S)
 VCS_REF    = $(if $(shell git status --porcelain),$(GIT_COMMIT)-$(BUILD_DATE),$(GIT_COMMIT))
 
 CGO_ENABLED = 0
-GO111MODULE := off
+#GO111MODULE := off
 GOOS        = $(shell go env GOOS)
 GOARCH      = $(ARCH_TYPE)
-# GOFLAGS=-mod=vendor
+GOFLAGS=-mod=vendor
 GOPACKAGES  = $(shell go list ./... | grep -v /vendor/ | grep -v /internal | grep -v /build | grep -v /test | grep -v /i18n/resources)
 
 ## WARNING: OPERATOR IMAGE_DESCRIPTION VAR MUST NOT CONTAIN SPACES.
@@ -98,7 +98,7 @@ operator\:build: deps
 
 .PHONY: operator\:run
 operator\:run:
-	operator-sdk up local --namespace="" --operator-flags="--zap-devel=true"
+	operator-sdk up local --namespace="" --operator-flags="--zap-devel=true --zap-level=5"
 
 ### HELPER UTILS #######################
 
