@@ -16,3 +16,9 @@ echo ">>> >>> Running make install"
 make install
 
 echo ">>> Done installing Operator SDK"
+
+operator-sdk version
+if [ $? != 0 ]; then
+  echo ">>>> opereattor-sdk installation failed"
+  exit 1
+fi
