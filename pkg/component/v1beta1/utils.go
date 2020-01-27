@@ -23,7 +23,7 @@ var log = logf.Log.WithName("component")
 func InstallComponentCRDs(cs *crdclientset.Clientset) error {
 	log.Info("Installing component CRDs")
 
-	componentCRDDirPath := "/opt/component-operator/deploy/crds"
+	componentCRDDirPath := "component-operator/deploy/crds"
 	files, err := ioutil.ReadDir(componentCRDDirPath)
 	if err != nil {
 		log.Error(err, "Fail to Read Component CRD Directory", "dirname", componentCRDDirPath)

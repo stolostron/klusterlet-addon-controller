@@ -38,7 +38,7 @@ COPY build/_output/bin/ibm-klusterlet-operator ${OPERATOR}
 
 COPY build/bin /usr/local/bin
 
-COPY component-operator/ /opt/component-operator/
+COPY component-operator/ component-operator/
 
 RUN  /usr/local/bin/user_setup
 
