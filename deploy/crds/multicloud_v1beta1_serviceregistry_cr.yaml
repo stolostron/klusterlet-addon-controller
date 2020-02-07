@@ -1,7 +1,0 @@
-apiVersion: multicloud.ibm.com/v1beta1
-kind: ServiceRegistry
-metadata:
-  name: example-serviceregistry
-spec:
-  # Add fields here
-  size: 3

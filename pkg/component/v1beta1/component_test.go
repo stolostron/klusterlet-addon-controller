@@ -1,8 +1,9 @@
-// Package v1beta1 of component Defines the Reconciliation logic and required setup for component operator.
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package v1beta1 of component Defines the Reconciliation logic and required setup for component operator.
 package v1beta1
 
 import (
@@ -11,8 +12,8 @@ import (
 
 	// fakecrdclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,8 +28,8 @@ var (
 	namespace = "multicluster-endpoint"
 )
 
-func newTestDeployment(name string) *extensionsv1beta1.Deployment {
-	deployment := &extensionsv1beta1.Deployment{
+func newTestDeployment(name string) *appsv1.Deployment {
+	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
@@ -62,7 +63,7 @@ func TestCreateReconcile(t *testing.T) {
 	err := Reconcile(instance, cl, scheme)
 	assert.NoError(t, err, "Create component reconcile should success")
 
-	deploymentComponentOperator := &extensionsv1beta1.Deployment{}
+	deploymentComponentOperator := &appsv1.Deployment{}
 	err = cl.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-component-operator", Namespace: namespace}, deploymentComponentOperator)
 	assert.NoError(t, err, "component deployment should be created")
 
@@ -93,7 +94,7 @@ func TestUpdateReconcile(t *testing.T) {
 	err := Reconcile(instance, cl, scheme)
 	assert.NoError(t, err, "Update component reconcile should success")
 
-	foundDeployment := &extensionsv1beta1.Deployment{}
+	foundDeployment := &appsv1.Deployment{}
 	err = cl.Get(context.TODO(), types.NamespacedName{Name: deploymentComponentOperator.Name, Namespace: deploymentComponentOperator.Namespace}, foundDeployment)
 	assert.NoError(t, err, "GET component deployment should success")
 

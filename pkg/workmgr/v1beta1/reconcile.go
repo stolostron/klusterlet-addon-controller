@@ -1,35 +1,32 @@
-//Package v1beta1 of workmgr Defines the Reconciliation logic and required setup for WorkManager CR.
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package v1beta1 of workmgr Defines the Reconciliation logic and required setup for WorkManager CR.
 package v1beta1
 
 import (
 	"context"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
-	tiller "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller/v1beta1"
 )
 
 var log = logf.Log.WithName("workmgr")
 
-// TODO(liuhao): switch from klusterletv1alpha1 to multicloudv1beta1 for the WorkManager related structs
-
 // Reconcile Resolves differences in the running state of the connection manager services and CRDs.
 func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
 	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
-	reqLogger.Info("Reconciling Tiller")
+	reqLogger.Info("Reconciling WorkManager")
 
 	workMgrCR, err := newWorkManagerCR(instance, client)
 	if err != nil {
@@ -72,11 +69,6 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		if foundWorkMgrCR.GetDeletionTimestamp() == nil {
 			if instance.GetDeletionTimestamp() == nil {
 				log.V(5).Info("WorkManager CR IS NOT in deletion state")
-				err = tiller.CheckDependency(instance, client, foundWorkMgrCR.Name)
-				if err != nil {
-					log.Error(err, "fail to check dependency for WorkManager CR")
-					return false, err
-				}
 				if err = update(instance, workMgrCR, foundWorkMgrCR, client); err != nil {
 					log.Error(err, "fail to UPDATE WorkManager CR")
 					return false, err
@@ -98,38 +90,6 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	}
 	reqLogger.Info("Successfully Reconciled WorkManager")
 	return false, nil
-}
-
-func newWorkManagerTillerIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) multicloudv1beta1.WorkManagerTillerIntegration {
-	if cr.Spec.TillerIntegration.Enabled {
-		// ICP Tiller
-		useExistingICPTiller := tiller.UseExistingICPTiller(client)
-		if useExistingICPTiller {
-			icpTillerServiceEndpoint := tiller.GetICPTillerServiceEndpoint(client)
-			return multicloudv1beta1.WorkManagerTillerIntegration{
-				Enabled:           true,
-				HelmReleasePrefix: "md",
-				Endpoint:          icpTillerServiceEndpoint,
-				CertIssuer:        "icp-ca-issuer",
-				AutoGenSecret:     true,
-				User:              tiller.GetICPTillerDefaultAdminUser(client),
-			}
-		}
-
-		// KlusterletOperator deployed Tiller
-		return multicloudv1beta1.WorkManagerTillerIntegration{
-			Enabled:           true,
-			HelmReleasePrefix: "md",
-			Endpoint:          cr.Name + "-tiller" + ":44134",
-			CertIssuer:        cr.Name + "-tiller",
-			AutoGenSecret:     true,
-			User:              cr.Name + "-admin",
-		}
-	}
-
-	return multicloudv1beta1.WorkManagerTillerIntegration{
-		Enabled: false,
-	}
 }
 
 func newWorkManagerPrometheusIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) multicloudv1beta1.WorkManagerPrometheusIntegration {
@@ -209,7 +169,6 @@ func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*mu
 
 			ConnectionManager: cr.Name + "-connmgr",
 
-			TillerIntegration:     newWorkManagerTillerIntegration(cr, client),
 			PrometheusIntegration: newWorkManagerPrometheusIntegration(cr, client),
 			Service:               newWorkManagerServiceConfig(),
 			Ingress:               newWorkManagerIngressConfig(client),
@@ -298,23 +257,6 @@ func delete(foundCR *multicloudv1beta1.WorkManager, client client.Client) error 
 func finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.WorkManager, client client.Client) error {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == cr.Name {
-			// Deletes Secrets
-			secretsToDeletes := []string{
-				cr.Name + "-tiller-client-certs",
-			}
-
-			for _, secretToDelete := range secretsToDeletes {
-				foundSecretToDelete := &corev1.Secret{}
-				err := client.Get(context.TODO(), types.NamespacedName{Name: secretToDelete, Namespace: cr.Namespace}, foundSecretToDelete)
-				if err == nil {
-					err := client.Delete(context.TODO(), foundSecretToDelete)
-					if err != nil {
-						log.Error(err, "Fail to DELETE WorkManager Secret", "Secret.Name", secretToDelete)
-						return err
-					}
-				}
-			}
-
 			// Remove finalizer
 			instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
 			return nil

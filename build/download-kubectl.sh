@@ -1,6 +1,6 @@
 #!/bin/bash
 
-KUBECTL_VER=v1.13.9
+KUBECTL_VER=v1.16.3
 BUILD_DIR=build
 
 echo "Downloading kubectl $KUBECTL_VER ..."

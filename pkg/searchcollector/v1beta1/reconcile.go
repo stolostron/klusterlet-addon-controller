@@ -1,31 +1,25 @@
-// Package v1beta1 of searchcollector provides a reconciler for the search collector
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package v1beta1 of searchcollector provides a reconciler for the search collector
 package v1beta1
 
 import (
 	"context"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
-	tiller "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller/v1beta1"
 )
-
-// TODO(liuhao): when tiller pod restart search-collector need to be restarted as well
-// ideally search-collector should be reattempting connection to tiller
-
-// TODO(liuhao): switch from klusterletv1alpha1 to multicloudv1beta1 for the component api
 
 var log = logf.Log.WithName("searchcollector")
 
@@ -93,11 +87,6 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 			log.V(5).Info("SearchCollector IS NOT in deletion state")
 			if instance.GetDeletionTimestamp() == nil && instance.Spec.SearchCollectorConfig.Enabled {
 				log.V(5).Info("instance IS NOT in deletion state and Search Collector is ENABLED")
-				err = tiller.CheckDependency(instance, client, foundSearchCollectorCR.Name)
-				if err != nil {
-					log.Error(err, "fail to check dependency for Search CR")
-					return false, err
-				}
 				err = update(instance, searchCollectorCR, foundSearchCollectorCR, client)
 				if err != nil {
 					log.Error(err, "fail to UPDATE SearchCollector CR")
@@ -146,41 +135,10 @@ func newSearchCollectorCR(instance *multicloudv1beta1.Endpoint, client client.Cl
 			ClusterName:       instance.Spec.ClusterName,
 			ClusterNamespace:  instance.Spec.ClusterNamespace,
 			ConnectionManager: instance.Name + "-connmgr",
-			TillerIntegration: newSearchCollectorTillerIntegration(instance, client),
 			Image:             image,
 			ImagePullSecret:   instance.Spec.ImagePullSecret,
 		},
 	}, err
-}
-
-func newSearchCollectorTillerIntegration(instance *multicloudv1beta1.Endpoint, client client.Client) multicloudv1beta1.SearchCollectorTillerIntegration {
-	if instance.Spec.TillerIntegration.Enabled {
-		// ICP Tiller
-		useExistingICPTiller := tiller.UseExistingICPTiller(client)
-		if useExistingICPTiller {
-			icpTillerServiceEndpoint := tiller.GetICPTillerServiceEndpoint(client)
-			return multicloudv1beta1.SearchCollectorTillerIntegration{
-				Enabled:       true,
-				Endpoint:      icpTillerServiceEndpoint,
-				CertIssuer:    "icp-ca-issuer",
-				AutoGenSecret: true,
-				User:          tiller.GetICPTillerDefaultAdminUser(client),
-			}
-		}
-
-		// KlusterletOperator deployed Tiller
-		return multicloudv1beta1.SearchCollectorTillerIntegration{
-			Enabled:       true,
-			Endpoint:      instance.Name + "-tiller" + ":44134",
-			CertIssuer:    instance.Name + "-tiller",
-			AutoGenSecret: true,
-			User:          instance.Name + "-admin",
-		}
-	}
-
-	return multicloudv1beta1.SearchCollectorTillerIntegration{
-		Enabled: false,
-	}
 }
 
 func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.SearchCollector, client client.Client) error {
@@ -223,22 +181,6 @@ func delete(foundCR *multicloudv1beta1.SearchCollector, client client.Client) er
 func finalize(instance *multicloudv1beta1.Endpoint, searchCollectorCR *multicloudv1beta1.SearchCollector, client client.Client) error {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == searchCollectorCR.Name {
-			secretsToDeletes := []string{
-				searchCollectorCR.Name + "-tiller-client-certs",
-			}
-
-			for _, secretToDelete := range secretsToDeletes {
-				foundSecretToDelete := &corev1.Secret{}
-				err := client.Get(context.TODO(), types.NamespacedName{Name: secretToDelete, Namespace: searchCollectorCR.Namespace}, foundSecretToDelete)
-				if err == nil {
-					err := client.Delete(context.TODO(), foundSecretToDelete)
-					if err != nil {
-						log.Error(err, "Fail to DELETE ConnectionManager Secret", "Secret.Name", secretToDelete)
-						return err
-					}
-				}
-			}
-
 			instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
 			return nil
 		}

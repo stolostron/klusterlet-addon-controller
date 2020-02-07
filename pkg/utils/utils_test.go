@@ -1,19 +1,21 @@
-//Package utils contains common utility functions that gets call by many differerent packages
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+//Package utils contains common utility functions that gets call by many differerent packages
 package utils
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 func TestUniqueStringSlice(t *testing.T) {
-	logf.SetLogger(logf.ZapLogger(true))
+	logf.SetLogger(zap.Logger(true))
 
 	testCases := []struct {
 		Input          []string

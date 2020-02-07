@@ -1,19 +1,17 @@
-// Package v1beta1 of appmgr provides a reconciler for the ApplicationManager
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package v1beta1 of appmgr provides a reconciler for the ApplicationManager
 package v1beta1
 
 import (
 	"context"
 
-	helmcrd "github.ibm.com/IBMMulticloudPlatform/helm-crd/pkg/apis/helm.bitnami.com/v1"
-	crdv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 )
@@ -58,27 +56,6 @@ func delete(foundCR *multicloudv1beta1.ApplicationManager, client client.Client)
 }
 
 func finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.ApplicationManager, client client.Client) error {
-	foundHelmCRD := &crdv1beta1.CustomResourceDefinition{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "helmreleases.helm.bitnami.com", Namespace: ""}, foundHelmCRD)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			log.Info("HelmCRD not found, skipping delete")
-		} else {
-			log.Error(err, "Unexpected ERROR")
-			return err
-		}
-	} else {
-		err = cleanUpHelmCRs(client)
-		if err != nil {
-			log.Error(err, "Failed to clean up Helm CRs")
-			return err
-		}
-	}
-
-	err = cleanUpSecret(instance, client, cr)
-	if err != nil {
-		return err
-	}
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == cr.Name {
 			// Remove finalizer
@@ -86,37 +63,5 @@ func finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Applic
 			return nil
 		}
 	}
-	return nil
-}
-
-func cleanUpHelmCRs(c client.Client) error {
-	log.Info("Cleaning up Helm CRs")
-	helmCRList := &helmcrd.HelmReleaseList{}
-	err := c.List(context.TODO(), &client.ListOptions{}, helmCRList)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			log.Info("Could not find HelmCR list")
-		} else {
-			log.Error(err, "Unexpected ERROR")
-			return err
-		}
-	} else {
-		for _, helmCR := range helmCRList.Items {
-			log.Info("Removing finalizer for CR " + helmCR.ObjectMeta.Name + " in Namespace " + helmCR.ObjectMeta.Namespace)
-			helmCR.ObjectMeta.Finalizers = []string{}
-			err = c.Update(context.TODO(), &helmCR)
-			if err != nil {
-				log.Error(err, "Failed to remove finalizer for CR "+helmCR.ObjectMeta.Name)
-				return err
-			}
-			log.Info("Deleting CR " + helmCR.ObjectMeta.Name + " in Namespace " + helmCR.ObjectMeta.Namespace)
-			err = c.Delete(context.TODO(), &helmCR)
-			if err != nil {
-				log.Error(err, "Failed to DELETE CR "+helmCR.ObjectMeta.Name)
-				return err
-			}
-		}
-	}
-
 	return nil
 }

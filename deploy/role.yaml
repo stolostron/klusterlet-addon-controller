@@ -9,19 +9,20 @@ rules:
   resources:
   - pods
   - services
+  - services/finalizers
   - endpoints
   - persistentvolumeclaims
   - events
   - configmaps
   - secrets
   verbs:
-  - '*'
-- apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
+  - create
+  - delete
   - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - apps
   resources:
@@ -30,7 +31,13 @@ rules:
   - replicasets
   - statefulsets
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - monitoring.coreos.com
   resources:
@@ -47,32 +54,37 @@ rules:
   verbs:
   - update
 - apiGroups:
-  - klusterlet.mcm.ibm.com
+  - ""
   resources:
-  - '*'
-  - tillers
-  - connectionmanagers
-  - workmanagers
-  - searchcollectors
-  - policycontrollers
-  - monitorings
+  - pods
   verbs:
-  - '*'
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  - deployments
+  verbs:
+  - get
 - apiGroups:
   - multicloud.ibm.com
   resources:
   - '*'
+  - applicationmanagers
   - certmanagers
   - connectionmanagers
+  - endpoints
+  - monitorings
   - policycontrollers
   - searchcollectors
   - serviceregistries
-  - tillers
   - topologycollectors
   - workmanagers
-  - meterings
-  - mongodbs
-  - monitorings
-  - applicationmanagers
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

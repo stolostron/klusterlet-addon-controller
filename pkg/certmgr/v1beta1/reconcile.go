@@ -1,8 +1,9 @@
-// Package v1beta1 of certmgr Defines the Reconciliation logic and required setup for component operator.
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package v1beta1 of certmgr Defines the Reconciliation logic and required setup for component operator.
 package v1beta1
 
 import (
@@ -10,21 +11,19 @@ import (
 
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	openshiftsecurityv1 "github.com/openshift/api/security/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/utils"
 )
-
-// TODO(liuhao): switch from klusterletv1alpha1.CertManager to multicloudv1beta1.CertManager
 
 var log = logf.Log.WithName("certmgr")
 
@@ -37,7 +36,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 
 	// ICP CertManager
 	log.V(5).Info("Looking for ICP CertManager Deployment", "Deployment.Name", "cert-manager-ibm-cert-manager", "Deployment.Namespace", "cert-manager")
-	findICPCertMgr := &extensionsv1beta1.Deployment{}
+	findICPCertMgr := &appsv1.Deployment{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: "cert-manager-ibm-cert-manager", Namespace: "cert-manager"}, findICPCertMgr)
 	if err == nil {
 		err = createSelfSignClusterIssuer(client, scheme, instance)
@@ -179,14 +178,9 @@ func createSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, c
 			},
 		},
 	}
-	err := controllerutil.SetControllerReference(cr, clusterIssuer, scheme)
-	if err != nil {
-		return err
-	}
 
 	foundClusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
-	err = client.Get(context.TODO(), types.NamespacedName{Name: clusterIssuer.Name}, foundClusterIssuer)
-
+	err := client.Get(context.TODO(), types.NamespacedName{Name: clusterIssuer.Name}, foundClusterIssuer)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating SelfSigned ClusterIssuer")
 		return client.Create(context.TODO(), clusterIssuer)
@@ -206,15 +200,9 @@ func deleteSelfSignClusterIssuer(client client.Client, scheme *runtime.Scheme, c
 			},
 		},
 	}
-	err := controllerutil.SetControllerReference(cr, clusterIssuer, scheme)
-	if err != nil {
-		return err
-	}
 
 	foundClusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
-	err = client.Get(context.TODO(), types.NamespacedName{Name: clusterIssuer.Name}, foundClusterIssuer)
-
-	if err == nil {
+	if err := client.Get(context.TODO(), types.NamespacedName{Name: clusterIssuer.Name}, foundClusterIssuer); err == nil {
 		log.Info("Deleting SelfSigned ClusterIssuer")
 		return client.Delete(context.TODO(), foundClusterIssuer)
 	}
@@ -240,31 +228,27 @@ func createOrUpdateServiceAccount(client client.Client, scheme *runtime.Scheme, 
 	foundServiceAccount := &corev1.ServiceAccount{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: serviceAccount.Name, Namespace: serviceAccount.Namespace}, foundServiceAccount)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			log.Info("Creating ServiceAccount", "Name", serviceAccount.Name, "Namespace", serviceAccount.Namespace)
-			if instance.Spec.ImagePullSecret != "" {
-				serviceAccount.ImagePullSecrets = append(serviceAccount.ImagePullSecrets, imagePullSecret)
-			}
-			err = client.Create(context.TODO(), serviceAccount)
-			if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		log.Info("Creating ServiceAccount", "Name", serviceAccount.Name, "Namespace", serviceAccount.Namespace)
+		if instance.Spec.ImagePullSecret != "" {
+			serviceAccount.ImagePullSecrets = append(serviceAccount.ImagePullSecrets, imagePullSecret)
+		}
+		if err := client.Create(context.TODO(), serviceAccount); err != nil {
+			return err
+		}
+
+		// if client.Get return error that means no privileged SCC in that case skip adding user to scc and ignore error
+		foundPrivilegedSCC := &openshiftsecurityv1.SecurityContextConstraints{}
+		if err := client.Get(context.TODO(), types.NamespacedName{Name: "privileged", Namespace: ""}, foundPrivilegedSCC); err == nil {
+			user := "system:serviceaccount:" + serviceAccount.Namespace + ":" + serviceAccount.Name
+			log.Info("Adding User to SCC", "User", user, "SCC", foundPrivilegedSCC.Name)
+			foundPrivilegedSCC.Users = append(foundPrivilegedSCC.Users, user)
+			foundPrivilegedSCC.Users = utils.UniqueStringSlice(foundPrivilegedSCC.Users)
+			if err := client.Update(context.TODO(), foundPrivilegedSCC); err != nil {
 				return err
 			}
-
-			foundPrivilegedSCC := &openshiftsecurityv1.SecurityContextConstraints{}
-			err = client.Get(context.TODO(), types.NamespacedName{Name: "privileged", Namespace: ""}, foundPrivilegedSCC)
-			// if client.Get return error that means no privileged SCC in that case skip adding user to scc and ignore error
-			if err == nil {
-				user := "system:serviceaccount:" + serviceAccount.Namespace + ":" + serviceAccount.Name
-				log.Info("Adding User to SCC", "User", user, "SCC", foundPrivilegedSCC.Name)
-				foundPrivilegedSCC.Users = append(foundPrivilegedSCC.Users, user)
-				foundPrivilegedSCC.Users = utils.UniqueStringSlice(foundPrivilegedSCC.Users)
-				err = client.Update(context.TODO(), foundPrivilegedSCC)
-				if err != nil {
-					return err
-				}
-			}
-		} else {
-			return err
 		}
 	} else {
 		if instance.Spec.ImagePullSecret != "" {

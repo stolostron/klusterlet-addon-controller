@@ -1,13 +1,13 @@
-// Package endpoint contain the controller and the main reconcile function for the endpoints.multicloud.ibm.com
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package endpoint contain the controller and the main reconcile function for the endpoints.multicloud.ibm.com
 package endpoint
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -15,9 +15,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
@@ -25,23 +25,15 @@ import (
 	certmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/certmgr/v1beta1"
 	component "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component/v1beta1"
 	connmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr/v1beta1"
-	metering "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/metering/v1beta1"
-	migration "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/migration/v1beta1"
 	monitoring "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/monitoring/v1beta1"
 	policyctrl "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/policyctrl/v1beta1"
 	searchcollector "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/searchcollector/v1beta1"
 	serviceregistry "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/serviceregistry/v1beta1"
-	tiller "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/tiller/v1beta1"
 	topology "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/topology/v1beta1"
 	workmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/workmgr/v1beta1"
 )
 
 var log = logf.Log.WithName("controller_endpoint")
-
-/**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
 
 // Add creates a new Endpoint Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -68,8 +60,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// TODO(user): Modify this to be the types you create that are owned by the primary resource
-	// Watch for changes to secondary resource Pods and requeue the owner Endpoint
+	// Watch for changes to secondary resources and requeue the owner Endpoint
 	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.ApplicationManager{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &multicloudv1beta1.Endpoint{},
@@ -94,24 +85,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	})
 	if err != nil {
 		log.Error(err, "Fail to add Watch for ConnectionManager to controller")
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.Metering{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &multicloudv1beta1.Endpoint{},
-	})
-	if err != nil {
-		log.Error(err, "Fail to add Watch for Metering to controller")
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.MongoDB{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &multicloudv1beta1.Endpoint{},
-	})
-	if err != nil {
-		log.Error(err, "Fail to add Watch for MongoDB to controller")
 		return err
 	}
 
@@ -142,15 +115,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.Tiller{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &multicloudv1beta1.Endpoint{},
-	})
-	if err != nil {
-		log.Error(err, "Fail to add Watch for Tiller to controller")
-		return err
-	}
-
 	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.TopologyCollector{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &multicloudv1beta1.Endpoint{},
@@ -168,16 +132,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		log.Error(err, "Fail to add Watch for WorkManager to controller")
 		return err
 	}
-
-	// NOTE(liuhao): for some reason this cause infinite requeue of reconcile request
-	// err = c.Watch(&source.Kind{Type: &extensionsv1beta1.Deployment{}}, &handler.EnqueueRequestForOwner{
-	// 	IsController: true,
-	// 	OwnerType:    &multicloudv1beta1.Endpoint{},
-	// })
-	// if err != nil {
-	// 	log.Error(err, "Fail to add Watch for Deployment to controller")
-	// 	return err
-	// }
 
 	return nil
 }
@@ -199,7 +153,6 @@ type ReconcileEndpoint struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	requeue := false
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling Endpoint")
 
@@ -217,18 +170,7 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 		return reconcile.Result{}, err
 	}
 
-	var tempRequeue bool
-
-	log.Info(strconv.FormatBool(instance.Spec.Migration))
-	// Migration from 3.2.0 to 3.2.1
-	if instance.Spec.Migration {
-
-		tempRequeue, err = migration.Reconcile(instance, r.client)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-		requeue = requeue || tempRequeue
-	}
+	var requeue, tempRequeue bool
 
 	err = component.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
@@ -236,12 +178,6 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 
 	tempRequeue, err = certmgr.Reconcile(instance, r.client, r.scheme)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	requeue = requeue || tempRequeue
-
-	tempRequeue, err = tiller.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -289,11 +225,6 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 	requeue = requeue || tempRequeue
 
-	err = metering.Reconcile(instance, r.client, r.scheme)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
 	_, err = appmgr.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -303,7 +234,7 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 	if err != nil && errors.IsConflict(err) {
 		return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
 	} else if err != nil {
-		log.Error(err, "Fail to UPDATE instance")
+		reqLogger.Error(err, "Fail to UPDATE instance")
 		return reconcile.Result{}, err
 	}
 

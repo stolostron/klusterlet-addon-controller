@@ -1,14 +1,15 @@
-// Package v1beta1 of searchcollector provides a reconciler for the SearchCollector
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package v1beta1 of searchcollector provides a reconciler for the SearchCollector
 package v1beta1
 
 import (
 	"context"
 
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -18,7 +19,7 @@ import (
 
 // IsReady helps the other components to check whether the searchcollector pod is ready
 func IsReady(instance *multicloudv1beta1.Endpoint, c client.Client) (bool, error) {
-	foundDeployment := &extensionsv1beta1.Deployment{}
+	foundDeployment := &appsv1.Deployment{}
 
 	err := c.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-search", Namespace: instance.Namespace}, foundDeployment)
 	if err != nil {

@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1-328
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1-398
 
 ARG VCS_REF
 ARG VCS_URL
@@ -7,7 +7,16 @@ ARG IMAGE_DESCRIPTION
 ARG ARCH_TYPE
 ARG IMAGE_VERSION
 
+ENV OPERATOR=/usr/local/bin/ibm-klusterlet-operator \
+    USER_UID=10001 \
+    USER_NAME=ibm-klusterlet-operator
+
 COPY licenses /licenses
+COPY deploy/crds deploy/crds
+COPY deploy/certmanager deploy/certmanager
+COPY build/bin /usr/local/bin
+COPY build/kubectl-linux-${ARCH_TYPE} /usr/local/bin/kubectl
+COPY build/_output/bin/ibm-klusterlet-operator ${OPERATOR}
 
 # http://label-schema.org/rc1/
 LABEL org.label-schema.vendor="IBM" \
@@ -24,25 +33,9 @@ LABEL org.label-schema.vendor="IBM" \
       version="$IMAGE_VERSION" \
       release="$VCS_REF"
 
-ENV OPERATOR=/usr/local/bin/ibm-klusterlet-operator \
-    USER_UID=10001 \
-    USER_NAME=ibm-klusterlet-operator
-
-# install kubectl 
-COPY build/kubectl-linux-${ARCH_TYPE} /usr/local/bin/kubectl
-
 RUN chmod +x /usr/local/bin/kubectl
-
-# install operator binary
-COPY build/_output/bin/ibm-klusterlet-operator ${OPERATOR}
-
-COPY build/bin /usr/local/bin
-
-COPY component-operator/ component-operator/
-
 RUN  /usr/local/bin/user_setup
 
 USER ${USER_UID}
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
-

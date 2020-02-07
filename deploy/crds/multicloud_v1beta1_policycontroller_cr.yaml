@@ -1,7 +1,0 @@
-apiVersion: multicloud.ibm.com/v1beta1
-kind: PolicyController
-metadata:
-  name: example-policycontroller
-spec:
-  # Add fields here
-  size: 3

@@ -3,8 +3,8 @@ SHELL := /bin/bash
 
 .EXPORT_ALL_VARIABLES:
 
-GIT_COMMIT     = $(shell git rev-parse --short HEAD)
-GIT_REMOTE_URL = $(shell git config --get remote.origin.url)
+GIT_COMMIT      = $(shell git rev-parse --short HEAD)
+GIT_REMOTE_URL  = $(shell git config --get remote.origin.url)
 GITHUB_USER    := $(shell echo $(GITHUB_USER) | sed 's/@/%40/g')
 GITHUB_TOKEN   ?=
 
@@ -14,19 +14,18 @@ BIN_DIR           = $(PROJECT_DIR)/bin
 VENDOR_DIR        = $(PROJECT_DIR)/vendor
 I18N_DIR          = $(PROJECT_DIR)/pkg/i18n
 DOCKER_BUILD_PATH = $(PROJECT_DIR)/.build-docker
-BUILD_DATE = $(shell date +%m/%d@%H:%M:%S)
-VCS_REF    = $(if $(shell git status --porcelain),$(GIT_COMMIT)-$(BUILD_DATE),$(GIT_COMMIT))
+BUILD_DATE        = $(shell date +%m/%d@%H:%M:%S)
+VCS_REF           = $(if $(shell git status --porcelain),$(GIT_COMMIT)-$(BUILD_DATE),$(GIT_COMMIT))
 
-CGO_ENABLED = 0
-GO111MODULE := off
-GOOS        = $(shell go env GOOS)
-GOARCH      = $(ARCH_TYPE)
-#GOFLAGS=-mod=vendor
-GOPACKAGES  = $(shell go list ./... | grep -v /vendor/ | grep -v /internal | grep -v /build | grep -v /test | grep -v /i18n/resources)
+CGO_ENABLED  = 0
+GO111MODULE := on
+GOOS         = $(shell go env GOOS)
+GOARCH       = $(ARCH_TYPE)
+GOPACKAGES   = $(shell go list ./... | grep -v /vendor/ | grep -v /internal | grep -v /build | grep -v /test | grep -v /i18n/resources)
 
 ## WARNING: OPERATOR IMAGE_DESCRIPTION VAR MUST NOT CONTAIN SPACES.
 IMAGE_DESCRIPTION ?= IBM_Multicloud_Operator
-DOCKER_FILE       = $(BUILD_DIR)/Dockerfile
+DOCKER_FILE        = $(BUILD_DIR)/Dockerfile
 DOCKER_REGISTRY   ?= hyc-cloud-private-scratch-docker-local.artifactory.swg-devops.com
 DOCKER_NAMESPACE  ?= ibmcom
 DOCKER_IMAGE      ?= icp-multicluster-endpoint-operator
@@ -37,23 +36,21 @@ BEFORE_SCRIPT := $(shell ./build/before-make-script.sh)
 
 -include $(shell curl -fso .build-harness -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3.raw" "https://raw.github.ibm.com/ICP-DevOps/build-harness/master/templates/Makefile.build-harness"; echo .build-harness)
 
-ARCH       ?= $(shell uname -m)
-ARCH_TYPE  = $(if $(patsubst x86_64,,$(ARCH)),$(ARCH),amd64)
+ARCH     ?= $(shell uname -m)
+ARCH_TYPE = $(if $(patsubst x86_64,,$(ARCH)),$(ARCH),amd64)
 
-#For operator-sdk build 
+#For operator-sdk build
 DOCKER_BUILD_OPTS=--build-arg "VCS_REF=$(VCS_REF)" \
 	--build-arg "VCS_URL=$(GIT_REMOTE_URL)" \
 	--build-arg "IMAGE_NAME=$(DOCKER_IMAGE)" \
 	--build-arg "IMAGE_DESCRIPTION=$(IMAGE_DESCRIPTION)" \
 	--build-arg "IMAGE_VERSION=$(SEMVERSION)" \
-	--build-arg "ARCH_TYPE=$(ARCH_TYPE)" 
+	--build-arg "ARCH_TYPE=$(ARCH_TYPE)"
 
 .PHONY: deps
 ## Download all project dependencies
 deps: init
-	go get -u github.com/golang/dep/cmd/dep
-	go get -u github.com/rws-github/go-swagger/cmd/swagger
-	dep ensure -v
+	GO111MODULE=off go get -u github.com/rws-github/go-swagger/cmd/swagger
 
 .PHONY: check
 ## Runs a set of required checks
@@ -86,7 +83,8 @@ operator\:tools:
 	./build/install-operator-sdk.sh
 
 .PHONY: operator\:build
-operator\:build: deps
+operator\:build:
+	@$(BUILD_DIR)/download-kubectl.sh
 	## WARNING: DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES.
 	$(info Building operator)
 	$(info GOOS: $(GOOS))
