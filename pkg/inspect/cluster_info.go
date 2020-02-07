@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
 )
@@ -27,7 +27,7 @@ var log = logf.Log.WithName("inspect")
 // DeployedOnHub checks that: Is this cluster a Hub Cluster?
 func DeployedOnHub(c client.Client) bool {
 	clusterStatusList := &mcmv1alpha1.ClusterStatusList{}
-	err := c.List(context.TODO(), &client.ListOptions{}, clusterStatusList)
+	err := c.List(context.TODO(), clusterStatusList, &client.ListOptions{})
 	return err == nil
 }
 
@@ -42,20 +42,6 @@ func OpenshiftPrometheusService(client client.Client) bool {
 func ICPPrometheusService(client client.Client) bool {
 	foundICPPrometheusService := &corev1.Service{}
 	err := client.Get(context.TODO(), types.NamespacedName{Name: "monitoring-prometheus", Namespace: "kube-system"}, foundICPPrometheusService)
-	return err == nil
-}
-
-// ICPMeteringService check: Is the cluster have the ICP metering-server service
-func ICPMeteringService(client client.Client) bool {
-	foundICPPrometheusService := &corev1.Service{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "metering-server", Namespace: "kube-system"}, foundICPPrometheusService)
-	return err == nil
-}
-
-// ICPMongoDBService check: Is the cluster have the ICP icp-mongodb service
-func ICPMongoDBService(client client.Client) bool {
-	foundICPMongoDBService := &corev1.Service{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: "icp-mongodb", Namespace: "kube-system"}, foundICPMongoDBService)
 	return err == nil
 }
 

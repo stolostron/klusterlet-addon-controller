@@ -1,7 +1,0 @@
-apiVersion: multicloud.ibm.com/v1beta1
-kind: CertManager
-metadata:
-  name: example-certmanager
-spec:
-  # Add fields here
-  size: 3

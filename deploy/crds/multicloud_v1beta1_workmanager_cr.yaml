@@ -1,7 +1,0 @@
-apiVersion: multicloud.ibm.com/v1beta1
-kind: WorkManager
-metadata:
-  name: example-workmanager
-spec:
-  # Add fields here
-  size: 3

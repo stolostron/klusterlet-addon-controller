@@ -1,8 +1,9 @@
-//Package v1beta1 of topology Defines the Reconciliation logic and required setup for topology collector CR.
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package v1beta1 of topology Defines the Reconciliation logic and required setup for topology collector CR.
 package v1beta1
 
 import (
@@ -17,13 +18,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/utils"
 )
-
-// TODO(liuhao): switch from klusterletv1alpha1 to multicloudv1beta1 for the component api
 
 var log = logf.Log.WithName("topology")
 
@@ -185,8 +184,7 @@ func newTopologyCollectorCR(cr *multicloudv1beta1.Endpoint, client client.Client
 
 func determineRuntime(kubeclient client.Client) string {
 	nodelist := &corev1.NodeList{}
-	err := kubeclient.List(context.TODO(), &client.ListOptions{}, nodelist)
-	if err != nil {
+	if err := kubeclient.List(context.TODO(), nodelist, &client.ListOptions{}); err != nil {
 		log.Error(err, "Error listing nodes in cluster, assuming ContainerRuntime is docker")
 		return "docker"
 	}

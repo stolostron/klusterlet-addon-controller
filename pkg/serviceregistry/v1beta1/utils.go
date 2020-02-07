@@ -1,14 +1,15 @@
-// Package v1beta1 of serviceregistry Defines the Reconciliation logic and required setup for serviceregistry.
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package v1beta1 of serviceregistry Defines the Reconciliation logic and required setup for serviceregistry.
 package v1beta1
 
 import (
 	"context"
 
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -20,7 +21,7 @@ import (
 func IsReady(instance *multicloudv1beta1.Endpoint, c client.Client) (bool, error) {
 	var svcregIsReady, coreDNSIsReady bool
 
-	foundSvcRegDeployment := &extensionsv1beta1.Deployment{}
+	foundSvcRegDeployment := &appsv1.Deployment{}
 	err := c.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-svcreg", Namespace: instance.Namespace}, foundSvcRegDeployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -37,7 +38,7 @@ func IsReady(instance *multicloudv1beta1.Endpoint, c client.Client) (bool, error
 		}
 	}
 
-	foundSvcRegCoreDNSDeployment := &extensionsv1beta1.Deployment{}
+	foundSvcRegCoreDNSDeployment := &appsv1.Deployment{}
 	err = c.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-svcreg-coredns", Namespace: instance.Namespace}, foundSvcRegCoreDNSDeployment)
 	if err != nil {
 		if errors.IsNotFound(err) {

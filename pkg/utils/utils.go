@@ -1,8 +1,9 @@
-//Package utils contains common utility functions that gets call by many differerent packages
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package utils contains common utility functions that gets call by many differerent packages
 package utils
 
 // UniqueStringSlice takes a string[] and remove the duplicate value

@@ -1,8 +1,9 @@
-// Package v1beta1 of workmgrs Defines the Reconciliation logic and required setup for component operator.
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package v1beta1 of workmgrs Defines the Reconciliation logic and required setup for component operator.
 package v1beta1
 
 import (
@@ -10,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -24,14 +25,14 @@ var (
 	namespace = "multicluster-endpoint"
 )
 
-func newTestDeployment(name string) *extensionsv1beta1.Deployment {
-	deployment := &extensionsv1beta1.Deployment{
+func newTestDeployment(name string) *appsv1.Deployment {
+	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Status: extensionsv1beta1.DeploymentStatus{
-			Conditions: []extensionsv1beta1.DeploymentCondition{extensionsv1beta1.DeploymentCondition{
+		Status: appsv1.DeploymentStatus{
+			Conditions: []appsv1.DeploymentCondition{appsv1.DeploymentCondition{
 				Type:   "Available",
 				Status: "True",
 			}},

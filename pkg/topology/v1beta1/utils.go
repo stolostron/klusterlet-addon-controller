@@ -1,14 +1,15 @@
-// Package v1beta1 of topology Defines the Reconciliation logic and required setup for component operator.
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package v1beta1 of topology Defines the Reconciliation logic and required setup for component operator.
 package v1beta1
 
 import (
 	"context"
 
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -19,7 +20,7 @@ import (
 // IsReady helps the other components to check whether the topology pod is ready
 func IsReady(instance *multicloudv1beta1.Endpoint, c client.Client) (bool, error) {
 	var collectorIsReady, appIsReady, daemonsetIsReady bool
-	foundCollectorDeployment := &extensionsv1beta1.Deployment{}
+	foundCollectorDeployment := &appsv1.Deployment{}
 	err := c.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-topology-weave-collector", Namespace: instance.Namespace}, foundCollectorDeployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -36,7 +37,7 @@ func IsReady(instance *multicloudv1beta1.Endpoint, c client.Client) (bool, error
 		}
 	}
 
-	foundAppDeployment := &extensionsv1beta1.Deployment{}
+	foundAppDeployment := &appsv1.Deployment{}
 	err = c.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-topology-weave-scope-app", Namespace: instance.Namespace}, foundAppDeployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -53,7 +54,7 @@ func IsReady(instance *multicloudv1beta1.Endpoint, c client.Client) (bool, error
 		}
 	}
 
-	foundDaemonset := &extensionsv1beta1.DaemonSet{}
+	foundDaemonset := &appsv1.DaemonSet{}
 	err = c.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-topology-weave-scope", Namespace: instance.Namespace}, foundDaemonset)
 	if err != nil {
 		if errors.IsNotFound(err) {

@@ -1,8 +1,9 @@
-// Package v1beta1 of monitoring provides a reconciler for the monitoring component
 // IBM Confidential
 // OCO Source Materials
-// (C) Copyright IBM Corporation 2019 All Rights Reserved
+// (C) Copyright IBM Corporation 2019, 2020 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package v1beta1 of monitoring provides a reconciler for the monitoring component
 package v1beta1
 
 import (
@@ -17,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
 	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/inspect"
@@ -33,12 +34,6 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	// Openshift Monitoring
 	if inspect.Info.KubeVendor == inspect.KubeVendorOpenShift {
 		log.Info("On Openshift, skip MonitoringCR Reconcile.")
-		return false, nil
-	}
-
-	// ICP Monitoring
-	if inspect.ICPMeteringService(client) {
-		log.Info("On ICP, skip MonitoringCR Reconcile.")
 		return false, nil
 	}
 
@@ -141,11 +136,8 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 }
 
 func createClusteRolesForMonitoring(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
-	var err error
-
 	labels := map[string]string{
-		"app": instance.Name,
-
+		"app":                                instance.Name,
 		"kubernetes.io/bootstrapping":        "rbac-defaults",
 		"rbac.icp.com/aggregate-to-icp-view": "true",
 	}
@@ -174,14 +166,7 @@ func createClusteRolesForMonitoring(instance *multicloudv1beta1.Endpoint, client
 		},
 	}
 
-	err = controllerutil.SetControllerReference(instance, viewAggregateClusteRole, scheme)
-	if err != nil {
-		log.Error(err, "Unable to SetControllerReference for viewAggregateClusteRole")
-		return err
-	}
-
-	err = createClusteRoles(client, viewAggregateClusteRole)
-	if err != nil {
+	if err := createClusteRoles(client, viewAggregateClusteRole); err != nil {
 		log.Error(err, "Unable to create viewAggregateClusteRole")
 		return err
 	}
@@ -210,14 +195,7 @@ func createClusteRolesForMonitoring(instance *multicloudv1beta1.Endpoint, client
 		},
 	}
 
-	err = controllerutil.SetControllerReference(instance, adminAggregateClusteRole, scheme)
-	if err != nil {
-		log.Error(err, "Unable to SetControllerReference for adminAggregateClusteRole")
-		return err
-	}
-
-	err = createClusteRoles(client, adminAggregateClusteRole)
-	if err != nil {
+	if err := createClusteRoles(client, adminAggregateClusteRole); err != nil {
 		log.Error(err, "Unable to create adminAggregateClusteRole")
 		return err
 	}
@@ -246,14 +224,7 @@ func createClusteRolesForMonitoring(instance *multicloudv1beta1.Endpoint, client
 		},
 	}
 
-	err = controllerutil.SetControllerReference(instance, editAggregateClusteRole, scheme)
-	if err != nil {
-		log.Error(err, "Unable to SetControllerReference for editAggregateClusteRole")
-		return err
-	}
-
-	err = createClusteRoles(client, editAggregateClusteRole)
-	if err != nil {
+	if err := createClusteRoles(client, editAggregateClusteRole); err != nil {
 		log.Error(err, "Unable to create editAggregateClusteRole")
 		return err
 	}
@@ -282,14 +253,7 @@ func createClusteRolesForMonitoring(instance *multicloudv1beta1.Endpoint, client
 		},
 	}
 
-	err = controllerutil.SetControllerReference(instance, operateAggregateClusteRole, scheme)
-	if err != nil {
-		log.Error(err, "Unable to SetControllerReference for operateAggregateClusteRole")
-		return err
-	}
-
-	err = createClusteRoles(client, operateAggregateClusteRole)
-	if err != nil {
+	if err := createClusteRoles(client, operateAggregateClusteRole); err != nil {
 		log.Error(err, "Unable to create operateAggregateClusteRole")
 		return err
 	}
@@ -342,13 +306,9 @@ func createClusterIssuer(instance *multicloudv1beta1.Endpoint, client client.Cli
 			},
 		},
 	}
-	err := controllerutil.SetControllerReference(instance, clusterIssuer, scheme)
-	if err != nil {
-		return err
-	}
 
 	foundClusterIssuer := &certmanagerv1alpha1.ClusterIssuer{}
-	err = client.Get(context.TODO(), types.NamespacedName{Name: clusterIssuer.Name}, foundClusterIssuer)
+	err := client.Get(context.TODO(), types.NamespacedName{Name: clusterIssuer.Name}, foundClusterIssuer)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("Creating Monitoring ClusterIssuer")
 		return client.Create(context.TODO(), clusterIssuer)

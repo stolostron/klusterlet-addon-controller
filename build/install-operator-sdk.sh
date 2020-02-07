@@ -2,12 +2,13 @@
 
 echo ">>> Installing Operator SDK"
 echo ">>> >>> Downloading source code"
-go get -d github.com/operator-framework/operator-sdk
+# cannot use 'set -e' because this command fails after project has been cloned down for some reason
+GO111MODULE=off go get -d github.com/operator-framework/operator-sdk
 
 cd $GOPATH/src/github.com/operator-framework/operator-sdk
 
-echo ">>> >>> Checking out version 0.9.x"
-git checkout v0.9.x
+echo ">>> >>> Checking out v0.15.1"
+git checkout v0.15.1
 
 echo ">>> >>> Running make tidy"
 make tidy

@@ -1,7 +1,0 @@
-apiVersion: multicloud.ibm.com/v1beta1
-kind: ConnectionManager
-metadata:
-  name: example-connectionmanager
-spec:
-  # Add fields here
-  size: 3
