@@ -66,11 +66,6 @@ spec:
             connectionManager:
               description: EndpointConnectionManagerSpec defines configuration for
                 the ConnectionManager component
-              properties:
-                enabledGlobalView:
-                  type: boolean
-              required:
-              - enabledGlobalView
               type: object
             imageNamePostfix:
               type: string
@@ -88,8 +83,6 @@ spec:
             imageRegistry:
               minLength: 1
               type: string
-            migrateFrom320:
-              type: boolean
             policyController:
               description: EndpointPolicyControllerSpec defines configuration for
                 the PolicyController component

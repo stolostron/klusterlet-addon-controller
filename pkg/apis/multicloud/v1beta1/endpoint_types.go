@@ -63,7 +63,6 @@ type EndpointSpec struct {
 
 // EndpointConnectionManagerSpec defines configuration for the ConnectionManager component
 type EndpointConnectionManagerSpec struct {
-	EnabledGlobalView bool `json:"enabledGlobalView"`
 }
 
 // EndpointApplicationManagerSpec defines configuration for the ApplicationManager component
