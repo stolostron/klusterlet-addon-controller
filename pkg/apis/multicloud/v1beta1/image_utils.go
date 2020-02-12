@@ -16,7 +16,7 @@ var defaultComponentImageMap = map[string]string{
 	"cert-manager-controller":        "icp-cert-manager-controller",
 	"component-operator":             "klusterlet-component-operator",
 	"configmap-reload":               "configmap-reload",
-	"connection-manager":             "mcm-operator",
+	"connection-manager":             "multicloud-manager",
 	"coredns":                        "coredns",
 	"curl":                           "curl",
 	"deployable":                     "deployable",
@@ -30,7 +30,7 @@ var defaultComponentImageMap = map[string]string{
 	"service-registry":               "mcm-service-registry",
 	"subscription":                   "subscription",
 	"topology-collector":             "weave-collector",
-	"work-manager":                   "mcm-klusterlet",
+	"work-manager":                   "multicloud-manager",
 	"weave":                          "mcm-weave-scope",
 }
 
@@ -39,7 +39,7 @@ var defaultComponentTagMap = map[string]string{
 	"cert-manager-controller":        "0.10.0",
 	"component-operator":             "3.3.0",
 	"configmap-reload":               "v0.2.2-build.1",
-	"connection-manager":             "3.3.0",
+	"connection-manager":             "latest",
 	"coredns":                        "1.2.6.1",
 	"curl":                           "4.2.0-build.2",
 	"deployable":                     "3.3.0",
@@ -53,7 +53,7 @@ var defaultComponentTagMap = map[string]string{
 	"service-registry":               "3.3.0",
 	"subscription":                   "3.3.0",
 	"topology-collector":             "3.3.0",
-	"work-manager":                   "3.3.0",
+	"work-manager":                   "latest",
 	"weave":                          "3.3.0",
 }
 
