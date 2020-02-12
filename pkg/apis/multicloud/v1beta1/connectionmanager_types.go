@@ -31,15 +31,8 @@ type ConnectionManagerSpec struct {
 
 	BootStrapConfig map[string]string `json:"bootstrapConfig"`
 
-	Image           image.Image                     `json:"image,omitempty"`
-	ImagePullSecret string                          `json:"imagePullSecret,omitempty"`
-	GlobalView      ConnectionManagerGlobalViewSpec `json:"globalView"`
-}
-
-// ConnectionManagerGlobalViewSpec defines the spec for connection manager global view
-type ConnectionManagerGlobalViewSpec struct {
-	Enabled         bool   `json:"enabled"`
-	CollectorLabels string `json:"collectorLabels"`
+	Image           image.Image `json:"image,omitempty"`
+	ImagePullSecret string      `json:"imagePullSecret,omitempty"`
 }
 
 // ConnectionManagerStatus defines the observed state of ConnectionManager

@@ -44,18 +44,6 @@ spec:
             fullnameOverride:
               minLength: 1
               type: string
-            globalView:
-              description: ConnectionManagerGlobalViewSpec defines the spec for connection
-                manager global view
-              properties:
-                collectorLabels:
-                  type: string
-                enabled:
-                  type: boolean
-              required:
-              - collectorLabels
-              - enabled
-              type: object
             image:
               description: Image defines the image to pull for a container
               properties:
@@ -77,7 +65,6 @@ spec:
           - clusterName
           - clusterNamespace
           - fullnameOverride
-          - globalView
           type: object
         status:
           description: ConnectionManagerStatus defines the observed state of ConnectionManager
