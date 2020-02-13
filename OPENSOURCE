@@ -426,7 +426,6 @@ github.com/yvasiyarov/go-metrics,c25f46c4b940
 github.com/yvasiyarov/gorelic,v0.0.6
 github.com/yvasiyarov/newrelic_platform_go,b21fdbd4370f
 github.com/ziutek/mymysql,v1.5.4
-github.ibm.com/IBMPrivateCloud/hcm-api,b9f23651c2f7
 gitlab.com/nyarla/go-crypt,d9a5dc2b789b
 go.etcd.io/bbolt,v1.3.3
 go.mongodb.org/mongo-driver,v1.1.0

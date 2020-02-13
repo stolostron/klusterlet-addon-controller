@@ -1,8 +1,9 @@
-// Package inspect provide information and utils about the cluster itself
 // IBM Confidential
 // OCO Source Materials
 // (C) Copyright IBM Corporation 2019 All Rights Reserved
 // The source code for this program is not published or otherwise divested of its trade secrets, irrespective of what has been deposited with the U.S. Copyright Office.
+
+// Package inspect provide information and utils about the cluster itself
 package inspect
 
 import (
@@ -19,7 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	mcmv1alpha1 "github.ibm.com/IBMPrivateCloud/hcm-api/pkg/apis/mcm/v1alpha1"
+	mcmv1alpha1 "github.com/open-cluster-management/multicloud-operators-foundation/pkg/apis/mcm/v1alpha1"
 )
 
 var log = logf.Log.WithName("inspect")

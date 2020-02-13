@@ -8,7 +8,7 @@ package v1beta1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
+	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!

@@ -7,5 +7,5 @@ package version
 
 var (
 	// Version Define the release version for the package.
-	Version = "3.4.0"
+	Version = "1.0.0"
 )

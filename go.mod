@@ -1,15 +1,15 @@
-module github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator
+module github.com/open-cluster-management/endpoint-operator
 
 go 1.13
 
 require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/jetstack/cert-manager v0.8.1
+	github.com/open-cluster-management/multicloud-operators-foundation v0.0.0-20200212094214-a1cac8f162b8
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/operator-framework/operator-sdk v0.15.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
-	github.ibm.com/IBMPrivateCloud/hcm-api v0.0.0-20191120015450-b9f23651c2f7
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.0.0

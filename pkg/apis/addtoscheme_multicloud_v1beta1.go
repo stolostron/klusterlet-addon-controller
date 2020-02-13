@@ -6,7 +6,7 @@
 package apis
 
 import (
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
+	"github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
 )
 
 func init() {

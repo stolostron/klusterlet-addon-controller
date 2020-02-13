@@ -7,16 +7,16 @@ ARG IMAGE_DESCRIPTION
 ARG ARCH_TYPE
 ARG IMAGE_VERSION
 
-ENV OPERATOR=/usr/local/bin/ibm-klusterlet-operator \
+ENV OPERATOR=/usr/local/bin/endpoint-operator \
     USER_UID=10001 \
-    USER_NAME=ibm-klusterlet-operator
+    USER_NAME=endpoint-operator
 
 COPY licenses /licenses
 COPY deploy/crds deploy/crds
 COPY deploy/certmanager deploy/certmanager
 COPY build/bin /usr/local/bin
 COPY build/kubectl-linux-${ARCH_TYPE} /usr/local/bin/kubectl
-COPY build/_output/bin/ibm-klusterlet-operator ${OPERATOR}
+COPY build/_output/bin/endpoint-operator ${OPERATOR}
 
 # http://label-schema.org/rc1/
 LABEL org.label-schema.vendor="IBM" \

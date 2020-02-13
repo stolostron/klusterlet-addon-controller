@@ -7,7 +7,7 @@
 package controller
 
 import (
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller/endpoint"
+	"github.com/open-cluster-management/endpoint-operator/pkg/controller/endpoint"
 )
 
 func init() {
