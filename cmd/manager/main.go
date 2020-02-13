@@ -17,6 +17,9 @@ import (
 
 	"github.com/ghodss/yaml"
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
+	"github.com/open-cluster-management/endpoint-operator/pkg/apis"
+	"github.com/open-cluster-management/endpoint-operator/pkg/controller"
+	"github.com/open-cluster-management/endpoint-operator/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -36,10 +39,6 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
-
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/controller"
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/version"
 )
 
 // Change below variables to serve metrics on different host or port.
@@ -95,7 +94,7 @@ func main() {
 
 	ctx := context.TODO()
 	// Become the leader before proceeding
-	err = leader.Become(ctx, "ibm-klusterlet-operator-lock")
+	err = leader.Become(ctx, "endpoint-operator-lock")
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -232,7 +231,10 @@ func installCRDs(cfg *rest.Config) error {
 				log.Error(err, "Fail to unmarshal crd yaml", "content", crdYaml)
 				return err
 			}
-			createOrUpdateCRD(crd, crdClient)
+			if err := createOrUpdateCRD(crd, crdClient); err != nil {
+				log.Error(err, "Failed to create/update crd", "path", crdFilePath)
+				return err
+			}
 		}
 	}
 
@@ -259,7 +261,10 @@ func installCRDs(cfg *rest.Config) error {
 				log.Error(err, "Fail to unmarshal crd yaml", "content", crdYaml)
 				return err
 			}
-			createOrUpdateCRD(crd, crdClient)
+			if err := createOrUpdateCRD(crd, crdClient); err != nil {
+				log.Error(err, "Failed to create/update crd", "path", certFilePath)
+				return err
+			}
 		}
 	}
 

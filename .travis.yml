@@ -17,48 +17,41 @@ branches:
     - /^v[0-9]+\..*$/
     - /^release-[0-9]+\..*$/
 
+os:
+  - linux
+
+env:
+  global:
+    - PROJECT_DIR=${TRAVIS_BUILD_DIR}
+
+stages:
+  - build
+  # - test-e2e
+  - publish
+
 jobs:
   include:
-    - stage: "Build Images"
-
-      os: linux
-      before_install:
-        - echo Go version is $TRAVIS_GO_VERSION
-        - go version
+    - stage: build
+      name: "Run all checks, unit tests, build and push image"
+      before_script:
+        - git config --global url.git@github.com:open-cluster-management/.insteadOf https://github.com/open-cluster-management/
+        - make init
+        - make component/init
       script:
-        - ./travis.sh
-      after_script:
-        - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"
+        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
+        - ./build/travis.sh   # to remove overhead and keep output clean
 
-    - os: linux-ppc64le
-      before_install:
-        - echo Go version is $TRAVIS_GO_VERSION
-        - go version
-      script:
-        - ./travis.sh
-      after_script:
-        - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"
+    # - stage: test-e2e
+    #   name: "Run e23-test"
+    #   if: type = pull_request
+    #   script:
+    #     - make component/pull
+    #     - make component/test/e2e
 
-    - os: linux-s390
-      before_install:
-        - echo Go version is $TRAVIS_GO_VERSION
+    - stage: publish
+      name: "Publish Image"
+      if: type = push AND branch =~ /^release-[0-9]+\..*$/
       script:
-        - ./travis.sh
-      after_script:
-        - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"
-
-    - stage: "Build Multi-Arch Image"
-      os: linux
-      script:
-        - |
-          if [[ "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
-            make init
-            export DOCKER_TAG=$(make semver:show-version)
-            make docker:login
-            make docker:manifest-tool
-            make docker:multi-arch
-          else
-            echo "Not building multi-arch image on a pull request"
-          fi
-      after_script:
-        - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"
+        - make pipeline-manifest/update PIPELINE_MANIFEST_COMPONENT_SHA256=${TRAVIS_COMMIT} PIPELINE_MANIFEST_COMPONENT_REPO=${TRAVIS_REPO_SLUG} PIPELINE_MANIFEST_BRANCH=${TRAVIS_BRANCH}
+    #   after_script:
+    #     - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"

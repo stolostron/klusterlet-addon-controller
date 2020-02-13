@@ -8,7 +8,7 @@ package v1beta1
 import (
 	"fmt"
 
-	"github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/image"
+	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 )
 
 var defaultComponentImageMap = map[string]string{

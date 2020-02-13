@@ -1,33 +1,16 @@
-# Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.tap
+# Files
+.build-harness
+.build-harness-bootstrap
+.vscode
+build/kubectl-*
 cover.html
-
-# Test binary, build with `go test -c`
+*.out
+*.tap
 *.test
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
-
-vendor
-.vscode
+# Folders
+.build-docker
 build/_output
-build-harness/
-.build-docker/
-.build/*.jar
-.idea
-.dev-env.template
-.build-harness
-.vendor-new
-
-#Scratch
-scratch
-build/kubectl-darwin-amd64
-build/kubectl-linux-amd64
-build/kubectl-linux-ppc64le
-build/kubectl-linux-s390x
-OPENSOURCE.check
+build-harness
+build-harness-extensions
+vendor

@@ -14,8 +14,11 @@ BIN_DIR           = $(PROJECT_DIR)/bin
 VENDOR_DIR        = $(PROJECT_DIR)/vendor
 I18N_DIR          = $(PROJECT_DIR)/pkg/i18n
 DOCKER_BUILD_PATH = $(PROJECT_DIR)/.build-docker
-BUILD_DATE        = $(shell date +%m/%d@%H:%M:%S)
-VCS_REF           = $(if $(shell git status --porcelain),$(GIT_COMMIT)-$(BUILD_DATE),$(GIT_COMMIT))
+
+ARCH       ?= $(shell uname -m)
+ARCH_TYPE   = $(if $(patsubst x86_64,,$(ARCH)),$(ARCH),amd64)
+BUILD_DATE  = $(shell date +%m/%d@%H:%M:%S)
+VCS_REF     = $(if $(shell git status --porcelain),$(GIT_COMMIT)-$(BUILD_DATE),$(GIT_COMMIT))
 
 CGO_ENABLED  = 0
 GO111MODULE := on
@@ -23,80 +26,68 @@ GOOS         = $(shell go env GOOS)
 GOARCH       = $(ARCH_TYPE)
 GOPACKAGES   = $(shell go list ./... | grep -v /vendor/ | grep -v /internal | grep -v /build | grep -v /test | grep -v /i18n/resources)
 
-## WARNING: OPERATOR IMAGE_DESCRIPTION VAR MUST NOT CONTAIN SPACES.
-IMAGE_DESCRIPTION ?= IBM_Multicloud_Operator
+## WARNING: IMAGE_DESCRIPTION & DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES.
+IMAGE_DESCRIPTION ?= Endpoint_Operator
 DOCKER_FILE        = $(BUILD_DIR)/Dockerfile
-DOCKER_REGISTRY   ?= hyc-cloud-private-scratch-docker-local.artifactory.swg-devops.com
-DOCKER_NAMESPACE  ?= ibmcom
-DOCKER_IMAGE      ?= icp-multicluster-endpoint-operator
+DOCKER_REGISTRY   ?= quay.io
+DOCKER_NAMESPACE  ?= open-cluster-management
+DOCKER_IMAGE      ?= $(COMPONENT_NAME)
 DOCKER_BUILD_TAG  ?= latest
 DOCKER_TAG        ?= $(shell whoami)
-
-BEFORE_SCRIPT := $(shell ./build/before-make-script.sh)
-
--include $(shell curl -fso .build-harness -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3.raw" "https://raw.github.ibm.com/ICP-DevOps/build-harness/master/templates/Makefile.build-harness"; echo .build-harness)
-
-ARCH     ?= $(shell uname -m)
-ARCH_TYPE = $(if $(patsubst x86_64,,$(ARCH)),$(ARCH),amd64)
-
-#For operator-sdk build
-DOCKER_BUILD_OPTS=--build-arg "VCS_REF=$(VCS_REF)" \
+DOCKER_BUILD_OPTS  = --build-arg "VCS_REF=$(VCS_REF)" \
 	--build-arg "VCS_URL=$(GIT_REMOTE_URL)" \
 	--build-arg "IMAGE_NAME=$(DOCKER_IMAGE)" \
 	--build-arg "IMAGE_DESCRIPTION=$(IMAGE_DESCRIPTION)" \
 	--build-arg "IMAGE_VERSION=$(SEMVERSION)" \
 	--build-arg "ARCH_TYPE=$(ARCH_TYPE)"
 
+# Use project's own component scripts
+COMPONENT_SCRIPTS_PATH = ${BUILD_DIR}
+
+BEFORE_SCRIPT := $(shell ./build/before-make-script.sh)
+
+-include $(shell curl -s -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
+
+
 .PHONY: deps
 ## Download all project dependencies
-deps: init
-	GO111MODULE=off go get -u github.com/rws-github/go-swagger/cmd/swagger
+deps: init component/init
 
 .PHONY: check
 ## Runs a set of required checks
-check: %check: %go:check %go:copyright:check
-#	@echo "WARNING: i18n is not yet supported by `make check`."
+check: lint
 
-.PHONY: image
+.PHONY: lint
+## Runs linter against go files
+lint:
+	golangci-lint run
+
+.PHONY: test
+## Runs go unit tests
+test: component/test/unit
+
+.PHONY: build
 ## Builds operator binary inside of an image
-image::
-	@$(BUILD_DIR)/download-kubectl.sh
-	$(MAKE) operator:build
+build: component/build
 
 .PHONY: clean
 ## Clean build-harness and remove Go generated build and test files
-clean:: %clean: %go:clean
+clean::
+	@rm -rf $(BUILD_DIR)/_output
 	@[ "$(BUILD_HARNESS_PATH)" == '/' ] || \
 	 [ "$(BUILD_HARNESS_PATH)" == '.' ] || \
 	   rm -rf $(BUILD_HARNESS_PATH)
+
+.PHONY: run
+## Run the operator against the kubeconfig targeted cluster
+run:
+	operator-sdk up local --namespace="" --operator-flags="--zap-devel=true"
 
 .PHONY: helpz
 helpz:
 ifndef build-harness
 	$(eval MAKEFILE_LIST := Makefile build-harness/modules/go/Makefile)
 endif
-
-### OPERATOR SDK #######################
-
-.PHONY: operator\:tools
-operator\:tools:
-	./build/install-operator-sdk.sh
-
-.PHONY: operator\:build
-operator\:build:
-	@$(BUILD_DIR)/download-kubectl.sh
-	## WARNING: DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES.
-	$(info Building operator)
-	$(info GOOS: $(GOOS))
-	$(info GOARCH: $(GOARCH))
-	$(info --IMAGE: $(DOCKER_IMAGE))
-	$(info --TAG: $(DOCKER_BUILD_TAG))
-	$(info --DOCKER_BUILD_OPTS: $(DOCKER_BUILD_OPTS))
-	operator-sdk build $(DOCKER_IMAGE):$(DOCKER_BUILD_TAG) --image-build-args "$(DOCKER_BUILD_OPTS)"
-
-.PHONY: operator\:run
-operator\:run:
-	operator-sdk up local --namespace="" --operator-flags="--zap-devel=true"
 
 ### HELPER UTILS #######################
 

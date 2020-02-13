@@ -20,17 +20,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	multicloudv1beta1 "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/apis/multicloud/v1beta1"
-	appmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/appmgr/v1beta1"
-	certmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/certmgr/v1beta1"
-	component "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/component/v1beta1"
-	connmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/connmgr/v1beta1"
-	monitoring "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/monitoring/v1beta1"
-	policyctrl "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/policyctrl/v1beta1"
-	searchcollector "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/searchcollector/v1beta1"
-	serviceregistry "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/serviceregistry/v1beta1"
-	topology "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/topology/v1beta1"
-	workmgr "github.ibm.com/IBMPrivateCloud/ibm-klusterlet-operator/pkg/workmgr/v1beta1"
+	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	appmgr "github.com/open-cluster-management/endpoint-operator/pkg/appmgr/v1beta1"
+	certmgr "github.com/open-cluster-management/endpoint-operator/pkg/certmgr/v1beta1"
+	component "github.com/open-cluster-management/endpoint-operator/pkg/component/v1beta1"
+	connmgr "github.com/open-cluster-management/endpoint-operator/pkg/connmgr/v1beta1"
+	monitoring "github.com/open-cluster-management/endpoint-operator/pkg/monitoring/v1beta1"
+	policyctrl "github.com/open-cluster-management/endpoint-operator/pkg/policyctrl/v1beta1"
+	searchcollector "github.com/open-cluster-management/endpoint-operator/pkg/searchcollector/v1beta1"
+	serviceregistry "github.com/open-cluster-management/endpoint-operator/pkg/serviceregistry/v1beta1"
+	topology "github.com/open-cluster-management/endpoint-operator/pkg/topology/v1beta1"
+	workmgr "github.com/open-cluster-management/endpoint-operator/pkg/workmgr/v1beta1"
 )
 
 var log = logf.Log.WithName("controller_endpoint")
