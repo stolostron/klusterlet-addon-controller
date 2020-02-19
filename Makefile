@@ -48,14 +48,22 @@ BEFORE_SCRIPT := $(shell ./build/before-make-script.sh)
 
 -include $(shell curl -s -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
 
-
 .PHONY: deps
 ## Download all project dependencies
 deps: init component/init
+	cd $(shell mktemp -d) && go get -u github.com/open-cluster-management/go-ossc/ossc
 
 .PHONY: check
 ## Runs a set of required checks
-check: lint
+check: lint ossccheck
+
+.PHONY: ossccheck
+ossccheck:
+	$(GOPATH)/bin/ossc --check
+
+.PHONY: ossc
+ossc:
+	ossc
 
 .PHONY: lint
 ## Runs linter against go files

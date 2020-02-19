@@ -14,3 +14,4 @@ build/_output
 build-harness
 build-harness-extensions
 vendor
+OPENSOURCE.check
