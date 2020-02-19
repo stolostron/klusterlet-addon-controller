@@ -35,6 +35,7 @@ jobs:
       name: "Run all checks, unit tests, build and push image"
       before_script:
         - git config --global url.git@github.com:open-cluster-management/.insteadOf https://github.com/open-cluster-management/
+        - make
         - make no-op
         - make deps
       script:
