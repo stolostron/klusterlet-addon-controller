@@ -54,7 +54,7 @@ no-op:
 .PHONY: deps
 ## Download all project dependencies
 deps: init component/init
-	cd $(shell mktemp -d) && go get -u github.com/open-cluster-management/go-ossc/ossc
+	cd $(shell mktemp -d) && GOSUMDB=off go get -u github.com/open-cluster-management/go-ossc/ossc
 
 .PHONY: check
 ## Runs a set of required checks
