@@ -35,8 +35,7 @@ jobs:
       name: "Run all checks, unit tests, build and push image"
       before_script:
         - git config --global url.git@github.com:open-cluster-management/.insteadOf https://github.com/open-cluster-management/
-        - make init
-        - make component/init
+        - make deps
       script:
         - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
         - ./build/travis.sh   # to remove overhead and keep output clean
