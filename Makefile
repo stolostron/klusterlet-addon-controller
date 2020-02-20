@@ -60,7 +60,7 @@ check: lint ossccheck
 
 .PHONY: ossccheck
 ossccheck:
-	$(GOPATH)/bin/ossc --check
+	ossc --check
 
 .PHONY: ossc
 ossc:
