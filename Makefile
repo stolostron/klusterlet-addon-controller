@@ -51,8 +51,6 @@ BEFORE_SCRIPT := $(shell ./build/before-make-script.sh)
 .PHONY: deps
 ## Download all project dependencies
 deps: init component/init
-	# do a get in a tmp dir to avoid local go.mod update
-	cd $(shell mktemp -d) && GOSUMDB=off go get -u github.com/open-cluster-management/go-ossc/ossc
 
 .PHONY: check
 ## Runs a set of required checks
