@@ -8,13 +8,6 @@ GIT_REMOTE_URL  = $(shell git config --get remote.origin.url)
 GITHUB_USER    := $(shell echo $(GITHUB_USER) | sed 's/@/%40/g')
 GITHUB_TOKEN   ?=
 
-PROJECT_DIR       = $(shell 'pwd')
-BUILD_DIR         = $(PROJECT_DIR)/build
-BIN_DIR           = $(PROJECT_DIR)/bin
-VENDOR_DIR        = $(PROJECT_DIR)/vendor
-I18N_DIR          = $(PROJECT_DIR)/pkg/i18n
-DOCKER_BUILD_PATH = $(PROJECT_DIR)/.build-docker
-
 ARCH       ?= $(shell uname -m)
 ARCH_TYPE   = $(if $(patsubst x86_64,,$(ARCH)),$(ARCH),amd64)
 BUILD_DATE  = $(shell date +%m/%d@%H:%M:%S)
@@ -25,6 +18,14 @@ GO111MODULE := on
 GOOS         = $(shell go env GOOS)
 GOARCH       = $(ARCH_TYPE)
 GOPACKAGES   = $(shell go list ./... | grep -v /vendor/ | grep -v /internal | grep -v /build | grep -v /test | grep -v /i18n/resources)
+
+PROJECT_DIR            = $(shell 'pwd')
+BUILD_DIR              = $(PROJECT_DIR)/build
+BIN_DIR                = $(PROJECT_DIR)/bin
+VENDOR_DIR             = $(PROJECT_DIR)/vendor
+I18N_DIR               = $(PROJECT_DIR)/pkg/i18n
+DOCKER_BUILD_PATH      = $(PROJECT_DIR)/.build-docker
+COMPONENT_SCRIPTS_PATH = $(BUILD_DIR)
 
 ## WARNING: IMAGE_DESCRIPTION & DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES.
 IMAGE_DESCRIPTION ?= Endpoint_Operator
@@ -41,10 +42,8 @@ DOCKER_BUILD_OPTS  = --build-arg "VCS_REF=$(VCS_REF)" \
 	--build-arg "IMAGE_VERSION=$(SEMVERSION)" \
 	--build-arg "ARCH_TYPE=$(ARCH_TYPE)"
 
-# Use project's own component scripts
-COMPONENT_SCRIPTS_PATH = ${BUILD_DIR}
 
-BEFORE_SCRIPT := $(shell ./build/before-make-script.sh)
+BEFORE_SCRIPT := $(shell build/before-make.sh)
 
 -include $(shell curl -s -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
 
@@ -67,7 +66,8 @@ ossc:
 .PHONY: lint
 ## Runs linter against go files
 lint:
-	golangci-lint run
+	@echo "Running linting tool ..."
+	@golangci-lint run --timeout 5m
 
 .PHONY: test
 ## Runs go unit tests

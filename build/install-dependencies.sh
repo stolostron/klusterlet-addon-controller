@@ -1,6 +1,4 @@
-#!/bin/bash
-
-set -e
+#!/bin/bash -e
 
 export GO111MODULE=off
 
@@ -41,7 +39,7 @@ if ! which operator-sdk > /dev/null; then
 fi
 
 
-# Tools built into image
+# Image tools
 
 KUBECTL_VER=v1.16.3
 echo "Downloading kubectl $KUBECTL_VER ..."
@@ -51,13 +49,13 @@ if [ ! -f "$BUILD_DIR/kubectl-linux-s390x" ]; then curl -f -s -L -o $BUILD_DIR/k
 echo "Downloaded kubectl to $BUILD_DIR"
 
 
-# Misc tools
+# Check tools
 
 # # TIPS: If the npm install fails because of permissions, do not run the command with sudo, just run:
 # # sudo chown -R $(whoami) ~/.npm
 # # sudo chown -R $(whoami) /usr/local/lib/node_modules
-# _tmpdir=/tmp/apilint
 # if ! which apilint > /dev/null; then
+#     _tmpdir=/tmp/apilint
 #     echo "Installing apilint..."
 #     rm -rf $_tmpdir
 #     git clone https://github.com/rws-github/apilint $_tmpdir
