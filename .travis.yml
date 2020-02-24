@@ -1,8 +1,5 @@
 language: go
 
-cache:
-  - apt: true
-
 go:
   - "1.13.x"
 
@@ -12,17 +9,7 @@ services:
 branches:
   only:
     - master
-    - dev
-    - /^[0-9]+\..*$/
-    - /^v[0-9]+\..*$/
     - /^release-[0-9]+\..*$/
-
-os:
-  - linux
-
-env:
-  global:
-    - PROJECT_DIR=${TRAVIS_BUILD_DIR}
 
 stages:
   - build
@@ -35,7 +22,6 @@ jobs:
       name: "Run all checks, unit tests, build and push image"
       before_script:
         - git config --global url.git@github.com:open-cluster-management/.insteadOf https://github.com/open-cluster-management/
-        # - make # Add this make to make sure the all is installed
         - make init
         - make component/init
       script:
@@ -53,6 +39,7 @@ jobs:
       name: "Publish Image"
       if: type = push AND branch =~ /^release-[0-9]+\..*$/
       script:
+        - make init
         - make pipeline-manifest/update PIPELINE_MANIFEST_COMPONENT_SHA256=${TRAVIS_COMMIT} PIPELINE_MANIFEST_COMPONENT_REPO=${TRAVIS_REPO_SLUG} PIPELINE_MANIFEST_BRANCH=${TRAVIS_BRANCH}
     #   after_script:
     #     - test "$TRAVIS_PULL_REQUEST" = "false" && test "$TRAVIS_TEST_RESULT" = "1" && ./build/slack-notification.sh || echo "Slack notification not sent"
