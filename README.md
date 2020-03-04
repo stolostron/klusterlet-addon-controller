@@ -1,6 +1,6 @@
 # endponint operator
 
-A Go operator built with the [operator-sdk](https://github.com/operator-framework/operator-sdk) that is used to manage the Create Update Delete of the component CR in the Klusterlet Component Operator
+A Go operator built with the [operator-sdk](https://github.com/operator-framework/operator-sdk) that is used to manage the Create Update Delete of the component CR in the Klusterlet Component Operator.
 
 ## Prepare your cluster
 
