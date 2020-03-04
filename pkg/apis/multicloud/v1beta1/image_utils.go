@@ -7,6 +7,7 @@ package v1beta1
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 )
