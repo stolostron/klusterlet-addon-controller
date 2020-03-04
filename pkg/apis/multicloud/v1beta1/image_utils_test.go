@@ -93,7 +93,7 @@ func TestGetImage(t *testing.T) {
 					},
 				},
 				component:       "connection-manager",
-				imageTagPostfix: "",
+				imageTagPostfix: "aUnique-Post-Fix",
 			},
 			want: image.Image{
 				Repository: fmt.Sprintf("sample-registry/uniquePath/%s", defaultComponentImageMap["connection-manager"]),
