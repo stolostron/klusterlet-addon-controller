@@ -70,7 +70,6 @@ spec:
         status:
           description: PolicyControllerStatus defines the observed state of PolicyController
           type: object
-      type: object
   version: v1beta1
   versions:
   - name: v1beta1

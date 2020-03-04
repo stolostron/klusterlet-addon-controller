@@ -79,7 +79,6 @@ spec:
         status:
           description: CertManagerStatus defines the observed state of CertManager
           type: object
-      type: object
   version: v1beta1
   versions:
   - name: v1beta1
