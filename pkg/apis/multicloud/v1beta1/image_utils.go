@@ -92,6 +92,10 @@ func (instance Endpoint) GetImage(component string) (image.Image, error) {
 			return img, fmt.Errorf("unable to locate default tag for component %s", component)
 		}
 	}
+	imageTagPostfix := os.Getenv("IMAGE_TAG_POSTFIX")
+	if len(imageTagPostfix) > 0 {
+		img.Tag = img.Tag + "-" + imageTagPostfix
+	}
 
 	return img, nil
 }
