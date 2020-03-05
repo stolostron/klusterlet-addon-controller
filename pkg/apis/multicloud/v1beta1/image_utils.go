@@ -15,6 +15,7 @@ import (
 var defaultComponentImageMap = map[string]string{
 	"cert-manager-acmesolver":        "cert-manager-acmesolver",
 	"cert-manager-controller":        "cert-manager-controller",
+	"cert-policy":                    "cert-policy-controller",
 	"component-operator":             "endpoint-component-operator",
 	"configmap-reload":               "donotexist",
 	"connection-manager":             "multicloud-manager",
@@ -38,6 +39,7 @@ var defaultComponentImageMap = map[string]string{
 var defaultComponentTagMap = map[string]string{
 	"cert-manager-acmesolver":        "0.10.1",
 	"cert-manager-controller":        "0.10.1",
+	"cert-policy":                    "3.4.0",
 	"component-operator":             "1.0.0",
 	"configmap-reload":               "0.0.0",
 	"connection-manager":             "0.0.1",
