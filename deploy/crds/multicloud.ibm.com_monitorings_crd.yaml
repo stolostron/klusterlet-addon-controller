@@ -299,7 +299,6 @@ spec:
         status:
           description: MonitoringStatus defines the observed state of Monitoring
           type: object
-      type: object
   version: v1beta1
   versions:
   - name: v1beta1

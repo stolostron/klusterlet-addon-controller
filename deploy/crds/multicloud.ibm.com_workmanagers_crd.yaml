@@ -137,7 +137,6 @@ spec:
         status:
           description: WorkManagerStatus defines the observed state of WorkManager
           type: object
-      type: object
   version: v1beta1
   versions:
   - name: v1beta1
