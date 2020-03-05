@@ -39,6 +39,7 @@ type EndpointSpec struct {
 	ServiceRegistryConfig    EndpointServiceRegistrySpec       `json:"serviceRegistry"`
 	ApplicationManagerConfig EndpointApplicationManagerSpec    `json:"applicationManager"`
 	ConnectionManagerConfig  EndpointConnectionManagerSpec     `json:"connectionManager"`
+	CertPolicyConfig         EndpointCertPolicySpec            `json:"certPolicy"`
 
 	// +kubebuilder:validation:MinLength=1
 	ImageRegistry    string `json:"imageRegistry"`
@@ -72,6 +73,11 @@ type EndpointApplicationManagerSpec struct {
 
 // EndpointSearchCollectorSpec defines configuration for the SearchCollector component
 type EndpointSearchCollectorSpec struct {
+	Enabled bool `json:"enabled"`
+}
+
+// EndpointCertPolicytSpec defines configuration for the CertPolicy component
+type EndpointCertPolicySpec struct {
 	Enabled bool `json:"enabled"`
 }
 
