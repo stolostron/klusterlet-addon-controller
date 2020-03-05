@@ -7,6 +7,7 @@ package v1beta1
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 )
@@ -90,6 +91,10 @@ func (instance Endpoint) GetImage(component string) (image.Image, error) {
 			img.Tag = tag
 		} else {
 			return img, fmt.Errorf("unable to locate default tag for component %s", component)
+		}
+		imageTagPostfix := os.Getenv("IMAGE_TAG_POSTFIX")
+		if len(imageTagPostfix) > 0 {
+			img.Tag = img.Tag + "-" + imageTagPostfix
 		}
 	}
 

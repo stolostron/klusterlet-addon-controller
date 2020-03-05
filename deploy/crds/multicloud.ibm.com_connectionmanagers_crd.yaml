@@ -69,7 +69,6 @@ spec:
         status:
           description: ConnectionManagerStatus defines the observed state of ConnectionManager
           type: object
-      type: object
   version: v1beta1
   versions:
   - name: v1beta1
