@@ -17,20 +17,20 @@ var defaultComponentImageMap = map[string]string{
 	"cert-manager-controller":        "cert-manager-controller",
 	"cert-policy":                    "cert-policy-controller",
 	"component-operator":             "endpoint-component-operator",
-	"configmap-reload":               "donotexist",
+	"configmap-reload":               "donotexist",  // img-configmap-reload ? (empty repo)
 	"connection-manager":             "multicloud-manager",
-	"coredns":                        "donotexist",
-	"curl":                           "donotexist",
+	"coredns":                        "coredns",  // exists but not onboarded to pipeline
+	"curl":                           "donotexist", // no repo
 	"deployable":                     "multicloud-operators-deployable",
 	"policy-controller":              "mcm-compliance",
-	"prometheus":                     "img-prometheus",
-	"prometheus-config-reloader":     "donotexist",
-	"prometheus-operator":            "img-prometheus-operator",
-	"prometheus-operator-controller": "prometheus-operator-controller",
+	"prometheus":                     "img-prometheus",  // empty repo
+	"prometheus-config-reloader":     "donotexist", // no repo
+	"prometheus-operator":            "img-prometheus-operator", // empty repo
+	"prometheus-operator-controller": "prometheus-operator-controller", // empty repo
 	"router":                         "management-ingress",
 	"search-collector":               "search-collector",
-	"service-registry":               "donotexist",
-	"subscription":                   "multicloud-operators-subscription-release",
+	"service-registry":               "multicloud-manager",
+	"subscription":                   "multicloud-operators-subscription",
 	"topology-collector":             "weave-collector",
 	"work-manager":                   "multicloud-manager",
 	"weave":                          "mcm-weavescope",
@@ -43,7 +43,7 @@ var defaultComponentTagMap = map[string]string{
 	"component-operator":             "1.0.0",
 	"configmap-reload":               "0.0.0",
 	"connection-manager":             "0.0.1",
-	"coredns":                        "0.0.0",
+	"coredns":                        "1.2.6.1",
 	"curl":                           "0.0.0",
 	"deployable":                     "3.5.0",
 	"policy-controller":              "3.6.0",
@@ -53,7 +53,7 @@ var defaultComponentTagMap = map[string]string{
 	"prometheus-operator-controller": "0.0.0",
 	"router":                         "1.0.0",
 	"search-collector":               "3.5.0",
-	"service-registry":               "0.0.0",
+	"service-registry":               "0.0.1",
 	"subscription":                   "3.5.0",
 	"topology-collector":             "3.6.0",
 	"work-manager":                   "0.0.1",
