@@ -40,6 +40,7 @@ type EndpointSpec struct {
 	ApplicationManagerConfig   EndpointApplicationManagerSpec    `json:"applicationManager"`
 	ConnectionManagerConfig    EndpointConnectionManagerSpec     `json:"connectionManager"`
 	CertPolicyControllerConfig EndpointCertPolicyControllerSpec  `json:"certPolicyController"`
+	CISControllerConfig        EndpointCISControllerSpec         `json:"cisController"`
 	IAMPolicyControllerConfig  EndpointIAMPolicyControllerSpec   `json:"iamPolicyController"`
 
 	// +kubebuilder:validation:MinLength=1
@@ -114,6 +115,11 @@ type EndpointTopologyCollectorSpec struct {
 
 // EndpointPrometheusIntegrationSpec defines configuration for the Promtheus Integration
 type EndpointPrometheusIntegrationSpec struct {
+	Enabled bool `json:"enabled"`
+}
+
+// EndpointCISControllerSpec defines configuration for the CISController component
+type EndpointCISControllerSpec struct {
 	Enabled bool `json:"enabled"`
 }
 

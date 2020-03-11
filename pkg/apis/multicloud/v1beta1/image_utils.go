@@ -16,17 +16,22 @@ var defaultComponentImageMap = map[string]string{
 	"cert-manager-acmesolver":        "cert-manager-acmesolver",
 	"cert-manager-controller":        "cert-manager-controller",
 	"cert-policy-controller":         "cert-policy-controller",
+	"cis-controller-controller":      "cis-controller",
+	"cis-controller-crawler":         "cis-crawler",
+	"cis-controller-drishti":         "drishti-cis",
+	"cis-controller-minio":           "img-minio",
+	"cis-controller-minio-cleaner":   "img-minio-mc",
 	"component-operator":             "endpoint-component-operator",
-	"configmap-reload":               "donotexist",  // img-configmap-reload ? (empty repo)
+	"configmap-reload":               "donotexist", // img-configmap-reload ? (empty repo)
 	"connection-manager":             "multicloud-manager",
-	"coredns":                        "coredns",  // exists but not onboarded to pipeline
+	"coredns":                        "coredns",    // exists but not onboarded to pipeline
 	"curl":                           "donotexist", // no repo
 	"deployable":                     "multicloud-operators-deployable",
 	"iam-policy-controller":          "iam-policy-controller",
 	"policy-controller":              "mcm-compliance",
-	"prometheus":                     "img-prometheus",  // empty repo
-	"prometheus-config-reloader":     "donotexist", // no repo
-	"prometheus-operator":            "img-prometheus-operator", // empty repo
+	"prometheus":                     "img-prometheus",                 // empty repo
+	"prometheus-config-reloader":     "donotexist",                     // no repo
+	"prometheus-operator":            "img-prometheus-operator",        // empty repo
 	"prometheus-operator-controller": "prometheus-operator-controller", // empty repo
 	"router":                         "management-ingress",
 	"search-collector":               "search-collector",
@@ -41,6 +46,11 @@ var defaultComponentTagMap = map[string]string{
 	"cert-manager-acmesolver":        "0.10.1",
 	"cert-manager-controller":        "0.10.1",
 	"cert-policy-controller":         "3.4.0",
+	"cis-controller-controller":      "3.6.0",
+	"cis-controller-crawler":         "3.6.0",
+	"cis-controller-drishti":         "3.4.0",
+	"cis-controller-minio":           "RELEASE.2019-04-09T01-22-30Z.3",
+	"cis-controller-minio-cleaner":   "RELEASE.2019-04-03T17-59-57Z.3",
 	"component-operator":             "1.0.0",
 	"configmap-reload":               "0.0.0",
 	"connection-manager":             "0.0.1",

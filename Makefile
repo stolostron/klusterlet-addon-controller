@@ -96,8 +96,8 @@ endif
 
 .PHONY: utils\:crds\:install
 utils\:crds\:install:
-	kubectl apply -f deploy/crds/multicloud_v1beta1_endpoint_crd.yaml
+	kubectl apply -f deploy/crds/multicloud.ibm.com_endpoints_crd.yaml
 
 .PHONY: utils\:crds\:uninstall
 utils\:crds\:uninstall:
-	kubectl delete -f deploy/crds/multicloud_v1beta1_endpoint_crd.yaml
+	kubectl delete -f deploy/crds/multicloud.ibm.com_endpoints_crd.yaml

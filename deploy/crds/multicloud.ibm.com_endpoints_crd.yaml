@@ -53,6 +53,15 @@ spec:
               required:
               - enabled
               type: object
+            cisController:
+              description: EndpointCISControllerSpec defines configuration for the
+                CISController component
+              properties:
+                enabled:
+                  type: boolean
+              required:
+              - enabled
+              type: object
             clusterLabels:
               additionalProperties:
                 type: string
@@ -164,6 +173,7 @@ spec:
           required:
           - applicationManager
           - certPolicyController
+          - cisController
           - clusterLabels
           - clusterName
           - clusterNamespace
