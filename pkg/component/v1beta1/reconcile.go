@@ -27,7 +27,7 @@ import (
 
 var log = logf.Log.WithName("component")
 
-// Reconcile Resolves differences in the running state of the klusterlet-component-operator deployment
+// Reconcile Resolves differences in the running state of the endpoint-component-operator deployment
 func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
 	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
 	reqLogger.Info("Reconciling ComponentOperator")
@@ -224,7 +224,7 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) (*appsv1.Deployment, er
 					ServiceAccountName: instance.Name + "-component-operator",
 					Containers: []corev1.Container{
 						corev1.Container{
-							Name:            "klusterlet-component-opeator",
+							Name:            "endpoint-component-operator",
 							Image:           deploymentImage,
 							ImagePullPolicy: instance.Spec.ImagePullPolicy,
 							Env: []corev1.EnvVar{
@@ -234,7 +234,7 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) (*appsv1.Deployment, er
 								},
 								corev1.EnvVar{
 									Name:  "OPERATOR_NAME",
-									Value: "klusterlet-component-opeator",
+									Value: "endpoint-component-operator",
 								},
 								corev1.EnvVar{
 									Name: "POD_NAME",
