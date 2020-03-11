@@ -13,9 +13,10 @@ import (
 	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
 	appmgr "github.com/open-cluster-management/endpoint-operator/pkg/appmgr/v1beta1"
 	certmgr "github.com/open-cluster-management/endpoint-operator/pkg/certmgr/v1beta1"
-	certpolicy "github.com/open-cluster-management/endpoint-operator/pkg/certpolicy/v1beta1"
+	certpolicycontroller "github.com/open-cluster-management/endpoint-operator/pkg/certpolicycontroller/v1beta1"
 	component "github.com/open-cluster-management/endpoint-operator/pkg/component/v1beta1"
 	connmgr "github.com/open-cluster-management/endpoint-operator/pkg/connmgr/v1beta1"
+	iampolicycontroller "github.com/open-cluster-management/endpoint-operator/pkg/iampolicycontroller/v1beta1"
 	monitoring "github.com/open-cluster-management/endpoint-operator/pkg/monitoring/v1beta1"
 	policyctrl "github.com/open-cluster-management/endpoint-operator/pkg/policyctrl/v1beta1"
 	searchcollector "github.com/open-cluster-management/endpoint-operator/pkg/searchcollector/v1beta1"
@@ -79,12 +80,21 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.CertPolicy{}}, &handler.EnqueueRequestForOwner{
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.CertPolicyController{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &multicloudv1beta1.Endpoint{},
 	})
 	if err != nil {
-		log.Error(err, "Fail to add Watch for CertPolicy to controller")
+		log.Error(err, "Fail to add Watch for CertPolicyController to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.IAMPolicyController{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &multicloudv1beta1.Endpoint{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for IAMPolicyController to controller")
 		return err
 	}
 
@@ -210,7 +220,13 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 	}
 	requeue = requeue || tempRequeue
 
-	tempRequeue, err = certpolicy.Reconcile(instance, r.client, r.scheme)
+	tempRequeue, err = certpolicycontroller.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	requeue = requeue || tempRequeue
+
+	tempRequeue, err = iampolicycontroller.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
