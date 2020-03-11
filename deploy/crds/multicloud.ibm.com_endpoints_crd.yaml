@@ -44,6 +44,15 @@ spec:
               additionalProperties:
                 type: string
               type: object
+            certPolicyController:
+              description: EndpointCertPolicyControllertSpec defines configuration
+                for the CertPolicyController component
+              properties:
+                enabled:
+                  type: boolean
+              required:
+              - enabled
+              type: object
             clusterLabels:
               additionalProperties:
                 type: string
@@ -66,6 +75,15 @@ spec:
             connectionManager:
               description: EndpointConnectionManagerSpec defines configuration for
                 the ConnectionManager component
+              type: object
+            iamPolicyController:
+              description: EndpointIAMPolicyControllertSpec defines configuration
+                for the IAMPolicyController component
+              properties:
+                enabled:
+                  type: boolean
+              required:
+              - enabled
               type: object
             imageNamePostfix:
               type: string
@@ -145,10 +163,12 @@ spec:
               type: string
           required:
           - applicationManager
+          - certPolicyController
           - clusterLabels
           - clusterName
           - clusterNamespace
           - connectionManager
+          - iamPolicyController
           - imageRegistry
           - policyController
           - prometheusIntegration

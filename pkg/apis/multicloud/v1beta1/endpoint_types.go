@@ -32,14 +32,15 @@ type EndpointSpec struct {
 
 	BootStrapConfig map[string]string `json:"bootstrapConfig,omitempty"`
 
-	PrometheusIntegration    EndpointPrometheusIntegrationSpec `json:"prometheusIntegration"`
-	TopologyCollectorConfig  EndpointTopologyCollectorSpec     `json:"topologyCollector"`
-	SearchCollectorConfig    EndpointSearchCollectorSpec       `json:"searchCollector"`
-	PolicyController         EndpointPolicyControllerSpec      `json:"policyController"`
-	ServiceRegistryConfig    EndpointServiceRegistrySpec       `json:"serviceRegistry"`
-	ApplicationManagerConfig EndpointApplicationManagerSpec    `json:"applicationManager"`
-	ConnectionManagerConfig  EndpointConnectionManagerSpec     `json:"connectionManager"`
-	CertPolicyConfig         EndpointCertPolicySpec            `json:"certPolicy"`
+	PrometheusIntegration      EndpointPrometheusIntegrationSpec `json:"prometheusIntegration"`
+	TopologyCollectorConfig    EndpointTopologyCollectorSpec     `json:"topologyCollector"`
+	SearchCollectorConfig      EndpointSearchCollectorSpec       `json:"searchCollector"`
+	PolicyController           EndpointPolicyControllerSpec      `json:"policyController"`
+	ServiceRegistryConfig      EndpointServiceRegistrySpec       `json:"serviceRegistry"`
+	ApplicationManagerConfig   EndpointApplicationManagerSpec    `json:"applicationManager"`
+	ConnectionManagerConfig    EndpointConnectionManagerSpec     `json:"connectionManager"`
+	CertPolicyControllerConfig EndpointCertPolicyControllerSpec  `json:"certPolicyController"`
+	IAMPolicyControllerConfig  EndpointIAMPolicyControllerSpec   `json:"iamPolicyController"`
 
 	// +kubebuilder:validation:MinLength=1
 	ImageRegistry    string `json:"imageRegistry"`
@@ -76,8 +77,13 @@ type EndpointSearchCollectorSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-// EndpointCertPolicytSpec defines configuration for the CertPolicy component
-type EndpointCertPolicySpec struct {
+// EndpointCertPolicyControllertSpec defines configuration for the CertPolicyController component
+type EndpointCertPolicyControllerSpec struct {
+	Enabled bool `json:"enabled"`
+}
+
+// EndpointIAMPolicyControllertSpec defines configuration for the IAMPolicyController component
+type EndpointIAMPolicyControllerSpec struct {
 	Enabled bool `json:"enabled"`
 }
 

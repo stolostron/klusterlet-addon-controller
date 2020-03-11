@@ -15,13 +15,14 @@ import (
 var defaultComponentImageMap = map[string]string{
 	"cert-manager-acmesolver":        "cert-manager-acmesolver",
 	"cert-manager-controller":        "cert-manager-controller",
-	"cert-policy":                    "cert-policy-controller",
+	"cert-policy-controller":         "cert-policy-controller",
 	"component-operator":             "endpoint-component-operator",
 	"configmap-reload":               "donotexist",  // img-configmap-reload ? (empty repo)
 	"connection-manager":             "multicloud-manager",
 	"coredns":                        "coredns",  // exists but not onboarded to pipeline
 	"curl":                           "donotexist", // no repo
 	"deployable":                     "multicloud-operators-deployable",
+	"iam-policy-controller":          "iam-policy-controller",
 	"policy-controller":              "mcm-compliance",
 	"prometheus":                     "img-prometheus",  // empty repo
 	"prometheus-config-reloader":     "donotexist", // no repo
@@ -39,13 +40,14 @@ var defaultComponentImageMap = map[string]string{
 var defaultComponentTagMap = map[string]string{
 	"cert-manager-acmesolver":        "0.10.1",
 	"cert-manager-controller":        "0.10.1",
-	"cert-policy":                    "3.4.0",
+	"cert-policy-controller":         "3.4.0",
 	"component-operator":             "1.0.0",
 	"configmap-reload":               "0.0.0",
 	"connection-manager":             "0.0.1",
 	"coredns":                        "1.2.6.1",
 	"curl":                           "0.0.0",
 	"deployable":                     "3.5.0",
+	"iam-policy-controller":          "1.0.0",
 	"policy-controller":              "3.6.0",
 	"prometheus":                     "0.0.0",
 	"prometheus-config-reloader":     "0.0.0",

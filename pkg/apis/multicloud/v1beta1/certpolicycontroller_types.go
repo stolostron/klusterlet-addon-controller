@@ -13,8 +13,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// CertPolicySpec defines the desired state of CertPolicy
-type CertPolicySpec struct {
+// CertPolicyControllerSpec defines the desired state of CertPolicyController
+type CertPolicyControllerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
@@ -35,8 +35,8 @@ type CertPolicySpec struct {
 	ImagePullSecret string      `json:"imagePullSecret,omitempty"`
 }
 
-// CertPolicyStatus defines the observed state of CertPolicy
-type CertPolicyStatus struct {
+// CertPolicyControllerStatus defines the observed state of CertPolicyController
+type CertPolicyControllerStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
@@ -44,26 +44,26 @@ type CertPolicyStatus struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// CertPolicy is the Schema for the certpolicy API
+// CertPolicyController is the Schema for the certpolicycontrollercontroller API
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=certpolicy,scope=Namespaced
-type CertPolicy struct {
+// +kubebuilder:resource:path=certpoliciescontroller,scope=Namespaced
+type CertPolicyController struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CertPolicySpec   `json:"spec,omitempty"`
-	Status CertPolicyStatus `json:"status,omitempty"`
+	Spec   CertPolicyControllerSpec   `json:"spec,omitempty"`
+	Status CertPolicyControllerStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// CertPolicyList contains a list of CertPolicy
-type CertPolicyList struct {
+// CertPolicyControllerList contains a list of CertPolicyController
+type CertPolicyControllerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CertPolicy `json:"items"`
+	Items           []CertPolicyController `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&CertPolicy{}, &CertPolicyList{})
+	SchemeBuilder.Register(&CertPolicyController{}, &CertPolicyControllerList{})
 }
