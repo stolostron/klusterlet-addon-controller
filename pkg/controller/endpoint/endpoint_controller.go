@@ -14,6 +14,7 @@ import (
 	appmgr "github.com/open-cluster-management/endpoint-operator/pkg/appmgr/v1beta1"
 	certmgr "github.com/open-cluster-management/endpoint-operator/pkg/certmgr/v1beta1"
 	certpolicycontroller "github.com/open-cluster-management/endpoint-operator/pkg/certpolicycontroller/v1beta1"
+	ciscontroller "github.com/open-cluster-management/endpoint-operator/pkg/ciscontroller/v1beta1"
 	component "github.com/open-cluster-management/endpoint-operator/pkg/component/v1beta1"
 	connmgr "github.com/open-cluster-management/endpoint-operator/pkg/connmgr/v1beta1"
 	iampolicycontroller "github.com/open-cluster-management/endpoint-operator/pkg/iampolicycontroller/v1beta1"
@@ -86,6 +87,15 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	})
 	if err != nil {
 		log.Error(err, "Fail to add Watch for CertPolicyController to controller")
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.CISController{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &multicloudv1beta1.Endpoint{},
+	})
+	if err != nil {
+		log.Error(err, "Fail to add Watch for CISController to controller")
 		return err
 	}
 
@@ -193,53 +203,69 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 
 	err = component.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
+		reqLogger.Error(err, "Unable to reconcile component", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 
 	tempRequeue, err = certmgr.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
+		reqLogger.Error(err, "Unable to reconcile certmgr", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 	requeue = requeue || tempRequeue
 
 	tempRequeue, err = connmgr.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
+		reqLogger.Error(err, "Unable to reconcile connmgr", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 	requeue = requeue || tempRequeue
 
 	tempRequeue, err = workmgr.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
+		reqLogger.Error(err, "Unable to reconcile workmgr", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 	requeue = requeue || tempRequeue
 
 	tempRequeue, err = searchcollector.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
+		reqLogger.Error(err, "Unable to reconcile searchcollector", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 	requeue = requeue || tempRequeue
 
 	tempRequeue, err = certpolicycontroller.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
+		reqLogger.Error(err, "Unable to reconcile certpolicycontroller", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
+		return reconcile.Result{}, err
+	}
+	requeue = requeue || tempRequeue
+
+	tempRequeue, err = ciscontroller.Reconcile(instance, r.client, r.scheme)
+	if err != nil {
+		reqLogger.Error(err, "Unable to reconcile ciscontroller", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 	requeue = requeue || tempRequeue
 
 	tempRequeue, err = iampolicycontroller.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
+		reqLogger.Error(err, "Unable to reconcile iampolicycontroller", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 	requeue = requeue || tempRequeue
 
 	tempRequeue, err = policyctrl.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
+		reqLogger.Error(err, "Unable to reconcile policyctrl", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 	requeue = requeue || tempRequeue
 
 	tempRequeue, err = serviceregistry.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
+		reqLogger.Error(err, "Unable to reconcile serviceregistry", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 	requeue = requeue || tempRequeue
@@ -252,12 +278,14 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 
 	tempRequeue, err = monitoring.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
+		reqLogger.Error(err, "Unable to reconcile monitoring", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 	requeue = requeue || tempRequeue
 
 	_, err = appmgr.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
+		reqLogger.Error(err, "Unable to reconcile appmgr", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 
