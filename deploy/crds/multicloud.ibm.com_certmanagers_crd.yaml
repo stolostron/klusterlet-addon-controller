@@ -31,6 +31,15 @@ spec:
         spec:
           description: CertManagerSpec defines the desired state of CertManager
           properties:
+            cert-manager-crd:
+              description: CertManagerCRDSpec defines cert-manager crd install on
+                endpoint-side
+              properties:
+                enabled:
+                  type: boolean
+              required:
+              - enabled
+              type: object
             clusterResourceNamespace:
               minLength: 1
               type: string
@@ -51,15 +60,6 @@ spec:
                   minLength: 1
                   type: string
               type: object
-            policy-controller:
-              description: CertManagerPolicyControllerSpec defines policy-controller
-                enabledment in ICP certmanager chart
-              properties:
-                enabled:
-                  type: boolean
-              required:
-              - enabled
-              type: object
             serviceAccount:
               description: CertManagerServiceAccount defines service account configuration
                 in the spec
@@ -71,9 +71,9 @@ spec:
               - name
               type: object
           required:
+          - cert-manager-crd
           - clusterResourceNamespace
           - fullnameOverride
-          - policy-controller
           - serviceAccount
           type: object
         status:
