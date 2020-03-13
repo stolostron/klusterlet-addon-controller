@@ -26,13 +26,13 @@ type CertManagerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ClusterResourceNamespace string `json:"clusterResourceNamespace"`
 
-	Image            image.Image                     `json:"image,omitempty"`
-	ServiceAccount   CertManagerServiceAccount       `json:"serviceAccount"`
-	PolicyController CertManagerPolicyControllerSpec `json:"policy-controller"`
+	Image          image.Image               `json:"image,omitempty"`
+	ServiceAccount CertManagerServiceAccount `json:"serviceAccount"`
+	CertManagerCRD CertManagerCRDSpec        `json:"cert-manager-crd"`
 }
 
-// CertManagerPolicyControllerSpec defines policy-controller enabledment in ICP certmanager chart
-type CertManagerPolicyControllerSpec struct {
+// CertManagerCRDSpec defines cert-manager crd install on endpoint-side
+type CertManagerCRDSpec struct {
 	Enabled bool `json:"enabled"`
 }
 

@@ -298,7 +298,7 @@ func newCertManagerCR(cr *multicloudv1beta1.Endpoint) (*multicloudv1beta1.CertMa
 				Name: cr.Name + "-certmgr",
 			},
 			Image: image,
-			PolicyController: multicloudv1beta1.CertManagerPolicyControllerSpec{
+			CertManagerCRD: multicloudv1beta1.CertManagerCRDSpec{
 				Enabled: false,
 			},
 		},
