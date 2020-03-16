@@ -26,7 +26,7 @@ var defaultComponentImageMap = map[string]string{
 	"connection-manager":             "multicloud-manager",
 	"coredns":                        "coredns",    // exists but not onboarded to pipeline
 	"curl":                           "donotexist", // no repo
-	"deployable":                     "multicloud-operators-deployable",
+	"deployable":                     "multicluster-operators-deployable",
 	"iam-policy-controller":          "iam-policy-controller",
 	"policy-controller":              "mcm-compliance",
 	"prometheus":                     "img-prometheus",                 // empty repo
@@ -36,7 +36,7 @@ var defaultComponentImageMap = map[string]string{
 	"router":                         "management-ingress",
 	"search-collector":               "search-collector",
 	"service-registry":               "multicloud-manager",
-	"subscription":                   "multicloud-operators-subscription",
+	"subscription":                   "multicluster-operators-subscription",
 	"topology-collector":             "weave-collector",
 	"work-manager":                   "multicloud-manager",
 	"weave":                          "mcm-weavescope",
@@ -56,7 +56,7 @@ var defaultComponentTagMap = map[string]string{
 	"connection-manager":             "0.0.1",
 	"coredns":                        "1.2.6.1",
 	"curl":                           "0.0.0",
-	"deployable":                     "3.5.0",
+	"deployable":                     "1.0.0",
 	"iam-policy-controller":          "1.0.0",
 	"policy-controller":              "3.6.0",
 	"prometheus":                     "0.0.0",
@@ -66,7 +66,7 @@ var defaultComponentTagMap = map[string]string{
 	"router":                         "1.0.0",
 	"search-collector":               "3.5.0",
 	"service-registry":               "0.0.1",
-	"subscription":                   "3.5.0",
+	"subscription":                   "1.0.0",
 	"topology-collector":             "3.6.0",
 	"work-manager":                   "0.0.1",
 	"weave":                          "3.6.0",
