@@ -32,16 +32,15 @@ type EndpointSpec struct {
 
 	BootStrapConfig map[string]string `json:"bootstrapConfig,omitempty"`
 
-	PrometheusIntegration      EndpointPrometheusIntegrationSpec `json:"prometheusIntegration"`
-	TopologyCollectorConfig    EndpointTopologyCollectorSpec     `json:"topologyCollector"`
-	SearchCollectorConfig      EndpointSearchCollectorSpec       `json:"searchCollector"`
-	PolicyController           EndpointPolicyControllerSpec      `json:"policyController"`
-	ServiceRegistryConfig      EndpointServiceRegistrySpec       `json:"serviceRegistry"`
-	ApplicationManagerConfig   EndpointApplicationManagerSpec    `json:"applicationManager"`
-	ConnectionManagerConfig    EndpointConnectionManagerSpec     `json:"connectionManager"`
-	CertPolicyControllerConfig EndpointCertPolicyControllerSpec  `json:"certPolicyController"`
-	CISControllerConfig        EndpointCISControllerSpec         `json:"cisController"`
-	IAMPolicyControllerConfig  EndpointIAMPolicyControllerSpec   `json:"iamPolicyController"`
+	TopologyCollectorConfig    EndpointTopologyCollectorSpec    `json:"topologyCollector"`
+	SearchCollectorConfig      EndpointSearchCollectorSpec      `json:"searchCollector"`
+	PolicyController           EndpointPolicyControllerSpec     `json:"policyController"`
+	ServiceRegistryConfig      EndpointServiceRegistrySpec      `json:"serviceRegistry"`
+	ApplicationManagerConfig   EndpointApplicationManagerSpec   `json:"applicationManager"`
+	ConnectionManagerConfig    EndpointConnectionManagerSpec    `json:"connectionManager"`
+	CertPolicyControllerConfig EndpointCertPolicyControllerSpec `json:"certPolicyController"`
+	CISControllerConfig        EndpointCISControllerSpec        `json:"cisController"`
+	IAMPolicyControllerConfig  EndpointIAMPolicyControllerSpec  `json:"iamPolicyController"`
 
 	// +kubebuilder:validation:MinLength=1
 	ImageRegistry    string `json:"imageRegistry"`

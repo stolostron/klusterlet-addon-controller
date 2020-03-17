@@ -34,8 +34,6 @@ type WorkManagerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	FullNameOverride string `json:"fullnameOverride"`
 
-	PrometheusIntegration WorkManagerPrometheusIntegration `json:"prometheusIntegration"`
-
 	Service WorkManagerService `json:"service"`
 	Ingress WorkManagerIngress `json:"ingress"`
 

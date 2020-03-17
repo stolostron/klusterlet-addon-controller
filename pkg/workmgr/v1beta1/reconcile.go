@@ -92,46 +92,6 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-func newWorkManagerPrometheusIntegration(cr *multicloudv1beta1.Endpoint, client client.Client) multicloudv1beta1.WorkManagerPrometheusIntegration {
-	if cr.Spec.PrometheusIntegration.Enabled {
-		// OpenShift Prometheus Service
-		found := inspect.OpenshiftPrometheusService(client)
-		if found { //found OpenShift Prometheus
-			return multicloudv1beta1.WorkManagerPrometheusIntegration{
-				Enabled:        true,
-				Service:        "openshift-monitoring/prometheus-k8s",
-				ScrapeTarget:   "kubelet",
-				Secret:         "",
-				UseBearerToken: true,
-			}
-		}
-
-		// ICP Prometheus Service
-		found = inspect.ICPPrometheusService(client)
-		if found { //found ICP Prometheus
-			return multicloudv1beta1.WorkManagerPrometheusIntegration{
-				Enabled:        true,
-				Service:        "kube-system/monitoring-prometheus",
-				Secret:         "kube-system/monitoring-monitoring-client-certs",
-				ScrapeTarget:   "kubernetes-cadvisor",
-				UseBearerToken: false,
-			}
-		}
-
-		//TODO(liuhao): KlusterletOperator deployed Prometheus
-		return multicloudv1beta1.WorkManagerPrometheusIntegration{
-			Enabled:        cr.Spec.PrometheusIntegration.Enabled,
-			Service:        cr.Namespace + "/monitoring-prometheus",
-			Secret:         cr.Namespace + "/monitoring-monitoring-client-certs",
-			UseBearerToken: false,
-		}
-	}
-
-	return multicloudv1beta1.WorkManagerPrometheusIntegration{
-		Enabled: false,
-	}
-}
-
 func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*multicloudv1beta1.WorkManager, error) {
 	labels := map[string]string{
 		"app": cr.Name,
@@ -169,9 +129,8 @@ func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*mu
 
 			ConnectionManager: cr.Name + "-connmgr",
 
-			PrometheusIntegration: newWorkManagerPrometheusIntegration(cr, client),
-			Service:               newWorkManagerServiceConfig(),
-			Ingress:               newWorkManagerIngressConfig(client),
+			Service: newWorkManagerServiceConfig(),
+			Ingress: newWorkManagerIngressConfig(client),
 
 			WorkManagerConfig: multicloudv1beta1.WorkManagerConfig{
 				Enabled: true,

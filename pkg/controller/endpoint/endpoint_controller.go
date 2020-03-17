@@ -18,7 +18,6 @@ import (
 	component "github.com/open-cluster-management/endpoint-operator/pkg/component/v1beta1"
 	connmgr "github.com/open-cluster-management/endpoint-operator/pkg/connmgr/v1beta1"
 	iampolicycontroller "github.com/open-cluster-management/endpoint-operator/pkg/iampolicycontroller/v1beta1"
-	monitoring "github.com/open-cluster-management/endpoint-operator/pkg/monitoring/v1beta1"
 	policyctrl "github.com/open-cluster-management/endpoint-operator/pkg/policyctrl/v1beta1"
 	searchcollector "github.com/open-cluster-management/endpoint-operator/pkg/searchcollector/v1beta1"
 	serviceregistry "github.com/open-cluster-management/endpoint-operator/pkg/serviceregistry/v1beta1"
@@ -272,13 +271,6 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 
 	tempRequeue, err = topology.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
-		return reconcile.Result{}, err
-	}
-	requeue = requeue || tempRequeue
-
-	tempRequeue, err = monitoring.Reconcile(instance, r.client, r.scheme)
-	if err != nil {
-		reqLogger.Error(err, "Unable to reconcile monitoring", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 	requeue = requeue || tempRequeue
