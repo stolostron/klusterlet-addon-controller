@@ -119,15 +119,6 @@ spec:
               required:
               - enabled
               type: object
-            prometheusIntegration:
-              description: EndpointPrometheusIntegrationSpec defines configuration
-                for the Promtheus Integration
-              properties:
-                enabled:
-                  type: boolean
-              required:
-              - enabled
-              type: object
             searchCollector:
               description: EndpointSearchCollectorSpec defines configuration for the
                 SearchCollector component
@@ -181,7 +172,6 @@ spec:
           - iamPolicyController
           - imageRegistry
           - policyController
-          - prometheusIntegration
           - searchCollector
           - serviceRegistry
           - topologyCollector

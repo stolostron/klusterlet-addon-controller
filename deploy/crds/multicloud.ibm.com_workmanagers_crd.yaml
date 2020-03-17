@@ -67,27 +67,6 @@ spec:
               - port
               - type
               type: object
-            prometheusIntegration:
-              description: WorkManagerPrometheusIntegration defines prometheus integration
-                parameters
-              properties:
-                enabled:
-                  type: boolean
-                scrapeTarget:
-                  type: string
-                secret:
-                  type: string
-                service:
-                  type: string
-                useBearerToken:
-                  type: boolean
-              required:
-              - enabled
-              - scrapeTarget
-              - secret
-              - service
-              - useBearerToken
-              type: object
             service:
               description: WorkManagerService defines service integration parameters
               properties:
@@ -131,7 +110,6 @@ spec:
           - connectionManager
           - fullnameOverride
           - ingress
-          - prometheusIntegration
           - service
           type: object
         status:

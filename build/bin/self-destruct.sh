@@ -18,7 +18,6 @@ component_crds=(
 	connectionmanagers.multicloud.ibm.com
 	meterings.multicloud.ibm.com
 	mongodbs.multicloud.ibm.com
-	monitorings.multicloud.ibm.com
 	policycontrollers.multicloud.ibm.com
 	searchcollectors.multicloud.ibm.com
 	serviceregistries.multicloud.ibm.com
