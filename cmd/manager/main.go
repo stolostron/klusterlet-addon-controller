@@ -14,6 +14,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"path/filepath"
 
 	"github.com/ghodss/yaml"
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
@@ -219,9 +220,9 @@ func installCRDs(cfg *rest.Config) error {
 	}
 	for _, file := range files {
 		if !file.IsDir() && strings.Contains(file.Name(), "crd.yaml") {
-			crdFilePath := crdsPath + "/" + file.Name()
+			crdFilePath := filepath.Join(crdsPath, file.Name())
 			log.V(1).Info("Found CRD Yaml", "file", crdFilePath)
-			crdYaml, err := ioutil.ReadFile(crdFilePath)
+			crdYaml, err := ioutil.ReadFile(filepath.Join(crdsPath, file.Name()))
 			if err != nil {
 				log.Error(err, "Fail to read file", "path", crdFilePath)
 				return err
@@ -249,9 +250,9 @@ func installCRDs(cfg *rest.Config) error {
 	}
 	for _, file := range certFiles {
 		if !file.IsDir() && strings.Contains(file.Name(), "crd.yaml") {
-			certFilePath := certPath + "/" + file.Name()
+			certFilePath := filepath.Join(certPath, file.Name())
 			log.V(1).Info("Found CRD Yaml", "file", certFilePath)
-			crdYaml, err := ioutil.ReadFile(certFilePath)
+			crdYaml, err := ioutil.ReadFile(filepath.Join(certPath, file.Name()))
 			if err != nil {
 				log.Error(err, "Fail to read file", "path", certFilePath)
 				return err
