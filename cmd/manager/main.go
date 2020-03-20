@@ -20,6 +20,7 @@ import (
 	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/apis"
 	"github.com/open-cluster-management/endpoint-operator/pkg/controller"
+	"github.com/open-cluster-management/endpoint-operator/pkg/inspect"
 	"github.com/open-cluster-management/endpoint-operator/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
@@ -99,6 +100,10 @@ func main() {
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
+	}
+	// Get cluster info
+	if err := inspect.InitClusterInfo(cfg); err != nil {
+		log.Error(err, "Failed to get cluster info. Skipping.")
 	}
 
 	log.Info("Installing CRDs")

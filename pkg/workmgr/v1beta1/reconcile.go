@@ -105,11 +105,11 @@ func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*mu
 
 	clusterLabels := cr.Spec.ClusterLabels
 	if clusterLabels != nil {
-		if clusterLabels["cloud"] == "auto-detect" {
+		if clusterLabels["cloud"] == "auto-detect" && len(string(inspect.Info.CloudVendor)) > 0 {
 			clusterLabels["cloud"] = string(inspect.Info.CloudVendor)
 		}
 
-		if clusterLabels["vendor"] == "auto-detect" {
+		if clusterLabels["vendor"] == "auto-detect" && len(string(inspect.Info.KubeVendor)) > 0 {
 			clusterLabels["vendor"] = string(inspect.Info.KubeVendor)
 		}
 	}
