@@ -56,8 +56,11 @@ func IBMCloudClusterInfoConfigMapExist(client client.Client) bool {
 // InitClusterInfo initialize the global variable Info in the inspec package
 func InitClusterInfo(cfg *rest.Config) error {
 	// Initialize RESTClient
+	oldNegotiatedSerializer := cfg.NegotiatedSerializer
 	cfg.NegotiatedSerializer = unstructuredscheme.NewUnstructuredNegotiatedSerializer()
 	kubeRESTClient, err := rest.UnversionedRESTClientFor(cfg)
+	// restore cfg before leaving
+	defer func(cfg *rest.Config) { cfg.NegotiatedSerializer = oldNegotiatedSerializer }(cfg)
 	if err != nil {
 		log.Error(err, "Fail to initialize RESTClient")
 		Info.KubeVendor = KubeVendorOther
