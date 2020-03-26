@@ -71,14 +71,12 @@ rules:
   resources:
   - '*'
   - applicationmanagers
-  - certmanagers
   - connectionmanagers
   - endpoints
   - monitorings
   - policycontrollers
   - searchcollectors
   - serviceregistries
-  - topologycollectors
   - workmanagers
   verbs:
   - create

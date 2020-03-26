@@ -13,7 +13,6 @@ kubectl delete deployment ibm-multicluster-endpoint-operator -n ${OPERATOR_NAMES
 # Force delete all component CRDs if they still exist
 component_crds=(
 	applicationmanagers.multicloud.ibm.com
-	certmanagers.multicloud.ibm.com
 	certpoliciescontroller.multicloud.ibm.com
 	ciscontrollers.multicloud.ibm.com
 	connectionmanagers.multicloud.ibm.com
@@ -21,7 +20,6 @@ component_crds=(
 	policycontrollers.multicloud.ibm.com
 	searchcollectors.multicloud.ibm.com
 	serviceregistries.multicloud.ibm.com
-	topologycollectors.multicloud.ibm.com
 	workmanagers.multicloud.ibm.com
 	endpoints.multicloud.ibm.com
 )

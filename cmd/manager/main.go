@@ -12,12 +12,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
-	"path/filepath"
 
 	"github.com/ghodss/yaml"
-	certmanagerv1alpha1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/apis"
 	"github.com/open-cluster-management/endpoint-operator/pkg/controller"
 	"github.com/open-cluster-management/endpoint-operator/pkg/inspect"
@@ -130,11 +129,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := certmanagerv1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
-
 	// Setup all Controllers
 	if err := controller.AddToManager(mgr); err != nil {
 		log.Error(err, "")
@@ -239,36 +233,6 @@ func installCRDs(cfg *rest.Config) error {
 			}
 			if err := createOrUpdateCRD(crd, crdClient); err != nil {
 				log.Error(err, "Failed to create/update crd", "path", crdFilePath)
-				return err
-			}
-		}
-	}
-
-	// TODO operator cannot run without cert manager crds existing
-	// becuse they are not apart of the operator they should actually be
-	// laid down as a pre-req
-	certPath := "deploy/certmanager"
-	certFiles, err := ioutil.ReadDir(certPath)
-	if err != nil {
-		log.Error(err, "Failed to cread cert manager CRDs directory", "path", certPath)
-		return err
-	}
-	for _, file := range certFiles {
-		if !file.IsDir() && strings.Contains(file.Name(), "crd.yaml") {
-			certFilePath := filepath.Join(certPath, file.Name())
-			log.V(1).Info("Found CRD Yaml", "file", certFilePath)
-			crdYaml, err := ioutil.ReadFile(filepath.Join(certPath, file.Name()))
-			if err != nil {
-				log.Error(err, "Fail to read file", "path", certFilePath)
-				return err
-			}
-			crd := &crdv1beta1.CustomResourceDefinition{}
-			if err := yaml.Unmarshal(crdYaml, crd); err != nil {
-				log.Error(err, "Fail to unmarshal crd yaml", "content", crdYaml)
-				return err
-			}
-			if err := createOrUpdateCRD(crd, crdClient); err != nil {
-				log.Error(err, "Failed to create/update crd", "path", certFilePath)
 				return err
 			}
 		}
