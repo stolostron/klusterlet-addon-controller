@@ -32,7 +32,6 @@ type EndpointSpec struct {
 
 	BootStrapConfig map[string]string `json:"bootstrapConfig,omitempty"`
 
-	TopologyCollectorConfig    EndpointTopologyCollectorSpec    `json:"topologyCollector"`
 	SearchCollectorConfig      EndpointSearchCollectorSpec      `json:"searchCollector"`
 	PolicyController           EndpointPolicyControllerSpec     `json:"policyController"`
 	ServiceRegistryConfig      EndpointServiceRegistrySpec      `json:"serviceRegistry"`
@@ -104,12 +103,6 @@ type EndpointWorkManagerSpec struct {
 // EndpointPolicyControllerSpec defines configuration for the PolicyController component
 type EndpointPolicyControllerSpec struct {
 	Enabled bool `json:"enabled"`
-}
-
-// EndpointTopologyCollectorSpec defines configuration for the WorkManager Promtheus Integration
-type EndpointTopologyCollectorSpec struct {
-	Enabled                 bool  `json:"enabled"`
-	CollectorUpdateInterval int32 `json:"updateInterval"`
 }
 
 // EndpointPrometheusIntegrationSpec defines configuration for the Promtheus Integration

@@ -13,7 +13,6 @@ ENV OPERATOR=/usr/local/bin/endpoint-operator \
 
 COPY licenses /licenses
 COPY deploy/crds deploy/crds
-COPY deploy/certmanager deploy/certmanager
 COPY build/bin /usr/local/bin
 COPY build/kubectl-linux-${ARCH_TYPE} /usr/local/bin/kubectl
 COPY build/_output/bin/endpoint-operator ${OPERATOR}

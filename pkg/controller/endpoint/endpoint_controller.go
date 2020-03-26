@@ -12,7 +12,6 @@ import (
 
 	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
 	appmgr "github.com/open-cluster-management/endpoint-operator/pkg/appmgr/v1beta1"
-	certmgr "github.com/open-cluster-management/endpoint-operator/pkg/certmgr/v1beta1"
 	certpolicycontroller "github.com/open-cluster-management/endpoint-operator/pkg/certpolicycontroller/v1beta1"
 	ciscontroller "github.com/open-cluster-management/endpoint-operator/pkg/ciscontroller/v1beta1"
 	component "github.com/open-cluster-management/endpoint-operator/pkg/component/v1beta1"
@@ -21,7 +20,6 @@ import (
 	policyctrl "github.com/open-cluster-management/endpoint-operator/pkg/policyctrl/v1beta1"
 	searchcollector "github.com/open-cluster-management/endpoint-operator/pkg/searchcollector/v1beta1"
 	serviceregistry "github.com/open-cluster-management/endpoint-operator/pkg/serviceregistry/v1beta1"
-	topology "github.com/open-cluster-management/endpoint-operator/pkg/topology/v1beta1"
 	workmgr "github.com/open-cluster-management/endpoint-operator/pkg/workmgr/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -68,15 +66,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	})
 	if err != nil {
 		log.Error(err, "Fail to add Watch for ApplicationManager to controller")
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.CertManager{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &multicloudv1beta1.Endpoint{},
-	})
-	if err != nil {
-		log.Error(err, "Fail to add Watch for CertManager to controller")
 		return err
 	}
 
@@ -143,15 +132,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.TopologyCollector{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &multicloudv1beta1.Endpoint{},
-	})
-	if err != nil {
-		log.Error(err, "Fail to add Watch for TopologyCollector to controller")
-		return err
-	}
-
 	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.WorkManager{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &multicloudv1beta1.Endpoint{},
@@ -206,13 +186,6 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 		return reconcile.Result{}, err
 	}
 
-	tempRequeue, err = certmgr.Reconcile(instance, r.client, r.scheme)
-	if err != nil {
-		reqLogger.Error(err, "Unable to reconcile certmgr", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
-		return reconcile.Result{}, err
-	}
-	requeue = requeue || tempRequeue
-
 	tempRequeue, err = connmgr.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		reqLogger.Error(err, "Unable to reconcile connmgr", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
@@ -265,12 +238,6 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 	tempRequeue, err = serviceregistry.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		reqLogger.Error(err, "Unable to reconcile serviceregistry", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
-		return reconcile.Result{}, err
-	}
-	requeue = requeue || tempRequeue
-
-	tempRequeue, err = topology.Reconcile(instance, r.client, r.scheme)
-	if err != nil {
 		return reconcile.Result{}, err
 	}
 	requeue = requeue || tempRequeue
