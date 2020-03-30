@@ -145,19 +145,6 @@ spec:
               required:
               - enabled
               type: object
-            topologyCollector:
-              description: EndpointTopologyCollectorSpec defines configuration for
-                the WorkManager Promtheus Integration
-              properties:
-                enabled:
-                  type: boolean
-                updateInterval:
-                  format: int32
-                  type: integer
-              required:
-              - enabled
-              - updateInterval
-              type: object
             version:
               minLength: 1
               type: string
