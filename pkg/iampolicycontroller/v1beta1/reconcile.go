@@ -136,6 +136,7 @@ func newIAMPolicyControllerCR(instance *multicloudv1beta1.Endpoint, client clien
 			ConnectionManager: instance.Name + "-connmgr",
 			Image:             image,
 			ImagePullSecret:   instance.Spec.ImagePullSecret,
+			IsOpenShift:       inspect.Info.KubeVendor == inspect.KubeVendorOpenShift,
 		},
 	}, err
 }
