@@ -38,6 +38,8 @@ type CISControllerSpec struct {
 	MinioCleaner CISControllerSpecMinioCleaner `json:"minioCleaner,omitempty"`
 
 	ImagePullSecret string `json:"imagePullSecret,omitempty"`
+
+	IsOpenShift bool `json:"ocp,omitempty"`
 }
 
 type CISControllerSpecController struct {

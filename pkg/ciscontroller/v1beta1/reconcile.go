@@ -178,6 +178,7 @@ func newCISControllerCR(instance *multicloudv1beta1.Endpoint, client client.Clie
 				Image: imageMinioCleaner,
 			},
 			ImagePullSecret: instance.Spec.ImagePullSecret,
+			IsOpenShift:     inspect.Info.KubeVendor == inspect.KubeVendorOpenShift,
 		},
 	}, err
 }

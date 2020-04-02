@@ -33,6 +33,8 @@ type IAMPolicyControllerSpec struct {
 
 	Image           image.Image `json:"image,omitempty"`
 	ImagePullSecret string      `json:"imagePullSecret,omitempty"`
+
+	IsOpenShift bool `json:"ocp,omitempty"`
 }
 
 // IAMPolicyControllerStatus defines the observed state of IAMPolicyController

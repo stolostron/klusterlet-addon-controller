@@ -59,6 +59,8 @@ spec:
               type: object
             imagePullSecret:
               type: string
+            ocp:
+              type: boolean
           required:
           - clusterName
           - clusterNamespace

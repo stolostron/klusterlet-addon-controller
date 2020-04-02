@@ -130,6 +130,8 @@ spec:
                       type: string
                   type: object
               type: object
+            ocp:
+              type: boolean
           required:
           - clusterName
           - clusterNamespace
