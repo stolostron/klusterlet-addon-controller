@@ -1,8 +1,12 @@
 #!/bin/bash
 
+set -e
+
 CURR_FOLDER_PATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 KIND_KUBECONFIG="${CURR_FOLDER_PATH}/../kind_kubeconfig.yaml"
+export KUBECONFIG=${KIND_KUBECONFIG}
 export DOCKER_IMAGE_AND_TAG=${1}
+export PULL_SECRET=multicloud-image-pull-secret
 
 
 if ! which kubectl > /dev/null; then
@@ -26,18 +30,34 @@ kind create cluster --name endpoint-operator-test || exit 1
 
 # setup kubeconfig
 kind get kubeconfig --name endpoint-operator-test > ${KIND_KUBECONFIG}
-export KUBECONFIG=${KIND_KUBECONFIG}
 
 echo "installing endpoint-operator"
 
 #Create the namespace
 kubectl create ns multicluster-endpoint
 
-kubectl create secret docker-registry multicloud-image-pull-secret \
+kubectl create secret docker-registry ${PULL_SECRET} \
       --docker-server=quay.io/open-cluster-management \
       --docker-username=${DOCKER_USER} \
       --docker-password=${DOCKER_PASS} \
       -n multicluster-endpoint
+
+cat <<EOF > $PROJECT_DIR/overlays/template/kustomization.yaml
+bases:
+- ../../deploy
+
+patchesStrategicMerge:
+- |-
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: endpoint-operator
+  spec:
+    template:
+      spec:
+        imagePullSecrets:
+        - name: $PULL_SECRET
+EOF
 
 kubectl apply -k deploy
 

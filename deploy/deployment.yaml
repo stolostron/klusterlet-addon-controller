@@ -14,8 +14,6 @@ spec:
         name: endpoint-operator
     spec:
       serviceAccountName: endpoint-operator
-      imagePullSecrets:
-        - name: multicloud-image-pull-secret
       containers:
         - name: endpoint-operator
           # Replace this with the built image name
