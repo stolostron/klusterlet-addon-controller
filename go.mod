@@ -4,6 +4,8 @@ go 1.13
 
 require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
+	github.com/onsi/ginkgo v1.10.1
+	github.com/onsi/gomega v1.7.0
 	github.com/open-cluster-management/multicloud-operators-foundation v0.0.0-20200212094214-a1cac8f162b8
 	github.com/operator-framework/operator-sdk v0.15.1
 	github.com/spf13/pflag v1.0.5
@@ -12,6 +14,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible
+	k8s.io/klog v1.0.0
 	sigs.k8s.io/controller-runtime v0.4.0
 )
 

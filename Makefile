@@ -94,10 +94,22 @@ endif
 
 ### HELPER UTILS #######################
 
-.PHONY: utils\:crds\:install
-utils\:crds\:install:
+.PHONY: utils\crds\install
+utils\crds\install:
 	kubectl apply -f deploy/crds/multicloud.ibm.com_endpoints_crd.yaml
 
-.PHONY: utils\:crds\:uninstall
-utils\:crds\:uninstall:
+.PHONY: utils\crds\uninstall
+utils\crds\uninstall:
 	kubectl delete -f deploy/crds/multicloud.ibm.com_endpoints_crd.yaml
+
+### FUNCTIONAL TESTS UTILS ###########
+
+deploy:
+	mkdir -p overlays/deploy
+	cp overlays/template/kustomization.yaml overlays/deploy
+	cd overlays/deploy
+	kustomize build overlays/deploy | kubectl apply -f -
+	rm -rf overlays/deploy
+
+.PHONY: functional-test
+functional-test: component/test/functional

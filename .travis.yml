@@ -20,7 +20,7 @@ addons:
 stages:
   - build
   - unit-test
-  # - test-e2e
+  - functional-test
   - release-ff
   - publish
 
@@ -40,7 +40,7 @@ jobs:
     - stage: unit-test
       name: "Run unit tests"
       script:
-        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi; 
+        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
         - make sonar/go
     # - stage: test-e2e
     #   name: "Run e23-test"
@@ -48,12 +48,22 @@ jobs:
     #   script:
     #     - make component/pull
     #     - make component/test/e2e
+
+    - stage: functional-test
+      name: "Run functional-test"
+      if: type = pull_request
+      script:
+        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
+        - make component/pull
+        - make component/test/functional
+
     - stage: release-ff
       name: "Push commits to current release branch"
       if: type = push AND branch =~ /^master$/
       script:
         - make
         - make release-ff
+
     - stage: publish
       name: "Publish Image"
       if: type = push AND branch =~ /^release-[0-9]+\..*$/
