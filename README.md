@@ -66,3 +66,26 @@ Example of Klusterlet CR `/deploy/crds/multicloud_v1beta1_endpoint_cr.yaml`
 - `make operator:build`
 - `make docker:tag`
 - `make docker:push`
+
+## Run Functional Test
+
+### Before Testing functional test with KinD
+
+1. Make sure you have [ginkgo](https://onsi.github.io/ginkgo/) excutable ready in your env. If not, do the following:
+   ```
+    go get github.com/onsi/ginkgo/ginkgo
+    go get github.com/onsi/gomega/...
+   ```
+
+2. Run functional test locally with KinD, you will need to install Kind https://kind.sigs.k8s.io/docs/user/quick-start/#installation
+
+### Run Functional Test Locally with KinD
+
+1. Export the image postfix for rcm-controller image:
+   ```
+    export COMPONENT_TAG_EXTENSION=-SNAPSHOT-2020-04-01-20-49-00
+   ```
+2. Run the following command to setup & start a kind cluster:
+   ```
+    make fucntional-test
+   ```
