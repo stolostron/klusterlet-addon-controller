@@ -2,6 +2,8 @@
 
 # PARAMETERS
 # $1 - Final image name and tag to be produced
+echo Building selfdestruct
+go build -o build/bin/selfdestruct ./selfdestruct
 
 echo Building operator
 echo GOOS: $GOOS

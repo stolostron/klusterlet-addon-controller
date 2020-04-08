@@ -14,7 +14,6 @@ ENV OPERATOR=/usr/local/bin/endpoint-operator \
 COPY licenses /licenses
 COPY deploy/crds deploy/crds
 COPY build/bin /usr/local/bin
-COPY build/kubectl-linux-${ARCH_TYPE} /usr/local/bin/kubectl
 COPY build/_output/bin/endpoint-operator ${OPERATOR}
 
 # http://label-schema.org/rc1/
@@ -32,7 +31,6 @@ LABEL org.label-schema.vendor="IBM" \
       version="$IMAGE_VERSION" \
       release="$VCS_REF"
 
-RUN chmod +x /usr/local/bin/kubectl
 RUN  /usr/local/bin/user_setup
 
 USER ${USER_UID}

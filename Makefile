@@ -58,6 +58,7 @@ test: component/test/unit
 .PHONY: build
 ## Builds operator binary inside of an image
 build: component/build
+	
 
 .PHONY: clean
 ## Clean build-harness and remove Go generated build and test files
@@ -71,6 +72,10 @@ clean::
 ## Run the operator against the kubeconfig targeted cluster
 run:
 	operator-sdk run --local --namespace="" --operator-flags="--zap-devel=true"
+
+.PHONE: request-destruct
+request-destruct:
+	build/bin/self-destruct.sh
 
 .PHONY: ossccheck
 ossccheck:

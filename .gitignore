@@ -3,11 +3,12 @@
 .build-harness-bootstrap
 OPENSOURCE.check
 .vscode
-build/kubectl-*
+build/bin/selfdestruct
 cover.html
 *.out
 *.tap
 *.test
+.DS_Store
 
 # Folders
 .build-docker
