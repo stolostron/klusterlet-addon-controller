@@ -39,7 +39,7 @@ type CISControllerSpec struct {
 
 	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 
-	IsOpenShift bool `json:"ocp,omitempty"`
+	IsOpenShift bool `json:"ocp"`
 }
 
 type CISControllerSpecController struct {
