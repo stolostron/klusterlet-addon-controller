@@ -21,7 +21,7 @@ func (in *ApplicationManager) DeepCopyInto(out *ApplicationManager) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	out.Spec = in.Spec
+	in.Spec.DeepCopyInto(&out.Spec)
 	out.Status = in.Status
 	return
 }
@@ -99,6 +99,13 @@ func (in *ApplicationManagerSpec) DeepCopyInto(out *ApplicationManagerSpec) {
 	*out = *in
 	out.DeployableSpec = in.DeployableSpec
 	out.SubscriptionSpec = in.SubscriptionSpec
+	if in.ImageShaDigests != nil {
+		in, out := &in.ImageShaDigests, &out.ImageShaDigests
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
@@ -150,7 +157,7 @@ func (in *CISController) DeepCopyInto(out *CISController) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	out.Spec = in.Spec
+	in.Spec.DeepCopyInto(&out.Spec)
 	out.Status = in.Status
 	return
 }
@@ -214,6 +221,13 @@ func (in *CISControllerSpec) DeepCopyInto(out *CISControllerSpec) {
 	out.Drishti = in.Drishti
 	out.Minio = in.Minio
 	out.MinioCleaner = in.MinioCleaner
+	if in.ImageShaDigests != nil {
+		in, out := &in.ImageShaDigests, &out.ImageShaDigests
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
@@ -333,7 +347,7 @@ func (in *CertPolicyController) DeepCopyInto(out *CertPolicyController) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	out.Spec = in.Spec
+	in.Spec.DeepCopyInto(&out.Spec)
 	out.Status = in.Status
 	return
 }
@@ -393,6 +407,13 @@ func (in *CertPolicyControllerList) DeepCopyObject() runtime.Object {
 func (in *CertPolicyControllerSpec) DeepCopyInto(out *CertPolicyControllerSpec) {
 	*out = *in
 	out.Image = in.Image
+	if in.ImageShaDigests != nil {
+		in, out := &in.ImageShaDigests, &out.ImageShaDigests
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
@@ -494,6 +515,13 @@ func (in *ConnectionManagerSpec) DeepCopyInto(out *ConnectionManagerSpec) {
 		}
 	}
 	out.Image = in.Image
+	if in.ImageShaDigests != nil {
+		in, out := &in.ImageShaDigests, &out.ImageShaDigests
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
@@ -834,7 +862,7 @@ func (in *IAMPolicyController) DeepCopyInto(out *IAMPolicyController) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	out.Spec = in.Spec
+	in.Spec.DeepCopyInto(&out.Spec)
 	out.Status = in.Status
 	return
 }
@@ -894,6 +922,13 @@ func (in *IAMPolicyControllerList) DeepCopyObject() runtime.Object {
 func (in *IAMPolicyControllerSpec) DeepCopyInto(out *IAMPolicyControllerSpec) {
 	*out = *in
 	out.Image = in.Image
+	if in.ImageShaDigests != nil {
+		in, out := &in.ImageShaDigests, &out.ImageShaDigests
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
@@ -928,7 +963,7 @@ func (in *PolicyController) DeepCopyInto(out *PolicyController) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	out.Spec = in.Spec
+	in.Spec.DeepCopyInto(&out.Spec)
 	out.Status = in.Status
 	return
 }
@@ -988,6 +1023,13 @@ func (in *PolicyControllerList) DeepCopyObject() runtime.Object {
 func (in *PolicyControllerSpec) DeepCopyInto(out *PolicyControllerSpec) {
 	*out = *in
 	out.Image = in.Image
+	if in.ImageShaDigests != nil {
+		in, out := &in.ImageShaDigests, &out.ImageShaDigests
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
@@ -1022,7 +1064,7 @@ func (in *SearchCollector) DeepCopyInto(out *SearchCollector) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	out.Spec = in.Spec
+	in.Spec.DeepCopyInto(&out.Spec)
 	out.Status = in.Status
 	return
 }
@@ -1082,6 +1124,13 @@ func (in *SearchCollectorList) DeepCopyObject() runtime.Object {
 func (in *SearchCollectorSpec) DeepCopyInto(out *SearchCollectorSpec) {
 	*out = *in
 	out.Image = in.Image
+	if in.ImageShaDigests != nil {
+		in, out := &in.ImageShaDigests, &out.ImageShaDigests
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
@@ -1116,7 +1165,7 @@ func (in *ServiceRegistry) DeepCopyInto(out *ServiceRegistry) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	out.Spec = in.Spec
+	in.Spec.DeepCopyInto(&out.Spec)
 	out.Status = in.Status
 	return
 }
@@ -1194,6 +1243,13 @@ func (in *ServiceRegistrySpec) DeepCopyInto(out *ServiceRegistrySpec) {
 	*out = *in
 	out.ServiceRegistry = in.ServiceRegistry
 	out.CoreDNS = in.CoreDNS
+	if in.ImageShaDigests != nil {
+		in, out := &in.ImageShaDigests, &out.ImageShaDigests
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
@@ -1362,6 +1418,13 @@ func (in *WorkManagerSpec) DeepCopyInto(out *WorkManagerSpec) {
 	out.Service = in.Service
 	out.Ingress = in.Ingress
 	out.WorkManagerConfig = in.WorkManagerConfig
+	if in.ImageShaDigests != nil {
+		in, out := &in.ImageShaDigests, &out.ImageShaDigests
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 

@@ -1,0 +1,362 @@
+[
+    {
+      "name": "application-ui",
+      "tag": "3.5.0-4843ba3b8ce93aa0ee134b0afc1156a6b2d24359",
+      "sha256": "4843ba3b8ce93aa0ee134b0afc1156a6b2d24359",
+      "repository": "open-cluster-management/application-ui",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:c87d0ab329a91b60ef7807c7abadbd37af021f64a27935e2ae4cdcf20c22d515"
+    },
+    {
+      "name": "cert-manager-acmesolver",
+      "tag": "0.10.1-0845adad3994a193f8d289bee98d1405d26dbe33",
+      "sha256": "0845adad3994a193f8d289bee98d1405d26dbe33",
+      "repository": "open-cluster-management/cert-manager",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:08f2cefba06cc757b3c32e727e994c9235a5f23221b48a64ca58ab04d3625f6d"
+    },
+    {
+      "name": "cert-manager-cainjector",
+      "tag": "0.10.1-0845adad3994a193f8d289bee98d1405d26dbe33",
+      "sha256": "0845adad3994a193f8d289bee98d1405d26dbe33",
+      "repository": "open-cluster-management/cert-manager",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:9607a0acf2690a0ea28b6c75db30522aae3aeba2d4726a78c6d776ce1db69cff"
+    },
+    {
+      "name": "cert-manager-controller",
+      "tag": "0.10.1-0845adad3994a193f8d289bee98d1405d26dbe33",
+      "sha256": "0845adad3994a193f8d289bee98d1405d26dbe33",
+      "repository": "open-cluster-management/cert-manager",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:56e8b3eab1a1c2adb890ed309e47811bb7fb8f6454d076013fa364980635d9cf"
+    },
+    {
+      "name": "cert-manager-webhook",
+      "tag": "0.10.1-0845adad3994a193f8d289bee98d1405d26dbe33",
+      "sha256": "0845adad3994a193f8d289bee98d1405d26dbe33",
+      "repository": "open-cluster-management/cert-manager",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:5a08be661bab81a9fa75f37cf9923337a0c6af7109c4b792c1befd8b0ac1e3e8"
+    },
+    {
+      "name": "cert-policy-controller",
+      "tag": "3.4.0-0111e3ffa98beb9eacd15140c57ade43ed7d01a5",
+      "sha256": "0111e3ffa98beb9eacd15140c57ade43ed7d01a5",
+      "repository": "open-cluster-management/cert-policy-controller",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:0755460cbbec78ad3098f3a0a3f5625ea085f0eb28b9efa8f7f78c86337313a0"
+    },
+    {
+      "name": "cis-controller",
+      "tag": "3.6.0-18cc65c946e79c37063921ff20be227f0667feb3",
+      "sha256": "18cc65c946e79c37063921ff20be227f0667feb3",
+      "repository": "open-cluster-management/cis-controller",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:6d17850639c4339cd43d42cafb5f40a789426780a434c4907016bc07e90b9428"
+    },
+    {
+      "name": "cis-crawler",
+      "tag": "3.6.0-930eb1915b3579e608e579a76cc290d75e24fcb6",
+      "sha256": "930eb1915b3579e608e579a76cc290d75e24fcb6",
+      "repository": "open-cluster-management/cis-crawler",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:14200ccc14f65a33633a19c79911e17b0299697720c0b82fde9ce6c0b5b97e68"
+    },
+    {
+      "name": "configmap-watcher",
+      "tag": "3.3.1-a2e053bac67033b5b09b350b84aae07349d1bc1e",
+      "sha256": "a2e053bac67033b5b09b350b84aae07349d1bc1e",
+      "repository": "open-cluster-management/configmap-watcher",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:0741e7e53d246ee645509a00523391122ed7383ce049b60b92f6ed22746327ec"
+    },
+    {
+      "name": "console-api",
+      "tag": "1.0.0-e29af41cdb57c48fd37431387f29405db4551ccb",
+      "sha256": "e29af41cdb57c48fd37431387f29405db4551ccb",
+      "repository": "open-cluster-management/console-api",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:a1564fe44cbde617428b5ce464436c38a272c36a47c96826a3ea1f4a03cee290"
+    },
+    {
+      "name": "console-header",
+      "tag": "1.0.0-7cbcd7fde45642070c3c47fa883ab4ba2056b151",
+      "sha256": "7cbcd7fde45642070c3c47fa883ab4ba2056b151",
+      "repository": "open-cluster-management/console-header",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:983b0ac3119a49b700e8998db99cace1cd8d0bd12d42a08baa897e166793b013"
+    },
+    {
+      "name": "console-ui",
+      "tag": "1.0.0-070c043a17b6ab1a3b4f3f0edfe5f6b0f24910ce",
+      "sha256": "070c043a17b6ab1a3b4f3f0edfe5f6b0f24910ce",
+      "repository": "open-cluster-management/console-ui",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:8f058d9a4c3bcdfb20f7c75ce6063322ca386f8f83d636722d4dbc72b21f6ea6"
+    },
+    {
+      "name": "coredns",
+      "tag": "1.2.6.1-45b965b691bfcb8dcc78ffbbeea11adde6944ddf",
+      "sha256": "45b965b691bfcb8dcc78ffbbeea11adde6944ddf",
+      "repository": "open-cluster-management/coredns",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:7fd569b897c50dceea4d17c9c00d2784bdd4e8d3cfe85b10a1a24809851aad92"
+    },
+    {
+      "name": "drishti-cis",
+      "tag": "3.4.0-3fe618a4521e64b2a35afc516c41389de0d2a6e5",
+      "sha256": "3fe618a4521e64b2a35afc516c41389de0d2a6e5",
+      "repository": "open-cluster-management/drishti-cis",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:2f0d3ee21d1071697271b9780b7b352fac8a688da9053c77eb3ef1ef617d42f8"
+    },
+    {
+      "name": "endpoint-component-operator",
+      "tag": "1.0.0-798d86729ae9a73ac31c10f38af428b6a00af199",
+      "sha256": "798d86729ae9a73ac31c10f38af428b6a00af199",
+      "repository": "open-cluster-management/endpoint-component-operator",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:b3edec494a5c9f5a9bf65699d0592ca2e50c205132f5337e8df07a7808d03887"
+    },
+    {
+      "name": "endpoint-operator",
+      "tag": "1.0.0-7c653350fa50942f36785fc97ef915c0c28f0a8c",
+      "sha256": "7c653350fa50942f36785fc97ef915c0c28f0a8c",
+      "repository": "open-cluster-management/endpoint-operator",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:d68008a91445e53feeadfcb48c6266a02c869c6b7cf2b7bf4fa8c7f5721c98ab"
+    },
+    {
+      "name": "grc-ui",
+      "tag": "3.6.0-d3ac3f9ba523203a11e9e763848a83be94f594c6",
+      "sha256": "d3ac3f9ba523203a11e9e763848a83be94f594c6",
+      "repository": "open-cluster-management/grc-ui",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:6fb6c72667fff509ce1b462e0de4310ac036f9435a6d8034b6f6c6a9c5098fbf"
+    },
+    {
+      "name": "grc-ui-api",
+      "tag": "3.6.0-8cac39bf0e7f7ecbce23510ce1d3db2c7e3fdcdf",
+      "sha256": "8cac39bf0e7f7ecbce23510ce1d3db2c7e3fdcdf",
+      "repository": "open-cluster-management/grc-ui-api",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:093ad4efa69e16b119ef2c0b6bd569c7adf1e38b1b76ddd49bfee5ebca797db7"
+    },
+    {
+      "name": "iam-policy-controller",
+      "tag": "1.0.0-3a7d5211b6326fd67268bd7492c8a68fbe913e17",
+      "sha256": "3a7d5211b6326fd67268bd7492c8a68fbe913e17",
+      "repository": "open-cluster-management/iam-policy-controller",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:a56d40244a544693ae18178a0be8af76602b89abe146a43613eaeac84a27494e"
+    },
+    {
+      "name": "img-minio",
+      "tag": "RELEASE.2019-04-09T01-22-30Z.3-e0a79bca33af508d6f5078ada71148f413ff0a01",
+      "sha256": "e0a79bca33af508d6f5078ada71148f413ff0a01",
+      "repository": "open-cluster-management/img-minio",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:c6c80c11215353209b8e073bfb7aad2c4d5ba25bba0b88189bdcf011ab9fd880"
+    },
+    {
+      "name": "img-minio-mc",
+      "tag": "RELEASE.2019-04-03T17-59-57Z.3-c2877387279d84ad007f382d15f56d4b5d70b581",
+      "sha256": "c2877387279d84ad007f382d15f56d4b5d70b581",
+      "repository": "open-cluster-management/img-minio-mc",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:c9c3ae1eb5cf46121618f0c08de18d12ac2f90dd91ccb2bbe312cd82970a2753"
+    },
+    {
+      "name": "kui-web-terminal",
+      "tag": "3.5.0-53125afd333b81b88340e596662f0ce8d5500995",
+      "sha256": "53125afd333b81b88340e596662f0ce8d5500995",
+      "repository": "open-cluster-management/kui-web-terminal",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:37d2409cede33f66a5a4b9ce2489d68833aac0ed7b3f9540923331805981c091"
+    },
+    {
+      "name": "management-ingress",
+      "tag": "1.0.0-a8ca8a5578dd71d223e988a510d4a943157902de",
+      "sha256": "a8ca8a5578dd71d223e988a510d4a943157902de",
+      "repository": "open-cluster-management/management-ingress",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:e72489028569822908437c07b60457010b8da1442b4c28b532fd6235061ba493"
+    },
+    {
+      "name": "mcm-compliance",
+      "tag": "3.6.0-dda6e79dd6e295d025a4b484324f61b419f87ce0",
+      "sha256": "dda6e79dd6e295d025a4b484324f61b419f87ce0",
+      "repository": "open-cluster-management/hcm-compliance",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:7ffd5cd8e30c10cf41ad3c271bf61ab3d2e377bd2b13acc7f7aa0fc80df0d700"
+    },
+    {
+      "name": "mcm-topology",
+      "tag": "3.6.0-9c8514093d0b55d0b2924bf3aa5439fbc294507f",
+      "sha256": "9c8514093d0b55d0b2924bf3aa5439fbc294507f",
+      "repository": "open-cluster-management/mcm-topology",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:b674879db8f604923a254492cdc37d0ca4cf53ec17c2e1ddc0e18790bd32b1b0"
+    },
+    {
+      "name": "mcm-topology-api",
+      "tag": "3.6.0-5dfecb0c15982d2557d0f18c5b75b702112676ee",
+      "sha256": "5dfecb0c15982d2557d0f18c5b75b702112676ee",
+      "repository": "open-cluster-management/mcm-topology-api",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:42cdd9ce92389a4f123521190d4ec9d12c28094b07736f2651c3e3c60a97accd"
+    },
+    {
+      "name": "multicloud-manager",
+      "tag": "0.0.1-06b2a61ddc92651e76573d5b55c1f692b0307690",
+      "sha256": "06b2a61ddc92651e76573d5b55c1f692b0307690",
+      "repository": "open-cluster-management/multicloud-operators-foundation",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:66d02f1631146085b87aee7c28039eddbbb3b53c375e4d45aeb4529091d58c9d"
+    },
+    {
+      "name": "multicluster-mongodb",
+      "tag": "3.6.3-5b52b02d01b5fd95e6c8807ff91def4b602ecb05",
+      "sha256": "5b52b02d01b5fd95e6c8807ff91def4b602ecb05",
+      "repository": "open-cluster-management/multicluster-mongodb-image",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:63304510b16c670b22dbc7a5d767e8dd0bcc5f4848249b0541aa8e5db494e294"
+    },
+    {
+      "name": "multicluster-mongodb-init",
+      "tag": "3.6.3-34999d09feb2fe1332efd409f291f95018c0d465",
+      "sha256": "34999d09feb2fe1332efd409f291f95018c0d465",
+      "repository": "open-cluster-management/multicluster-mongodb-init",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:fdcd0cfff2db821fed450b161b751a197e83e8960e43ab839ac2e797782b2723"
+    },
+    {
+      "name": "multicluster-operators-application",
+      "tag": "1.0.0-59f6ae12ee7e9cc0d827d42b023456f36120e649",
+      "sha256": "59f6ae12ee7e9cc0d827d42b023456f36120e649",
+      "repository": "open-cluster-management/multicloud-operators-application",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:7abd9aec80f09ea6542f433ee98df1c66971123bf6b496b57b4e6e499393a9c9"
+    },
+    {
+      "name": "multicluster-operators-channel",
+      "tag": "1.0.0-722ba6ebe2da2e8dfa34301902d7417d891b183a",
+      "sha256": "722ba6ebe2da2e8dfa34301902d7417d891b183a",
+      "repository": "open-cluster-management/multicloud-operators-channel",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:b55842d925a245b4db2d719d142afc972e997dc56b8079346b7b465d6c72e3ab"
+    },
+    {
+      "name": "multicluster-operators-deployable",
+      "tag": "1.0.0-158722845851d83d8b6fa0937e9a5a4ac617cc3a",
+      "sha256": "158722845851d83d8b6fa0937e9a5a4ac617cc3a",
+      "repository": "open-cluster-management/multicloud-operators-deployable",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:5d0bd55b653bece9feff81ff3346075fb44b16b8f03cc409ac7970c539323149"
+    },
+    {
+      "name": "multicluster-operators-placementrule",
+      "tag": "1.0.0-5a52c406aebc5bf396f02d33e68036a6672e5556",
+      "sha256": "5a52c406aebc5bf396f02d33e68036a6672e5556",
+      "repository": "open-cluster-management/multicloud-operators-placementrule",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:2bb2c289ba434e9ef5c508475004376f057bd42eb00cb29b9c7780e35d368ec0"
+    },
+    {
+      "name": "multicluster-operators-subscription",
+      "tag": "1.0.0-35b1203dd884070a1a85434374f1a25f911c6502",
+      "sha256": "35b1203dd884070a1a85434374f1a25f911c6502",
+      "repository": "open-cluster-management/multicloud-operators-subscription",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:8a3b6975d3ab66919618f656687ed630fe892262172d6b1ad1e55eed343dbe60"
+    },
+    {
+      "name": "multicluster-operators-subscription-release",
+      "tag": "1.0.0-d91a1039f29d65ed148247782a62c0ae36d5199e",
+      "sha256": "d91a1039f29d65ed148247782a62c0ae36d5199e",
+      "repository": "open-cluster-management/multicloud-operators-subscription-release",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:0e06adeee9f2620977aa1539b4105f62b9200a78aaff6dbaf2f0ed4babc9a370"
+    },
+    {
+      "name": "multiclusterhub-operator",
+      "tag": "1.0.0-360c42512eb8d8e851be37b4c2211b1f3f9cc57e",
+      "sha256": "360c42512eb8d8e851be37b4c2211b1f3f9cc57e",
+      "repository": "open-cluster-management/multicloudhub-operator",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:a4aadd966c5e248a080fe23d1d57b119a8d98afd464a300fee5cdc83ac3aea21"
+    },
+    {
+      "name": "multiclusterhub-operator-bundle",
+      "tag": "1.0.0-360c42512eb8d8e851be37b4c2211b1f3f9cc57e",
+      "sha256": "360c42512eb8d8e851be37b4c2211b1f3f9cc57e",
+      "repository": "open-cluster-management/multicloudhub-operator",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:b473cbf3d65582f10a45e78d58565ae7de4f9ad12daf4dd40be311f9c9b91ec9"
+    },
+    {
+      "name": "multiclusterhub-repo",
+      "tag": "1.0.0-6a53b9ac85c016a14ff9700ca513852149b501be",
+      "sha256": "6a53b9ac85c016a14ff9700ca513852149b501be",
+      "repository": "open-cluster-management/multicloudhub-repo",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:99c0638b56fc8891031c2b025ab04c16cce3eb68b742771731261d33c77ed896"
+    },
+    {
+      "name": "open-cluster-management-e2e",
+      "tag": "1.0.0-f5e7295fdc554bc1e6a7f4c88fdc09e1d8544d13",
+      "sha256": "f5e7295fdc554bc1e6a7f4c88fdc09e1d8544d13",
+      "repository": "open-cluster-management/open-cluster-management-e2e",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:67ccf9ce2d368b40ad2241fdea7cb4a9227aa39bcb7870fe071a4ea2492d8ee5"
+    },
+    {
+      "name": "rcm-controller",
+      "tag": "1.0.0-a352b281fdf78a350d59cc8292cf0b4574b05f9f",
+      "sha256": "a352b281fdf78a350d59cc8292cf0b4574b05f9f",
+      "repository": "open-cluster-management/rcm-controller",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:1a14e787f153c0c92fbb5bf3c03c58d43c1e7945ec5bda6c533c1dd8b2863eae"
+    },
+    {
+      "name": "redisgraph-tls",
+      "tag": "3.5.0-77e979eb53220b64ff405a5d3e88629d271dd0af",
+      "sha256": "77e979eb53220b64ff405a5d3e88629d271dd0af",
+      "repository": "open-cluster-management/redisgraph-tls",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:8028348ae9286be35d6ae381c3da130fc72f969626a368d19bc749ad42e59aea"
+    },
+    {
+      "name": "search-aggregator",
+      "tag": "3.5.0-abf23f3bfa276b5b7450c63e66b772f152b7c308",
+      "sha256": "abf23f3bfa276b5b7450c63e66b772f152b7c308",
+      "repository": "open-cluster-management/search-aggregator",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:c2ee908b8b49363e6728e1dfd79758b296f464028b4fe65b1b58c9b40b1b57d3"
+    },
+    {
+      "name": "search-api",
+      "tag": "3.5.0-1614fdef528ebf11424e4d14547f1ccdabcb2515",
+      "sha256": "1614fdef528ebf11424e4d14547f1ccdabcb2515",
+      "repository": "open-cluster-management/search-api",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:4bf51f1767ceb98752fea71c0a16b65e0de01f855732da91865d26197c3f897a"
+    },
+    {
+      "name": "search-collector",
+      "tag": "3.5.0-71f84380b488afc77e23f5fca35f0e34d5b6fb3e",
+      "sha256": "71f84380b488afc77e23f5fca35f0e34d5b6fb3e",
+      "repository": "open-cluster-management/search-collector",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:ba86af1281872d9776faabe1f4b1cfb8e58fe9732972cda4e90fbb3454d6bd2c"
+    },
+    {
+      "name": "search-operator",
+      "tag": "0.1.0-0c816af66df029112ca427b35869843f895b0d86",
+      "sha256": "0c816af66df029112ca427b35869843f895b0d86",
+      "repository": "open-cluster-management/search-operator",
+      "remote": "quay.io/open-cluster-management",
+      "manifest-sha256": "sha256:6c47b2a205181f2a2dedea3cc233e43f4bfb0dc58cd53db4bd561fd1b8f5cc63"
+    }
+  ]

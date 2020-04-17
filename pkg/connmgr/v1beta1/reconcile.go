@@ -101,7 +101,8 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 }
 
 func newConnectionManagerCR(cr *multicloudv1beta1.Endpoint) (*multicloudv1beta1.ConnectionManager, error) {
-	image, err := cr.GetImage("connection-manager")
+	var imageShaDigests = make(map[string]string, 1)
+	image, imageShaDigests, err := cr.GetImage("connection-manager", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "connection-manager")
 		return nil, err
@@ -132,6 +133,7 @@ func newConnectionManagerCR(cr *multicloudv1beta1.Endpoint) (*multicloudv1beta1.
 			BootStrapConfig:  cr.Spec.BootStrapConfig,
 			FullNameOverride: cr.Name + "-connmgr",
 			Image:            image,
+			ImageShaDigests:  imageShaDigests,
 			ImagePullSecret:  cr.Spec.ImagePullSecret,
 		},
 	}, nil

@@ -34,8 +34,11 @@ type ConnectionManagerSpec struct {
 
 	BootStrapConfig map[string]string `json:"bootstrapConfig"`
 
-	Image           image.Image `json:"image,omitempty"`
-	ImagePullSecret string      `json:"imagePullSecret,omitempty"`
+	Image image.Image `json:"image,omitempty"`
+
+	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
+
+	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 }
 
 // ConnectionManagerStatus defines the observed state of ConnectionManager

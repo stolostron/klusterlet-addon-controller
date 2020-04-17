@@ -9,6 +9,7 @@ cover.html
 *.tap
 *.test
 .DS_Store
+kind_kubeconfig.yaml
 
 # Folders
 .build-docker
@@ -16,4 +17,3 @@ build/_output
 build-harness
 build-harness-extensions
 vendor
-

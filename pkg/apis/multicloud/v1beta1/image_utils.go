@@ -10,9 +10,15 @@ package v1beta1
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/ghodss/yaml"
 
 	"github.com/open-cluster-management/endpoint-operator/pkg/image"
+	"github.com/open-cluster-management/endpoint-operator/version"
 )
 
 var defaultComponentImageMap = map[string]string{
@@ -55,24 +61,36 @@ var defaultComponentTagMap = map[string]string{
 	"work-manager":                 "0.0.1",
 }
 
-// GetImage returns the image.Image for the specified component return error if information not found
-func (instance Endpoint) GetImage(component string) (image.Image, error) {
-	img := image.Image{
+type manifest struct {
+	Images []imageManifest `json:"inline"`
+}
+
+type imageManifest struct {
+	Name           string `json:"name,omitempty"`
+	ManifestSha256 string `json:"manifest-sha256,omitempty"`
+}
+
+// GetImage returns the image.Image,  for the specified component return error if information not found
+func (instance Endpoint) GetImage(component string,
+	imageShaDigestIn map[string]string,
+) (img image.Image, imageShaDigest map[string]string, err error) {
+	imageShaDigest = imageShaDigestIn
+	img = image.Image{
 		PullPolicy: instance.Spec.ImagePullPolicy,
 	}
 
-	if instance.Spec.ImageRegistry != "" {
-		img.Repository = instance.Spec.ImageRegistry + "/"
+	if imageName, ok := defaultComponentImageMap[component]; ok {
+		img.Name = imageName
+	} else {
+		return img, imageShaDigest, fmt.Errorf("unable to locate default image name for component %s", component)
 	}
 
-	if imageName, ok := defaultComponentImageMap[component]; ok {
-		img.Repository = img.Repository + imageName
-	} else {
-		return img, fmt.Errorf("unable to locate default image name for component %s", component)
+	if instance.Spec.ImageRegistry != "" {
+		img.Repository = instance.Spec.ImageRegistry
 	}
 
 	if instance.Spec.ImageNamePostfix != "" {
-		img.Repository = img.Repository + instance.Spec.ImageNamePostfix
+		img.Name = img.Name + instance.Spec.ImageNamePostfix
 	}
 
 	if len(instance.Spec.ComponentsImagesTag) > 0 {
@@ -87,11 +105,54 @@ func (instance Endpoint) GetImage(component string) (image.Image, error) {
 		if tag, ok := defaultComponentTagMap[component]; ok {
 			img.Tag = tag
 		} else {
-			return img, fmt.Errorf("unable to locate default tag for component %s", component)
+			return img, imageShaDigest, fmt.Errorf("unable to locate default tag for component %s", component)
 		}
-		imageTagPostfix := os.Getenv("IMAGE_TAG_POSTFIX")
-		img.Tag = img.Tag + imageTagPostfix
+		img.TagPostfix = os.Getenv("IMAGE_TAG_POSTFIX")
+		// fmt.Println("img.TagPostfix:" + img.TagPostfix)
 	}
+	useSHA := os.Getenv("USE_SHA_MANIFEST")
+	// fmt.Println("useSHA:" + useSHA)
+	if strings.ToLower(useSHA) == "true" {
+		im, err := getManifest(img.Name)
+		if err != nil {
+			return img, imageShaDigest, err
+		}
+		if im != nil {
+			shaDigestKey := strings.ReplaceAll(img.Name, "-", "_")
+			// fmt.Println("shaDigestKey:" + shaDigestKey)
+			imageShaDigest[shaDigestKey] = im.ManifestSha256
+			// fmt.Println(("sha:" + imageShaDigest[shaDigestKey]))
+			return img, imageShaDigest, nil
+		}
+	}
+	return img, imageShaDigest, nil
+}
 
-	return img, nil
+//getManifest returns the *imageManifest and nil if not found
+//Return an error only if the manifest is malformed
+func getManifest(imageName string) (*imageManifest, error) {
+	var m manifest
+	m.Images = make([]imageManifest, 0)
+	filePath := filepath.Join("image-manifests", version.Version+".json")
+	// fmt.Println(("filepath:" + filePath))
+	homeDir := os.Getenv("HOME")
+	if homeDir != "" {
+		filePath = filepath.Join(homeDir, filePath)
+	}
+	// fmt.Println(("filepath:" + filePath))
+	b, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		fmt.Println((err.Error()))
+		return nil, err
+	}
+	err = yaml.Unmarshal(b, &m.Images)
+	if err != nil {
+		return nil, err
+	}
+	for i, im := range m.Images {
+		if im.Name == imageName {
+			return &m.Images[i], nil
+		}
+	}
+	return nil, nil
 }

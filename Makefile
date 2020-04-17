@@ -121,4 +121,10 @@ deploy:
 	rm -rf overlays/deploy
 
 .PHONY: functional-test
-functional-test: component/test/functional
+functional-test: 
+	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/endpoint-operator-test/... -- --v=5
+
+.PHONY: functional-test-full
+functional-test-full: build component/test/functional
+
+

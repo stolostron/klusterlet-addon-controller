@@ -6,10 +6,13 @@ ARG IMAGE_NAME
 ARG IMAGE_VERSION
 ARG VCS_REF
 ARG VCS_URL
+ARG MANIFEST_PATH
 
 ENV OPERATOR=/usr/local/bin/endpoint-operator \
     USER_UID=10001 \
     USER_NAME=endpoint-operator
+
+COPY image-manifests image-manifests
 
 COPY deploy/crds deploy/crds
 COPY build/bin /usr/local/bin

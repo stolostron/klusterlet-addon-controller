@@ -102,13 +102,15 @@ func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client
 		"app": instance.Name,
 	}
 
-	deployableImage, err := instance.GetImage("deployable")
+	var imageShaDigests = make(map[string]string, 2)
+
+	deployableImage, imageShaDigests, err := instance.GetImage("deployable", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "deployable")
 		return nil, err
 	}
 
-	subscriptionImage, err := instance.GetImage("subscription")
+	subscriptionImage, imageShaDigests, err := instance.GetImage("subscription", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "subscription")
 		return nil, err
@@ -131,6 +133,7 @@ func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client
 			SubscriptionSpec: multicloudv1beta1.ApplicationManagerSubscriptionSpec{
 				Image: subscriptionImage,
 			},
+			ImageShaDigests: imageShaDigests,
 			ImagePullSecret: instance.Spec.ImagePullSecret,
 		},
 	}, nil

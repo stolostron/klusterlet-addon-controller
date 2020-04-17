@@ -7,6 +7,7 @@
 // Licensed Materials - Property of IBM
 //
 // Copyright (c) 2020 Red Hat, Inc.
+
 package endpoint_operator_test
 
 import (
@@ -44,26 +45,30 @@ var addPatchString = fmt.Sprintf(
 var _ = Describe("Endpoint", func() {
 
 	It("Should create all component CR", func() {
-		By("Creating endpoint")
 		endpoint := newEndpoint(testEndpointName, testNamespace)
+		clientHubDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Delete(testEndpointName, &metav1.DeleteOptions{})
 		createNewUnstructured(clientHubDynamic, gvrEndpoint,
 			endpoint, testEndpointName, testNamespace)
-
 		When("endpoint created, wait for all component CRs to be created", func() {
 			Eventually(func() error {
-				var err error
 				klog.V(1).Info("Wait endpoint component operator...")
-				_, err = clientHub.AppsV1().Deployments(testNamespace).Get(EndpointComponentOperator, metav1.GetOptions{})
+				d, err := clientHub.AppsV1().Deployments(testNamespace).Get(EndpointComponentOperator, metav1.GetOptions{})
+				if err != nil {
+					klog.V(5).Infof("endpoint-component-operator:\n%#v", d)
+				}
 				return err
-			}, 4, 0.2).Should(BeNil())
+			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("endpoint component operator created")
 
 			Eventually(func() error {
 				var err error
 				klog.V(1).Info("Wait cert policy controller...")
-				_, err = clientHubDynamic.Resource(gvrCertpoliciescontroller).Namespace(testNamespace).Get(CertPolicyController, metav1.GetOptions{})
+				r, err := clientHubDynamic.Resource(gvrCertpoliciescontroller).Namespace(testNamespace).Get(CertPolicyController, metav1.GetOptions{})
+				if err != nil {
+					klog.V(5).Infof("Policy controller:\n%#v", r)
+				}
 				return err
-			}, 2, 0.2).Should(BeNil())
+			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("cert policy controller created")
 
 			Eventually(func() error {
@@ -71,7 +76,7 @@ var _ = Describe("Endpoint", func() {
 				klog.V(1).Info("Wait search controller...")
 				_, err = clientHubDynamic.Resource(gvrSearchcollector).Namespace(testNamespace).Get(SearchCollector, metav1.GetOptions{})
 				return err
-			}, 2, 0.2).Should(BeNil())
+			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("search controller created")
 
 			Eventually(func() error {
@@ -79,7 +84,7 @@ var _ = Describe("Endpoint", func() {
 				klog.V(1).Info("Wait policy controller...")
 				_, err = clientHubDynamic.Resource(gvrPolicycontroller).Namespace(testNamespace).Get(PolicyController, metav1.GetOptions{})
 				return err
-			}, 2, 0.2).Should(BeNil())
+			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("policy controller created")
 
 			Eventually(func() error {
@@ -87,7 +92,7 @@ var _ = Describe("Endpoint", func() {
 				klog.V(1).Info("Wait application manager...")
 				_, err = clientHubDynamic.Resource(gvrApplicationmanager).Namespace(testNamespace).Get(ApplicationManager, metav1.GetOptions{})
 				return err
-			}, 2, 0.2).Should(BeNil())
+			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("application manager created")
 
 			Eventually(func() error {
@@ -95,15 +100,14 @@ var _ = Describe("Endpoint", func() {
 				klog.V(1).Info("Wait connection manager...")
 				_, err = clientHubDynamic.Resource(gvrConnectionmanager).Namespace(testNamespace).Get(ConnectionManager, metav1.GetOptions{})
 				return err
-			}, 2, 0.2).Should(BeNil())
+			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("connection manager created")
 
 			Eventually(func() error {
-				var err error
 				klog.V(1).Info("Wait service registries...")
-				_, err = clientHubDynamic.Resource(gvrServiceregistries).Namespace(testNamespace).Get(ServiceRegistries, metav1.GetOptions{})
+				_, err := clientHubDynamic.Resource(gvrServiceregistries).Namespace(testNamespace).Get(ServiceRegistries, metav1.GetOptions{})
 				return err
-			}, 2, 0.2).Should(BeNil())
+			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("service registries created")
 
 		})
@@ -120,7 +124,7 @@ var _ = Describe("Endpoint", func() {
 				klog.V(1).Info("Wait application manager component...")
 				objAppmgr, err = clientHubDynamic.Resource(gvrApplicationmanager).Namespace(testNamespace).Get(ApplicationManager, metav1.GetOptions{})
 				return objAppmgr
-			}, 2, 0.2).Should(BeNil())
+			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("application manager deleted")
 		})
 	})

@@ -120,7 +120,8 @@ func newCertPolicyControllerCR(instance *multicloudv1beta1.Endpoint, client clie
 		"app": instance.Name,
 	}
 
-	image, err := instance.GetImage("cert-policy-controller")
+	var imageShaDigests = make(map[string]string, 1)
+	image, imageShaDigests, err := instance.GetImage("cert-policy-controller", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cert-policy")
 		return nil, err
@@ -138,6 +139,7 @@ func newCertPolicyControllerCR(instance *multicloudv1beta1.Endpoint, client clie
 			ClusterNamespace:  instance.Spec.ClusterNamespace,
 			ConnectionManager: instance.Name + "-connmgr",
 			Image:             image,
+			ImageShaDigests:   imageShaDigests,
 			ImagePullSecret:   instance.Spec.ImagePullSecret,
 		},
 	}, err

@@ -46,6 +46,9 @@ spec:
             image:
               description: Image defines the image to pull for a container
               properties:
+                name:
+                  minLength: 1
+                  type: string
                 pullPolicy:
                   description: PullPolicy describes a policy for if/when to pull a
                     container image
@@ -56,9 +59,15 @@ spec:
                 tag:
                   minLength: 1
                   type: string
+                tagPostfix:
+                  type: string
               type: object
             imagePullSecret:
               type: string
+            imageShaDigests:
+              additionalProperties:
+                type: string
+              type: object
             ocp:
               type: boolean
           required:
@@ -66,6 +75,7 @@ spec:
           - clusterNamespace
           - connectionManager
           - fullnameOverride
+          - ocp
           type: object
         status:
           description: IAMPolicyControllerStatus defines the observed state of IAMPolicyController

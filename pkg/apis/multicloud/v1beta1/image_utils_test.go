@@ -22,7 +22,6 @@
 package v1beta1
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -56,7 +55,8 @@ func TestGetImage(t *testing.T) {
 				imageTagPostfix: "",
 			},
 			want: image.Image{
-				Repository: fmt.Sprintf("sample-registry/uniquePath/%s", defaultComponentImageMap["component-operator"]),
+				Repository: "sample-registry/uniquePath",
+				Name:       defaultComponentImageMap["component-operator"],
 				Tag:        defaultComponentTagMap["component-operator"],
 			},
 			wantErr: false,
@@ -83,8 +83,10 @@ func TestGetImage(t *testing.T) {
 				imageTagPostfix: "-aUnique-Post-Fix",
 			},
 			want: image.Image{
-				Repository: fmt.Sprintf("sample-registry-2/uniquePath/%s", defaultComponentImageMap["connection-manager"]),
-				Tag:        fmt.Sprintf("%s-aUnique-Post-Fix", defaultComponentTagMap["connection-manager"]),
+				Repository: "sample-registry-2/uniquePath",
+				Name:       defaultComponentImageMap["connection-manager"],
+				Tag:        defaultComponentTagMap["connection-manager"],
+				TagPostfix: "aUnique-Post-Fix",
 			},
 			wantErr: false,
 		},
@@ -103,7 +105,8 @@ func TestGetImage(t *testing.T) {
 				imageTagPostfix: "-aUnique-Post-Fix",
 			},
 			want: image.Image{
-				Repository: fmt.Sprintf("sample-registry/uniquePath/%s", defaultComponentImageMap["connection-manager"]),
+				Repository: "sample-registry/uniquePath",
+				Name:       defaultComponentImageMap["connection-manager"],
 				Tag:        "some-special-version-tag",
 			},
 			wantErr: false,
@@ -112,17 +115,81 @@ func TestGetImage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("Running tests %s", tt.name)
 			err := os.Setenv(imageTagPostfixKey, tt.args.imageTagPostfix)
 			if err != nil {
 				t.Errorf("Cannot set env %s", imageTagPostfixKey)
 			}
-			img, err := tt.args.endpoint.GetImage(tt.args.component)
+			var imageShaDigests map[string]string
+			img, _, err := tt.args.endpoint.GetImage(tt.args.component, imageShaDigests)
 			if tt.wantErr != (err != nil) {
 				t.Errorf("Should return error correctly.")
 			} else if !tt.wantErr {
-				assert.Equal(t, img.Repository, tt.want.Repository, "image name should match")
-				assert.Equal(t, img.Tag, tt.want.Tag, "image tag should match")
+				assert.Equal(t, tt.want.Repository, img.Repository, "repository should match")
+				assert.Equal(t, tt.want.Name, img.Name, "image name should match")
+				assert.Equal(t, tt.want.Tag, img.Tag, "image tag should match")
 			}
 		})
 	}
 }
+
+// func TestGetImageWithManifest(t *testing.T) {
+// 	os.Setenv("USE_SHA_MANIFEST", "true")
+
+// 	type args struct {
+// 		endpoint        *Endpoint
+// 		component       string
+// 		imageTagPostfix string
+// 	}
+
+// 	tests := []struct {
+// 		name    string
+// 		args    args
+// 		want    image.Image
+// 		wantErr bool
+// 	}{
+// 		{
+// 			name: "Use Default Component Sha",
+// 			args: args{
+// 				endpoint: &Endpoint{
+// 					Spec: EndpointSpec{
+// 						ImageRegistry: "sample-registry/uniquePath",
+// 					},
+// 				},
+// 				component:       "component-operator",
+// 				imageTagPostfix: "",
+// 			},
+// 			want: image.Image{
+// 				Repository: "sample-registry/uniquePath",
+// 				Name:       defaultComponentImageMap["component-operator"],
+// 				Tag:        defaultComponentTagMap["component-operator"],
+// 			},
+// 			wantErr: false,
+// 		},
+// 		{
+// 			name: "Not Exists Component",
+// 			args: args{
+// 				endpoint:        &Endpoint{},
+// 				component:       "notExistsComponent",
+// 				imageTagPostfix: "",
+// 			},
+// 			want:    image.Image{},
+// 			wantErr: true,
+// 		},
+// 	}
+
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			t.Logf("Running tests %s", tt.name)
+// 			imageShaDigests := make(map[string]string)
+// 			img, _, err := tt.args.endpoint.GetImage(tt.args.component, imageShaDigests)
+// 			if tt.wantErr != (err != nil) {
+// 				t.Errorf("Should return error correctly. Error:%s", err)
+// 			} else if !tt.wantErr {
+// 				assert.Equal(t, tt.want.Repository, img.Repository, "repository should match")
+// 				assert.Equal(t, tt.want.Name, img.Name, "image name should match")
+// 				assert.Equal(t, tt.want.Tag, img.Tag, "image tag should match")
+// 			}
+// 		})
+// 	}
+// }

@@ -120,31 +120,33 @@ func newCISControllerCR(instance *multicloudv1beta1.Endpoint, client client.Clie
 		"app": instance.Name,
 	}
 
-	imageController, err := instance.GetImage("cis-controller-controller")
+	var imageShaDigests = make(map[string]string, 5)
+
+	imageController, imageShaDigests, err := instance.GetImage("cis-controller-controller", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cis-controller-controller")
 		return nil, err
 	}
 
-	imageCrawler, err := instance.GetImage("cis-controller-crawler")
+	imageCrawler, imageShaDigests, err := instance.GetImage("cis-controller-crawler", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cis-controller-crawler")
 		return nil, err
 	}
 
-	imageDrishti, err := instance.GetImage("cis-controller-drishti")
+	imageDrishti, imageShaDigests, err := instance.GetImage("cis-controller-drishti", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cis-controller-drishti")
 		return nil, err
 	}
 
-	imageMinio, err := instance.GetImage("cis-controller-minio")
+	imageMinio, imageShaDigests, err := instance.GetImage("cis-controller-minio", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cis-controller-minio")
 		return nil, err
 	}
 
-	imageMinioCleaner, err := instance.GetImage("cis-controller-minio-cleaner")
+	imageMinioCleaner, imageShaDigests, err := instance.GetImage("cis-controller-minio-cleaner", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cis-controller-minio-cleaner")
 		return nil, err
@@ -180,6 +182,7 @@ func newCISControllerCR(instance *multicloudv1beta1.Endpoint, client client.Clie
 			MinioCleaner: multicloudv1beta1.CISControllerSpecMinioCleaner{
 				Image: imageMinioCleaner,
 			},
+			ImageShaDigests: imageShaDigests,
 			ImagePullSecret: instance.Spec.ImagePullSecret,
 			IsOpenShift:     inspect.Info.KubeVendor == inspect.KubeVendorOpenShift,
 		},
