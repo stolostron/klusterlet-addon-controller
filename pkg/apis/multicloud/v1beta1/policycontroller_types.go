@@ -33,9 +33,13 @@ type PolicyControllerSpec struct {
 	ClusterNamespace string `json:"clusterNamespace,omitempty"`
 	DeployedOnHub    bool   `json:"deployedOnHub,omitempty"`
 	//Image information for the PolicyController
-	Image                       image.Image `json:"image,omitempty"`
-	ImagePullSecret             string      `json:"imagePullSecret,omitempty"`
-	PostDeleteJobServiceAccount string      `json:"postDeleteJobServiceAccount,omitempty"`
+	Image image.Image `json:"image,omitempty"`
+
+	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
+
+	ImagePullSecret string `json:"imagePullSecret,omitempty"`
+
+	PostDeleteJobServiceAccount string `json:"postDeleteJobServiceAccount,omitempty"`
 }
 
 // PolicyControllerStatus defines the observed state of PolicyController

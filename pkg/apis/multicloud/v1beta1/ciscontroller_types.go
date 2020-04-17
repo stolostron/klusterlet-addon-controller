@@ -42,6 +42,8 @@ type CISControllerSpec struct {
 
 	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 
+	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
+
 	IsOpenShift bool `json:"ocp"`
 }
 

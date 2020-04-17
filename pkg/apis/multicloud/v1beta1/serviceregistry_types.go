@@ -28,7 +28,10 @@ type ServiceRegistrySpec struct {
 	FullNameOverride string               `json:"fullnameOverride"`
 	ServiceRegistry  ServiceRegistryImage `json:"serviceRegistry"`
 	CoreDNS          CoreDNSImage         `json:"coredns"`
-	ImagePullSecret  string               `json:"imagePullSecret,omitempty"`
+
+	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
+
+	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 
 	ConnectionManager                  string `json:"connectionManager"`
 	DNSSuffix                          string `json:"dnsSuffix,omitempty"`

@@ -85,7 +85,18 @@ Example of Klusterlet CR `/deploy/crds/multicloud_v1beta1_endpoint_cr.yaml`
    ```
     export COMPONENT_TAG_EXTENSION=-SNAPSHOT-2020-04-01-20-49-00
    ```
-2. Run the following command to setup & start a kind cluster:
+2. Run tests:
+   - Run the following command to setup & start a kind cluster:
    ```
-    make fucntional-test
+    make component/test/functional
    ```
+   - Run the following command to build the image, setup & start a kind cluster:
+    ```
+    make functional-test-full
+   ```
+   - Run the following command to run the test on an existing cluster:
+    ```
+    export KUBECONFIG=...
+    make functional-test
+   ```
+  

@@ -44,6 +44,9 @@ spec:
                 image:
                   description: Image defines the image to pull for a container
                   properties:
+                    name:
+                      minLength: 1
+                      type: string
                     pullPolicy:
                       description: PullPolicy describes a policy for if/when to pull
                         a container image
@@ -54,6 +57,8 @@ spec:
                     tag:
                       minLength: 1
                       type: string
+                    tagPostfix:
+                      type: string
                   type: object
               type: object
             dnsSuffix:
@@ -62,6 +67,10 @@ spec:
               type: string
             imagePullSecret:
               type: string
+            imageShaDigests:
+              additionalProperties:
+                type: string
+              type: object
             istioIngressGateway:
               type: string
             istioServiceEntryRegistryNamespace:
@@ -75,6 +84,9 @@ spec:
                 image:
                   description: Image defines the image to pull for a container
                   properties:
+                    name:
+                      minLength: 1
+                      type: string
                     pullPolicy:
                       description: PullPolicy describes a policy for if/when to pull
                         a container image
@@ -84,6 +96,8 @@ spec:
                       type: string
                     tag:
                       minLength: 1
+                      type: string
+                    tagPostfix:
                       type: string
                   type: object
               required:

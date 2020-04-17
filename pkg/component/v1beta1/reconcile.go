@@ -194,15 +194,33 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) (*appsv1.Deployment, er
 		"app": instance.Name,
 	}
 
+	var imageShaDigests = make(map[string]string, 1)
 	var deploymentImage string
 	if instance.Spec.ComponentOperatorImage != "" {
 		deploymentImage = instance.Spec.ComponentOperatorImage
 	} else {
-		image, err := instance.GetImage("component-operator")
+		image, imageShaDigests, err := instance.GetImage("component-operator", imageShaDigests)
 		if err != nil {
 			return nil, err
 		}
-		deploymentImage = image.Repository + ":" + image.Tag
+		keys := make([]string, 0, len(imageShaDigests))
+		for k := range imageShaDigests {
+			keys = append(keys, k)
+		}
+
+		// log.Info("sha-reconcile:", "sha", imageShaDigests)
+
+		// if sha, ok := imageShaDigests["endpoint_component_operator"]; ok {
+		// 	log.Info("SHA:", "sha", sha)
+		// 	deploymentImage = image.Repository + "/" + image.Name + "@" + sha
+		// } else {
+		// 	deploymentImage = image.Repository + "/" + image.Name + ":" + image.Tag + image.TagPostfix
+		// }
+		if len(keys) == 0 {
+			deploymentImage = image.Repository + "/" + image.Name + ":" + image.Tag + image.TagPostfix
+		} else {
+			deploymentImage = image.Repository + "/" + image.Name + "@" + imageShaDigests[keys[0]]
+		}
 	}
 
 	deployment := &appsv1.Deployment{

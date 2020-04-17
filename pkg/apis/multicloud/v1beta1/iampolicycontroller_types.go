@@ -34,8 +34,11 @@ type IAMPolicyControllerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ConnectionManager string `json:"connectionManager"`
 
-	Image           image.Image `json:"image,omitempty"`
-	ImagePullSecret string      `json:"imagePullSecret,omitempty"`
+	Image image.Image `json:"image,omitempty"`
+
+	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
+
+	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 
 	IsOpenShift bool `json:"ocp"`
 }

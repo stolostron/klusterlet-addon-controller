@@ -18,6 +18,10 @@ type Image struct {
 	// +kubebuilder:validation:MinLength=1
 	Repository string `json:"repository,omitempty"`
 	// +kubebuilder:validation:MinLength=1
-	Tag        string            `json:"tag,omitempty"`
+	Name string `json:"name,omitempty"`
+	// +kubebuilder:validation:MinLength=1
+	Tag string `json:"tag,omitempty"`
+
+	TagPostfix string            `json:"tagPostfix,omitempty"`
 	PullPolicy corev1.PullPolicy `json:"pullPolicy,omitempty"`
 }

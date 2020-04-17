@@ -101,7 +101,8 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 }
 
 func newPolicyControllerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*multicloudv1beta1.PolicyController, error) {
-	image, err := cr.GetImage("policy-controller")
+	var imageShaDigests = make(map[string]string, 1)
+	image, imageShaDigests, err := cr.GetImage("policy-controller", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "policy-controller")
 		return nil, err
@@ -122,6 +123,7 @@ func newPolicyControllerCR(cr *multicloudv1beta1.Endpoint, client client.Client)
 			ClusterNamespace:            cr.Spec.ClusterNamespace,
 			ConnectionManager:           cr.Name + "-connmgr",
 			Image:                       image,
+			ImageShaDigests:             imageShaDigests,
 			ImagePullSecret:             cr.Spec.ImagePullSecret,
 			DeployedOnHub:               inspect.DeployedOnHub(client),
 			PostDeleteJobServiceAccount: cr.Name + "-component-operator",

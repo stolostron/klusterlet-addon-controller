@@ -100,7 +100,8 @@ func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*mu
 		"app": cr.Name,
 	}
 
-	workMgrImage, err := cr.GetImage("work-manager")
+	var imageShaDigests = make(map[string]string, 1)
+	workMgrImage, imageShaDigests, err := cr.GetImage("work-manager", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "work-manager")
 		return nil, err
@@ -139,7 +140,7 @@ func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*mu
 				Enabled: true,
 				Image:   workMgrImage,
 			},
-
+			ImageShaDigests: imageShaDigests,
 			ImagePullSecret: cr.Spec.ImagePullSecret,
 		},
 	}, nil

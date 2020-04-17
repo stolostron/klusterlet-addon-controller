@@ -121,7 +121,8 @@ func newSearchCollectorCR(instance *multicloudv1beta1.Endpoint, client client.Cl
 		"app": instance.Name,
 	}
 
-	image, err := instance.GetImage("search-collector")
+	var imageShaDigests = make(map[string]string, 1)
+	image, imageShaDigests, err := instance.GetImage("search-collector", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "search-collector")
 		return nil, err
@@ -139,6 +140,7 @@ func newSearchCollectorCR(instance *multicloudv1beta1.Endpoint, client client.Cl
 			ClusterNamespace:  instance.Spec.ClusterNamespace,
 			ConnectionManager: instance.Name + "-connmgr",
 			Image:             image,
+			ImageShaDigests:   imageShaDigests,
 			ImagePullSecret:   instance.Spec.ImagePullSecret,
 		},
 	}, err

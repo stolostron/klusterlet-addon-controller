@@ -42,6 +42,8 @@ type WorkManagerSpec struct {
 
 	WorkManagerConfig WorkManagerConfig `json:"workManager,omitempty"`
 
+	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
+
 	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 }
 

@@ -168,12 +168,14 @@ func newServiceRegistryCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1be
 	labels := map[string]string{
 		"app": instance.Name,
 	}
-	serviceRegistryImage, err := instance.GetImage("service-registry")
+	var imageShaDigests = make(map[string]string, 2)
+	serviceRegistryImage, imageShaDigests, err := instance.GetImage("service-registry", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "service registry")
 		return nil, err
 	}
-	coreDNSImage, err := instance.GetImage("coredns")
+
+	coreDNSImage, imageShaDigests, err := instance.GetImage("coredns", imageShaDigests)
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "coredns")
 		return nil, err
@@ -200,6 +202,7 @@ func newServiceRegistryCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1be
 			Plugins:                            instance.Spec.ServiceRegistryConfig.Plugins,
 			IstioIngressGateway:                instance.Spec.ServiceRegistryConfig.IstioIngressGateway,
 			IstioServiceEntryRegistryNamespace: instance.Spec.ServiceRegistryConfig.IstioserviceEntryRegistryNamespace,
+			ImageShaDigests:                    imageShaDigests,
 			ImagePullSecret:                    instance.Spec.ImagePullSecret,
 		},
 	}, nil

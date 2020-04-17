@@ -38,6 +38,8 @@ type ApplicationManagerSpec struct {
 	DeployableSpec   ApplicationManagerDeployableSpec   `json:"deployable"`
 	SubscriptionSpec ApplicationManagerSubscriptionSpec `json:"subscription"`
 
+	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
+
 	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 }
 
