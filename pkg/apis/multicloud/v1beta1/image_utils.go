@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 	"github.com/open-cluster-management/endpoint-operator/version"
@@ -61,6 +62,12 @@ var defaultComponentTagMap = map[string]string{
 	"work-manager":                 "0.0.1",
 }
 
+//Manifest contains the manifest.
+//The Manifest is loaded using the LoadManifest method.
+var Manifest manifest
+
+var log = logf.Log.WithName("image_utils")
+
 type manifest struct {
 	Images []imageManifest `json:"inline"`
 }
@@ -68,6 +75,13 @@ type manifest struct {
 type imageManifest struct {
 	Name           string `json:"name,omitempty"`
 	ManifestSha256 string `json:"manifest-sha256,omitempty"`
+}
+
+func init() {
+	err := LoadManifest()
+	if err != nil {
+		log.Error(err, "Error while reading the manifest")
+	}
 }
 
 // GetImage returns the image.Image,  for the specified component return error if information not found
@@ -107,13 +121,12 @@ func (instance Endpoint) GetImage(component string,
 		} else {
 			return img, imageShaDigest, fmt.Errorf("unable to locate default tag for component %s", component)
 		}
-		img.TagPostfix = os.Getenv("IMAGE_TAG_POSTFIX")
-		// fmt.Println("img.TagPostfix:" + img.TagPostfix)
 	}
+	img.TagPostfix = os.Getenv("IMAGE_TAG_POSTFIX")
 	useSHA := os.Getenv("USE_SHA_MANIFEST")
 	// fmt.Println("useSHA:" + useSHA)
 	if strings.ToLower(useSHA) == "true" {
-		im, err := getManifest(img.Name)
+		im, err := getImageManifest(img.Name)
 		if err != nil {
 			return img, imageShaDigest, err
 		}
@@ -128,31 +141,33 @@ func (instance Endpoint) GetImage(component string,
 	return img, imageShaDigest, nil
 }
 
-//getManifest returns the *imageManifest and nil if not found
+//getImageManifest returns the *imageManifest and nil if not found
 //Return an error only if the manifest is malformed
-func getManifest(imageName string) (*imageManifest, error) {
-	var m manifest
-	m.Images = make([]imageManifest, 0)
+func getImageManifest(imageName string) (*imageManifest, error) {
+	for i, im := range Manifest.Images {
+		if im.Name == imageName {
+			return &Manifest.Images[i], nil
+		}
+	}
+	return nil, nil
+}
+
+//LoadManifest returns the *imageManifest and nil if not found
+//Return an error only if the manifest is malformed
+func LoadManifest() error {
+	Manifest.Images = make([]imageManifest, 0)
 	filePath := filepath.Join("image-manifests", version.Version+".json")
-	// fmt.Println(("filepath:" + filePath))
 	homeDir := os.Getenv("HOME")
 	if homeDir != "" {
 		filePath = filepath.Join(homeDir, filePath)
 	}
-	// fmt.Println(("filepath:" + filePath))
 	b, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		fmt.Println((err.Error()))
-		return nil, err
+		return err
 	}
-	err = yaml.Unmarshal(b, &m.Images)
+	err = yaml.Unmarshal(b, &Manifest.Images)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	for i, im := range m.Images {
-		if im.Name == imageName {
-			return &m.Images[i], nil
-		}
-	}
-	return nil, nil
+	return nil
 }
