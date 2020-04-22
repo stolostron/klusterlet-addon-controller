@@ -12,9 +12,11 @@ package endpoint_operator_test
 
 import (
 	"fmt"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -22,14 +24,46 @@ import (
 )
 
 const (
-	ApplicationManager        = "endpoint-appmgr"
-	CertPolicyController      = "endpoint-certpolicyctrl"
-	ConnectionManager         = "endpoint-connmgr"
-	PolicyController          = "endpoint-policyctrl"
-	SearchCollector           = "endpoint-search"
-	WorkManager               = "endpoint-workmgr"
-	ServiceRegistries         = "endpoint-svcreg"
-	EndpointComponentOperator = "endpoint-component-operator"
+	applicationManager        = "endpoint-appmgr"
+	certPolicyController      = "endpoint-certpolicyctrl"
+	connectionManager         = "endpoint-connmgr"
+	policyController          = "endpoint-policyctrl"
+	searchCollector           = "endpoint-search"
+	workManager               = "endpoint-workmgr"
+	serviceRegistries         = "endpoint-svcreg"
+	endpointComponentOperator = "endpoint-component-operator"
+)
+
+const (
+	//We can not test on the sha value as the image manifest is overwriten by CICD
+	endpointComponentOperatorContainer = "endpoint-component-operator"
+	endpointComponentOperatorImage     = "endpoint-component-operator"
+	endpointComponentOperatorSha       = "sha256:b3edec494a5c9f5a9bf65699d0592ca2e50c205132f5337e8df07a7808d03887"
+	endpointComponentOperatorImagePath = defaultImageRegistry + "/" + endpointComponentOperatorImage
+
+	certPolicyControllerImage  = "cert-policy-controller"
+	certPolicyControllerShaKey = "cert_policy_controller"
+
+	searchCollectorImage  = "search-collector"
+	searchCollectorShaKey = "search_collector"
+
+	policyControllerImage  = "mcm-compliance"
+	policyControllerShaKey = "mcm_compliance"
+
+	applicationManagerSubImage  = "multicluster-operators-subscription"
+	applicationManagerSubShaKey = "multicluster_operators_subscription"
+
+	applicationManagerDepImage  = "multicluster-operators-deployable"
+	applicationManagerDepShaKey = "multicluster_operators_deployable"
+
+	connectionManagerImage  = "multicloud-manager"
+	connectionManagerShaKey = "multicloud_manager"
+
+	serviceRegistriesDNSImage  = "coredns"
+	serviceRegistriesDNSShaKey = "coredns"
+
+	serviceRegistriesSRImage  = "multicloud-manager"
+	serviceRegistriesSRShaKey = "multicloud_manager"
 )
 
 var deletePatchString = fmt.Sprintf(
@@ -46,83 +80,149 @@ var _ = Describe("Endpoint", func() {
 
 	It("Should create all component CR", func() {
 		endpoint := newEndpoint(testEndpointName, testNamespace)
-		clientHubDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Delete(testEndpointName, &metav1.DeleteOptions{})
-		createNewUnstructured(clientHubDynamic, gvrEndpoint,
+		clientClusterDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Delete(testEndpointName, &metav1.DeleteOptions{})
+		createNewUnstructured(clientClusterDynamic, gvrEndpoint,
 			endpoint, testEndpointName, testNamespace)
 		When("endpoint created, wait for all component CRs to be created", func() {
+			var endpointComponentOperatorDeployment *appsv1.Deployment
 			Eventually(func() error {
+				var err error
 				klog.V(1).Info("Wait endpoint component operator...")
-				d, err := clientHub.AppsV1().Deployments(testNamespace).Get(EndpointComponentOperator, metav1.GetOptions{})
-				if err != nil {
-					klog.V(5).Infof("endpoint-component-operator:\n%#v", d)
-				}
+				endpointComponentOperatorDeployment, err = clientCluster.AppsV1().Deployments(testNamespace).Get(endpointComponentOperator, metav1.GetOptions{})
 				return err
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("endpoint component operator created")
+			var image string
+			for _, c := range endpointComponentOperatorDeployment.Spec.Template.Spec.Containers {
+				if c.Name == endpointComponentOperatorContainer {
+					image = c.Image
+					klog.Infof("image:%s", image)
+					break
+				}
+			}
+			if useSha {
+				splits := strings.Split(image, "@")
+				//We can not test the sha itself because manifest is overwriten in CICD
+				Expect(len(splits)).To(Equal(2))
+				Expect(len(splits[1]) > 0).To((BeTrue()))
+			} else if tagPostfix != "" {
+				//We can not test the tag itself because it is defined in CICD
+				Expect(strings.Contains(image, tagPostfix)).To(BeTrue())
+			} else {
+				Expect(len(image) > len(endpointComponentOperatorImagePath)+1).To(BeTrue())
+			}
 
+			var cr *unstructured.Unstructured
 			Eventually(func() error {
 				var err error
 				klog.V(1).Info("Wait cert policy controller...")
-				r, err := clientHubDynamic.Resource(gvrCertpoliciescontroller).Namespace(testNamespace).Get(CertPolicyController, metav1.GetOptions{})
-				if err != nil {
-					klog.V(5).Infof("Policy controller:\n%#v", r)
-				}
+				cr, err = clientClusterDynamic.Resource(gvrCertpoliciescontroller).Namespace(testNamespace).Get(certPolicyController, metav1.GetOptions{})
 				return err
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("cert policy controller created")
 
+			spec := cr.Object["spec"].(map[string]interface{})
+			imageMap, ok, err := unstructured.NestedStringMap(spec, "image")
+			Expect(err).To(BeNil())
+			Expect(ok).To(BeTrue())
+			checkImageAttributes(cr, useSha, imageMap, certPolicyControllerImage, defaultImageRegistry, tagPostfix, certPolicyControllerShaKey)
+
 			Eventually(func() error {
 				var err error
 				klog.V(1).Info("Wait search controller...")
-				_, err = clientHubDynamic.Resource(gvrSearchcollector).Namespace(testNamespace).Get(SearchCollector, metav1.GetOptions{})
+				cr, err = clientClusterDynamic.Resource(gvrSearchcollector).Namespace(testNamespace).Get(searchCollector, metav1.GetOptions{})
 				return err
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("search controller created")
 
+			spec = cr.Object["spec"].(map[string]interface{})
+			imageMap, ok, err = unstructured.NestedStringMap(spec, "image")
+			Expect(err).To(BeNil())
+			Expect(ok).To(BeTrue())
+			checkImageAttributes(cr, useSha, imageMap, searchCollectorImage, defaultImageRegistry, tagPostfix, searchCollectorShaKey)
+
 			Eventually(func() error {
 				var err error
 				klog.V(1).Info("Wait policy controller...")
-				_, err = clientHubDynamic.Resource(gvrPolicycontroller).Namespace(testNamespace).Get(PolicyController, metav1.GetOptions{})
+				cr, err = clientClusterDynamic.Resource(gvrPolicycontroller).Namespace(testNamespace).Get(policyController, metav1.GetOptions{})
 				return err
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("policy controller created")
 
+			spec = cr.Object["spec"].(map[string]interface{})
+			imageMap, ok, err = unstructured.NestedStringMap(spec, "image")
+			Expect(err).To(BeNil())
+			Expect(ok).To(BeTrue())
+			checkImageAttributes(cr, useSha, imageMap, policyControllerImage, defaultImageRegistry, tagPostfix, policyControllerShaKey)
+
 			Eventually(func() error {
 				var err error
 				klog.V(1).Info("Wait application manager...")
-				_, err = clientHubDynamic.Resource(gvrApplicationmanager).Namespace(testNamespace).Get(ApplicationManager, metav1.GetOptions{})
+				cr, err = clientClusterDynamic.Resource(gvrApplicationmanager).Namespace(testNamespace).Get(applicationManager, metav1.GetOptions{})
 				return err
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("application manager created")
 
+			spec = cr.Object["spec"].(map[string]interface{})
+			deployable := spec["deployable"].(map[string]interface{})
+			imageMap, ok, err = unstructured.NestedStringMap(deployable, "image")
+			Expect(err).To(BeNil())
+			Expect(ok).To(BeTrue())
+			checkImageAttributes(cr, useSha, imageMap, applicationManagerDepImage, defaultImageRegistry, tagPostfix, applicationManagerDepShaKey)
+
+			subscription := spec["subscription"].(map[string]interface{})
+			imageMap, ok, err = unstructured.NestedStringMap(subscription, "image")
+			Expect(err).To(BeNil())
+			Expect(ok).To(BeTrue())
+			checkImageAttributes(cr, useSha, imageMap, applicationManagerSubImage, defaultImageRegistry, tagPostfix, applicationManagerSubShaKey)
+
 			Eventually(func() error {
 				var err error
 				klog.V(1).Info("Wait connection manager...")
-				_, err = clientHubDynamic.Resource(gvrConnectionmanager).Namespace(testNamespace).Get(ConnectionManager, metav1.GetOptions{})
+				cr, err = clientClusterDynamic.Resource(gvrConnectionmanager).Namespace(testNamespace).Get(connectionManager, metav1.GetOptions{})
 				return err
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("connection manager created")
 
+			spec = cr.Object["spec"].(map[string]interface{})
+			imageMap, ok, err = unstructured.NestedStringMap(spec, "image")
+			Expect(err).To(BeNil())
+			Expect(ok).To(BeTrue())
+			checkImageAttributes(cr, useSha, imageMap, connectionManagerImage, defaultImageRegistry, tagPostfix, connectionManagerShaKey)
+
 			Eventually(func() error {
+				var err error
 				klog.V(1).Info("Wait service registries...")
-				_, err := clientHubDynamic.Resource(gvrServiceregistries).Namespace(testNamespace).Get(ServiceRegistries, metav1.GetOptions{})
+				cr, err = clientClusterDynamic.Resource(gvrServiceregistries).Namespace(testNamespace).Get(serviceRegistries, metav1.GetOptions{})
 				return err
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("service registries created")
 
+			spec = cr.Object["spec"].(map[string]interface{})
+			coredns := spec["coredns"].(map[string]interface{})
+			imageMap, ok, err = unstructured.NestedStringMap(coredns, "image")
+			Expect(err).To(BeNil())
+			Expect(ok).To(BeTrue())
+			checkImageAttributes(cr, useSha, imageMap, serviceRegistriesDNSImage, defaultImageRegistry, tagPostfix, serviceRegistriesDNSShaKey)
+
+			serviceRegistry := spec["serviceRegistry"].(map[string]interface{})
+			imageMap, ok, err = unstructured.NestedStringMap(serviceRegistry, "image")
+			Expect(err).To(BeNil())
+			Expect(ok).To(BeTrue())
+			checkImageAttributes(cr, useSha, imageMap, serviceRegistriesSRImage, defaultImageRegistry, tagPostfix, serviceRegistriesSRShaKey)
 		})
 	})
 
 	It("Should delete corresponding component CR", func() {
 		By("Updating endpoint")
-		_, err := clientHubDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Patch(testEndpointName, types.JSONPatchType, []byte(deletePatchString), metav1.PatchOptions{})
+		_, err := clientClusterDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Patch(testEndpointName, types.JSONPatchType, []byte(deletePatchString), metav1.PatchOptions{})
 		Expect(err).To(BeNil())
 
 		When("endpoint update, wait for corresponding component to create/delete", func() {
 			Eventually(func() *unstructured.Unstructured {
 				var objAppmgr *unstructured.Unstructured
 				klog.V(1).Info("Wait application manager component...")
-				objAppmgr, err = clientHubDynamic.Resource(gvrApplicationmanager).Namespace(testNamespace).Get(ApplicationManager, metav1.GetOptions{})
+				objAppmgr, err = clientClusterDynamic.Resource(gvrApplicationmanager).Namespace(testNamespace).Get(applicationManager, metav1.GetOptions{})
 				return objAppmgr
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("application manager deleted")
@@ -131,14 +231,14 @@ var _ = Describe("Endpoint", func() {
 
 	It("Should add corresponding component CR", func() {
 		By("Updating endpoint")
-		_, err := clientHubDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Patch(testEndpointName, types.JSONPatchType, []byte(addPatchString), metav1.PatchOptions{})
+		_, err := clientClusterDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Patch(testEndpointName, types.JSONPatchType, []byte(addPatchString), metav1.PatchOptions{})
 		Expect(err).To(BeNil())
 
 		When("endpoint update, wait for corresponding component to create/delete", func() {
 			Eventually(func() error {
 				var err error
 				klog.V(1).Info("Wait application manager...")
-				_, err = clientHubDynamic.Resource(gvrApplicationmanager).Namespace(testNamespace).Get(ApplicationManager, metav1.GetOptions{})
+				_, err = clientClusterDynamic.Resource(gvrApplicationmanager).Namespace(testNamespace).Get(applicationManager, metav1.GetOptions{})
 				return err
 			}, 5, 1).Should(BeNil())
 			klog.V(1).Info("application manager created")
@@ -147,14 +247,14 @@ var _ = Describe("Endpoint", func() {
 
 	It("Should delete all component CRs", func() {
 		By("Deleteing endpoint")
-		err := clientHubDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Delete(testEndpointName, &metav1.DeleteOptions{})
+		err := clientClusterDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Delete(testEndpointName, &metav1.DeleteOptions{})
 		Expect(err).To(BeNil())
 
 		When("endpoint deleted, wait for all components CR to be deleted", func() {
 			Eventually(func() *unstructured.Unstructured {
 				var objCertPolicyCtl *unstructured.Unstructured
 				klog.V(1).Info("Wait cert policy controller...")
-				objCertPolicyCtl, err = clientHubDynamic.Resource(gvrCertpoliciescontroller).Namespace(testNamespace).Get(CertPolicyController, metav1.GetOptions{})
+				objCertPolicyCtl, err = clientClusterDynamic.Resource(gvrCertpoliciescontroller).Namespace(testNamespace).Get(certPolicyController, metav1.GetOptions{})
 				return objCertPolicyCtl
 			}, 5, 1).Should(BeNil())
 			klog.V(1).Info("cert policy controller deleted")
@@ -162,7 +262,7 @@ var _ = Describe("Endpoint", func() {
 			Eventually(func() *unstructured.Unstructured {
 				var objSearchCtl *unstructured.Unstructured
 				klog.V(1).Info("Wait search controller...")
-				objSearchCtl, err = clientHubDynamic.Resource(gvrSearchcollector).Namespace(testNamespace).Get(SearchCollector, metav1.GetOptions{})
+				objSearchCtl, err = clientClusterDynamic.Resource(gvrSearchcollector).Namespace(testNamespace).Get(searchCollector, metav1.GetOptions{})
 				return objSearchCtl
 			}, 5, 1).Should(BeNil())
 			klog.V(1).Info("search controller deleted")
@@ -170,7 +270,7 @@ var _ = Describe("Endpoint", func() {
 			Eventually(func() *unstructured.Unstructured {
 				var objPolicyCtl *unstructured.Unstructured
 				klog.V(1).Info("Wait policy controller...")
-				objPolicyCtl, err = clientHubDynamic.Resource(gvrPolicycontroller).Namespace(testNamespace).Get(PolicyController, metav1.GetOptions{})
+				objPolicyCtl, err = clientClusterDynamic.Resource(gvrPolicycontroller).Namespace(testNamespace).Get(policyController, metav1.GetOptions{})
 				return objPolicyCtl
 			}, 5, 1).Should(BeNil())
 			klog.V(1).Info("policy controller deleted")
@@ -178,7 +278,7 @@ var _ = Describe("Endpoint", func() {
 			Eventually(func() *unstructured.Unstructured {
 				var objAppMgr *unstructured.Unstructured
 				klog.V(1).Info("Wait application manager...")
-				objAppMgr, err = clientHubDynamic.Resource(gvrApplicationmanager).Namespace(testNamespace).Get(ApplicationManager, metav1.GetOptions{})
+				objAppMgr, err = clientClusterDynamic.Resource(gvrApplicationmanager).Namespace(testNamespace).Get(applicationManager, metav1.GetOptions{})
 				return objAppMgr
 			}, 5, 1).Should(BeNil())
 			klog.V(1).Info("application manager deleted")
@@ -186,7 +286,7 @@ var _ = Describe("Endpoint", func() {
 			Eventually(func() *unstructured.Unstructured {
 				var objConnMgr *unstructured.Unstructured
 				klog.V(1).Info("Wait connection manager...")
-				objConnMgr, err = clientHubDynamic.Resource(gvrConnectionmanager).Namespace(testNamespace).Get(ConnectionManager, metav1.GetOptions{})
+				objConnMgr, err = clientClusterDynamic.Resource(gvrConnectionmanager).Namespace(testNamespace).Get(connectionManager, metav1.GetOptions{})
 				return objConnMgr
 			}, 5, 1).Should(BeNil())
 			klog.V(1).Info("connection manager deletedd")
@@ -194,7 +294,7 @@ var _ = Describe("Endpoint", func() {
 			Eventually(func() *unstructured.Unstructured {
 				var objServiceReg *unstructured.Unstructured
 				klog.V(1).Info("Wait service registries...")
-				objServiceReg, err = clientHubDynamic.Resource(gvrServiceregistries).Namespace(testNamespace).Get(ServiceRegistries, metav1.GetOptions{})
+				objServiceReg, err = clientClusterDynamic.Resource(gvrServiceregistries).Namespace(testNamespace).Get(serviceRegistries, metav1.GetOptions{})
 				return objServiceReg
 			}, 5, 1).Should(BeNil())
 			klog.V(1).Info("service registries deleted")
@@ -202,10 +302,25 @@ var _ = Describe("Endpoint", func() {
 			Eventually(func() error {
 				//var objComponentOperator *appsv1.Deployment
 				klog.V(1).Info("Wait endpoint component operator...")
-				_, err = clientHub.AppsV1().Deployments(testNamespace).Get(EndpointComponentOperator, metav1.GetOptions{})
+				_, err = clientCluster.AppsV1().Deployments(testNamespace).Get(endpointComponentOperator, metav1.GetOptions{})
 				return err
 			}, 5, 1).ShouldNot(BeNil())
 			klog.V(1).Info("endpoint component operator deleted")
 		})
 	})
 })
+
+func checkImageAttributes(cr *unstructured.Unstructured, useSha bool, image map[string]string, name, repository, tagPostfix, shaKey string) {
+	spec := cr.Object["spec"].(map[string]interface{})
+	Expect(image["name"]).To(Equal(name))
+	Expect(image["repository"]).To(Equal(repository))
+	Expect(image["tag"]).NotTo(BeEmpty())
+	Expect(image["tagPostfix"]).To(Equal(tagPostfix))
+	imageShaDigests, ok, err := unstructured.NestedStringMap(spec, "imageShaDigests")
+	Expect(err).To(BeNil())
+	Expect(ok).To(Equal(useSha))
+	if ok {
+		_, ok := imageShaDigests[shaKey]
+		Expect(ok).To(BeTrue())
+	}
+}

@@ -59,7 +59,7 @@ for dir in overlays/test/* ; do
   kubectl patch deployment endpoint-operator -n multicluster-endpoint -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"endpoint-operator\",\"image\":\"${DOCKER_IMAGE}\"}]}}}}"
   kubectl rollout status -n multicluster-endpoint deployment endpoint-operator --timeout=120s
   sleep 10
-  ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/endpoint-operator-test/... -- --v=5
+  ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/endpoint-operator-test/... -- --v=1
 done
 
 kind delete cluster --name endpoint-operator-test

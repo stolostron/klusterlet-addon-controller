@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: endpoint-operator
+  namespace: multicluster-endpoint
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      - name: multicloud-image-pull-secret
+      containers:
+      - name: endpoint-operator
+        env:
+        - name: USE_SHA_MANIFEST
+          value: "false"
+        - name: IMAGE_TAG_POSTFIX
+          value: "-tag-postfix"

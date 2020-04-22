@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -32,11 +33,20 @@ import (
 	"k8s.io/klog"
 )
 
+const (
+	endpointOperator           = "endpoint-operator"
+	endpointOperatorContainer  = "endpoint-operator"
+	defaultImageRegistry       = "quay.io/open-cluster-management"
+	defaultImagePullSecretName = "multicloud-image-pull-secret"
+	testEndpointName           = "endpoint"
+	testNamespace              = "multicluster-endpoint"
+)
+
 var (
-	testNamespace    string
-	testEndpointName string
-	clientHub        kubernetes.Interface
-	clientHubDynamic dynamic.Interface
+	useSha               bool
+	tagPostfix           string
+	clientCluster        kubernetes.Interface
+	clientClusterDynamic dynamic.Interface
 
 	gvrEndpoint               schema.GroupVersionResource
 	gvrApplicationmanager     schema.GroupVersionResource
@@ -54,9 +64,6 @@ var (
 	kubeadminUser       string
 	kubeadminCredential string
 	kubeconfig          string
-
-	defaultImageRegistry       string
-	defaultImagePullSecretName string
 )
 
 func newEndpoint(name, namespace string) *unstructured.Unstructured {
@@ -88,7 +95,7 @@ func newEndpoint(name, namespace string) *unstructured.Unstructured {
 				"connectionManager": map[string]interface{}{
 					"enabledGlobalView": false,
 				},
-				"imageRegistry":   "quay.io/open-cluster-management",
+				"imageRegistry":   defaultImageRegistry,
 				"imagePullSecret": "multicloud-image-pull-secret",
 				"policyController": map[string]interface{}{
 					"enabled": true,
@@ -127,12 +134,12 @@ func newEndpoint(name, namespace string) *unstructured.Unstructured {
 
 // createNewUnstructured creates resources by using gvr & obj
 func createNewUnstructured(
-	clientHubDynamic dynamic.Interface,
+	clientClusterDynamic dynamic.Interface,
 	gvr schema.GroupVersionResource,
 	obj *unstructured.Unstructured,
 	name, namespace string,
 ) {
-	ns := clientHubDynamic.Resource(gvr).Namespace(namespace)
+	ns := clientClusterDynamic.Resource(gvr).Namespace(namespace)
 	Expect(ns.Create(obj, metav1.CreateOptions{})).NotTo(BeNil())
 	Expect(ns.Get(name, metav1.GetOptions{})).NotTo(BeNil())
 }
@@ -169,14 +176,10 @@ var _ = BeforeSuite(func() {
 	gvrServiceregistries = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "serviceregistries"}
 	gvrWorkmanagers = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "workmanagers"}
 
-	clientHub = NewKubeClient("", "", "")
-	clientHubDynamic = NewKubeClientDynamic("", "", "")
-	defaultImageRegistry = "quay.io/open-cluster-management"
-	defaultImagePullSecretName = "multicloud-image-pull-secret"
-	testEndpointName = "endpoint"
-	testNamespace = "multicluster-endpoint"
+	clientCluster = NewKubeClient("", "", "")
+	clientClusterDynamic = NewKubeClientDynamic("", "", "")
 	By("Create Namesapce if needed")
-	namespaces := clientHub.CoreV1().Namespaces()
+	namespaces := clientCluster.CoreV1().Namespaces()
 	if _, err := namespaces.Get(testNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
 		Expect(namespaces.Create(&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
@@ -184,7 +187,30 @@ var _ = BeforeSuite(func() {
 			},
 		})).NotTo(BeNil())
 	}
+	d, err := clientCluster.AppsV1().Deployments(testNamespace).Get(endpointOperator, metav1.GetOptions{})
+	if err != nil {
+		klog.V(5).Infof("endpoint-operator:\n%#v", d)
+	}
+	Expect(err).To(BeNil())
+	useSha = false
+	tagPostfix = ""
+	for _, c := range d.Spec.Template.Spec.Containers {
+		if c.Name == endpointOperatorContainer {
+			for _, e := range c.Env {
+				if e.Name == "USE_SHA_MANIFEST" {
+					useSha = e.Value == strings.ToLower("true")
+					klog.V(5).Infof("useSha=%t", useSha)
+				}
+				if e.Name == "IMAGE_TAG_POSTFIX" {
+					tagPostfix = e.Value
+					klog.V(5).Infof("tagPostFix=%s", tagPostfix)
+				}
+			}
+			break
+		}
+	}
 	Expect(namespaces.Get(testNamespace, metav1.GetOptions{})).NotTo(BeNil())
+
 })
 
 func NewKubeClient(url, kubeconfig, context string) kubernetes.Interface {
