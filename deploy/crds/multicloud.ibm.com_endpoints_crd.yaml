@@ -75,12 +75,6 @@ spec:
             componentOperatorImage:
               description: used for dev work only
               type: string
-            componentsImagesTag:
-              additionalProperties:
-                type: string
-              description: ComponentsImagesTag contains the tag of each component
-                images
-              type: object
             connectionManager:
               description: EndpointConnectionManagerSpec defines configuration for
                 the ConnectionManager component

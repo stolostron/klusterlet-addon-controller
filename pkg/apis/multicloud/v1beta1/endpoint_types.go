@@ -53,9 +53,6 @@ type EndpointSpec struct {
 	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
 	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
 
-	// ComponentsImagesTag contains the tag of each component images
-	ComponentsImagesTag map[string]string `json:"componentsImagesTag,omitempty"`
-
 	// // ComponentTagMap contains the tag of each component
 	// ComponentTagMap map[string]string `json:"componentTagMap"`
 	// // ComponentImageMap contains the image name of each component
