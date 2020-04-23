@@ -102,7 +102,6 @@ spec:
               minLength: 1
               type: string
             imageRegistry:
-              minLength: 1
               type: string
             policyController:
               description: EndpointPolicyControllerSpec defines configuration for
@@ -151,7 +150,6 @@ spec:
           - clusterNamespace
           - connectionManager
           - iamPolicyController
-          - imageRegistry
           - policyController
           - searchCollector
           - serviceRegistry
