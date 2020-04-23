@@ -100,41 +100,46 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-func newConnectionManagerCR(cr *multicloudv1beta1.Endpoint) (*multicloudv1beta1.ConnectionManager, error) {
-	var imageShaDigests = make(map[string]string, 1)
-	image, imageShaDigests, err := cr.GetImage("connection-manager", imageShaDigests)
+func newConnectionManagerCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1beta1.ConnectionManager, error) {
+	labels := map[string]string{
+		"app": instance.Name,
+	}
+
+	gv := multicloudv1beta1.GlobalValues{
+		ImagePullPolicy: instance.Spec.ImagePullPolicy,
+		ImagePullSecret: instance.Spec.ImagePullSecret,
+		ImageOverrides:  make(map[string]string, 1),
+	}
+
+	imageKey, imageRepository, err := instance.GetImage("connection-manager")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "connection-manager")
 		return nil, err
 	}
+	gv.ImageOverrides[imageKey] = imageRepository
+
 	// if BootStrapConfig is empty, adds default value
 
-	_, ok := cr.Spec.BootStrapConfig["hubSecret"]
+	_, ok := instance.Spec.BootStrapConfig["hubSecret"]
 	if !ok {
-		if cr.Spec.BootStrapConfig == nil {
-			cr.Spec.BootStrapConfig = make(map[string]string)
+		if instance.Spec.BootStrapConfig == nil {
+			instance.Spec.BootStrapConfig = make(map[string]string)
 		}
-		cr.Spec.BootStrapConfig["hubSecret"] = cr.Namespace + "/klusterlet-bootstrap"
-	}
-
-	labels := map[string]string{
-		"app": cr.Name,
+		instance.Spec.BootStrapConfig["hubSecret"] = instance.Namespace + "/klusterlet-bootstrap"
 	}
 
 	return &multicloudv1beta1.ConnectionManager{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-connmgr",
-			Namespace: cr.Namespace,
+			Name:      instance.Name + "-connmgr",
+			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
 		Spec: multicloudv1beta1.ConnectionManagerSpec{
-			ClusterName:      cr.Spec.ClusterName,
-			ClusterNamespace: cr.Spec.ClusterNamespace,
-			BootStrapConfig:  cr.Spec.BootStrapConfig,
-			FullNameOverride: cr.Name + "-connmgr",
-			Image:            image,
-			ImageShaDigests:  imageShaDigests,
-			ImagePullSecret:  cr.Spec.ImagePullSecret,
+			ClusterName:      instance.Spec.ClusterName,
+			ClusterNamespace: instance.Spec.ClusterNamespace,
+			BootStrapConfig:  instance.Spec.BootStrapConfig,
+			FullNameOverride: instance.Name + "-connmgr",
+			GlobalValues:     gv,
 		},
 	}, nil
 }

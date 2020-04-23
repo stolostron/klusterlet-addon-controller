@@ -18,48 +18,27 @@ import (
 	"github.com/ghodss/yaml"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 	"github.com/open-cluster-management/endpoint-operator/version"
 )
 
-var defaultComponentImageMap = map[string]string{
-	"cert-policy-controller":       "cert-policy-controller",
-	"cis-controller-controller":    "cis-controller",
-	"cis-controller-crawler":       "cis-crawler",
-	"cis-controller-drishti":       "drishti-cis",
-	"cis-controller-minio":         "img-minio",
-	"cis-controller-minio-cleaner": "img-minio-mc",
-	"component-operator":           "endpoint-component-operator",
-	"connection-manager":           "multicloud-manager",
+var defaultComponentImageKeyMap = map[string]string{
+	"cert-policy-controller":       "cert_policy_controller",
+	"cis-controller-controller":    "cis_controller",
+	"cis-controller-crawler":       "cis_crawler",
+	"cis-controller-drishti":       "drishti_cis",
+	"cis-controller-minio":         "img_minio",
+	"cis-controller-minio-cleaner": "img_minio_mc",
+	"component-operator":           "endpoint_component_operator",
+	"connection-manager":           "multicloud_manager",
 	"coredns":                      "coredns",
-	"deployable":                   "multicluster-operators-deployable",
-	"iam-policy-controller":        "iam-policy-controller",
-	"policy-controller":            "mcm-compliance",
-	"router":                       "management-ingress",
-	"search-collector":             "search-collector",
-	"service-registry":             "multicloud-manager",
-	"subscription":                 "multicluster-operators-subscription",
-	"work-manager":                 "multicloud-manager",
-}
-
-var defaultComponentTagMap = map[string]string{
-	"cert-policy-controller":       "3.4.0",
-	"cis-controller-controller":    "3.6.0",
-	"cis-controller-crawler":       "3.6.0",
-	"cis-controller-drishti":       "3.4.0",
-	"cis-controller-minio":         "RELEASE.2019-04-09T01-22-30Z.3",
-	"cis-controller-minio-cleaner": "RELEASE.2019-04-03T17-59-57Z.3",
-	"component-operator":           "1.0.0",
-	"connection-manager":           "0.0.1",
-	"coredns":                      "1.2.6.1",
-	"deployable":                   "1.0.0",
-	"iam-policy-controller":        "1.0.0",
-	"policy-controller":            "3.6.0",
-	"router":                       "1.0.0",
-	"search-collector":             "3.5.0",
-	"service-registry":             "0.0.1",
-	"subscription":                 "1.0.0",
-	"work-manager":                 "0.0.1",
+	"deployable":                   "multicluster_operators_deployable",
+	"iam-policy-controller":        "iam_policy_controller",
+	"policy-controller":            "mcm_compliance",
+	"router":                       "management_ingress",
+	"search-collector":             "search_collector",
+	"service-registry":             "multicloud_manager",
+	"subscription":                 "multicluster_operators_subscription",
+	"work-manager":                 "multicloud_manager",
 }
 
 //Manifest contains the manifest.
@@ -69,99 +48,90 @@ var Manifest manifest
 var log = logf.Log.WithName("image_utils")
 
 type manifest struct {
-	Images []imageManifest `json:"inline"`
+	Images []manifestElement `json:"inline"`
 }
 
-type imageManifest struct {
-	Name           string `json:"name,omitempty"`
-	ManifestSha256 string `json:"manifest-sha256,omitempty"`
+type manifestElement struct {
+	ImageKey        string `json:"image-key,omitempty"`
+	ImageName       string `json:"image-name,omitempty"`
+	ImageVersion    string `json:"image-version,omitempty"`
+	ImageTag        string `json:"image-tag,omitempty"`
+	ImageDigest     string `json:"image-digest,omitempty"`
+	ImageRepository string `json:"image-remote,omitempty"`
+	GitSha256       string `json:"git-sha256,omitempty"`
+	GitRepository   string `json:"git-repository,omitempty"`
 }
 
 func init() {
-	err := LoadManifest()
+	Manifest.Images = make([]manifestElement, 0)
+	manifestPath := filepath.Join("image-manifests", version.Version+".json")
+	homeDir := os.Getenv("HOME")
+	if homeDir != "" {
+		manifestPath = filepath.Join(homeDir, manifestPath)
+	}
+	err := LoadManifest(manifestPath)
 	if err != nil {
 		log.Error(err, "Error while reading the manifest")
 	}
 }
 
 // GetImage returns the image.Image,  for the specified component return error if information not found
-func (instance Endpoint) GetImage(component string,
-	imageShaDigestIn map[string]string,
-) (img image.Image, imageShaDigest map[string]string, err error) {
-	imageShaDigest = imageShaDigestIn
-	img = image.Image{
-		PullPolicy: instance.Spec.ImagePullPolicy,
+func (instance Endpoint) GetImage(component string) (imageKey, imageRepository string, err error) {
+
+	if v, ok := defaultComponentImageKeyMap[component]; ok {
+		imageKey = v
+	} else {
+		return "", "", fmt.Errorf("unable to locate default image name for component %s", component)
 	}
 
-	if imageName, ok := defaultComponentImageMap[component]; ok {
-		img.Name = imageName
-	} else {
-		return img, imageShaDigest, fmt.Errorf("unable to locate default image name for component %s", component)
+	imageManifest, err := getImageManifest(imageKey)
+	if err != nil {
+		return "", "", err
 	}
+
+	imageKey = imageManifest.ImageKey
 
 	if instance.Spec.ImageRegistry != "" {
-		img.Repository = instance.Spec.ImageRegistry
+		imageRepository = instance.Spec.ImageRegistry
+	} else {
+		imageRepository = imageManifest.ImageRepository
 	}
 
-	if instance.Spec.ImageNamePostfix != "" {
-		img.Name = img.Name + instance.Spec.ImageNamePostfix
-	}
+	imageRepository = imageRepository + "/" + imageManifest.ImageName
 
-	if len(instance.Spec.ComponentsImagesTag) > 0 {
-		if tag, ok := instance.Spec.ComponentsImagesTag[component]; ok {
-			img.Tag = tag
-		} // else {
-		// TODO how to log - WARN("unable to locate tag for component %s", component)
-		// don't want to add new dependencies to other projects importing this package
-		//}
-	}
-	if img.Tag == "" {
-		if tag, ok := defaultComponentTagMap[component]; ok {
-			img.Tag = tag
-		} else {
-			return img, imageShaDigest, fmt.Errorf("unable to locate default tag for component %s", component)
-		}
-	}
-	img.TagPostfix = os.Getenv("IMAGE_TAG_POSTFIX")
 	useSHA := os.Getenv("USE_SHA_MANIFEST")
-	// fmt.Println("useSHA:" + useSHA)
 	if strings.ToLower(useSHA) == "true" {
-		im, err := getImageManifest(img.Name)
-		if err != nil {
-			return img, imageShaDigest, err
-		}
-		if im != nil {
-			shaDigestKey := strings.ReplaceAll(img.Name, "-", "_")
-			// fmt.Println("shaDigestKey:" + shaDigestKey)
-			imageShaDigest[shaDigestKey] = im.ManifestSha256
-			// fmt.Println(("sha:" + imageShaDigest[shaDigestKey]))
-			return img, imageShaDigest, nil
+		imageRepository = imageRepository + "@" + imageManifest.ImageDigest
+	} else {
+		imageRepository = imageRepository + ":" + imageManifest.ImageVersion
+		tagPostfix := os.Getenv("IMAGE_TAG_POSTFIX")
+		if tagPostfix != "" {
+			imageRepository = imageRepository + tagPostfix
 		}
 	}
-	return img, imageShaDigest, nil
+
+	return imageKey, imageRepository, nil
 }
 
-//getImageManifest returns the *imageManifest and nil if not found
+//getImageManifest returns the *manifestElement and nil if not found
 //Return an error only if the manifest is malformed
-func getImageManifest(imageName string) (*imageManifest, error) {
+func getImageManifest(imageKey string) (*manifestElement, error) {
 	for i, im := range Manifest.Images {
-		if im.Name == imageName {
+		if im.ImageKey == imageKey {
 			return &Manifest.Images[i], nil
 		}
 	}
 	return nil, nil
 }
 
-//LoadManifest returns the *imageManifest and nil if not found
+//LoadManifest returns the *manifestElement and nil if not found
 //Return an error only if the manifest is malformed
-func LoadManifest() error {
-	Manifest.Images = make([]imageManifest, 0)
-	filePath := filepath.Join("image-manifests", version.Version+".json")
-	homeDir := os.Getenv("HOME")
-	if homeDir != "" {
-		filePath = filepath.Join(homeDir, filePath)
+func LoadManifest(manifestPath string) error {
+	//Check if already loaded
+	if len(Manifest.Images) != 0 {
+		return nil
 	}
-	b, err := ioutil.ReadFile(filePath)
+	b, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
 		return err
 	}

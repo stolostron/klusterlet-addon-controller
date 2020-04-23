@@ -44,36 +44,26 @@ spec:
             fullnameOverride:
               minLength: 1
               type: string
-            image:
-              description: Image defines the image to pull for a container
+            global:
+              description: GlobalValues defines the global values
               properties:
-                name:
-                  minLength: 1
-                  type: string
-                pullPolicy:
+                imageOverrides:
+                  additionalProperties:
+                    type: string
+                  type: object
+                imagePullPolicy:
                   description: PullPolicy describes a policy for if/when to pull a
                     container image
                   type: string
-                repository:
-                  minLength: 1
+                imagePullSecret:
                   type: string
-                tag:
-                  minLength: 1
-                  type: string
-                tagPostfix:
-                  type: string
-              type: object
-            imagePullSecret:
-              type: string
-            imageShaDigests:
-              additionalProperties:
-                type: string
               type: object
           required:
           - clusterName
           - clusterNamespace
           - connectionManager
           - fullnameOverride
+          - global
           type: object
         status:
           description: CertPolicyControllerStatus defines the observed state of CertPolicyController

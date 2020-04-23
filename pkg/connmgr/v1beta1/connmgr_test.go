@@ -11,6 +11,8 @@ package v1beta1
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,11 +24,30 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	"github.com/open-cluster-management/endpoint-operator/version"
 )
 
 var (
-	namespace = "multicluster-endpoint"
+	namespace    = "multicluster-endpoint"
+	manifestPath = filepath.Join("..", "..", "..", "image-manifests", version.Version+".json")
 )
+
+func TestMain(m *testing.M) {
+	err := setup()
+	if err != nil {
+		os.Exit(999)
+	}
+	code := m.Run()
+	teardown()
+	os.Exit(code)
+}
+
+func setup() error {
+	return multicloudv1beta1.LoadManifest(manifestPath)
+}
+
+func teardown() {
+}
 
 func newTestDeployment(name string) *appsv1.Deployment {
 	deployment := &appsv1.Deployment{
@@ -141,7 +162,8 @@ func TestUpdateReconcile(t *testing.T) {
 	assert.Equal(t, connmgr.Spec.ClusterName, instance.Spec.ClusterName, "connmgr CR ClusterName should be updated")
 	assert.Equal(t, connmgr.Spec.ClusterNamespace, instance.Spec.ClusterNamespace, "connmgr CR ClusterNamespace should be updated")
 	assert.Equal(t, connmgr.Spec.BootStrapConfig, instance.Spec.BootStrapConfig, "connmgr CR BootStrapConfig should be updated")
-	assert.Equal(t, connmgr.Spec.ImagePullSecret, instance.Spec.ImagePullSecret, "connmgr CR ImagePullSecret should be updated")
+	assert.Equal(t, connmgr.Spec.GlobalValues.ImagePullSecret, instance.Spec.ImagePullSecret, "connmgr CR ImagePullSecret should be updated")
+	assert.Equal(t, connmgr.Spec.GlobalValues.ImagePullPolicy, instance.Spec.ImagePullPolicy, "connmgr CR ImagePullPolicy should be updated")
 }
 
 func TestDeleteReconcile(t *testing.T) {

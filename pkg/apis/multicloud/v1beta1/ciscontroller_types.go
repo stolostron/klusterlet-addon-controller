@@ -9,7 +9,6 @@
 package v1beta1
 
 import (
-	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,37 +33,9 @@ type CISControllerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ConnectionManager string `json:"connectionManager"`
 
-	Controller   CISControllerSpecController   `json:"cisController,omitempty"`
-	Crawler      CISControllerSpecCrawler      `json:"cisCrawler,omitempty"`
-	Drishti      CISControllerSpecDrishti      `json:"drishti,omitempty"`
-	Minio        CISControllerSpecMinio        `json:"minio,omitempty"`
-	MinioCleaner CISControllerSpecMinioCleaner `json:"minioCleaner,omitempty"`
-
-	ImagePullSecret string `json:"imagePullSecret,omitempty"`
-
-	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
+	GlobalValues GlobalValues `json:"global"`
 
 	IsOpenShift bool `json:"ocp"`
-}
-
-type CISControllerSpecController struct {
-	Image image.Image `json:"image,omitempty"`
-}
-
-type CISControllerSpecCrawler struct {
-	Image image.Image `json:"image,omitempty"`
-}
-
-type CISControllerSpecDrishti struct {
-	Image image.Image `json:"image,omitempty"`
-}
-
-type CISControllerSpecMinio struct {
-	Image image.Image `json:"image,omitempty"`
-}
-
-type CISControllerSpecMinioCleaner struct {
-	Image image.Image `json:"image,omitempty"`
 }
 
 // CISControllerStatus defines the observed state of CISController

@@ -121,11 +121,7 @@ var _ = Describe("Endpoint", func() {
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("cert policy controller created")
 
-			spec := cr.Object["spec"].(map[string]interface{})
-			imageMap, ok, err := unstructured.NestedStringMap(spec, "image")
-			Expect(err).To(BeNil())
-			Expect(ok).To(BeTrue())
-			checkImageAttributes(cr, useSha, imageMap, certPolicyControllerImage, defaultImageRegistry, tagPostfix, certPolicyControllerShaKey)
+			checkImageAttributes(cr, useSha, defaultImageRegistry, tagPostfix)
 
 			Eventually(func() error {
 				var err error
@@ -135,11 +131,7 @@ var _ = Describe("Endpoint", func() {
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("search controller created")
 
-			spec = cr.Object["spec"].(map[string]interface{})
-			imageMap, ok, err = unstructured.NestedStringMap(spec, "image")
-			Expect(err).To(BeNil())
-			Expect(ok).To(BeTrue())
-			checkImageAttributes(cr, useSha, imageMap, searchCollectorImage, defaultImageRegistry, tagPostfix, searchCollectorShaKey)
+			checkImageAttributes(cr, useSha, defaultImageRegistry, tagPostfix)
 
 			Eventually(func() error {
 				var err error
@@ -149,11 +141,7 @@ var _ = Describe("Endpoint", func() {
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("policy controller created")
 
-			spec = cr.Object["spec"].(map[string]interface{})
-			imageMap, ok, err = unstructured.NestedStringMap(spec, "image")
-			Expect(err).To(BeNil())
-			Expect(ok).To(BeTrue())
-			checkImageAttributes(cr, useSha, imageMap, policyControllerImage, defaultImageRegistry, tagPostfix, policyControllerShaKey)
+			checkImageAttributes(cr, useSha, defaultImageRegistry, tagPostfix)
 
 			Eventually(func() error {
 				var err error
@@ -163,18 +151,7 @@ var _ = Describe("Endpoint", func() {
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("application manager created")
 
-			spec = cr.Object["spec"].(map[string]interface{})
-			deployable := spec["deployable"].(map[string]interface{})
-			imageMap, ok, err = unstructured.NestedStringMap(deployable, "image")
-			Expect(err).To(BeNil())
-			Expect(ok).To(BeTrue())
-			checkImageAttributes(cr, useSha, imageMap, applicationManagerDepImage, defaultImageRegistry, tagPostfix, applicationManagerDepShaKey)
-
-			subscription := spec["subscription"].(map[string]interface{})
-			imageMap, ok, err = unstructured.NestedStringMap(subscription, "image")
-			Expect(err).To(BeNil())
-			Expect(ok).To(BeTrue())
-			checkImageAttributes(cr, useSha, imageMap, applicationManagerSubImage, defaultImageRegistry, tagPostfix, applicationManagerSubShaKey)
+			checkImageAttributes(cr, useSha, defaultImageRegistry, tagPostfix)
 
 			Eventually(func() error {
 				var err error
@@ -184,11 +161,7 @@ var _ = Describe("Endpoint", func() {
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("connection manager created")
 
-			spec = cr.Object["spec"].(map[string]interface{})
-			imageMap, ok, err = unstructured.NestedStringMap(spec, "image")
-			Expect(err).To(BeNil())
-			Expect(ok).To(BeTrue())
-			checkImageAttributes(cr, useSha, imageMap, connectionManagerImage, defaultImageRegistry, tagPostfix, connectionManagerShaKey)
+			checkImageAttributes(cr, useSha, defaultImageRegistry, tagPostfix)
 
 			Eventually(func() error {
 				var err error
@@ -198,18 +171,7 @@ var _ = Describe("Endpoint", func() {
 			}, 10, 1).Should(BeNil())
 			klog.V(1).Info("service registries created")
 
-			spec = cr.Object["spec"].(map[string]interface{})
-			coredns := spec["coredns"].(map[string]interface{})
-			imageMap, ok, err = unstructured.NestedStringMap(coredns, "image")
-			Expect(err).To(BeNil())
-			Expect(ok).To(BeTrue())
-			checkImageAttributes(cr, useSha, imageMap, serviceRegistriesDNSImage, defaultImageRegistry, tagPostfix, serviceRegistriesDNSShaKey)
-
-			serviceRegistry := spec["serviceRegistry"].(map[string]interface{})
-			imageMap, ok, err = unstructured.NestedStringMap(serviceRegistry, "image")
-			Expect(err).To(BeNil())
-			Expect(ok).To(BeTrue())
-			checkImageAttributes(cr, useSha, imageMap, serviceRegistriesSRImage, defaultImageRegistry, tagPostfix, serviceRegistriesSRShaKey)
+			checkImageAttributes(cr, useSha, defaultImageRegistry, tagPostfix)
 		})
 	})
 
@@ -310,17 +272,28 @@ var _ = Describe("Endpoint", func() {
 	})
 })
 
-func checkImageAttributes(cr *unstructured.Unstructured, useSha bool, image map[string]string, name, repository, tagPostfix, shaKey string) {
+func checkImageAttributes(cr *unstructured.Unstructured, useSha bool, repository, tagPostfix string) {
 	spec := cr.Object["spec"].(map[string]interface{})
-	Expect(image["name"]).To(Equal(name))
-	Expect(image["repository"]).To(Equal(repository))
-	Expect(image["tag"]).NotTo(BeEmpty())
-	Expect(image["tagPostfix"]).To(Equal(tagPostfix))
-	imageShaDigests, ok, err := unstructured.NestedStringMap(spec, "imageShaDigests")
+	global := spec["global"].(map[string]interface{})
+	imageMap, ok, err := unstructured.NestedStringMap(global, "imageOverrides")
 	Expect(err).To(BeNil())
-	Expect(ok).To(Equal(useSha))
-	if ok {
-		_, ok := imageShaDigests[shaKey]
-		Expect(ok).To(BeTrue())
+	Expect(ok).To(BeTrue())
+	for _, repositoryCR := range imageMap {
+
+		var splits []string
+		if useSha {
+			splits = strings.Split(repositoryCR, "@")
+			Expect(len(splits)).To(Equal(2))
+			Expect(strings.Contains(splits[1], "sha256:")).To(BeTrue())
+		} else {
+			splits = strings.Split(repositoryCR, ":")
+			if tagPostfix != "" {
+				Expect(strings.HasSuffix(splits[1], tagPostfix)).To(BeTrue())
+			} else {
+				Expect(splits[1]).NotTo(BeEmpty())
+			}
+		}
+		//We can not test on the image name because we don't it in the CR.
+		Expect(strings.HasPrefix(splits[0], repository+"/")).To(BeTrue())
 	}
 }

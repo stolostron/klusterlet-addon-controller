@@ -100,33 +100,41 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-func newPolicyControllerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*multicloudv1beta1.PolicyController, error) {
-	var imageShaDigests = make(map[string]string, 1)
-	image, imageShaDigests, err := cr.GetImage("policy-controller", imageShaDigests)
+func newPolicyControllerCR(instance *multicloudv1beta1.Endpoint,
+	client client.Client,
+) (*multicloudv1beta1.PolicyController, error) {
+	labels := map[string]string{
+		"app": instance.Name,
+	}
+
+	gv := multicloudv1beta1.GlobalValues{
+		ImagePullPolicy: instance.Spec.ImagePullPolicy,
+		ImagePullSecret: instance.Spec.ImagePullSecret,
+		ImageOverrides:  make(map[string]string, 1),
+	}
+
+	imageKey, imageRepository, err := instance.GetImage("policy-controller")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "policy-controller")
 		return nil, err
 	}
 
-	labels := map[string]string{
-		"app": cr.Name,
-	}
+	gv.ImageOverrides[imageKey] = imageRepository
+
 	return &multicloudv1beta1.PolicyController{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-policyctrl",
-			Namespace: cr.Namespace,
+			Name:      instance.Name + "-policyctrl",
+			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
 		Spec: multicloudv1beta1.PolicyControllerSpec{
-			FullNameOverride:            cr.Name + "-policyctrl",
-			ClusterName:                 cr.Spec.ClusterName,
-			ClusterNamespace:            cr.Spec.ClusterNamespace,
-			ConnectionManager:           cr.Name + "-connmgr",
-			Image:                       image,
-			ImageShaDigests:             imageShaDigests,
-			ImagePullSecret:             cr.Spec.ImagePullSecret,
+			FullNameOverride:            instance.Name + "-policyctrl",
+			ClusterName:                 instance.Spec.ClusterName,
+			ClusterNamespace:            instance.Spec.ClusterNamespace,
+			ConnectionManager:           instance.Name + "-connmgr",
+			GlobalValues:                gv,
 			DeployedOnHub:               inspect.DeployedOnHub(client),
-			PostDeleteJobServiceAccount: cr.Name + "-component-operator",
+			PostDeleteJobServiceAccount: instance.Name + "-component-operator",
 		},
 	}, nil
 }

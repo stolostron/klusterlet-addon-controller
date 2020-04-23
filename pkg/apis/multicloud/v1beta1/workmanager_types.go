@@ -10,8 +10,6 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -40,26 +38,7 @@ type WorkManagerSpec struct {
 	Service WorkManagerService `json:"service"`
 	Ingress WorkManagerIngress `json:"ingress"`
 
-	WorkManagerConfig WorkManagerConfig `json:"workManager,omitempty"`
-
-	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
-
-	ImagePullSecret string `json:"imagePullSecret,omitempty"`
-}
-
-// WorkManagerConfig defines work-manager container configuration parameters
-type WorkManagerConfig struct {
-	Enabled bool        `json:"enabled"`
-	Image   image.Image `json:"image"`
-}
-
-// WorkManagerPrometheusIntegration defines prometheus integration parameters
-type WorkManagerPrometheusIntegration struct {
-	Enabled        bool   `json:"enabled"`
-	Service        string `json:"service"`
-	Secret         string `json:"secret"`
-	ScrapeTarget   string `json:"scrapeTarget"`
-	UseBearerToken bool   `json:"useBearerToken"`
+	GlobalValues GlobalValues `json:"global,omitempty"`
 }
 
 // WorkManagerService defines service integration parameters

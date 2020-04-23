@@ -102,19 +102,25 @@ func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client
 		"app": instance.Name,
 	}
 
-	var imageShaDigests = make(map[string]string, 2)
+	gv := multicloudv1beta1.GlobalValues{
+		ImagePullPolicy: instance.Spec.ImagePullPolicy,
+		ImagePullSecret: instance.Spec.ImagePullSecret,
+		ImageOverrides:  make(map[string]string, 2),
+	}
 
-	deployableImage, imageShaDigests, err := instance.GetImage("deployable", imageShaDigests)
+	imageKey, imageRepository, err := instance.GetImage("deployable")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "deployable")
 		return nil, err
 	}
+	gv.ImageOverrides[imageKey] = imageRepository
 
-	subscriptionImage, imageShaDigests, err := instance.GetImage("subscription", imageShaDigests)
+	imageKey, imageRepository, err = instance.GetImage("subscription")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "subscription")
 		return nil, err
 	}
+	gv.ImageOverrides[imageKey] = imageRepository
 
 	return &multicloudv1beta1.ApplicationManager{
 		ObjectMeta: metav1.ObjectMeta{
@@ -127,14 +133,7 @@ func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client
 			ConnectionManager: instance.Name + "-connmgr",
 			ClusterName:       instance.Spec.ClusterName,
 			ClusterNamespace:  instance.Spec.ClusterNamespace,
-			DeployableSpec: multicloudv1beta1.ApplicationManagerDeployableSpec{
-				Image: deployableImage,
-			},
-			SubscriptionSpec: multicloudv1beta1.ApplicationManagerSubscriptionSpec{
-				Image: subscriptionImage,
-			},
-			ImageShaDigests: imageShaDigests,
-			ImagePullSecret: instance.Spec.ImagePullSecret,
+			GlobalValues:      gv,
 		},
 	}, nil
 }

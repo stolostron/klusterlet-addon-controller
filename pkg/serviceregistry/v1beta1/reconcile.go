@@ -168,18 +168,28 @@ func newServiceRegistryCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1be
 	labels := map[string]string{
 		"app": instance.Name,
 	}
-	var imageShaDigests = make(map[string]string, 2)
-	serviceRegistryImage, imageShaDigests, err := instance.GetImage("service-registry", imageShaDigests)
+
+	gv := multicloudv1beta1.GlobalValues{
+		ImagePullPolicy: instance.Spec.ImagePullPolicy,
+		ImagePullSecret: instance.Spec.ImagePullSecret,
+		ImageOverrides:  make(map[string]string, 2),
+	}
+
+	imageKey, imageRepository, err := instance.GetImage("service-registry")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "service registry")
 		return nil, err
 	}
 
-	coreDNSImage, imageShaDigests, err := instance.GetImage("coredns", imageShaDigests)
+	gv.ImageOverrides[imageKey] = imageRepository
+
+	imageKey, imageRepository, err = instance.GetImage("coredns")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "coredns")
 		return nil, err
 	}
+
+	gv.ImageOverrides[imageKey] = imageRepository
 
 	return &multicloudv1beta1.ServiceRegistry{
 		ObjectMeta: metav1.ObjectMeta{
@@ -188,22 +198,15 @@ func newServiceRegistryCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1be
 			Labels:    labels,
 		},
 		Spec: multicloudv1beta1.ServiceRegistrySpec{
-			ClusterName:      instance.Spec.ClusterName,
-			ClusterNamespace: instance.Spec.ClusterNamespace,
-			FullNameOverride: instance.Name + "-svcreg",
-			ServiceRegistry: multicloudv1beta1.ServiceRegistryImage{
-				Image: serviceRegistryImage,
-			},
-			CoreDNS: multicloudv1beta1.CoreDNSImage{
-				Image: coreDNSImage,
-			},
+			ClusterName:                        instance.Spec.ClusterName,
+			ClusterNamespace:                   instance.Spec.ClusterNamespace,
+			FullNameOverride:                   instance.Name + "-svcreg",
+			GlobalValues:                       gv,
 			ConnectionManager:                  instance.Name + "-connmgr",
 			DNSSuffix:                          instance.Spec.ServiceRegistryConfig.DNSSuffix,
 			Plugins:                            instance.Spec.ServiceRegistryConfig.Plugins,
 			IstioIngressGateway:                instance.Spec.ServiceRegistryConfig.IstioIngressGateway,
 			IstioServiceEntryRegistryNamespace: instance.Spec.ServiceRegistryConfig.IstioserviceEntryRegistryNamespace,
-			ImageShaDigests:                    imageShaDigests,
-			ImagePullSecret:                    instance.Spec.ImagePullSecret,
 		},
 	}, nil
 }

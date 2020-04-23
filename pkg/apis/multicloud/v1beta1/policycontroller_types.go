@@ -10,8 +10,6 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -32,12 +30,8 @@ type PolicyControllerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ClusterNamespace string `json:"clusterNamespace,omitempty"`
 	DeployedOnHub    bool   `json:"deployedOnHub,omitempty"`
-	//Image information for the PolicyController
-	Image image.Image `json:"image,omitempty"`
 
-	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
-
-	ImagePullSecret string `json:"imagePullSecret,omitempty"`
+	GlobalValues GlobalValues `json:"global,omitempty"`
 
 	PostDeleteJobServiceAccount string `json:"postDeleteJobServiceAccount,omitempty"`
 }

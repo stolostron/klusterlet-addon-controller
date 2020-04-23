@@ -31,50 +31,6 @@ spec:
         spec:
           description: CISControllerSpec defines the desired state of CISController
           properties:
-            cisController:
-              properties:
-                image:
-                  description: Image defines the image to pull for a container
-                  properties:
-                    name:
-                      minLength: 1
-                      type: string
-                    pullPolicy:
-                      description: PullPolicy describes a policy for if/when to pull
-                        a container image
-                      type: string
-                    repository:
-                      minLength: 1
-                      type: string
-                    tag:
-                      minLength: 1
-                      type: string
-                    tagPostfix:
-                      type: string
-                  type: object
-              type: object
-            cisCrawler:
-              properties:
-                image:
-                  description: Image defines the image to pull for a container
-                  properties:
-                    name:
-                      minLength: 1
-                      type: string
-                    pullPolicy:
-                      description: PullPolicy describes a policy for if/when to pull
-                        a container image
-                      type: string
-                    repository:
-                      minLength: 1
-                      type: string
-                    tag:
-                      minLength: 1
-                      type: string
-                    tagPostfix:
-                      type: string
-                  type: object
-              type: object
             clusterName:
               minLength: 1
               type: string
@@ -84,80 +40,22 @@ spec:
             connectionManager:
               minLength: 1
               type: string
-            drishti:
-              properties:
-                image:
-                  description: Image defines the image to pull for a container
-                  properties:
-                    name:
-                      minLength: 1
-                      type: string
-                    pullPolicy:
-                      description: PullPolicy describes a policy for if/when to pull
-                        a container image
-                      type: string
-                    repository:
-                      minLength: 1
-                      type: string
-                    tag:
-                      minLength: 1
-                      type: string
-                    tagPostfix:
-                      type: string
-                  type: object
-              type: object
             fullnameOverride:
               minLength: 1
               type: string
-            imagePullSecret:
-              type: string
-            imageShaDigests:
-              additionalProperties:
-                type: string
-              type: object
-            minio:
+            global:
+              description: GlobalValues defines the global values
               properties:
-                image:
-                  description: Image defines the image to pull for a container
-                  properties:
-                    name:
-                      minLength: 1
-                      type: string
-                    pullPolicy:
-                      description: PullPolicy describes a policy for if/when to pull
-                        a container image
-                      type: string
-                    repository:
-                      minLength: 1
-                      type: string
-                    tag:
-                      minLength: 1
-                      type: string
-                    tagPostfix:
-                      type: string
+                imageOverrides:
+                  additionalProperties:
+                    type: string
                   type: object
-              type: object
-            minioCleaner:
-              properties:
-                image:
-                  description: Image defines the image to pull for a container
-                  properties:
-                    name:
-                      minLength: 1
-                      type: string
-                    pullPolicy:
-                      description: PullPolicy describes a policy for if/when to pull
-                        a container image
-                      type: string
-                    repository:
-                      minLength: 1
-                      type: string
-                    tag:
-                      minLength: 1
-                      type: string
-                    tagPostfix:
-                      type: string
-                  type: object
+                imagePullPolicy:
+                  description: PullPolicy describes a policy for if/when to pull a
+                    container image
+                  type: string
+                imagePullSecret:
+                  type: string
               type: object
             ocp:
               type: boolean
@@ -166,6 +64,7 @@ spec:
           - clusterNamespace
           - connectionManager
           - fullnameOverride
+          - global
           - ocp
           type: object
         status:

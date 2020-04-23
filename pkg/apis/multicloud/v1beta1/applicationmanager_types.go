@@ -10,8 +10,6 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -35,22 +33,7 @@ type ApplicationManagerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ConnectionManager string `json:"connectionManager"`
 
-	DeployableSpec   ApplicationManagerDeployableSpec   `json:"deployable"`
-	SubscriptionSpec ApplicationManagerSubscriptionSpec `json:"subscription"`
-
-	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
-
-	ImagePullSecret string `json:"imagePullSecret,omitempty"`
-}
-
-// ApplicationManagerDeployableSpec defines configuration for Deployable in ApplicationManager
-type ApplicationManagerDeployableSpec struct {
-	Image image.Image `json:"image"`
-}
-
-// ApplicationManagerSubscriptionSpec defines configuration for Subscription in ApplicationManager
-type ApplicationManagerSubscriptionSpec struct {
-	Image image.Image `json:"image"`
+	GlobalValues GlobalValues `json:"global"`
 }
 
 // ApplicationManagerStatus defines the observed state of ApplicationManager

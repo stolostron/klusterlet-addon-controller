@@ -37,39 +37,23 @@ spec:
               type: string
             connectionManager:
               type: string
-            coredns:
-              description: CoreDNSImage defines CoreDNSImage configuration in the
-                spec
-              properties:
-                image:
-                  description: Image defines the image to pull for a container
-                  properties:
-                    name:
-                      minLength: 1
-                      type: string
-                    pullPolicy:
-                      description: PullPolicy describes a policy for if/when to pull
-                        a container image
-                      type: string
-                    repository:
-                      minLength: 1
-                      type: string
-                    tag:
-                      minLength: 1
-                      type: string
-                    tagPostfix:
-                      type: string
-                  type: object
-              type: object
             dnsSuffix:
               type: string
             fullnameOverride:
               type: string
-            imagePullSecret:
-              type: string
-            imageShaDigests:
-              additionalProperties:
-                type: string
+            global:
+              description: GlobalValues defines the global values
+              properties:
+                imageOverrides:
+                  additionalProperties:
+                    type: string
+                  type: object
+                imagePullPolicy:
+                  description: PullPolicy describes a policy for if/when to pull a
+                    container image
+                  type: string
+                imagePullSecret:
+                  type: string
               type: object
             istioIngressGateway:
               type: string
@@ -77,39 +61,11 @@ spec:
               type: string
             plugins:
               type: string
-            serviceRegistry:
-              description: ServiceRegistryImage defines service registry configuration
-                in the spec
-              properties:
-                image:
-                  description: Image defines the image to pull for a container
-                  properties:
-                    name:
-                      minLength: 1
-                      type: string
-                    pullPolicy:
-                      description: PullPolicy describes a policy for if/when to pull
-                        a container image
-                      type: string
-                    repository:
-                      minLength: 1
-                      type: string
-                    tag:
-                      minLength: 1
-                      type: string
-                    tagPostfix:
-                      type: string
-                  type: object
-              required:
-              - image
-              type: object
           required:
           - clusterName
           - clusterNamespace
           - connectionManager
-          - coredns
           - fullnameOverride
-          - serviceRegistry
           type: object
         status:
           description: ServiceRegistryStatus defines the observed state of ServiceRegistry

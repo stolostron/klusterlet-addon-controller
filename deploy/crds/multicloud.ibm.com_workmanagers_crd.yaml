@@ -47,11 +47,19 @@ spec:
             fullnameOverride:
               minLength: 1
               type: string
-            imagePullSecret:
-              type: string
-            imageShaDigests:
-              additionalProperties:
-                type: string
+            global:
+              description: GlobalValues defines the global values
+              properties:
+                imageOverrides:
+                  additionalProperties:
+                    type: string
+                  type: object
+                imagePullPolicy:
+                  description: PullPolicy describes a policy for if/when to pull a
+                    container image
+                  type: string
+                imagePullSecret:
+                  type: string
               type: object
             ingress:
               description: WorkManagerIngress defines ingress configuration for WorkManager
@@ -82,35 +90,6 @@ spec:
                   type: string
               required:
               - type
-              type: object
-            workManager:
-              description: WorkManagerConfig defines work-manager container configuration
-                parameters
-              properties:
-                enabled:
-                  type: boolean
-                image:
-                  description: Image defines the image to pull for a container
-                  properties:
-                    name:
-                      minLength: 1
-                      type: string
-                    pullPolicy:
-                      description: PullPolicy describes a policy for if/when to pull
-                        a container image
-                      type: string
-                    repository:
-                      minLength: 1
-                      type: string
-                    tag:
-                      minLength: 1
-                      type: string
-                    tagPostfix:
-                      type: string
-                  type: object
-              required:
-              - enabled
-              - image
               type: object
           required:
           - clusterLabels

@@ -9,7 +9,6 @@
 package v1beta1
 
 import (
-	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,11 +33,7 @@ type IAMPolicyControllerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ConnectionManager string `json:"connectionManager"`
 
-	Image image.Image `json:"image,omitempty"`
-
-	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
-
-	ImagePullSecret string `json:"imagePullSecret,omitempty"`
+	GlobalValues GlobalValues `json:"global,omitempty"`
 
 	IsOpenShift bool `json:"ocp"`
 }

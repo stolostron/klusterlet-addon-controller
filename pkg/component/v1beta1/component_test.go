@@ -11,6 +11,8 @@ package v1beta1
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	// fakecrdclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
@@ -25,11 +27,30 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	"github.com/open-cluster-management/endpoint-operator/version"
 )
 
 var (
-	namespace = "multicluster-endpoint"
+	namespace    = "multicluster-endpoint"
+	manifestPath = filepath.Join("..", "..", "..", "image-manifests", version.Version+".json")
 )
+
+func TestMain(m *testing.M) {
+	err := setup()
+	if err != nil {
+		os.Exit(999)
+	}
+	code := m.Run()
+	teardown()
+	os.Exit(code)
+}
+
+func setup() error {
+	return multicloudv1beta1.LoadManifest(manifestPath)
+}
+
+func teardown() {
+}
 
 func newTestDeployment(name string) *appsv1.Deployment {
 	deployment := &appsv1.Deployment{

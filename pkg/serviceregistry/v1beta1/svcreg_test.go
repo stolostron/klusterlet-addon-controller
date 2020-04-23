@@ -11,6 +11,8 @@ package v1beta1
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,11 +24,30 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	"github.com/open-cluster-management/endpoint-operator/version"
 )
 
 var (
-	namespace = "multicluster-endpoint"
+	namespace    = "multicluster-endpoint"
+	manifestPath = filepath.Join("..", "..", "..", "image-manifests", version.Version+".json")
 )
+
+func TestMain(m *testing.M) {
+	err := setup()
+	if err != nil {
+		os.Exit(999)
+	}
+	code := m.Run()
+	teardown()
+	os.Exit(code)
+}
+
+func setup() error {
+	return multicloudv1beta1.LoadManifest(manifestPath)
+}
+
+func teardown() {
+}
 
 func newTestDeployment(name string) *appsv1.Deployment {
 	deployment := &appsv1.Deployment{
@@ -187,7 +208,8 @@ func TestUpdateReconcile(t *testing.T) {
 	assert.Equal(t, svcreg.Spec.ClusterName, instance.Spec.ClusterName, "svcreg CR ClusterName should be updated")
 	assert.Equal(t, svcreg.Spec.ClusterNamespace, instance.Spec.ClusterNamespace, "svcreg CR ClusterNamespace should be updated")
 	assert.Equal(t, svcreg.Spec.FullNameOverride, instance.Name+"-svcreg", "svcreg CR FullNameOverride should be updated")
-	assert.Equal(t, svcreg.Spec.ImagePullSecret, instance.Spec.ImagePullSecret, "svcreg CR ImagePullSecret should be updated")
+	assert.Equal(t, svcreg.Spec.GlobalValues.ImagePullSecret, instance.Spec.ImagePullSecret, "svcreg CR ImagePullSecret should be updated")
+	assert.Equal(t, svcreg.Spec.GlobalValues.ImagePullPolicy, instance.Spec.ImagePullPolicy, "svcreg CR ImagePullPolicy should be updated")
 	assert.Equal(t, svcreg.Spec.ConnectionManager, instance.Name+"-connmgr", "svcreg CR ConnectionManager should be updated")
 	assert.Equal(t, svcreg.Spec.DNSSuffix, instance.Spec.ServiceRegistryConfig.DNSSuffix, "svcreg CR DNSSuffix should be updated")
 	assert.Equal(t, svcreg.Spec.Plugins, instance.Spec.ServiceRegistryConfig.Plugins, "svcreg CR Plugins should be updated")

@@ -40,74 +40,29 @@ spec:
             connectionManager:
               minLength: 1
               type: string
-            deployable:
-              description: ApplicationManagerDeployableSpec defines configuration
-                for Deployable in ApplicationManager
-              properties:
-                image:
-                  description: Image defines the image to pull for a container
-                  properties:
-                    name:
-                      minLength: 1
-                      type: string
-                    pullPolicy:
-                      description: PullPolicy describes a policy for if/when to pull
-                        a container image
-                      type: string
-                    repository:
-                      minLength: 1
-                      type: string
-                    tag:
-                      minLength: 1
-                      type: string
-                    tagPostfix:
-                      type: string
-                  type: object
-              required:
-              - image
-              type: object
             fullnameOverride:
               minLength: 1
               type: string
-            imagePullSecret:
-              type: string
-            imageShaDigests:
-              additionalProperties:
-                type: string
-              type: object
-            subscription:
-              description: ApplicationManagerSubscriptionSpec defines configuration
-                for Subscription in ApplicationManager
+            global:
+              description: GlobalValues defines the global values
               properties:
-                image:
-                  description: Image defines the image to pull for a container
-                  properties:
-                    name:
-                      minLength: 1
-                      type: string
-                    pullPolicy:
-                      description: PullPolicy describes a policy for if/when to pull
-                        a container image
-                      type: string
-                    repository:
-                      minLength: 1
-                      type: string
-                    tag:
-                      minLength: 1
-                      type: string
-                    tagPostfix:
-                      type: string
+                imageOverrides:
+                  additionalProperties:
+                    type: string
                   type: object
-              required:
-              - image
+                imagePullPolicy:
+                  description: PullPolicy describes a policy for if/when to pull a
+                    container image
+                  type: string
+                imagePullSecret:
+                  type: string
               type: object
           required:
           - clusterName
           - clusterNamespace
           - connectionManager
-          - deployable
           - fullnameOverride
-          - subscription
+          - global
           type: object
         status:
           description: ApplicationManagerStatus defines the observed state of ApplicationManager

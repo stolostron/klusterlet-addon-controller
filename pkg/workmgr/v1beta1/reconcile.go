@@ -95,19 +95,28 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*multicloudv1beta1.WorkManager, error) {
+func newWorkManagerCR(instance *multicloudv1beta1.Endpoint,
+	client client.Client,
+) (*multicloudv1beta1.WorkManager, error) {
 	labels := map[string]string{
-		"app": cr.Name,
+		"app": instance.Name,
 	}
 
-	var imageShaDigests = make(map[string]string, 1)
-	workMgrImage, imageShaDigests, err := cr.GetImage("work-manager", imageShaDigests)
+	gv := multicloudv1beta1.GlobalValues{
+		ImagePullPolicy: instance.Spec.ImagePullPolicy,
+		ImagePullSecret: instance.Spec.ImagePullSecret,
+		ImageOverrides:  make(map[string]string, 1),
+	}
+
+	imageKey, imageRepository, err := instance.GetImage("work-manager")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "work-manager")
 		return nil, err
 	}
 
-	clusterLabels := cr.Spec.ClusterLabels
+	gv.ImageOverrides[imageKey] = imageRepository
+
+	clusterLabels := instance.Spec.ClusterLabels
 	if clusterLabels != nil {
 		if clusterLabels["cloud"] == "auto-detect" && len(string(inspect.Info.CloudVendor)) > 0 {
 			clusterLabels["cloud"] = string(inspect.Info.CloudVendor)
@@ -120,28 +129,22 @@ func newWorkManagerCR(cr *multicloudv1beta1.Endpoint, client client.Client) (*mu
 
 	return &multicloudv1beta1.WorkManager{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-workmgr",
-			Namespace: cr.Namespace,
+			Name:      instance.Name + "-workmgr",
+			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
 		Spec: multicloudv1beta1.WorkManagerSpec{
-			FullNameOverride: cr.Name + "-workmgr",
+			FullNameOverride: instance.Name + "-workmgr",
 
-			ClusterName:      cr.Spec.ClusterName,
-			ClusterNamespace: cr.Spec.ClusterNamespace,
+			ClusterName:      instance.Spec.ClusterName,
+			ClusterNamespace: instance.Spec.ClusterNamespace,
 			ClusterLabels:    clusterLabels,
 
-			ConnectionManager: cr.Name + "-connmgr",
+			ConnectionManager: instance.Name + "-connmgr",
 
-			Service: newWorkManagerServiceConfig(),
-			Ingress: newWorkManagerIngressConfig(client),
-
-			WorkManagerConfig: multicloudv1beta1.WorkManagerConfig{
-				Enabled: true,
-				Image:   workMgrImage,
-			},
-			ImageShaDigests: imageShaDigests,
-			ImagePullSecret: cr.Spec.ImagePullSecret,
+			Service:      newWorkManagerServiceConfig(),
+			Ingress:      newWorkManagerIngressConfig(client),
+			GlobalValues: gv,
 		},
 	}, nil
 }
