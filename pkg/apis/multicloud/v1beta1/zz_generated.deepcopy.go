@@ -629,13 +629,6 @@ func (in *EndpointSpec) DeepCopyInto(out *EndpointSpec) {
 	out.CertPolicyControllerConfig = in.CertPolicyControllerConfig
 	out.CISControllerConfig = in.CISControllerConfig
 	out.IAMPolicyControllerConfig = in.IAMPolicyControllerConfig
-	if in.ComponentsImagesTag != nil {
-		in, out := &in.ComponentsImagesTag, &out.ComponentsImagesTag
-		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
 	return
 }
 

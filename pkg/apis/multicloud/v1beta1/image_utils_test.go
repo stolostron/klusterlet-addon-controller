@@ -103,9 +103,6 @@ func TestGetImage(t *testing.T) {
 				endpoint: &Endpoint{
 					Spec: EndpointSpec{
 						ImageRegistry: "sample-registry/uniquePath",
-						ComponentsImagesTag: map[string]string{
-							"connection-manager": "some-special-version-tag",
-						},
 					},
 				},
 				component:       "connection-manager",

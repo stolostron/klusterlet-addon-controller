@@ -67,7 +67,6 @@ var (
 )
 
 func newEndpoint(name, namespace string) *unstructured.Unstructured {
-	imageTagPostfix := os.Getenv("COMPONENT_TAG_EXTENSION")
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "multicloud.ibm.com/v1beta1",
@@ -111,20 +110,6 @@ func newEndpoint(name, namespace string) *unstructured.Unstructured {
 				},
 				"iamPolicyController": map[string]interface{}{
 					"enabled": false,
-				},
-				"componentsImagesTag": map[string]interface{}{
-					"cert-policy-controller": "3.4.0" + imageTagPostfix,
-					"component-operator":     "1.0.0" + imageTagPostfix,
-					"connection-manager":     "0.0.1" + imageTagPostfix,
-					"deployable":             "1.0.0" + imageTagPostfix,
-					"iam-policy-controller":  "1.0.0" + imageTagPostfix,
-					"policy-controller":      "3.6.0" + imageTagPostfix,
-					"search-collector":       "3.5.0" + imageTagPostfix,
-					"service-registry":       "0.0.1" + imageTagPostfix,
-					"subscription":           "1.0.0" + imageTagPostfix,
-					"topology-collector":     "3.6.0" + imageTagPostfix,
-					"weave":                  "3.6.0" + imageTagPostfix,
-					"work-manager":           "0.0.1" + imageTagPostfix,
 				},
 				"version": "1.0.0",
 			},
