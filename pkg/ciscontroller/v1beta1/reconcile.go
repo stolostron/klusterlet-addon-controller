@@ -120,37 +120,51 @@ func newCISControllerCR(instance *multicloudv1beta1.Endpoint, client client.Clie
 		"app": instance.Name,
 	}
 
-	var imageShaDigests = make(map[string]string, 5)
+	gv := multicloudv1beta1.GlobalValues{
+		ImagePullPolicy: instance.Spec.ImagePullPolicy,
+		ImagePullSecret: instance.Spec.ImagePullSecret,
+		ImageOverrides:  make(map[string]string, 5),
+	}
 
-	imageController, imageShaDigests, err := instance.GetImage("cis-controller-controller", imageShaDigests)
+	imageKey, imageRepository, err := instance.GetImage("cis-controller-controller")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cis-controller-controller")
 		return nil, err
 	}
 
-	imageCrawler, imageShaDigests, err := instance.GetImage("cis-controller-crawler", imageShaDigests)
+	gv.ImageOverrides[imageKey] = imageRepository
+
+	imageKey, imageRepository, err = instance.GetImage("cis-controller-crawler")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cis-controller-crawler")
 		return nil, err
 	}
 
-	imageDrishti, imageShaDigests, err := instance.GetImage("cis-controller-drishti", imageShaDigests)
+	gv.ImageOverrides[imageKey] = imageRepository
+
+	imageKey, imageRepository, err = instance.GetImage("cis-controller-drishti")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cis-controller-drishti")
 		return nil, err
 	}
 
-	imageMinio, imageShaDigests, err := instance.GetImage("cis-controller-minio", imageShaDigests)
+	gv.ImageOverrides[imageKey] = imageRepository
+
+	imageKey, imageRepository, err = instance.GetImage("cis-controller-minio")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cis-controller-minio")
 		return nil, err
 	}
 
-	imageMinioCleaner, imageShaDigests, err := instance.GetImage("cis-controller-minio-cleaner", imageShaDigests)
+	gv.ImageOverrides[imageKey] = imageRepository
+
+	imageKey, imageRepository, err = instance.GetImage("cis-controller-minio-cleaner")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cis-controller-minio-cleaner")
 		return nil, err
 	}
+
+	gv.ImageOverrides[imageKey] = imageRepository
 
 	return &multicloudv1beta1.CISController{
 		ObjectMeta: metav1.ObjectMeta{
@@ -163,28 +177,8 @@ func newCISControllerCR(instance *multicloudv1beta1.Endpoint, client client.Clie
 			ClusterName:       instance.Spec.ClusterName,
 			ClusterNamespace:  instance.Spec.ClusterNamespace,
 			ConnectionManager: instance.Name + "-connmgr",
-			Controller: multicloudv1beta1.CISControllerSpecController{
-				Image: imageController,
-			},
-
-			Crawler: multicloudv1beta1.CISControllerSpecCrawler{
-				Image: imageCrawler,
-			},
-
-			Drishti: multicloudv1beta1.CISControllerSpecDrishti{
-				Image: imageDrishti,
-			},
-
-			Minio: multicloudv1beta1.CISControllerSpecMinio{
-				Image: imageMinio,
-			},
-
-			MinioCleaner: multicloudv1beta1.CISControllerSpecMinioCleaner{
-				Image: imageMinioCleaner,
-			},
-			ImageShaDigests: imageShaDigests,
-			ImagePullSecret: instance.Spec.ImagePullSecret,
-			IsOpenShift:     inspect.Info.KubeVendor == inspect.KubeVendorOpenShift,
+			GlobalValues:      gv,
+			IsOpenShift:       inspect.Info.KubeVendor == inspect.KubeVendorOpenShift,
 		},
 	}, err
 }

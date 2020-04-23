@@ -45,30 +45,19 @@ spec:
             fullnameOverride:
               minLength: 1
               type: string
-            image:
-              description: Image information for the PolicyController
+            global:
+              description: GlobalValues defines the global values
               properties:
-                name:
-                  minLength: 1
-                  type: string
-                pullPolicy:
+                imageOverrides:
+                  additionalProperties:
+                    type: string
+                  type: object
+                imagePullPolicy:
                   description: PullPolicy describes a policy for if/when to pull a
                     container image
                   type: string
-                repository:
-                  minLength: 1
+                imagePullSecret:
                   type: string
-                tag:
-                  minLength: 1
-                  type: string
-                tagPostfix:
-                  type: string
-              type: object
-            imagePullSecret:
-              type: string
-            imageShaDigests:
-              additionalProperties:
-                type: string
               type: object
             postDeleteJobServiceAccount:
               type: string

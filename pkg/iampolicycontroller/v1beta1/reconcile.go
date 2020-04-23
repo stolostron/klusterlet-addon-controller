@@ -120,12 +120,19 @@ func newIAMPolicyControllerCR(instance *multicloudv1beta1.Endpoint, client clien
 		"app": instance.Name,
 	}
 
-	var imageShaDigests = make(map[string]string, 1)
-	image, imageShaDigests, err := instance.GetImage("iam-policy-controller", imageShaDigests)
+	gv := multicloudv1beta1.GlobalValues{
+		ImagePullPolicy: instance.Spec.ImagePullPolicy,
+		ImagePullSecret: instance.Spec.ImagePullSecret,
+		ImageOverrides:  make(map[string]string, 1),
+	}
+
+	imageKey, imageRepository, err := instance.GetImage("iam-policy-controller")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "iam-policy")
 		return nil, err
 	}
+
+	gv.ImageOverrides[imageKey] = imageRepository
 
 	return &multicloudv1beta1.IAMPolicyController{
 		ObjectMeta: metav1.ObjectMeta{
@@ -138,9 +145,7 @@ func newIAMPolicyControllerCR(instance *multicloudv1beta1.Endpoint, client clien
 			ClusterName:       instance.Spec.ClusterName,
 			ClusterNamespace:  instance.Spec.ClusterNamespace,
 			ConnectionManager: instance.Name + "-connmgr",
-			Image:             image,
-			ImageShaDigests:   imageShaDigests,
-			ImagePullSecret:   instance.Spec.ImagePullSecret,
+			GlobalValues:      gv,
 			IsOpenShift:       inspect.Info.KubeVendor == inspect.KubeVendorOpenShift,
 		},
 	}, err

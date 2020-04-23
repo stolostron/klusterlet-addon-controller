@@ -164,7 +164,6 @@ func TestEndpointOperator(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	By("Setup Kube client")
-	//gvrClusterregistry = schema.GroupVersionResource{Group: "clusterregistry.k8s.io", Version: "v1alpha1", Resource: "clusters"}
 	gvrEndpoint = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "endpoints"}
 	gvrApplicationmanager = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "applicationmanagers"}
 	gvrCertpoliciescontroller = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "certpoliciescontroller"}

@@ -134,7 +134,7 @@ func newClusterRoleBinding(instance *multicloudv1beta1.Endpoint) *rbacv1.Cluster
 			Labels: labels,
 		},
 		Subjects: []rbacv1.Subject{
-			rbacv1.Subject{
+			{
 				Kind:      "ServiceAccount",
 				Name:      instance.Name + "-component-operator",
 				Namespace: instance.Namespace,
@@ -158,12 +158,12 @@ func newClusterRole(instance *multicloudv1beta1.Endpoint) *rbacv1.ClusterRole {
 			Labels: labels,
 		},
 		Rules: []rbacv1.PolicyRule{
-			rbacv1.PolicyRule{
+			{
 				APIGroups: []string{"*"},
 				Resources: []string{"*"},
 				Verbs:     []string{"*"},
 			},
-			rbacv1.PolicyRule{
+			{
 				APIGroups:       nil,
 				NonResourceURLs: []string{"*"},
 				Resources:       []string{},
@@ -194,33 +194,15 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) (*appsv1.Deployment, er
 		"app": instance.Name,
 	}
 
-	var imageShaDigests = make(map[string]string, 1)
 	var deploymentImage string
 	if instance.Spec.ComponentOperatorImage != "" {
 		deploymentImage = instance.Spec.ComponentOperatorImage
 	} else {
-		image, imageShaDigests, err := instance.GetImage("component-operator", imageShaDigests)
+		_, imageRepository, err := instance.GetImage("component-operator")
 		if err != nil {
 			return nil, err
 		}
-		keys := make([]string, 0, len(imageShaDigests))
-		for k := range imageShaDigests {
-			keys = append(keys, k)
-		}
-
-		// log.Info("sha-reconcile:", "sha", imageShaDigests)
-
-		// if sha, ok := imageShaDigests["endpoint_component_operator"]; ok {
-		// 	log.Info("SHA:", "sha", sha)
-		// 	deploymentImage = image.Repository + "/" + image.Name + "@" + sha
-		// } else {
-		// 	deploymentImage = image.Repository + "/" + image.Name + ":" + image.Tag + image.TagPostfix
-		// }
-		if len(keys) == 0 {
-			deploymentImage = image.Repository + "/" + image.Name + ":" + image.Tag + image.TagPostfix
-		} else {
-			deploymentImage = image.Repository + "/" + image.Name + "@" + imageShaDigests[keys[0]]
-		}
+		deploymentImage = imageRepository
 	}
 
 	deployment := &appsv1.Deployment{
@@ -244,20 +226,20 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) (*appsv1.Deployment, er
 				Spec: corev1.PodSpec{
 					ServiceAccountName: instance.Name + "-component-operator",
 					Containers: []corev1.Container{
-						corev1.Container{
+						{
 							Name:            "endpoint-component-operator",
 							Image:           deploymentImage,
 							ImagePullPolicy: instance.Spec.ImagePullPolicy,
 							Env: []corev1.EnvVar{
-								corev1.EnvVar{
+								{
 									Name:  "WATCH_NAMESPACE",
 									Value: os.Getenv("WATCH_NAMESPACE"),
 								},
-								corev1.EnvVar{
+								{
 									Name:  "OPERATOR_NAME",
 									Value: "endpoint-component-operator",
 								},
-								corev1.EnvVar{
+								{
 									Name: "POD_NAME",
 									ValueFrom: &corev1.EnvVarSource{
 										FieldRef: &corev1.ObjectFieldSelector{
@@ -278,7 +260,7 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) (*appsv1.Deployment, er
 
 	if instance.Spec.ImagePullSecret != "" {
 		deployment.Spec.Template.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
-			corev1.LocalObjectReference{
+			{
 				Name: instance.Spec.ImagePullSecret,
 			},
 		}

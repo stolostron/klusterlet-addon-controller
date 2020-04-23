@@ -10,8 +10,6 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -23,31 +21,16 @@ type ServiceRegistrySpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 
-	ClusterName      string               `json:"clusterName"`
-	ClusterNamespace string               `json:"clusterNamespace"`
-	FullNameOverride string               `json:"fullnameOverride"`
-	ServiceRegistry  ServiceRegistryImage `json:"serviceRegistry"`
-	CoreDNS          CoreDNSImage         `json:"coredns"`
-
-	ImageShaDigests map[string]string `json:"imageShaDigests,omitempty"`
-
-	ImagePullSecret string `json:"imagePullSecret,omitempty"`
+	ClusterName      string       `json:"clusterName"`
+	ClusterNamespace string       `json:"clusterNamespace"`
+	FullNameOverride string       `json:"fullnameOverride"`
+	GlobalValues     GlobalValues `json:"global,omitempty"`
 
 	ConnectionManager                  string `json:"connectionManager"`
 	DNSSuffix                          string `json:"dnsSuffix,omitempty"`
 	Plugins                            string `json:"plugins,omitempty"`
 	IstioIngressGateway                string `json:"istioIngressGateway,omitempty"`
 	IstioServiceEntryRegistryNamespace string `json:"istioServiceEntryRegistryNamespace,omitempty"`
-}
-
-// ServiceRegistryImage defines service registry configuration in the spec
-type ServiceRegistryImage struct {
-	Image image.Image `json:"image"`
-}
-
-// CoreDNSImage defines CoreDNSImage configuration in the spec
-type CoreDNSImage struct {
-	Image image.Image `json:"image,omitempty"`
 }
 
 // ServiceRegistryStatus defines the observed state of ServiceRegistry

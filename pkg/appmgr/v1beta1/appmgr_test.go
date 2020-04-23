@@ -11,6 +11,8 @@ package v1beta1
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,11 +25,30 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	"github.com/open-cluster-management/endpoint-operator/version"
 )
 
 var (
-	namespace = "multicluster-endpoint"
+	namespace    = "multicluster-endpoint"
+	manifestPath = filepath.Join("..", "..", "..", "image-manifests", version.Version+".json")
 )
+
+func TestMain(m *testing.M) {
+	err := setup()
+	if err != nil {
+		os.Exit(999)
+	}
+	code := m.Run()
+	teardown()
+	os.Exit(code)
+}
+
+func setup() error {
+	return multicloudv1beta1.LoadManifest(manifestPath)
+}
+
+func teardown() {
+}
 
 func newTestDeployment(name string) *appsv1.Deployment {
 	deployment := &appsv1.Deployment{
@@ -36,7 +57,7 @@ func newTestDeployment(name string) *appsv1.Deployment {
 			Namespace: namespace,
 		},
 		Status: appsv1.DeploymentStatus{
-			Conditions: []appsv1.DeploymentCondition{appsv1.DeploymentCondition{
+			Conditions: []appsv1.DeploymentCondition{{
 				Type:   "Available",
 				Status: "True",
 			}},
@@ -192,7 +213,8 @@ func TestUpdateReconcile(t *testing.T) {
 	assert.Equal(t, appmgr.Spec.ClusterName, instance.Spec.ClusterName, "appmgr CR ClusterName should be updated")
 	assert.Equal(t, appmgr.Spec.ClusterNamespace, instance.Spec.ClusterNamespace, "appmgr CR ClusterNamespace should be updated")
 	assert.Equal(t, appmgr.Spec.FullNameOverride, instance.Name+"-appmgr", "appmgr CR FullNameOverride should be updated")
-	assert.Equal(t, appmgr.Spec.ImagePullSecret, instance.Spec.ImagePullSecret, "appmgr CR ImagePullSecret should be updated")
+	assert.Equal(t, appmgr.Spec.GlobalValues.ImagePullSecret, instance.Spec.ImagePullSecret, "appmgr CR ImagePullSecret should be updated")
+	assert.Equal(t, appmgr.Spec.GlobalValues.ImagePullPolicy, instance.Spec.ImagePullPolicy, "appmgr CR ImagePullPolicy should be updated")
 }
 
 func TestDeleteReconcileWithDeletionTimestamp(t *testing.T) {

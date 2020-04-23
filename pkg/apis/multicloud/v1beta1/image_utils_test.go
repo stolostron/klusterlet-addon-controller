@@ -22,20 +22,19 @@
 package v1beta1
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/ghodss/yaml"
-	"github.com/open-cluster-management/endpoint-operator/pkg/image"
 	"github.com/open-cluster-management/endpoint-operator/version"
 	"github.com/stretchr/testify/assert"
 )
 
+var manifestPath = filepath.Join("..", "..", "..", "..", "image-manifests", version.Version+".json")
+
 func TestGetImage(t *testing.T) {
 	os.Setenv("USE_SHA_MANIFEST", "false")
-	err := loadTestManifest()
+	err := LoadManifest(manifestPath)
 	if err != nil {
 		t.Error(err)
 	}
@@ -49,7 +48,7 @@ func TestGetImage(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    image.Image
+		want    GlobalValues
 		wantErr bool
 	}{
 		{
@@ -63,10 +62,10 @@ func TestGetImage(t *testing.T) {
 				component:       "component-operator",
 				imageTagPostfix: "",
 			},
-			want: image.Image{
-				Repository: "sample-registry/uniquePath",
-				Name:       defaultComponentImageMap["component-operator"],
-				Tag:        defaultComponentTagMap["component-operator"],
+			want: GlobalValues{
+				ImageOverrides: map[string]string{
+					"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator:1.0.0",
+				},
 			},
 			wantErr: false,
 		},
@@ -77,7 +76,7 @@ func TestGetImage(t *testing.T) {
 				component:       "notExistsComponent",
 				imageTagPostfix: "",
 			},
-			want:    image.Image{},
+			want:    GlobalValues{},
 			wantErr: true,
 		},
 		{
@@ -91,11 +90,10 @@ func TestGetImage(t *testing.T) {
 				component:       "connection-manager",
 				imageTagPostfix: "-aUnique-Post-Fix",
 			},
-			want: image.Image{
-				Repository: "sample-registry-2/uniquePath",
-				Name:       defaultComponentImageMap["connection-manager"],
-				Tag:        defaultComponentTagMap["connection-manager"],
-				TagPostfix: "aUnique-Post-Fix",
+			want: GlobalValues{
+				ImageOverrides: map[string]string{
+					"multicloud_manager": "sample-registry-2/uniquePath/multicloud-manager:0.0.1-aUnique-Post-Fix",
+				},
 			},
 			wantErr: false,
 		},
@@ -113,10 +111,10 @@ func TestGetImage(t *testing.T) {
 				component:       "connection-manager",
 				imageTagPostfix: "-aUnique-Post-Fix",
 			},
-			want: image.Image{
-				Repository: "sample-registry/uniquePath",
-				Name:       defaultComponentImageMap["connection-manager"],
-				Tag:        "some-special-version-tag",
+			want: GlobalValues{
+				ImageOverrides: map[string]string{
+					"multicloud_manager": "sample-registry/uniquePath/multicloud-manager:0.0.1-aUnique-Post-Fix",
+				},
 			},
 			wantErr: false,
 		},
@@ -129,14 +127,11 @@ func TestGetImage(t *testing.T) {
 			if err != nil {
 				t.Errorf("Cannot set env %s", imageTagPostfixKey)
 			}
-			var imageShaDigests map[string]string
-			img, _, err := tt.args.endpoint.GetImage(tt.args.component, imageShaDigests)
+			imgKey, imgRepository, err := tt.args.endpoint.GetImage(tt.args.component)
 			if tt.wantErr != (err != nil) {
 				t.Errorf("Should return error correctly.")
 			} else if !tt.wantErr {
-				assert.Equal(t, tt.want.Repository, img.Repository, "repository should match")
-				assert.Equal(t, tt.want.Name, img.Name, "image name should match")
-				assert.Equal(t, tt.want.Tag, img.Tag, "image tag should match")
+				assert.Equal(t, tt.want.ImageOverrides[imgKey], imgRepository, "repository should match")
 			}
 		})
 	}
@@ -145,22 +140,19 @@ func TestGetImage(t *testing.T) {
 func TestGetImageWithManifest(t *testing.T) {
 	os.Setenv("USE_SHA_MANIFEST", "true")
 	os.Setenv("IMAGE_TAG_POSTFIX", "")
-	err := loadTestManifest()
+	err := LoadManifest(manifestPath)
 	if err != nil {
 		t.Error(err)
 	}
 	type args struct {
-		endpoint        *Endpoint
-		component       string
-		imageTagPostfix string
+		endpoint  *Endpoint
+		component string
 	}
 
 	tests := []struct {
 		name    string
 		args    args
-		want    image.Image
-		sha     string
-		shaKey  string
+		want    GlobalValues
 		wantErr bool
 	}{
 		{
@@ -171,27 +163,22 @@ func TestGetImageWithManifest(t *testing.T) {
 						ImageRegistry: "sample-registry/uniquePath",
 					},
 				},
-				component:       "component-operator",
-				imageTagPostfix: "hello",
+				component: "component-operator",
 			},
-			want: image.Image{
-				Repository: "sample-registry/uniquePath",
-				Name:       defaultComponentImageMap["component-operator"],
-				Tag:        defaultComponentTagMap["component-operator"],
-				TagPostfix: "",
+			want: GlobalValues{
+				ImageOverrides: map[string]string{
+					"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:e3f50682886650444e1c8ffa495ffced073b8f50f8606932514dca42ae74081b",
+				},
 			},
-			sha:     "sha256:b3edec494a5c9f5a9bf65699d0592ca2e50c205132f5337e8df07a7808d03887",
-			shaKey:  "endpoint_component_operator",
 			wantErr: false,
 		},
 		{
 			name: "Not Exists Component",
 			args: args{
-				endpoint:        &Endpoint{},
-				component:       "notExistsComponent",
-				imageTagPostfix: "",
+				endpoint:  &Endpoint{},
+				component: "notExistsComponent",
 			},
-			want:    image.Image{},
+			want:    GlobalValues{},
 			wantErr: true,
 		},
 	}
@@ -199,33 +186,12 @@ func TestGetImageWithManifest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Logf("Running tests %s", tt.name)
-			imageShaDigests := make(map[string]string)
-			img, sha, err := tt.args.endpoint.GetImage(tt.args.component, imageShaDigests)
+			imgKey, imgRepository, err := tt.args.endpoint.GetImage(tt.args.component)
 			if tt.wantErr != (err != nil) {
 				t.Errorf("Should return error correctly. Error:%s", err)
 			} else if !tt.wantErr {
-				assert.Equal(t, tt.want.Repository, img.Repository, "repository should match")
-				assert.Equal(t, tt.want.Name, img.Name, "image name should match")
-				assert.Equal(t, tt.want.Tag, img.Tag, "image tag should match")
-				assert.Equal(t, tt.want.TagPostfix, img.TagPostfix, "image tag should match")
-				sha, ok := sha[tt.shaKey]
-				assert.True(t, ok)
-				assert.Equal(t, tt.sha, sha, "image sha should match")
+				assert.Equal(t, tt.want.ImageOverrides[imgKey], imgRepository, "repository should match")
 			}
 		})
 	}
-}
-
-func loadTestManifest() error {
-	Manifest.Images = make([]imageManifest, 0)
-	filePath := filepath.Join("..", "..", "..", "..", "image-manifests", version.Version+".json")
-	b, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-	err = yaml.Unmarshal(b, &Manifest.Images)
-	if err != nil {
-		return err
-	}
-	return nil
 }
