@@ -44,8 +44,7 @@ type EndpointSpec struct {
 	CISControllerConfig        EndpointCISControllerSpec        `json:"cisController"`
 	IAMPolicyControllerConfig  EndpointIAMPolicyControllerSpec  `json:"iamPolicyController"`
 
-	// +kubebuilder:validation:MinLength=1
-	ImageRegistry    string `json:"imageRegistry"`
+	ImageRegistry    string `json:"imageRegistry,omitempty"`
 	ImageNamePostfix string `json:"imageNamePostfix,omitempty"`
 	// +kubebuilder:validation:MinLength=1
 	ImagePullSecret string `json:"imagePullSecret,omitempty"`
