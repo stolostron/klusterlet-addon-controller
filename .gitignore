@@ -17,3 +17,7 @@ build/_output
 build-harness
 build-harness-extensions
 vendor
+
+!vbh/.build-harness-vendorized
+!vbh/build-harness
+!vbh/build-harness-extensions
