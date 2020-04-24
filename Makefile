@@ -2,15 +2,12 @@
 SHELL := /bin/bash
 
 
-export GIT_COMMIT      = $(shell git rev-parse --short HEAD)
-export GIT_REMOTE_URL  = $(shell git config --get remote.origin.url)
 export GITHUB_USER    := $(shell echo $(GITHUB_USER) | sed 's/@/%40/g')
 export GITHUB_TOKEN   ?=
 
 export ARCH       ?= $(shell uname -m)
 export ARCH_TYPE   = $(if $(patsubst x86_64,,$(ARCH)),$(ARCH),amd64)
 export BUILD_DATE  = $(shell date +%m/%d@%H:%M:%S)
-export VCS_REF     = $(if $(shell git status --porcelain),$(GIT_COMMIT)-$(BUILD_DATE),$(GIT_COMMIT))
 
 export CGO_ENABLED  = 0
 export GO111MODULE := on
@@ -40,8 +37,20 @@ export DOCKER_BUILD_OPTS  = --build-arg "VCS_REF=$(VCS_REF)" \
 
 BEFORE_SCRIPT := $(shell build/before-make.sh)
 
--include $(shell curl -s -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
+USE_VENDORIZED_BUILD_HARNESS ?=
 
+ifndef USE_VENDORIZED_BUILD_HARNESS
+-include $(shell curl -s -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
+else
+-include vbh/.build-harness-vendorized
+endif
+
+# Only use git commands if it exists
+ifdef GIT
+GIT_COMMIT      = $(shell git rev-parse --short HEAD)
+GIT_REMOTE_URL  = $(shell git config --get remote.origin.url)
+VCS_REF     = $(if $(shell git status --porcelain),$(GIT_COMMIT)-$(BUILD_DATE),$(GIT_COMMIT))
+endif
 
 .PHONY: deps
 ## Download all project dependencies
