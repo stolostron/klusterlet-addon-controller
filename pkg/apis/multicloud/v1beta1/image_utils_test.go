@@ -164,7 +164,7 @@ func TestGetImageWithManifest(t *testing.T) {
 			},
 			want: GlobalValues{
 				ImageOverrides: map[string]string{
-					"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:e3f50682886650444e1c8ffa495ffced073b8f50f8606932514dca42ae74081b",
+					"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256",
 				},
 			},
 			wantErr: false,
