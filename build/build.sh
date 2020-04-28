@@ -10,15 +10,14 @@
 
 # PARAMETERS
 # $1 - Final image name and tag to be produced
-echo Building selfdestruct
-go build -o build/bin/selfdestruct ./selfdestruct
-echo Building operator
+echo Building selfdestruct and operator
 echo GOOS: $GOOS
 echo GOARCH: $GOARCH
-echo "--IMAGE: $DOCKER_IMAGE"
-echo "--TAG: $DOCKER_BUILD_TAG"
-echo "--DOCKER_BUILD_OPTS: $DOCKER_BUILD_OPTS"
-operator-sdk build $DOCKER_IMAGE:$DOCKER_BUILD_TAG --image-build-args "$DOCKER_BUILD_OPTS"
+
+docker build . \
+$DOCKER_BUILD_OPTS \
+-t $DOCKER_IMAGE:$DOCKER_BUILD_TAG \
+-f build/Dockerfile
 
 if [ ! -z "$1" ]; then
     echo "Retagging image as $1"
