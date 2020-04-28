@@ -21,6 +21,9 @@ export DOCKER_BUILD_PATH      = $(PROJECT_DIR)/.build-docker
 export COMPONENT_SCRIPTS_PATH = $(BUILD_DIR)
 
 ## WARNING: OPERATOR-SDK - IMAGE_DESCRIPTION & DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES
+export COMPONENT_NAME ?= $(shell cat ./COMPONENT_NAME 2> /dev/null)
+export COMPONENT_VERSION ?= $(shell cat ./COMPONENT_VERSION 2> /dev/null)
+
 export IMAGE_DESCRIPTION ?= Endpoint_Operator
 export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile
 export DOCKER_REGISTRY   ?= quay.io
@@ -28,12 +31,18 @@ export DOCKER_NAMESPACE  ?= open-cluster-management
 export DOCKER_IMAGE      ?= $(COMPONENT_NAME)
 export DOCKER_BUILD_TAG  ?= latest
 export DOCKER_TAG        ?= $(shell whoami)
-export DOCKER_BUILD_OPTS  = --build-arg "VCS_REF=$(VCS_REF)" \
-	--build-arg "VCS_URL=$(GIT_REMOTE_URL)" \
-	--build-arg "IMAGE_NAME=$(DOCKER_IMAGE)" \
-	--build-arg "IMAGE_DESCRIPTION=$(IMAGE_DESCRIPTION)" \
-	--build-arg "IMAGE_VERSION=$(SEMVERSION)" \
-	--build-arg "ARCH_TYPE=$(ARCH_TYPE)"
+
+export DOCKER_BUILD_OPTS  = --build-arg REMOTE_SOURCE=. \
+	--build-arg REMOTE_SOURCE_DIR=/remote-source \
+	--build-arg GITHUB_TOKEN=$(GITHUB_TOKEN) \
+	--build-arg VCS_REF=$(VCS_REF) \
+	--build-arg VCS_URL=$(GIT_REMOTE_URL) \
+	--build-arg IMAGE_NAME=$(DOCKER_IMAGE) \
+	--build-arg IMAGE_DESCRIPTION=$(IMAGE_DESCRIPTION) \
+	--build-arg IMAGE_VERSION=$(SEMVERSION) \
+	--build-arg COMPONENT_NAME=$(COMPONENT_NAME) \
+	--build-arg COMPONENT_VERSION=$(COMPONENT_VERSION) \
+	--build-arg ARCH_TYPE=$(ARCH_TYPE)
 
 BEFORE_SCRIPT := $(shell build/before-make.sh)
 

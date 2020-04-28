@@ -1,24 +1,39 @@
+FROM openshift/origin-release:golang-1.13 as builder
+
+ARG REMOTE_SOURCE
+ARG REMOTE_SOURCE_DIR
+ARG GITHUB_TOKEN
+
+COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR/app/
+WORKDIR $REMOTE_SOURCE_DIR/app
+
+RUN git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+
+RUN GOFLAGS="" go build ./cmd/manager
+RUN GOFLAGS="" go build -o $REMOTE_SOURCE_DIR/app/build/bin/selfdestruct ./selfdestruct
+
+
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1-398
 
-ARG ARCH_TYPE
 ARG IMAGE_DESCRIPTION
 ARG IMAGE_NAME
 ARG IMAGE_VERSION
 ARG VCS_REF
 ARG VCS_URL
-ARG MANIFEST_PATH
+ARG COMPONENT_NAME
+ARG COMPONENT_VERSION
+ARG REMOTE_SOURCE_DIR
 
-ENV OPERATOR=/usr/local/bin/endpoint-operator \
+ENV OPERATOR=/usr/local/bin/$COMPONENT_NAME \
     USER_UID=10001 \
-    USER_NAME=endpoint-operator
+    USER_NAME=$COMPONENT_NAME
 
 COPY image-manifests image-manifests
 
-COPY deploy/crds deploy/crds
-COPY build/bin /usr/local/bin
-COPY build/_output/bin/endpoint-operator ${OPERATOR}
+COPY --from=builder $REMOTE_SOURCE_DIR/app/deploy/crds deploy/crds
+COPY --from=builder $REMOTE_SOURCE_DIR/app/manager ${OPERATOR}
+COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin /usr/local/bin
 
-# http://label-schema.org/rc1/
 LABEL org.label-schema.vendor="Red Hat" \
       org.label-schema.name="$IMAGE_NAME" \
       org.label-schema.description="$IMAGE_DESCRIPTION" \
