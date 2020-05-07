@@ -215,7 +215,7 @@ var _ = Describe("Endpoint", func() {
 		When("endpoint deleted, wait for all components CR to be deleted", func() {
 			Eventually(func() *unstructured.Unstructured {
 				var objCertPolicyCtl *unstructured.Unstructured
-				klog.V(1).Info("Wait cert policy controller...")
+				klog.V(1).Info("Wait deletion cert policy controller...")
 				objCertPolicyCtl, err = clientClusterDynamic.Resource(gvrCertpoliciescontroller).Namespace(testNamespace).Get(certPolicyController, metav1.GetOptions{})
 				return objCertPolicyCtl
 			}, 5, 1).Should(BeNil())
@@ -223,7 +223,7 @@ var _ = Describe("Endpoint", func() {
 
 			Eventually(func() *unstructured.Unstructured {
 				var objSearchCtl *unstructured.Unstructured
-				klog.V(1).Info("Wait search controller...")
+				klog.V(1).Info("Wait deletion search controller...")
 				objSearchCtl, err = clientClusterDynamic.Resource(gvrSearchcollector).Namespace(testNamespace).Get(searchCollector, metav1.GetOptions{})
 				return objSearchCtl
 			}, 5, 1).Should(BeNil())
@@ -231,7 +231,7 @@ var _ = Describe("Endpoint", func() {
 
 			Eventually(func() *unstructured.Unstructured {
 				var objPolicyCtl *unstructured.Unstructured
-				klog.V(1).Info("Wait policy controller...")
+				klog.V(1).Info("Wait deletion policy controller...")
 				objPolicyCtl, err = clientClusterDynamic.Resource(gvrPolicycontroller).Namespace(testNamespace).Get(policyController, metav1.GetOptions{})
 				return objPolicyCtl
 			}, 5, 1).Should(BeNil())
@@ -239,7 +239,7 @@ var _ = Describe("Endpoint", func() {
 
 			Eventually(func() *unstructured.Unstructured {
 				var objAppMgr *unstructured.Unstructured
-				klog.V(1).Info("Wait application manager...")
+				klog.V(1).Info("Wait deletion application manager...")
 				objAppMgr, err = clientClusterDynamic.Resource(gvrApplicationmanager).Namespace(testNamespace).Get(applicationManager, metav1.GetOptions{})
 				return objAppMgr
 			}, 5, 1).Should(BeNil())
@@ -247,7 +247,7 @@ var _ = Describe("Endpoint", func() {
 
 			Eventually(func() *unstructured.Unstructured {
 				var objConnMgr *unstructured.Unstructured
-				klog.V(1).Info("Wait connection manager...")
+				klog.V(1).Info("Wait deletion connection manager...")
 				objConnMgr, err = clientClusterDynamic.Resource(gvrConnectionmanager).Namespace(testNamespace).Get(connectionManager, metav1.GetOptions{})
 				return objConnMgr
 			}, 5, 1).Should(BeNil())
@@ -255,15 +255,14 @@ var _ = Describe("Endpoint", func() {
 
 			Eventually(func() *unstructured.Unstructured {
 				var objServiceReg *unstructured.Unstructured
-				klog.V(1).Info("Wait service registries...")
+				klog.V(1).Info("Wait deletion service registries...")
 				objServiceReg, err = clientClusterDynamic.Resource(gvrServiceregistries).Namespace(testNamespace).Get(serviceRegistries, metav1.GetOptions{})
 				return objServiceReg
 			}, 5, 1).Should(BeNil())
 			klog.V(1).Info("service registries deleted")
 
 			Eventually(func() error {
-				//var objComponentOperator *appsv1.Deployment
-				klog.V(1).Info("Wait endpoint component operator...")
+				klog.V(1).Info("Wait deletion endpoint component operator...")
 				_, err = clientCluster.AppsV1().Deployments(testNamespace).Get(endpointComponentOperator, metav1.GetOptions{})
 				return err
 			}, 5, 1).ShouldNot(BeNil())

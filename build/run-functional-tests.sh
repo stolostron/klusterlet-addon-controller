@@ -11,38 +11,72 @@
 set -e
 # set -x
 
-DOCKER_IMAGE=$1
+DOCKER_IMAGE=$1-coverage
+if [ -z $FUNCT_TEST_TMPDIR ]; then
+ export FUNCT_TEST_TMPDIR=/tmp/`uuidgen`
+fi
 
-CURR_FOLDER_PATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-KIND_KUBECONFIG="${CURR_FOLDER_PATH}/../kind_kubeconfig.yaml"
+mkdir -p ${FUNCT_TEST_TMPDIR}
+
+echo "FUNCT_TEST_TMPDIR="$FUNCT_TEST_TMPDIR
+
+KIND_KUBECONFIG="${PROJECT_DIR}/kind_kubeconfig.yaml"
+echo "KIND_KUBECONFIG="$KIND_KUBECONFIG
+
 export KUBECONFIG=${KIND_KUBECONFIG}
 export PULL_SECRET=multicloud-image-pull-secret
+
+wait_file() {
+  local file="$1"; shift
+  local wait_seconds="${1:-10}"; shift # 10 seconds as default timeout
+
+  until test $((wait_seconds--)) -eq 0 -o -f "$file" ; do sleep 1; done
+
+  ((++wait_seconds))
+}
 
 if ! which kubectl > /dev/null; then
     echo "installing kubectl"
     curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
 fi
+
 if ! which kind > /dev/null; then
     echo "installing kind"
     curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-$(uname)-amd64
     chmod +x ./kind
     sudo mv ./kind /usr/local/bin/kind
 fi
+kind --version
+
 if ! which ginkgo > /dev/null; then
     echo "Installing ginkgo ..."
     GO111MODULE=off go get github.com/onsi/ginkgo/ginkgo
     GO111MODULE=off go get github.com/onsi/gomega/...
 fi
 
+if ! which gocovmerge > /dev/null; then 
+    echo "Installing gocovmerge..."; 
+    GO111MODULE=off go get -u github.com/wadey/gocovmerge; 
+fi
+
+
 echo "creating cluster"
-kind create cluster --name endpoint-operator-test || exit 1
+
+sed "s#REPLACE_DIR#${FUNCT_TEST_TMPDIR}/test/coverage-functional/endpoint-operator#" ${PROJECT_DIR}/build/kind-config/kind-config.yaml > ${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml
+
+cat ${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml
+
+#Create local directory to hold coverage results
+mkdir -p ${FUNCT_TEST_TMPDIR}/test/coverage-functional/endpoint-operator
+
+kind create cluster --name endpoint-operator-test --config=${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml  || exit 1
 
 # setup kubeconfig
-kind export kubeconfig --name=endpoint-operator-test --kubeconfig ${KIND_KUBECONFIG}
+kind export kubeconfig --name=endpoint-operator-test --kubeconfig ${KIND_KUBECONFIG} 
 
 echo "installing endpoint-operator"
 
-kind load docker-image $DOCKER_IMAGE --name=endpoint-operator-test
+kind load docker-image $DOCKER_IMAGE --name=endpoint-operator-test 
 
 #Create the namespace
 kubectl apply -f ${PROJECT_DIR}/deploy/namespace.yaml
@@ -53,13 +87,31 @@ kubectl create secret docker-registry ${PULL_SECRET} \
       --docker-password=$DOCKER_PASS \
       -n multicluster-endpoint
 
+#Loop on scenario
 for dir in overlays/test/* ; do
+  echo "=========================================="
   echo "Executing test "$dir
+  echo "=========================================="
   kubectl apply -k $dir
   kubectl patch deployment endpoint-operator -n multicluster-endpoint -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"endpoint-operator\",\"image\":\"${DOCKER_IMAGE}\"}]}}}}"
   kubectl rollout status -n multicluster-endpoint deployment endpoint-operator --timeout=120s
   sleep 10
   ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/endpoint-operator-test/... -- --v=1
+  kubectl delete deployment endpoint-operator -n multicluster-endpoint
 done
 
-kind delete cluster --name endpoint-operator-test
+kind delete cluster --name endpoint-operator-test 
+
+rm -rf ${PROJECT_DIR}/test/coverage-functional
+mkdir -p ${PROJECT_DIR}/test/coverage-functional
+
+mv ${FUNCT_TEST_TMPDIR}/test/coverage-functional/endpoint-operator/* ${PROJECT_DIR}/test/coverage-functional/
+
+gocovmerge ${PROJECT_DIR}/test/coverage-functional/* >> ${PROJECT_DIR}/test/coverage-functional/cover-functional.out
+COVERAGE=$(go tool cover -func=${PROJECT_DIR}/test/coverage-functional/cover-functional.out | grep "total:" | awk '{ print $3 }' | sed 's/[][()><%]/ /g')
+echo "-------------------------------------------------------------------------"
+echo "TOTAL COVERAGE IS ${COVERAGE}%"
+echo "-------------------------------------------------------------------------"
+
+go tool cover -html ${PROJECT_DIR}/test/coverage-functional/cover-functional.out -o ${PROJECT_DIR}/test/coverage-functional/cover-functional.html
+

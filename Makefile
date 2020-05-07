@@ -143,6 +143,10 @@ functional-test:
 	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/endpoint-operator-test/... -- --v=5
 
 .PHONY: functional-test-full
-functional-test-full: build component/test/functional
+functional-test-full: build-coverage component/test/functional
 
-
+.PHONY: build-coverage
+## Builds operator binary inside of an image
+build-coverage: 
+	build/build-coverage.sh ${COMPONENT_DOCKER_REPO}/${COMPONENT_NAME}:${COMPONENT_VERSION}${COMPONENT_TAG_EXTENSION}-coverage
+	

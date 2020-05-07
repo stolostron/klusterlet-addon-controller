@@ -42,18 +42,13 @@ jobs:
       script:
         - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
         - make sonar/go
-    # - stage: test-e2e
-    #   name: "Run e23-test"
-    #   if: type = pull_request
-    #   script:
-    #     - make component/pull
-    #     - make component/test/e2e
 
     - stage: functional-test
       name: "Run functional-test"
       script:
         - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
-        - make component/pull
+        - make component/init
+        - make build-coverage
         - make component/test/functional
 
     - stage: release-ff
