@@ -5,11 +5,13 @@ OPENSOURCE.check
 .vscode
 build/bin/selfdestruct
 cover.html
+cover-functional.html
 *.out
 *.tap
 *.test
 .DS_Store
 kind_kubeconfig.yaml
+kind-config-generated.yaml
 
 # Folders
 .build-docker
