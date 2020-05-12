@@ -9,7 +9,7 @@
 ###############################################################################
 
 set -e
-# set -x
+#set -x
 
 DOCKER_IMAGE=$1-coverage
 if [ -z $FUNCT_TEST_TMPDIR ]; then
@@ -22,6 +22,16 @@ echo "FUNCT_TEST_TMPDIR="$FUNCT_TEST_TMPDIR
 
 KIND_KUBECONFIG="${PROJECT_DIR}/kind_kubeconfig.yaml"
 echo "KIND_KUBECONFIG="$KIND_KUBECONFIG
+
+if [ -z $DOCKER_USER ]; then
+   echo "DOCKER_USER is not defined!"
+   exit 1
+fi
+if [ -z $DOCKER_PASS ]; then
+   echo "DOCKER_PASS is not defined!"
+   exit 1
+fi
+
 
 export KUBECONFIG=${KIND_KUBECONFIG}
 export PULL_SECRET=multicloud-image-pull-secret
@@ -54,9 +64,9 @@ if ! which ginkgo > /dev/null; then
     GO111MODULE=off go get github.com/onsi/gomega/...
 fi
 
-if ! which gocovmerge > /dev/null; then 
-    echo "Installing gocovmerge..."; 
-    GO111MODULE=off go get -u github.com/wadey/gocovmerge; 
+if ! which gocovmerge > /dev/null; then
+    echo "Installing gocovmerge...";
+    GO111MODULE=off go get -u github.com/wadey/gocovmerge;
 fi
 
 
@@ -72,11 +82,11 @@ mkdir -p ${FUNCT_TEST_TMPDIR}/test/coverage-functional/endpoint-operator
 kind create cluster --name endpoint-operator-test --config=${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml  || exit 1
 
 # setup kubeconfig
-kind export kubeconfig --name=endpoint-operator-test --kubeconfig ${KIND_KUBECONFIG} 
+kind export kubeconfig --name=endpoint-operator-test --kubeconfig ${KIND_KUBECONFIG}
 
 echo "installing endpoint-operator"
 
-kind load docker-image $DOCKER_IMAGE --name=endpoint-operator-test 
+kind load docker-image $DOCKER_IMAGE --name=endpoint-operator-test
 
 #Create the namespace
 kubectl apply -f ${PROJECT_DIR}/deploy/namespace.yaml
@@ -100,7 +110,7 @@ for dir in overlays/test/* ; do
   kubectl delete deployment endpoint-operator -n multicluster-endpoint
 done
 
-kind delete cluster --name endpoint-operator-test 
+kind delete cluster --name endpoint-operator-test
 
 rm -rf ${PROJECT_DIR}/test/coverage-functional
 mkdir -p ${PROJECT_DIR}/test/coverage-functional
@@ -114,4 +124,3 @@ echo "TOTAL COVERAGE IS ${COVERAGE}%"
 echo "-------------------------------------------------------------------------"
 
 go tool cover -html ${PROJECT_DIR}/test/coverage-functional/cover-functional.out -o ${PROJECT_DIR}/test/coverage-functional/cover-functional.html
-

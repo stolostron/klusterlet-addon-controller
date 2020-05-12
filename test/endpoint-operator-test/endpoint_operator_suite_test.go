@@ -56,7 +56,6 @@ var (
 	gvrIampoliciescontroller  schema.GroupVersionResource
 	gvrPolicycontroller       schema.GroupVersionResource
 	gvrSearchcollector        schema.GroupVersionResource
-	gvrServiceregistries      schema.GroupVersionResource
 	gvrWorkmanagers           schema.GroupVersionResource
 
 	optionsFile         string
@@ -100,9 +99,6 @@ func newEndpoint(name, namespace string) *unstructured.Unstructured {
 					"enabled": true,
 				},
 				"searchCollector": map[string]interface{}{
-					"enabled": true,
-				},
-				"serviceRegistry": map[string]interface{}{
 					"enabled": true,
 				},
 				"cisController": map[string]interface{}{
@@ -157,7 +153,6 @@ var _ = BeforeSuite(func() {
 	gvrIampoliciescontroller = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "iampoliciescontroller"}
 	gvrPolicycontroller = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "policycontrollers"}
 	gvrSearchcollector = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "searchcollectors"}
-	gvrServiceregistries = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "serviceregistries"}
 	gvrWorkmanagers = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "workmanagers"}
 
 	clientCluster = NewKubeClient("", "", "")

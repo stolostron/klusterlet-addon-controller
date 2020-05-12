@@ -22,7 +22,6 @@ import (
 	iampolicycontroller "github.com/open-cluster-management/endpoint-operator/pkg/iampolicycontroller/v1beta1"
 	policyctrl "github.com/open-cluster-management/endpoint-operator/pkg/policyctrl/v1beta1"
 	searchcollector "github.com/open-cluster-management/endpoint-operator/pkg/searchcollector/v1beta1"
-	serviceregistry "github.com/open-cluster-management/endpoint-operator/pkg/serviceregistry/v1beta1"
 	workmgr "github.com/open-cluster-management/endpoint-operator/pkg/workmgr/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -126,14 +125,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.ServiceRegistry{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &multicloudv1beta1.Endpoint{},
-	})
-	if err != nil {
-		log.Error(err, "Fail to add Watch for ServiceRegistry to controller")
-		return err
-	}
 
 	err = c.Watch(&source.Kind{Type: &multicloudv1beta1.WorkManager{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
@@ -234,13 +225,6 @@ func (r *ReconcileEndpoint) Reconcile(request reconcile.Request) (reconcile.Resu
 	tempRequeue, err = policyctrl.Reconcile(instance, r.client, r.scheme)
 	if err != nil {
 		reqLogger.Error(err, "Unable to reconcile policyctrl", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
-		return reconcile.Result{}, err
-	}
-	requeue = requeue || tempRequeue
-
-	tempRequeue, err = serviceregistry.Reconcile(instance, r.client, r.scheme)
-	if err != nil {
-		reqLogger.Error(err, "Unable to reconcile serviceregistry", "endpointName", instance.GetName(), "endpointNamespace", instance.GetNamespace())
 		return reconcile.Result{}, err
 	}
 	requeue = requeue || tempRequeue

@@ -77,7 +77,6 @@ rules:
   - monitorings
   - policycontrollers
   - searchcollectors
-  - serviceregistries
   - workmanagers
   verbs:
   - create
