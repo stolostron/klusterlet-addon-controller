@@ -6,7 +6,6 @@
 //
 // Copyright (c) 2020 Red Hat, Inc.
 
-// Package v1beta1 of serviceregistry provides a reconciler for the serviceregistry
 
 package main
 
@@ -49,7 +48,6 @@ var componentCRDs []string = []string{
 	"iampoliciescontroller.multicloud.ibm.com",
 	"policycontrollers.multicloud.ibm.com",
 	"searchcollectors.multicloud.ibm.com",
-	"serviceregistries.multicloud.ibm.com",
 	"workmanagers.multicloud.ibm.com",
 	"endpoints.multicloud.ibm.com",
 }

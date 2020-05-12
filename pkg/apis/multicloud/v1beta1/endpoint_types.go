@@ -37,7 +37,6 @@ type EndpointSpec struct {
 
 	SearchCollectorConfig      EndpointSearchCollectorSpec      `json:"searchCollector"`
 	PolicyController           EndpointPolicyControllerSpec     `json:"policyController"`
-	ServiceRegistryConfig      EndpointServiceRegistrySpec      `json:"serviceRegistry"`
 	ApplicationManagerConfig   EndpointApplicationManagerSpec   `json:"applicationManager"`
 	ConnectionManagerConfig    EndpointConnectionManagerSpec    `json:"connectionManager"`
 	CertPolicyControllerConfig EndpointCertPolicyControllerSpec `json:"certPolicyController"`
@@ -85,14 +84,6 @@ type EndpointIAMPolicyControllerSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-// EndpointServiceRegistrySpec defines configuration for the ServiceRegistry component
-type EndpointServiceRegistrySpec struct {
-	Enabled                            bool   `json:"enabled"`
-	DNSSuffix                          string `json:"dnsSuffix,omitempty"`
-	Plugins                            string `json:"plugins,omitempty"`
-	IstioIngressGateway                string `json:"istioIngressGateway,omitempty"`
-	IstioserviceEntryRegistryNamespace string `json:"istioserviceEntryRegistryNamespace,omitempty"`
-}
 
 // EndpointWorkManagerSpec defines configuration for the WorkManager component
 type EndpointWorkManagerSpec struct {

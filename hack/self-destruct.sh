@@ -22,7 +22,6 @@ component_crds=(
 	iampoliciescontroller.multicloud.ibm.com
 	policycontrollers.multicloud.ibm.com
 	searchcollectors.multicloud.ibm.com
-	serviceregistries.multicloud.ibm.com
 	workmanagers.multicloud.ibm.com
 	endpoints.multicloud.ibm.com
 )

@@ -121,23 +121,6 @@ spec:
               required:
               - enabled
               type: object
-            serviceRegistry:
-              description: EndpointServiceRegistrySpec defines configuration for the
-                ServiceRegistry component
-              properties:
-                dnsSuffix:
-                  type: string
-                enabled:
-                  type: boolean
-                istioIngressGateway:
-                  type: string
-                istioserviceEntryRegistryNamespace:
-                  type: string
-                plugins:
-                  type: string
-              required:
-              - enabled
-              type: object
             version:
               minLength: 1
               type: string
@@ -152,7 +135,6 @@ spec:
           - iamPolicyController
           - policyController
           - searchCollector
-          - serviceRegistry
           - version
           type: object
         status:

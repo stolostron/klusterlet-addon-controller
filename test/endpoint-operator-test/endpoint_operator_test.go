@@ -30,7 +30,6 @@ const (
 	policyController          = "endpoint-policyctrl"
 	searchCollector           = "endpoint-search"
 	workManager               = "endpoint-workmgr"
-	serviceRegistries         = "endpoint-svcreg"
 	endpointComponentOperator = "endpoint-component-operator"
 )
 
@@ -59,11 +58,6 @@ const (
 	connectionManagerImage  = "multicloud-manager"
 	connectionManagerShaKey = "multicloud_manager"
 
-	serviceRegistriesDNSImage  = "coredns"
-	serviceRegistriesDNSShaKey = "coredns"
-
-	serviceRegistriesSRImage  = "multicloud-manager"
-	serviceRegistriesSRShaKey = "multicloud_manager"
 )
 
 var deletePatchString = fmt.Sprintf(
@@ -162,16 +156,6 @@ var _ = Describe("Endpoint", func() {
 			klog.V(1).Info("connection manager created")
 
 			checkImageAttributes(cr, useSha, defaultImageRegistry, tagPostfix)
-
-			Eventually(func() error {
-				var err error
-				klog.V(1).Info("Wait service registries...")
-				cr, err = clientClusterDynamic.Resource(gvrServiceregistries).Namespace(testNamespace).Get(serviceRegistries, metav1.GetOptions{})
-				return err
-			}, 10, 1).Should(BeNil())
-			klog.V(1).Info("service registries created")
-
-			checkImageAttributes(cr, useSha, defaultImageRegistry, tagPostfix)
 		})
 	})
 
@@ -252,14 +236,6 @@ var _ = Describe("Endpoint", func() {
 				return objConnMgr
 			}, 5, 1).Should(BeNil())
 			klog.V(1).Info("connection manager deletedd")
-
-			Eventually(func() *unstructured.Unstructured {
-				var objServiceReg *unstructured.Unstructured
-				klog.V(1).Info("Wait deletion service registries...")
-				objServiceReg, err = clientClusterDynamic.Resource(gvrServiceregistries).Namespace(testNamespace).Get(serviceRegistries, metav1.GetOptions{})
-				return objServiceReg
-			}, 5, 1).Should(BeNil())
-			klog.V(1).Info("service registries deleted")
 
 			Eventually(func() error {
 				klog.V(1).Info("Wait deletion endpoint component operator...")

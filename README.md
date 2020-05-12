@@ -1,8 +1,17 @@
-# endponint operator
+# endpoint operator
 
 A Go operator built with the [operator-sdk](https://github.com/operator-framework/operator-sdk) that is used to manage the Create Update Delete of the component CR in the Klusterlet Component Operator.
 
-## Prepare your cluster
+## Prerequisites
+
+- Must have [operator-sdk](https://github.com/operator-framework/operator-sdk) v0.15.1 installed
+
+```shell
+# can be installed with the following command
+> make deps
+
+
+## Prepare your cluster 
 
 1. Create namespace
 
@@ -54,9 +63,17 @@ NOTE: this will use the amd64 version of the operator
 
 ## Installing Klusterlet using Klusterlet Operator
 
-To create a klusterlet deployment with the klusterlet operator u need to create the klusterlet CR
+To create a klusterlet deployment with the klusterlet operator you need to create the klusterlet CR
 
 Example of Klusterlet CR `/deploy/crds/multicloud_v1beta1_endpoint_cr.yaml`
+
+## Rebuilding zz_generated.deepcopy.go file
+Any modifications to files pkg/apis/multicloud/v1beta1/*types.go will require you to run the
+following:
+```
+operator-sdk generate k8s
+```
+to regenerate the zz_generated.deepcopy.go file.
 
 ## Build and publish a personal build to scratch artifactory
 
@@ -86,17 +103,18 @@ Example of Klusterlet CR `/deploy/crds/multicloud_v1beta1_endpoint_cr.yaml`
     export COMPONENT_TAG_EXTENSION=-SNAPSHOT-2020-04-01-20-49-00
    ```
 2. Run tests:
+   - Run the following command to build the image, setup & start a kind cluster (Ideal for someone new to the repo and wanting to test changes):
+    ```
+    export DOCKER_USER=<Docker username>
+    export DOCKER_PASS=<Docker password>
+    make functional-test-full
+   ```
    - Run the following command to setup & start a kind cluster:
    ```
     make component/test/functional
-   ```
-   - Run the following command to build the image, setup & start a kind cluster:
-    ```
-    make functional-test-full
    ```
    - Run the following command to run the test on an existing cluster:
     ```
     export KUBECONFIG=...
     make functional-test
    ```
-  
