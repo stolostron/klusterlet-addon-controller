@@ -20,15 +20,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	klusterletv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1beta1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/inspect"
 )
 
 var log = logf.Log.WithName("workmgr")
 
 // Reconcile Resolves differences in the running state of the connection manager services and CRDs.
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
-	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
+func Reconcile(instance *klusterletv1beta1.Klusterlet, client client.Client, scheme *runtime.Scheme) (bool, error) {
+	reqLogger := log.WithValues("Klusterlet.Namespace", instance.Namespace, "Klusterlet.Name", instance.Name)
 	reqLogger.Info("Reconciling WorkManager")
 
 	workMgrCR, err := newWorkManagerCR(instance, client)
@@ -43,7 +43,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		return false, err
 	}
 
-	foundWorkMgrCR := &multicloudv1beta1.WorkManager{}
+	foundWorkMgrCR := &klusterletv1beta1.WorkManager{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: workMgrCR.Name, Namespace: workMgrCR.Namespace}, foundWorkMgrCR)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -95,14 +95,14 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-func newWorkManagerCR(instance *multicloudv1beta1.Endpoint,
+func newWorkManagerCR(instance *klusterletv1beta1.Klusterlet,
 	client client.Client,
-) (*multicloudv1beta1.WorkManager, error) {
+) (*klusterletv1beta1.WorkManager, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
 
-	gv := multicloudv1beta1.GlobalValues{
+	gv := klusterletv1beta1.GlobalValues{
 		ImagePullPolicy: instance.Spec.ImagePullPolicy,
 		ImagePullSecret: instance.Spec.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 1),
@@ -127,13 +127,13 @@ func newWorkManagerCR(instance *multicloudv1beta1.Endpoint,
 		}
 	}
 
-	return &multicloudv1beta1.WorkManager{
+	return &klusterletv1beta1.WorkManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-workmgr",
 			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
-		Spec: multicloudv1beta1.WorkManagerSpec{
+		Spec: klusterletv1beta1.WorkManagerSpec{
 			FullNameOverride: instance.Name + "-workmgr",
 
 			ClusterName:      instance.Spec.ClusterName,
@@ -149,8 +149,8 @@ func newWorkManagerCR(instance *multicloudv1beta1.Endpoint,
 	}, nil
 }
 
-func newWorkManagerServiceConfig() multicloudv1beta1.WorkManagerService {
-	workManagerService := multicloudv1beta1.WorkManagerService{}
+func newWorkManagerServiceConfig() klusterletv1beta1.WorkManagerService {
+	workManagerService := klusterletv1beta1.WorkManagerService{}
 
 	switch kubeVendor := inspect.Info.KubeVendor; kubeVendor {
 	case inspect.KubeVendorAKS:
@@ -168,8 +168,8 @@ func newWorkManagerServiceConfig() multicloudv1beta1.WorkManagerService {
 	return workManagerService
 }
 
-func newWorkManagerIngressConfig(c client.Client) multicloudv1beta1.WorkManagerIngress {
-	workManagerIngress := multicloudv1beta1.WorkManagerIngress{}
+func newWorkManagerIngressConfig(c client.Client) klusterletv1beta1.WorkManagerIngress {
+	workManagerIngress := klusterletv1beta1.WorkManagerIngress{}
 
 	switch kubeVendor := inspect.Info.KubeVendor; kubeVendor {
 	case inspect.KubeVendorOpenShift:
@@ -184,7 +184,7 @@ func newWorkManagerIngressConfig(c client.Client) multicloudv1beta1.WorkManagerI
 	return workManagerIngress
 }
 
-func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.WorkManager, client client.Client) error {
+func create(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.WorkManager, client client.Client) error {
 	log.Info("Creating a new WorkManager", "WorkManager.Namespace", cr.Namespace, "WorkManager.Name", cr.Name)
 	err := client.Create(context.TODO(), cr)
 	if err != nil {
@@ -197,7 +197,7 @@ func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.WorkMana
 	return nil
 }
 
-func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.WorkManager, foundCR *multicloudv1beta1.WorkManager, client client.Client) error {
+func update(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.WorkManager, foundCR *klusterletv1beta1.WorkManager, client client.Client) error {
 	foundCR.Spec = cr.Spec
 	err := client.Update(context.TODO(), foundCR)
 	if err != nil && !errors.IsConflict(err) {
@@ -216,11 +216,11 @@ func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.WorkMana
 	return nil
 }
 
-func delete(foundCR *multicloudv1beta1.WorkManager, client client.Client) error {
+func delete(foundCR *klusterletv1beta1.WorkManager, client client.Client) error {
 	return client.Delete(context.TODO(), foundCR)
 }
 
-func finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.WorkManager, client client.Client) error {
+func finalize(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.WorkManager, client client.Client) error {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == cr.Name {
 			// Remove finalizer

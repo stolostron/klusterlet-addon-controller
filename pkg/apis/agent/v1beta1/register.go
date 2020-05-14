@@ -8,9 +8,9 @@
 
 // NOTE: Boilerplate only.  Ignore this file.
 
-// Package v1beta1 contains API Schema definitions for the multicloud v1beta1 API group
+// Package v1beta1 contains API Schema definitions for the agent v1beta1 API group
 // +k8s:deepcopy-gen=package,register
-// +groupName=multicloud.ibm.com
+// +groupName=agent.open-cluster-management.io
 package v1beta1
 
 import (
@@ -20,7 +20,7 @@ import (
 
 var (
 	// SchemeGroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: "multicloud.ibm.com", Version: "v1beta1"}
+	SchemeGroupVersion = schema.GroupVersion{Group: "agent.open-cluster-management.io", Version: "v1beta1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}

@@ -4,26 +4,26 @@
 ###############################################################################
 
 if [ -z "${OPERATOR_NAMESPACE}" ]; then
-	OPERATOR_NAMESPACE="multicluster-endpoint"
+	OPERATOR_NAMESPACE="klusterlet"
 fi
 
-# Delete all endpoints.multicloud.ibm.com
-kubectl delete endpoints.multicloud.ibm.com -n ${OPERATOR_NAMESPACE}  --all --timeout=60s
+# Delete all klusterlets.agent.open-cluster-management.io
+kubectl delete klusterlets.agent.open-cluster-management.io -n ${OPERATOR_NAMESPACE}  --all --timeout=60s
 
 # Delete Deployment
-kubectl delete deployment endpoint-operator -n ${OPERATOR_NAMESPACE}
+kubectl delete deployment klusterlet-operator -n ${OPERATOR_NAMESPACE}
 
 # Force delete all component CRDs if they still exist
 component_crds=(
-	applicationmanagers.multicloud.ibm.com
-	certpoliciescontroller.multicloud.ibm.com
-	ciscontrollers.multicloud.ibm.com
-	connectionmanagers.multicloud.ibm.com
-	iampoliciescontroller.multicloud.ibm.com
-	policycontrollers.multicloud.ibm.com
-	searchcollectors.multicloud.ibm.com
-	workmanagers.multicloud.ibm.com
-	endpoints.multicloud.ibm.com
+	applicationmanagers.agent.open-cluster-management.io
+	certpoliciescontroller.agent.open-cluster-management.io
+	ciscontrollers.agent.open-cluster-management.io
+	connectionmanagers.agent.open-cluster-management.io
+	iampoliciescontroller.agent.open-cluster-management.io
+	policycontrollers.agent.open-cluster-management.io
+	searchcollectors.agent.open-cluster-management.io
+	workmanagers.agent.open-cluster-management.io
+	klusterlets.agent.open-cluster-management.io
 )
 
 for crd in "${component_crds[@]}"; do

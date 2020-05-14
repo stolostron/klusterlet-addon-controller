@@ -1,20 +1,20 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: endpoints.multicloud.ibm.com
+  name: klusterlets.agent.open-cluster-management.io
 spec:
-  group: multicloud.ibm.com
+  group: agent.open-cluster-management.io
   names:
-    kind: Endpoint
-    listKind: EndpointList
-    plural: endpoints
-    singular: endpoint
+    kind: Klusterlet
+    listKind: KlusterletList
+    plural: klusterlets
+    singular: klusterlet
   scope: Namespaced
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: Endpoint is the Schema for the endpoints API
+      description: Klusterlet is the Schema for the klusterlets API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -29,11 +29,11 @@ spec:
         metadata:
           type: object
         spec:
-          description: EndpointSpec defines the desired state of Endpoint
+          description: KlusterletSpec defines the desired state of Klusterlet
           properties:
             applicationManager:
-              description: EndpointApplicationManagerSpec defines configuration for
-                the ApplicationManager component
+              description: KlusterletApplicationManagerSpec defines configuration
+                for the ApplicationManager component
               properties:
                 enabled:
                   type: boolean
@@ -45,7 +45,7 @@ spec:
                 type: string
               type: object
             certPolicyController:
-              description: EndpointCertPolicyControllertSpec defines configuration
+              description: KlusterletCertPolicyControllerSpec defines configuration
                 for the CertPolicyController component
               properties:
                 enabled:
@@ -54,7 +54,7 @@ spec:
               - enabled
               type: object
             cisController:
-              description: EndpointCISControllerSpec defines configuration for the
+              description: KlusterletCISControllerSpec defines configuration for the
                 CISController component
               properties:
                 enabled:
@@ -76,11 +76,11 @@ spec:
               description: used for dev work only
               type: string
             connectionManager:
-              description: EndpointConnectionManagerSpec defines configuration for
+              description: KlusterletConnectionManagerSpec defines configuration for
                 the ConnectionManager component
               type: object
             iamPolicyController:
-              description: EndpointIAMPolicyControllertSpec defines configuration
+              description: KlusterletIAMPolicyControllerSpec defines configuration
                 for the IAMPolicyController component
               properties:
                 enabled:
@@ -104,7 +104,7 @@ spec:
             imageRegistry:
               type: string
             policyController:
-              description: EndpointPolicyControllerSpec defines configuration for
+              description: KlusterletPolicyControllerSpec defines configuration for
                 the PolicyController component
               properties:
                 enabled:
@@ -113,8 +113,8 @@ spec:
               - enabled
               type: object
             searchCollector:
-              description: EndpointSearchCollectorSpec defines configuration for the
-                SearchCollector component
+              description: KlusterletSearchCollectorSpec defines configuration for
+                the SearchCollector component
               properties:
                 enabled:
                   type: boolean
@@ -138,7 +138,7 @@ spec:
           - version
           type: object
         status:
-          description: EndpointStatus defines the observed state of Endpoint
+          description: KlusterletStatus defines the observed state of Klusterlet
           type: object
   version: v1beta1
   versions:

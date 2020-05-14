@@ -24,7 +24,7 @@ export COMPONENT_SCRIPTS_PATH = $(BUILD_DIR)
 export COMPONENT_NAME ?= $(shell cat ./COMPONENT_NAME 2> /dev/null)
 export COMPONENT_VERSION ?= $(shell cat ./COMPONENT_VERSION 2> /dev/null)
 
-export IMAGE_DESCRIPTION ?= Endpoint_Operator
+export IMAGE_DESCRIPTION ?= Klusterlet_Operator
 export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile
 export DOCKER_REGISTRY   ?= quay.io
 export DOCKER_NAMESPACE  ?= open-cluster-management
@@ -123,11 +123,11 @@ endif
 
 .PHONY: utils\crds\install
 utils\crds\install:
-	kubectl apply -f deploy/crds/multicloud.ibm.com_endpoints_crd.yaml
+	kubectl apply -f deploy/crds/agent.open-cluster-management.io_klusterlets_crd.yaml
 
 .PHONY: utils\crds\uninstall
 utils\crds\uninstall:
-	kubectl delete -f deploy/crds/multicloud.ibm.com_endpoints_crd.yaml
+	kubectl delete -f deploy/crds/agent.open-cluster-management.io_klusterlets_crd.yaml
 
 ### FUNCTIONAL TESTS UTILS ###########
 
@@ -140,7 +140,7 @@ deploy:
 
 .PHONY: functional-test
 functional-test: 
-	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/endpoint-operator-test/... -- --v=5
+	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/klusterlet-operator-test/... -- --v=5
 
 .PHONY: functional-test-full
 functional-test-full: build-coverage component/test/functional

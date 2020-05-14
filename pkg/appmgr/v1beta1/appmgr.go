@@ -16,12 +16,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	klusterletv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1beta1"
 )
 
 var log = logf.Log.WithName("appmgr")
 
-func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.ApplicationManager, client client.Client) error {
+func create(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.ApplicationManager, client client.Client) error {
 	log.Info("Creating a new ApplicationManager", "ApplicationManager.Namespace", cr.Namespace, "ApplicationManager.Name", cr.Name)
 
 	err := client.Create(context.TODO(), cr)
@@ -35,7 +35,7 @@ func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Applicat
 	return nil
 }
 
-func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.ApplicationManager, foundCR *multicloudv1beta1.ApplicationManager, client client.Client) error {
+func update(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.ApplicationManager, foundCR *klusterletv1beta1.ApplicationManager, client client.Client) error {
 	foundCR.Spec = cr.Spec
 	err := client.Update(context.TODO(), foundCR)
 	if err != nil && !errors.IsConflict(err) {
@@ -54,11 +54,11 @@ func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Applicat
 	return nil
 }
 
-func delete(foundCR *multicloudv1beta1.ApplicationManager, client client.Client) error {
+func delete(foundCR *klusterletv1beta1.ApplicationManager, client client.Client) error {
 	return client.Delete(context.TODO(), foundCR)
 }
 
-func finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.ApplicationManager, client client.Client) error {
+func finalize(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.ApplicationManager, client client.Client) error {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == cr.Name {
 			// Remove finalizer

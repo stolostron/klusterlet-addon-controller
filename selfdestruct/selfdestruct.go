@@ -6,7 +6,6 @@
 //
 // Copyright (c) 2020 Red Hat, Inc.
 
-
 package main
 
 import (
@@ -37,19 +36,19 @@ import (
 
 var operatorNamespace string
 
-const ENDPOINT_DELETION_TIMEOUT int = 60
+const KLUSTERLET_DELETION_TIMEOUT int = 60
 const CR_DELETION_TIMEOUT int = 15
 
 var componentCRDs []string = []string{
-	"applicationmanagers.multicloud.ibm.com",
-	"certpoliciescontroller.multicloud.ibm.com",
-	"ciscontrollers.multicloud.ibm.com",
-	"connectionmanagers.multicloud.ibm.com",
-	"iampoliciescontroller.multicloud.ibm.com",
-	"policycontrollers.multicloud.ibm.com",
-	"searchcollectors.multicloud.ibm.com",
-	"workmanagers.multicloud.ibm.com",
-	"endpoints.multicloud.ibm.com",
+	"applicationmanagers.agent.open-cluster-management.io",
+	"certpoliciescontroller.agent.open-cluster-management.io",
+	"ciscontrollers.agent.open-cluster-management.io",
+	"connectionmanagers.agent.open-cluster-management.io",
+	"iampoliciescontroller.agent.open-cluster-management.io",
+	"policycontrollers.agent.open-cluster-management.io",
+	"searchcollectors.agent.open-cluster-management.io",
+	"workmanagers.agent.open-cluster-management.io",
+	"klusterlets.agent.open-cluster-management.io",
 }
 
 func main() {
@@ -63,7 +62,7 @@ func main() {
 	if operatorNamespace == "" {
 		operatorNamespace = os.Getenv("OPERATOR_NAMESPACE")
 		if operatorNamespace == "" {
-			operatorNamespace = "multicluster-endpoint"
+			operatorNamespace = "klusterlet"
 		}
 	}
 
@@ -82,12 +81,12 @@ func main() {
 
 func doDestruction(cfg *rest.Config) {
 	clientDynamic := dynamic.NewForConfigOrDie(cfg)
-	deleteEndpoints(clientDynamic)
+	deleteKlusterlets(clientDynamic)
 
 	clientKube := kubernetes.NewForConfigOrDie(cfg)
-	deleteEndpointOperator(clientKube)
+	deleteKlusterletOperator(clientKube)
 
-	deleteEndpointComponentOperator(clientKube)
+	deleteKlusterletComponentOperator(clientKube)
 
 	clientAPIExtensionV1beta1 := apiextensionsclientset.NewForConfigOrDie(cfg)
 	forceDeleteCRDS(clientAPIExtensionV1beta1, clientDynamic)
@@ -96,31 +95,31 @@ func doDestruction(cfg *rest.Config) {
 
 }
 
-func deleteEndpoints(clientDynamic dynamic.Interface) {
-	gvr := schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "endpoints"}
+func deleteKlusterlets(clientDynamic dynamic.Interface) {
+	gvr := schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1beta1", Resource: "klusterlets"}
 	klog.V(1).Infof("Retrieving resources %v", gvr)
-	endpoints, err := clientDynamic.Resource(gvr).Namespace(operatorNamespace).List(metav1.ListOptions{})
+	klusterlets, err := clientDynamic.Resource(gvr).Namespace(operatorNamespace).List(metav1.ListOptions{})
 	if err != nil {
 		klog.Error(err)
 		return
 	}
-	_ = endpoints.EachListItem(func(item runtime.Object) error {
+	_ = klusterlets.EachListItem(func(item runtime.Object) error {
 		castItem := item.(*unstructured.Unstructured)
 		klog.V(1).Infof("Deleting %s/%s", castItem.GetName(), castItem.GetNamespace())
 		err := clientDynamic.Resource(gvr).Namespace(castItem.GetNamespace()).Delete(castItem.GetName(), &metav1.DeleteOptions{})
-		gps := ENDPOINT_DELETION_TIMEOUT
+		gps := KLUSTERLET_DELETION_TIMEOUT
 		for gps != 0 {
 			_, err := clientDynamic.Resource(gvr).Namespace(castItem.GetNamespace()).Get(castItem.GetName(), metav1.GetOptions{})
 			if err != nil {
 				gps = 0
 			} else {
-				klog.V(1).Infof("Wait endpoints %s/%s deletion", castItem.GetName(), castItem.GetNamespace())
+				klog.V(1).Infof("Wait klusterlets %s/%s deletion", castItem.GetName(), castItem.GetNamespace())
 				time.Sleep(1 * time.Second)
 				gps -= 1
 			}
 		}
 		if gps == 0 {
-			klog.Error("endpoints deletions times out")
+			klog.Error("klusterlets deletions times out")
 		}
 		if err != nil {
 			klog.Error(err)
@@ -129,17 +128,17 @@ func deleteEndpoints(clientDynamic dynamic.Interface) {
 	})
 }
 
-func deleteEndpointOperator(clientKube kubernetes.Interface) {
-	klog.V(1).Info("Deleting endpoint-operator deployment")
-	err := clientKube.AppsV1().Deployments(operatorNamespace).Delete("endpoint-operator", &metav1.DeleteOptions{})
+func deleteKlusterletOperator(clientKube kubernetes.Interface) {
+	klog.V(1).Info("Deleting klusterlet-operator deployment")
+	err := clientKube.AppsV1().Deployments(operatorNamespace).Delete("klusterlet-operator", &metav1.DeleteOptions{})
 	if err != nil {
 		klog.Error(err)
 	}
 }
 
-func deleteEndpointComponentOperator(clientKube kubernetes.Interface) {
-	klog.V(1).Info("Deleting endpoint-component-operator deployment")
-	err := clientKube.AppsV1().Deployments(operatorNamespace).Delete("endpoint-component-operator", &metav1.DeleteOptions{})
+func deleteKlusterletComponentOperator(clientKube kubernetes.Interface) {
+	klog.V(1).Info("Deleting klusterlet-component-operator deployment")
+	err := clientKube.AppsV1().Deployments(operatorNamespace).Delete("klusterlet-component-operator", &metav1.DeleteOptions{})
 	if err != nil {
 		klog.Error(err)
 	}

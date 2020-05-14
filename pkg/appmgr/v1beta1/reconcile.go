@@ -19,12 +19,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	klusterletv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1beta1"
 )
 
 // Reconcile Resolves differences in the running state of the cert-manager services and CRDs.
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
-	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
+func Reconcile(instance *klusterletv1beta1.Klusterlet, client client.Client, scheme *runtime.Scheme) (bool, error) {
+	reqLogger := log.WithValues("Klusterlet.Namespace", instance.Namespace, "Klusterlet.Name", instance.Name)
 	reqLogger.Info("Reconciling ApplicationManager")
 
 	appMgrCR, err := newApplicationManagerCR(instance, client)
@@ -37,7 +37,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		return false, err
 	}
 
-	foundAppMgrCR := &multicloudv1beta1.ApplicationManager{}
+	foundAppMgrCR := &klusterletv1beta1.ApplicationManager{}
 	if err := client.Get(context.TODO(), types.NamespacedName{Name: appMgrCR.Name, Namespace: appMgrCR.Namespace}, foundAppMgrCR); err != nil {
 		if !kerrors.IsNotFound(err) {
 			log.Error(err, "Unexpected ERROR")
@@ -97,12 +97,12 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client.Client) (*multicloudv1beta1.ApplicationManager, error) {
+func newApplicationManagerCR(instance *klusterletv1beta1.Klusterlet, client client.Client) (*klusterletv1beta1.ApplicationManager, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
 
-	gv := multicloudv1beta1.GlobalValues{
+	gv := klusterletv1beta1.GlobalValues{
 		ImagePullPolicy: instance.Spec.ImagePullPolicy,
 		ImagePullSecret: instance.Spec.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 2),
@@ -122,13 +122,13 @@ func newApplicationManagerCR(instance *multicloudv1beta1.Endpoint, client client
 	}
 	gv.ImageOverrides[imageKey] = imageRepository
 
-	return &multicloudv1beta1.ApplicationManager{
+	return &klusterletv1beta1.ApplicationManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-appmgr",
 			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
-		Spec: multicloudv1beta1.ApplicationManagerSpec{
+		Spec: klusterletv1beta1.ApplicationManagerSpec{
 			FullNameOverride:  instance.Name + "-appmgr",
 			ConnectionManager: instance.Name + "-connmgr",
 			ClusterName:       instance.Spec.ClusterName,

@@ -26,12 +26,12 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	klusterletv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1beta1"
 	"github.com/open-cluster-management/endpoint-operator/version"
 )
 
 var (
-	namespace    = "multicluster-endpoint"
+	namespace    = "klusterlet"
 	manifestPath = filepath.Join("..", "..", "..", "image-manifests", version.Version+".json")
 )
 
@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() error {
-	return multicloudv1beta1.LoadManifest(manifestPath)
+	return klusterletv1beta1.LoadManifest(manifestPath)
 }
 
 func teardown() {
@@ -62,13 +62,13 @@ func newTestDeployment(name string) *appsv1.Deployment {
 	return deployment
 }
 
-func newInstance() *multicloudv1beta1.Endpoint {
-	instance := &multicloudv1beta1.Endpoint{
+func newInstance() *klusterletv1beta1.Klusterlet {
+	instance := &klusterletv1beta1.Klusterlet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "endpoint",
+			Name:      "klusterlet",
 			Namespace: namespace,
 		},
-		Spec: multicloudv1beta1.EndpointSpec{
+		Spec: klusterletv1beta1.KlusterletSpec{
 			Version:         "3.2.1",
 			ImagePullPolicy: "Always",
 			ImagePullSecret: "image-pull",
@@ -82,7 +82,7 @@ func TestCreateReconcile(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 	instance := newInstance()
 	scheme := scheme.Scheme
-	scheme.AddKnownTypes(multicloudv1beta1.SchemeGroupVersion, instance)
+	scheme.AddKnownTypes(klusterletv1beta1.SchemeGroupVersion, instance)
 
 	err := Reconcile(instance, cl, scheme)
 	assert.NoError(t, err, "Create component reconcile should success")
@@ -113,7 +113,7 @@ func TestUpdateReconcile(t *testing.T) {
 	cl := fake.NewFakeClient(objs...)
 
 	scheme := scheme.Scheme
-	scheme.AddKnownTypes(multicloudv1beta1.SchemeGroupVersion, instance)
+	scheme.AddKnownTypes(klusterletv1beta1.SchemeGroupVersion, instance)
 
 	err := Reconcile(instance, cl, scheme)
 	assert.NoError(t, err, "Update component reconcile should success")

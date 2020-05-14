@@ -1,21 +1,20 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: certpoliciescontroller.multicloud.ibm.com
+  name: connectionmanagers.agent.open-cluster-management.io
 spec:
-  group: multicloud.ibm.com
+  group: agent.open-cluster-management.io
   names:
-    kind: CertPolicyController
-    listKind: CertPolicyControllerList
-    plural: certpoliciescontroller
-    singular: certpolicycontroller
+    kind: ConnectionManager
+    listKind: ConnectionManagerList
+    plural: connectionmanagers
+    singular: connectionmanager
   scope: Namespaced
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: CertPolicyController is the Schema for the certpolicycontrollercontroller
-        API
+      description: ConnectionManager is the Schema for the connectionmanagers API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -30,15 +29,16 @@ spec:
         metadata:
           type: object
         spec:
-          description: CertPolicyControllerSpec defines the desired state of CertPolicyController
+          description: ConnectionManagerSpec defines the desired state of ConnectionManager
           properties:
+            bootstrapConfig:
+              additionalProperties:
+                type: string
+              type: object
             clusterName:
               minLength: 1
               type: string
             clusterNamespace:
-              minLength: 1
-              type: string
-            connectionManager:
               minLength: 1
               type: string
             fullnameOverride:
@@ -59,14 +59,13 @@ spec:
                   type: string
               type: object
           required:
+          - bootstrapConfig
           - clusterName
           - clusterNamespace
-          - connectionManager
           - fullnameOverride
-          - global
           type: object
         status:
-          description: CertPolicyControllerStatus defines the observed state of CertPolicyController
+          description: ConnectionManagerStatus defines the observed state of ConnectionManager
           type: object
   version: v1beta1
   versions:

@@ -20,15 +20,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	klusterletv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1beta1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/inspect"
 )
 
 var log = logf.Log.WithName("policyctrl")
 
 // Reconcile Resolves differences in the running state of the connection manager services and CRDs.
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
-	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
+func Reconcile(instance *klusterletv1beta1.Klusterlet, client client.Client, scheme *runtime.Scheme) (bool, error) {
+	reqLogger := log.WithValues("Klusterlet.Namespace", instance.Namespace, "Klusterlet.Name", instance.Name)
 	reqLogger.Info("Reconciling Policy Controller")
 
 	policyCtrlCR, err := newPolicyControllerCR(instance, client)
@@ -43,7 +43,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		return false, err
 	}
 
-	foundPolicyCtrlCR := &multicloudv1beta1.PolicyController{}
+	foundPolicyCtrlCR := &klusterletv1beta1.PolicyController{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: policyCtrlCR.Name, Namespace: policyCtrlCR.Namespace}, foundPolicyCtrlCR)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -100,14 +100,14 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-func newPolicyControllerCR(instance *multicloudv1beta1.Endpoint,
+func newPolicyControllerCR(instance *klusterletv1beta1.Klusterlet,
 	client client.Client,
-) (*multicloudv1beta1.PolicyController, error) {
+) (*klusterletv1beta1.PolicyController, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
 
-	gv := multicloudv1beta1.GlobalValues{
+	gv := klusterletv1beta1.GlobalValues{
 		ImagePullPolicy: instance.Spec.ImagePullPolicy,
 		ImagePullSecret: instance.Spec.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 1),
@@ -121,13 +121,13 @@ func newPolicyControllerCR(instance *multicloudv1beta1.Endpoint,
 
 	gv.ImageOverrides[imageKey] = imageRepository
 
-	return &multicloudv1beta1.PolicyController{
+	return &klusterletv1beta1.PolicyController{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-policyctrl",
 			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
-		Spec: multicloudv1beta1.PolicyControllerSpec{
+		Spec: klusterletv1beta1.PolicyControllerSpec{
 			FullNameOverride:            instance.Name + "-policyctrl",
 			ClusterName:                 instance.Spec.ClusterName,
 			ClusterNamespace:            instance.Spec.ClusterNamespace,
@@ -139,7 +139,7 @@ func newPolicyControllerCR(instance *multicloudv1beta1.Endpoint,
 	}, nil
 }
 
-func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.PolicyController, c client.Client) error {
+func create(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.PolicyController, c client.Client) error {
 	log.Info("Creating a new PolicyController", "PolicyController.Namespace", cr.Namespace, "PolicyController.Name", cr.Name)
 	err := c.Create(context.TODO(), cr)
 	if err != nil {
@@ -152,7 +152,7 @@ func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.PolicyCo
 	return nil
 }
 
-func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.PolicyController, foundCR *multicloudv1beta1.PolicyController, client client.Client) error {
+func update(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.PolicyController, foundCR *klusterletv1beta1.PolicyController, client client.Client) error {
 	foundCR.Spec = cr.Spec
 	err := client.Update(context.TODO(), foundCR)
 	if err != nil && !errors.IsConflict(err) {
@@ -171,16 +171,16 @@ func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.PolicyCo
 	return nil
 }
 
-func delete(policyCR *multicloudv1beta1.PolicyController, c client.Client) error {
+func delete(policyCR *klusterletv1beta1.PolicyController, c client.Client) error {
 	return c.Delete(context.TODO(), policyCR)
 }
 
-func finalize(instance *multicloudv1beta1.Endpoint, policyCtrlCR *multicloudv1beta1.PolicyController) {
+func finalize(instance *klusterletv1beta1.Klusterlet, policyCtrlCR *klusterletv1beta1.PolicyController) {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == policyCtrlCR.Name {
 			instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)
 			return
 		}
 	}
-	log.V(5).Info("No Policy Controller Finalizer in the Endpoint.")
+	log.V(5).Info("No Policy Controller Finalizer in the Klusterlet.")
 }

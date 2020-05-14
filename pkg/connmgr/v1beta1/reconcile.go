@@ -21,14 +21,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	klusterletv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1beta1"
 )
 
 var log = logf.Log.WithName("connmgr")
 
 // Reconcile Resolves differences in the running state of the connection manager services and CRDs.
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
-	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
+func Reconcile(instance *klusterletv1beta1.Klusterlet, client client.Client, scheme *runtime.Scheme) (bool, error) {
+	reqLogger := log.WithValues("Klusterlet.Namespace", instance.Namespace, "Klusterlet.Name", instance.Name)
 	reqLogger.Info("Reconciling ConnectionManager")
 
 	connMgrCR, err := newConnectionManagerCR(instance)
@@ -43,7 +43,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		return false, err
 	}
 
-	foundConnMgrCR := &multicloudv1beta1.ConnectionManager{}
+	foundConnMgrCR := &klusterletv1beta1.ConnectionManager{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: connMgrCR.Name, Namespace: connMgrCR.Namespace}, foundConnMgrCR)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -100,12 +100,12 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return false, nil
 }
 
-func newConnectionManagerCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1beta1.ConnectionManager, error) {
+func newConnectionManagerCR(instance *klusterletv1beta1.Klusterlet) (*klusterletv1beta1.ConnectionManager, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
 
-	gv := multicloudv1beta1.GlobalValues{
+	gv := klusterletv1beta1.GlobalValues{
 		ImagePullPolicy: instance.Spec.ImagePullPolicy,
 		ImagePullSecret: instance.Spec.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 1),
@@ -128,13 +128,13 @@ func newConnectionManagerCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1
 		instance.Spec.BootStrapConfig["hubSecret"] = instance.Namespace + "/klusterlet-bootstrap"
 	}
 
-	return &multicloudv1beta1.ConnectionManager{
+	return &klusterletv1beta1.ConnectionManager{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-connmgr",
 			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
-		Spec: multicloudv1beta1.ConnectionManagerSpec{
+		Spec: klusterletv1beta1.ConnectionManagerSpec{
 			ClusterName:      instance.Spec.ClusterName,
 			ClusterNamespace: instance.Spec.ClusterNamespace,
 			BootStrapConfig:  instance.Spec.BootStrapConfig,
@@ -144,7 +144,7 @@ func newConnectionManagerCR(instance *multicloudv1beta1.Endpoint) (*multicloudv1
 	}, nil
 }
 
-func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.ConnectionManager, client client.Client) error {
+func create(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.ConnectionManager, client client.Client) error {
 	log.Info("Creating a new ConnectionManager", "ConnectionManager.Namespace", cr.Namespace, "ConnectionManager.Name", cr.Name)
 	err := client.Create(context.TODO(), cr)
 	if err != nil {
@@ -157,7 +157,7 @@ func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Connecti
 	return nil
 }
 
-func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.ConnectionManager, foundCR *multicloudv1beta1.ConnectionManager, client client.Client) error {
+func update(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.ConnectionManager, foundCR *klusterletv1beta1.ConnectionManager, client client.Client) error {
 	foundCR.Spec = cr.Spec
 	err := client.Update(context.TODO(), foundCR)
 	if err != nil && !errors.IsConflict(err) {
@@ -176,11 +176,11 @@ func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.Connecti
 	return nil
 }
 
-func delete(foundCR *multicloudv1beta1.ConnectionManager, client client.Client) error {
+func delete(foundCR *klusterletv1beta1.ConnectionManager, client client.Client) error {
 	return client.Delete(context.TODO(), foundCR)
 }
 
-func finalize(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.ConnectionManager, client client.Client) error {
+func finalize(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.ConnectionManager, client client.Client) error {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == cr.Name {
 			// Delete Secrets

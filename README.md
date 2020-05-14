@@ -1,4 +1,4 @@
-# endpoint operator
+# klusterlet operator
 
 A Go operator built with the [operator-sdk](https://github.com/operator-framework/operator-sdk) that is used to manage the Create Update Delete of the component CR in the Klusterlet Component Operator.
 
@@ -16,7 +16,7 @@ A Go operator built with the [operator-sdk](https://github.com/operator-framewor
 1. Create namespace
 
 ```shell
-kubectl create namespace multicluster-endpoint
+kubectl create namespace klusterlet
 ```
 
 2. Create image pull secret for artifactory
@@ -35,7 +35,7 @@ kubectl create namespace multicluster-endpoint
 - paste from clipboard
 - `unset KUBECONFIG`
 - log into the cluster you want to install klusterlet on
-- `kubectl create secret generic klusterlet-bootstrap -n multicluster-endpoint --from-file=kubeconfig=$tmpKUBECONFIG`
+- `kubectl create secret generic klusterlet-bootstrap -n klusterlet --from-file=kubeconfig=$tmpKUBECONFIG`
 
 4. Install klusterlet CRD
 
@@ -65,10 +65,10 @@ NOTE: this will use the amd64 version of the operator
 
 To create a klusterlet deployment with the klusterlet operator you need to create the klusterlet CR
 
-Example of Klusterlet CR `/deploy/crds/multicloud_v1beta1_endpoint_cr.yaml`
+Example of Klusterlet CR `/deploy/crds/agent.open-cluster-management.io_v1beta1_klusterlet_cr.yaml`
 
 ## Rebuilding zz_generated.deepcopy.go file
-Any modifications to files pkg/apis/multicloud/v1beta1/*types.go will require you to run the
+Any modifications to files pkg/apis/agent/v1beta1/*types.go will require you to run the
 following:
 ```
 operator-sdk generate k8s

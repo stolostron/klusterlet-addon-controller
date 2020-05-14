@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: endpoint-operator
-  namespace: multicluster-endpoint
+  name: klusterlet-operator
+  namespace: klusterlet
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: endpoint-operator
+      name: klusterlet-operator
   template:
     metadata:
       labels:
-        name: endpoint-operator
+        name: klusterlet-operator
     spec:
-      serviceAccountName: endpoint-operator
+      serviceAccountName: klusterlet-operator
       containers:
-        - name: endpoint-operator
+        - name: klusterlet-operator
           # Replace this with the built image name
           image: REPLACE_NAME
           command:
-          - endpoint-operator
+          - klusterlet-operator
           imagePullPolicy: IfNotPresent
           env:
           - name: WATCH_NAMESPACE
@@ -31,4 +31,4 @@ spec:
               fieldRef:
                 fieldPath: metadata.name
           - name: OPERATOR_NAME
-            value: "endpoint-operator"
+            value: "klusterlet-operator"

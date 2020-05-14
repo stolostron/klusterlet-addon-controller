@@ -1,20 +1,20 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: policycontrollers.multicloud.ibm.com
+  name: applicationmanagers.agent.open-cluster-management.io
 spec:
-  group: multicloud.ibm.com
+  group: agent.open-cluster-management.io
   names:
-    kind: PolicyController
-    listKind: PolicyControllerList
-    plural: policycontrollers
-    singular: policycontroller
+    kind: ApplicationManager
+    listKind: ApplicationManagerList
+    plural: applicationmanagers
+    singular: applicationmanager
   scope: Namespaced
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: PolicyController is the Schema for the policycontrollers API
+      description: ApplicationManager is the Schema for the applicationmanagers API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -29,7 +29,7 @@ spec:
         metadata:
           type: object
         spec:
-          description: PolicyControllerSpec defines the desired state of PolicyController
+          description: ApplicationManagerSpec defines the desired state of ApplicationManager
           properties:
             clusterName:
               minLength: 1
@@ -40,8 +40,6 @@ spec:
             connectionManager:
               minLength: 1
               type: string
-            deployedOnHub:
-              type: boolean
             fullnameOverride:
               minLength: 1
               type: string
@@ -59,14 +57,15 @@ spec:
                 imagePullSecret:
                   type: string
               type: object
-            postDeleteJobServiceAccount:
-              type: string
           required:
+          - clusterName
+          - clusterNamespace
           - connectionManager
           - fullnameOverride
+          - global
           type: object
         status:
-          description: PolicyControllerStatus defines the observed state of PolicyController
+          description: ApplicationManagerStatus defines the observed state of ApplicationManager
           type: object
   version: v1beta1
   versions:

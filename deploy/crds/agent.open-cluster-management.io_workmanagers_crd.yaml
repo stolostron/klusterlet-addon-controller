@@ -1,20 +1,20 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: iampoliciescontroller.multicloud.ibm.com
+  name: workmanagers.agent.open-cluster-management.io
 spec:
-  group: multicloud.ibm.com
+  group: agent.open-cluster-management.io
   names:
-    kind: IAMPolicyController
-    listKind: IAMPolicyControllerList
-    plural: iampoliciescontroller
-    singular: iampolicycontroller
+    kind: WorkManager
+    listKind: WorkManagerList
+    plural: workmanagers
+    singular: workmanager
   scope: Namespaced
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: IAMPolicyController is the Schema for the iampolicycontroller API
+      description: WorkManager is the Schema for the workmanagers API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -29,8 +29,12 @@ spec:
         metadata:
           type: object
         spec:
-          description: IAMPolicyControllerSpec defines the desired state of IAMPolicyController
+          description: WorkManagerSpec defines the desired state of WorkManager
           properties:
+            clusterLabels:
+              additionalProperties:
+                type: string
+              type: object
             clusterName:
               minLength: 1
               type: string
@@ -57,17 +61,47 @@ spec:
                 imagePullSecret:
                   type: string
               type: object
-            ocp:
-              type: boolean
+            ingress:
+              description: WorkManagerIngress defines ingress configuration for WorkManager
+              properties:
+                host:
+                  type: string
+                port:
+                  type: string
+                type:
+                  enum:
+                  - Ingress
+                  - Route
+                  - None
+                  type: string
+              required:
+              - host
+              - port
+              - type
+              type: object
+            service:
+              description: WorkManagerService defines service integration parameters
+              properties:
+                type:
+                  enum:
+                  - ClusterIP
+                  - NodePort
+                  - LoadBalancer
+                  type: string
+              required:
+              - type
+              type: object
           required:
+          - clusterLabels
           - clusterName
           - clusterNamespace
           - connectionManager
           - fullnameOverride
-          - ocp
+          - ingress
+          - service
           type: object
         status:
-          description: IAMPolicyControllerStatus defines the observed state of IAMPolicyController
+          description: WorkManagerStatus defines the observed state of WorkManager
           type: object
   version: v1beta1
   versions:

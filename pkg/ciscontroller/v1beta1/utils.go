@@ -12,15 +12,16 @@ package v1beta1
 import (
 	"context"
 
-	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	klusterletv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1beta1"
 )
 
 // IsReady helps the other components to check whether the ciscontroller pod is ready
-func IsReady(instance *multicloudv1beta1.Endpoint, c client.Client) (bool, error) {
+func IsReady(instance *klusterletv1beta1.Klusterlet, c client.Client) (bool, error) {
 	foundDeployment := &appsv1.Deployment{}
 
 	err := c.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-search", Namespace: instance.Namespace}, foundDeployment)

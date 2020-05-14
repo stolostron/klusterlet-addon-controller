@@ -16,8 +16,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// EndpointSpec defines the desired state of Endpoint
-type EndpointSpec struct {
+// KlusterletSpec defines the desired state of Klusterlet
+type KlusterletSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
@@ -35,13 +35,13 @@ type EndpointSpec struct {
 
 	BootStrapConfig map[string]string `json:"bootstrapConfig,omitempty"`
 
-	SearchCollectorConfig      EndpointSearchCollectorSpec      `json:"searchCollector"`
-	PolicyController           EndpointPolicyControllerSpec     `json:"policyController"`
-	ApplicationManagerConfig   EndpointApplicationManagerSpec   `json:"applicationManager"`
-	ConnectionManagerConfig    EndpointConnectionManagerSpec    `json:"connectionManager"`
-	CertPolicyControllerConfig EndpointCertPolicyControllerSpec `json:"certPolicyController"`
-	CISControllerConfig        EndpointCISControllerSpec        `json:"cisController"`
-	IAMPolicyControllerConfig  EndpointIAMPolicyControllerSpec  `json:"iamPolicyController"`
+	SearchCollectorConfig      KlusterletSearchCollectorSpec      `json:"searchCollector"`
+	PolicyController           KlusterletPolicyControllerSpec     `json:"policyController"`
+	ApplicationManagerConfig   KlusterletApplicationManagerSpec   `json:"applicationManager"`
+	ConnectionManagerConfig    KlusterletConnectionManagerSpec    `json:"connectionManager"`
+	CertPolicyControllerConfig KlusterletCertPolicyControllerSpec `json:"certPolicyController"`
+	CISControllerConfig        KlusterletCISControllerSpec        `json:"cisController"`
+	IAMPolicyControllerConfig  KlusterletIAMPolicyControllerSpec  `json:"iamPolicyController"`
 
 	ImageRegistry    string `json:"imageRegistry,omitempty"`
 	ImageNamePostfix string `json:"imageNamePostfix,omitempty"`
@@ -60,53 +60,52 @@ type EndpointSpec struct {
 	ComponentOperatorImage string `json:"componentOperatorImage,omitempty"`
 }
 
-// EndpointConnectionManagerSpec defines configuration for the ConnectionManager component
-type EndpointConnectionManagerSpec struct {
+// KlusterletConnectionManagerSpec defines configuration for the ConnectionManager component
+type KlusterletConnectionManagerSpec struct {
 }
 
-// EndpointApplicationManagerSpec defines configuration for the ApplicationManager component
-type EndpointApplicationManagerSpec struct {
+// KlusterletApplicationManagerSpec defines configuration for the ApplicationManager component
+type KlusterletApplicationManagerSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-// EndpointSearchCollectorSpec defines configuration for the SearchCollector component
-type EndpointSearchCollectorSpec struct {
+// KlusterletSearchCollectorSpec defines configuration for the SearchCollector component
+type KlusterletSearchCollectorSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-// EndpointCertPolicyControllertSpec defines configuration for the CertPolicyController component
-type EndpointCertPolicyControllerSpec struct {
+// KlusterletCertPolicyControllerSpec defines configuration for the CertPolicyController component
+type KlusterletCertPolicyControllerSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-// EndpointIAMPolicyControllertSpec defines configuration for the IAMPolicyController component
-type EndpointIAMPolicyControllerSpec struct {
+// KlusterletIAMPolicyControllerSpec defines configuration for the IAMPolicyController component
+type KlusterletIAMPolicyControllerSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-
-// EndpointWorkManagerSpec defines configuration for the WorkManager component
-type EndpointWorkManagerSpec struct {
+// KlusterletWorkManagerSpec defines configuration for the WorkManager component
+type KlusterletWorkManagerSpec struct {
 	ClusterLabels map[string]string `json:"clusterLabels"`
 }
 
-// EndpointPolicyControllerSpec defines configuration for the PolicyController component
-type EndpointPolicyControllerSpec struct {
+// KlusterletPolicyControllerSpec defines configuration for the PolicyController component
+type KlusterletPolicyControllerSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-// EndpointPrometheusIntegrationSpec defines configuration for the Promtheus Integration
-type EndpointPrometheusIntegrationSpec struct {
+// KlusterletPrometheusIntegrationSpec defines configuration for the Promtheus Integration
+type KlusterletPrometheusIntegrationSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-// EndpointCISControllerSpec defines configuration for the CISController component
-type EndpointCISControllerSpec struct {
+// KlusterletCISControllerSpec defines configuration for the CISController component
+type KlusterletCISControllerSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-// EndpointStatus defines the observed state of Endpoint
-type EndpointStatus struct {
+// KlusterletStatus defines the observed state of Klusterlet
+type KlusterletStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
@@ -114,26 +113,26 @@ type EndpointStatus struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Endpoint is the Schema for the endpoints API
+// Klusterlet is the Schema for the klusterlets API
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=endpoints,scope=Namespaced
-type Endpoint struct {
+// +kubebuilder:resource:path=klusterlets,scope=Namespaced
+type Klusterlet struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EndpointSpec   `json:"spec,omitempty"`
-	Status EndpointStatus `json:"status,omitempty"`
+	Spec   KlusterletSpec   `json:"spec,omitempty"`
+	Status KlusterletStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// EndpointList contains a list of Endpoint
-type EndpointList struct {
+// KlusterletList contains a list of Klusterlet
+type KlusterletList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Endpoint `json:"items"`
+	Items           []Klusterlet `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Endpoint{}, &EndpointList{})
+	SchemeBuilder.Register(&Klusterlet{}, &KlusterletList{})
 }

@@ -28,7 +28,7 @@ var defaultComponentImageKeyMap = map[string]string{
 	"cis-controller-drishti":       "drishti_cis",
 	"cis-controller-minio":         "img_minio",
 	"cis-controller-minio-cleaner": "img_minio_mc",
-	"component-operator":           "endpoint_component_operator",
+	"component-operator":           "klusterlet_component_operator",
 	"connection-manager":           "multicloud_manager",
 	"coredns":                      "coredns",
 	"deployable":                   "multicluster_operators_deployable",
@@ -76,7 +76,7 @@ func init() {
 }
 
 // GetImage returns the image.Image,  for the specified component return error if information not found
-func (instance Endpoint) GetImage(component string) (imageKey, imageRepository string, err error) {
+func (instance Klusterlet) GetImage(component string) (imageKey, imageRepository string, err error) {
 
 	if v, ok := defaultComponentImageKeyMap[component]; ok {
 		imageKey = v

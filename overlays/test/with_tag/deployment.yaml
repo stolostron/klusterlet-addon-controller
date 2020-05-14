@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: endpoint-operator
-  namespace: multicluster-endpoint
+  name: klusterlet-operator
+  namespace: klusterlet
 spec:
   template:
     spec:
@@ -11,7 +11,7 @@ spec:
       imagePullSecrets:
       - name: multicloud-image-pull-secret
       containers:
-      - name: endpoint-operator
+      - name: klusterlet-operator
         command:
         volumeMounts:
         - mountPath: /tmp/coverage

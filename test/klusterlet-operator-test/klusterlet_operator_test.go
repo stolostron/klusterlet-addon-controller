@@ -8,7 +8,7 @@
 //
 // Copyright (c) 2020 Red Hat, Inc.
 
-package endpoint_operator_test
+package klusterlet_operator_test
 
 import (
 	"fmt"
@@ -24,21 +24,21 @@ import (
 )
 
 const (
-	applicationManager        = "endpoint-appmgr"
-	certPolicyController      = "endpoint-certpolicyctrl"
-	connectionManager         = "endpoint-connmgr"
-	policyController          = "endpoint-policyctrl"
-	searchCollector           = "endpoint-search"
-	workManager               = "endpoint-workmgr"
-	endpointComponentOperator = "endpoint-component-operator"
+	applicationManager          = "klusterlet-appmgr"
+	certPolicyController        = "klusterlet-certpolicyctrl"
+	connectionManager           = "klusterlet-connmgr"
+	policyController            = "klusterlet-policyctrl"
+	searchCollector             = "klusterlet-search"
+	workManager                 = "klusterlet-workmgr"
+	klusterletComponentOperator = "klusterlet-component-operator"
 )
 
 const (
 	//We can not test on the sha value as the image manifest is overwriten by CICD
-	endpointComponentOperatorContainer = "endpoint-component-operator"
-	endpointComponentOperatorImage     = "endpoint-component-operator"
-	endpointComponentOperatorSha       = "sha256:b3edec494a5c9f5a9bf65699d0592ca2e50c205132f5337e8df07a7808d03887"
-	endpointComponentOperatorImagePath = defaultImageRegistry + "/" + endpointComponentOperatorImage
+	klusterletComponentOperatorContainer = "klusterlet-component-operator"
+	klusterletComponentOperatorImage     = "klusterlet-component-operator"
+	klusterletComponentOperatorSha       = "sha256:b3edec494a5c9f5a9bf65699d0592ca2e50c205132f5337e8df07a7808d03887"
+	klusterletComponentOperatorImagePath = defaultImageRegistry + "/" + klusterletComponentOperatorImage
 
 	certPolicyControllerImage  = "cert-policy-controller"
 	certPolicyControllerShaKey = "cert_policy_controller"
@@ -57,7 +57,6 @@ const (
 
 	connectionManagerImage  = "multicloud-manager"
 	connectionManagerShaKey = "multicloud_manager"
-
 )
 
 var deletePatchString = fmt.Sprintf(
@@ -70,25 +69,25 @@ var addPatchString = fmt.Sprintf(
 	"replace", "/spec/applicationManager/enabled", true,
 )
 
-var _ = Describe("Endpoint", func() {
+var _ = Describe("Klusterlet", func() {
 
 	It("Should create all component CR", func() {
-		endpoint := newEndpoint(testEndpointName, testNamespace)
-		clientClusterDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Delete(testEndpointName, &metav1.DeleteOptions{})
-		createNewUnstructured(clientClusterDynamic, gvrEndpoint,
-			endpoint, testEndpointName, testNamespace)
-		When("endpoint created, wait for all component CRs to be created", func() {
-			var endpointComponentOperatorDeployment *appsv1.Deployment
+		klusterlet := newKlusterlet(testKlusterletName, testNamespace)
+		clientClusterDynamic.Resource(gvrKlusterlet).Namespace(testNamespace).Delete(testKlusterletName, &metav1.DeleteOptions{})
+		createNewUnstructured(clientClusterDynamic, gvrKlusterlet,
+			klusterlet, testKlusterletName, testNamespace)
+		When("klusterlet created, wait for all component CRs to be created", func() {
+			var klusterletComponentOperatorDeployment *appsv1.Deployment
 			Eventually(func() error {
 				var err error
-				klog.V(1).Info("Wait endpoint component operator...")
-				endpointComponentOperatorDeployment, err = clientCluster.AppsV1().Deployments(testNamespace).Get(endpointComponentOperator, metav1.GetOptions{})
+				klog.V(1).Info("Wait klusterlet component operator...")
+				klusterletComponentOperatorDeployment, err = clientCluster.AppsV1().Deployments(testNamespace).Get(klusterletComponentOperator, metav1.GetOptions{})
 				return err
 			}, 10, 1).Should(BeNil())
-			klog.V(1).Info("endpoint component operator created")
+			klog.V(1).Info("klusterlet component operator created")
 			var image string
-			for _, c := range endpointComponentOperatorDeployment.Spec.Template.Spec.Containers {
-				if c.Name == endpointComponentOperatorContainer {
+			for _, c := range klusterletComponentOperatorDeployment.Spec.Template.Spec.Containers {
+				if c.Name == klusterletComponentOperatorContainer {
 					image = c.Image
 					klog.Infof("image:%s", image)
 					break
@@ -103,7 +102,7 @@ var _ = Describe("Endpoint", func() {
 				//We can not test the tag itself because it is defined in CICD
 				Expect(strings.Contains(image, tagPostfix)).To(BeTrue())
 			} else {
-				Expect(len(image) > len(endpointComponentOperatorImagePath)+1).To(BeTrue())
+				Expect(len(image) > len(klusterletComponentOperatorImagePath)+1).To(BeTrue())
 			}
 
 			var cr *unstructured.Unstructured
@@ -160,11 +159,11 @@ var _ = Describe("Endpoint", func() {
 	})
 
 	It("Should delete corresponding component CR", func() {
-		By("Updating endpoint")
-		_, err := clientClusterDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Patch(testEndpointName, types.JSONPatchType, []byte(deletePatchString), metav1.PatchOptions{})
+		By("Updating klusterlet")
+		_, err := clientClusterDynamic.Resource(gvrKlusterlet).Namespace(testNamespace).Patch(testKlusterletName, types.JSONPatchType, []byte(deletePatchString), metav1.PatchOptions{})
 		Expect(err).To(BeNil())
 
-		When("endpoint update, wait for corresponding component to create/delete", func() {
+		When("klusterlet update, wait for corresponding component to create/delete", func() {
 			Eventually(func() *unstructured.Unstructured {
 				var objAppmgr *unstructured.Unstructured
 				klog.V(1).Info("Wait application manager component...")
@@ -176,11 +175,11 @@ var _ = Describe("Endpoint", func() {
 	})
 
 	It("Should add corresponding component CR", func() {
-		By("Updating endpoint")
-		_, err := clientClusterDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Patch(testEndpointName, types.JSONPatchType, []byte(addPatchString), metav1.PatchOptions{})
+		By("Updating klusterlet")
+		_, err := clientClusterDynamic.Resource(gvrKlusterlet).Namespace(testNamespace).Patch(testKlusterletName, types.JSONPatchType, []byte(addPatchString), metav1.PatchOptions{})
 		Expect(err).To(BeNil())
 
-		When("endpoint update, wait for corresponding component to create/delete", func() {
+		When("klusterlet update, wait for corresponding component to create/delete", func() {
 			Eventually(func() error {
 				var err error
 				klog.V(1).Info("Wait application manager...")
@@ -192,11 +191,11 @@ var _ = Describe("Endpoint", func() {
 	})
 
 	It("Should delete all component CRs", func() {
-		By("Deleteing endpoint")
-		err := clientClusterDynamic.Resource(gvrEndpoint).Namespace(testNamespace).Delete(testEndpointName, &metav1.DeleteOptions{})
+		By("Deleteing klusterlet")
+		err := clientClusterDynamic.Resource(gvrKlusterlet).Namespace(testNamespace).Delete(testKlusterletName, &metav1.DeleteOptions{})
 		Expect(err).To(BeNil())
 
-		When("endpoint deleted, wait for all components CR to be deleted", func() {
+		When("klusterlet deleted, wait for all components CR to be deleted", func() {
 			Eventually(func() *unstructured.Unstructured {
 				var objCertPolicyCtl *unstructured.Unstructured
 				klog.V(1).Info("Wait deletion cert policy controller...")
@@ -238,11 +237,11 @@ var _ = Describe("Endpoint", func() {
 			klog.V(1).Info("connection manager deletedd")
 
 			Eventually(func() error {
-				klog.V(1).Info("Wait deletion endpoint component operator...")
-				_, err = clientCluster.AppsV1().Deployments(testNamespace).Get(endpointComponentOperator, metav1.GetOptions{})
+				klog.V(1).Info("Wait deletion klusterlet component operator...")
+				_, err = clientCluster.AppsV1().Deployments(testNamespace).Get(klusterletComponentOperator, metav1.GetOptions{})
 				return err
 			}, 5, 1).ShouldNot(BeNil())
-			klog.V(1).Info("endpoint component operator deleted")
+			klog.V(1).Info("klusterlet component operator deleted")
 		})
 	})
 })
