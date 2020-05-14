@@ -23,12 +23,12 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	klusterletv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1beta1"
 	"github.com/open-cluster-management/endpoint-operator/version"
 )
 
 var (
-	namespace    = "multicluster-endpoint"
+	namespace    = "klusterlet"
 	manifestPath = filepath.Join("..", "..", "..", "image-manifests", version.Version+".json")
 )
 
@@ -43,7 +43,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() error {
-	return multicloudv1beta1.LoadManifest(manifestPath)
+	return klusterletv1beta1.LoadManifest(manifestPath)
 }
 
 func teardown() {
@@ -65,28 +65,28 @@ func newTestDeployment(name string) *appsv1.Deployment {
 	return deployment
 }
 
-func newInstance() *multicloudv1beta1.Endpoint {
-	instance := &multicloudv1beta1.Endpoint{
+func newInstance() *klusterletv1beta1.Klusterlet {
+	instance := &klusterletv1beta1.Klusterlet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "endpoint",
+			Name:      "klusterlet",
 			Namespace: namespace,
 		},
-		Spec: multicloudv1beta1.EndpointSpec{
+		Spec: klusterletv1beta1.KlusterletSpec{
 			Version: "3.2.1",
 		},
 	}
 	return instance
 }
 
-func newInstanceInDeletion() *multicloudv1beta1.Endpoint {
-	instance := &multicloudv1beta1.Endpoint{
+func newInstanceInDeletion() *klusterletv1beta1.Klusterlet {
+	instance := &klusterletv1beta1.Klusterlet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              "endpoint",
+			Name:              "klusterlet",
 			Namespace:         namespace,
 			DeletionTimestamp: &metav1.Time{},
-			Finalizers:        []string{"endpoint-workmgr"},
+			Finalizers:        []string{"klusterlet-workmgr"},
 		},
-		Spec: multicloudv1beta1.EndpointSpec{
+		Spec: klusterletv1beta1.KlusterletSpec{
 			Version:         "3.2.1",
 			ImagePullSecret: "image-pull",
 		},
@@ -94,10 +94,10 @@ func newInstanceInDeletion() *multicloudv1beta1.Endpoint {
 	return instance
 }
 
-func newWorkmgr() *multicloudv1beta1.WorkManager {
-	workmgr := &multicloudv1beta1.WorkManager{
+func newWorkmgr() *klusterletv1beta1.WorkManager {
+	workmgr := &klusterletv1beta1.WorkManager{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "endpoint-workmgr",
+			Name:      "klusterlet-workmgr",
 			Namespace: namespace,
 		},
 	}
@@ -106,11 +106,11 @@ func newWorkmgr() *multicloudv1beta1.WorkManager {
 
 func TestCreateReconcile(t *testing.T) {
 	instance := newInstance()
-	workmgr := &multicloudv1beta1.WorkManager{}
+	workmgr := &klusterletv1beta1.WorkManager{}
 
 	scheme := scheme.Scheme
-	scheme.AddKnownTypes(multicloudv1beta1.SchemeGroupVersion, instance)
-	scheme.AddKnownTypes(multicloudv1beta1.SchemeGroupVersion, workmgr)
+	scheme.AddKnownTypes(klusterletv1beta1.SchemeGroupVersion, instance)
+	scheme.AddKnownTypes(klusterletv1beta1.SchemeGroupVersion, workmgr)
 
 	objs := []runtime.Object{}
 	cl := fake.NewFakeClient(objs...)
@@ -125,11 +125,11 @@ func TestCreateReconcile(t *testing.T) {
 
 func TestFinalizeReconcile(t *testing.T) {
 	instance := newInstanceInDeletion()
-	workmgr := &multicloudv1beta1.WorkManager{}
+	workmgr := &klusterletv1beta1.WorkManager{}
 
 	scheme := scheme.Scheme
-	scheme.AddKnownTypes(multicloudv1beta1.SchemeGroupVersion, instance)
-	scheme.AddKnownTypes(multicloudv1beta1.SchemeGroupVersion, workmgr)
+	scheme.AddKnownTypes(klusterletv1beta1.SchemeGroupVersion, instance)
+	scheme.AddKnownTypes(klusterletv1beta1.SchemeGroupVersion, workmgr)
 
 	objs := []runtime.Object{}
 	cl := fake.NewFakeClient(objs...)
@@ -146,8 +146,8 @@ func TestUpdateReconcile(t *testing.T) {
 	workmgr := newWorkmgr()
 
 	scheme := scheme.Scheme
-	scheme.AddKnownTypes(multicloudv1beta1.SchemeGroupVersion, instance)
-	scheme.AddKnownTypes(multicloudv1beta1.SchemeGroupVersion, workmgr)
+	scheme.AddKnownTypes(klusterletv1beta1.SchemeGroupVersion, instance)
+	scheme.AddKnownTypes(klusterletv1beta1.SchemeGroupVersion, workmgr)
 
 	objs := []runtime.Object{workmgr}
 	cl := fake.NewFakeClient(objs...)
@@ -170,8 +170,8 @@ func TestDeleteReconcile(t *testing.T) {
 	workmgr := newWorkmgr()
 
 	scheme := scheme.Scheme
-	scheme.AddKnownTypes(multicloudv1beta1.SchemeGroupVersion, instance)
-	scheme.AddKnownTypes(multicloudv1beta1.SchemeGroupVersion, workmgr)
+	scheme.AddKnownTypes(klusterletv1beta1.SchemeGroupVersion, instance)
+	scheme.AddKnownTypes(klusterletv1beta1.SchemeGroupVersion, workmgr)
 
 	objs := []runtime.Object{workmgr}
 	cl := fake.NewFakeClient(objs...)

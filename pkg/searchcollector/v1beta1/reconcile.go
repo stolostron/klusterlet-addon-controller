@@ -20,15 +20,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	klusterletv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1beta1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/inspect"
 )
 
 var log = logf.Log.WithName("searchcollector")
 
 // Reconcile reconciles the search collector
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) (bool, error) {
-	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
+func Reconcile(instance *klusterletv1beta1.Klusterlet, client client.Client, scheme *runtime.Scheme) (bool, error) {
+	reqLogger := log.WithValues("Klusterlet.Namespace", instance.Namespace, "Klusterlet.Name", instance.Name)
 	reqLogger.Info("Reconciling SearchCollector")
 
 	// Deployed on hub
@@ -50,7 +50,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 		return false, err
 	}
 
-	foundSearchCollectorCR := &multicloudv1beta1.SearchCollector{}
+	foundSearchCollectorCR := &klusterletv1beta1.SearchCollector{}
 	err = client.Get(context.TODO(), types.NamespacedName{Name: searchCollectorCR.Name, Namespace: searchCollectorCR.Namespace}, foundSearchCollectorCR)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -116,12 +116,12 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 }
 
 // TODO(liuhao): the following method need to be refactored as instance method of SearchCollector struct
-func newSearchCollectorCR(instance *multicloudv1beta1.Endpoint, client client.Client) (*multicloudv1beta1.SearchCollector, error) {
+func newSearchCollectorCR(instance *klusterletv1beta1.Klusterlet, client client.Client) (*klusterletv1beta1.SearchCollector, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
 
-	gv := multicloudv1beta1.GlobalValues{
+	gv := klusterletv1beta1.GlobalValues{
 		ImagePullPolicy: instance.Spec.ImagePullPolicy,
 		ImagePullSecret: instance.Spec.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 1),
@@ -135,13 +135,13 @@ func newSearchCollectorCR(instance *multicloudv1beta1.Endpoint, client client.Cl
 
 	gv.ImageOverrides[imageKey] = imageRepository
 
-	return &multicloudv1beta1.SearchCollector{
+	return &klusterletv1beta1.SearchCollector{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name + "-search",
 			Namespace: instance.Namespace,
 			Labels:    labels,
 		},
-		Spec: multicloudv1beta1.SearchCollectorSpec{
+		Spec: klusterletv1beta1.SearchCollectorSpec{
 			FullNameOverride:  instance.Name + "-search",
 			ClusterName:       instance.Spec.ClusterName,
 			ClusterNamespace:  instance.Spec.ClusterNamespace,
@@ -151,7 +151,7 @@ func newSearchCollectorCR(instance *multicloudv1beta1.Endpoint, client client.Cl
 	}, err
 }
 
-func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.SearchCollector, client client.Client) error {
+func create(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.SearchCollector, client client.Client) error {
 	// Create the CR and add the Finalizer to the instance
 	log.Info("Creating a new SearchCollector", "SearchCollector.Namespace", cr.Namespace, "SearchCollector.Name", cr.Name)
 	err := client.Create(context.TODO(), cr)
@@ -165,7 +165,7 @@ func create(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.SearchCo
 	return nil
 }
 
-func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.SearchCollector, foundCR *multicloudv1beta1.SearchCollector, client client.Client) error {
+func update(instance *klusterletv1beta1.Klusterlet, cr *klusterletv1beta1.SearchCollector, foundCR *klusterletv1beta1.SearchCollector, client client.Client) error {
 	foundCR.Spec = cr.Spec
 	err := client.Update(context.TODO(), foundCR)
 	if err != nil && !errors.IsConflict(err) {
@@ -184,11 +184,11 @@ func update(instance *multicloudv1beta1.Endpoint, cr *multicloudv1beta1.SearchCo
 	return nil
 }
 
-func delete(foundCR *multicloudv1beta1.SearchCollector, client client.Client) error {
+func delete(foundCR *klusterletv1beta1.SearchCollector, client client.Client) error {
 	return client.Delete(context.TODO(), foundCR)
 }
 
-func finalize(instance *multicloudv1beta1.Endpoint, searchCollectorCR *multicloudv1beta1.SearchCollector, client client.Client) error {
+func finalize(instance *klusterletv1beta1.Klusterlet, searchCollectorCR *klusterletv1beta1.SearchCollector, client client.Client) error {
 	for i, finalizer := range instance.Finalizers {
 		if finalizer == searchCollectorCR.Name {
 			instance.Finalizers = append(instance.Finalizers[0:i], instance.Finalizers[i+1:]...)

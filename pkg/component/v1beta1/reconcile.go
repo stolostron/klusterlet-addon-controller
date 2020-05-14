@@ -25,14 +25,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	klusterletv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1beta1"
 )
 
 var log = logf.Log.WithName("component")
 
-// Reconcile Resolves differences in the running state of the endpoint-component-operator deployment
-func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, scheme *runtime.Scheme) error {
-	reqLogger := log.WithValues("Endpoint.Namespace", instance.Namespace, "Endpoint.Name", instance.Name)
+// Reconcile Resolves differences in the running state of the klusterlet-component-operator deployment
+func Reconcile(instance *klusterletv1beta1.Klusterlet, client client.Client, scheme *runtime.Scheme) error {
+	reqLogger := log.WithValues("Klusterlet.Namespace", instance.Namespace, "Klusterlet.Name", instance.Name)
 	reqLogger.Info("Reconciling ComponentOperator")
 
 	var err error
@@ -123,7 +123,7 @@ func Reconcile(instance *multicloudv1beta1.Endpoint, client client.Client, schem
 	return nil
 }
 
-func newClusterRoleBinding(instance *multicloudv1beta1.Endpoint) *rbacv1.ClusterRoleBinding {
+func newClusterRoleBinding(instance *klusterletv1beta1.Klusterlet) *rbacv1.ClusterRoleBinding {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
@@ -147,7 +147,7 @@ func newClusterRoleBinding(instance *multicloudv1beta1.Endpoint) *rbacv1.Cluster
 	}
 }
 
-func newClusterRole(instance *multicloudv1beta1.Endpoint) *rbacv1.ClusterRole {
+func newClusterRole(instance *klusterletv1beta1.Klusterlet) *rbacv1.ClusterRole {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
@@ -173,7 +173,7 @@ func newClusterRole(instance *multicloudv1beta1.Endpoint) *rbacv1.ClusterRole {
 	}
 }
 
-func newServiceAccount(instance *multicloudv1beta1.Endpoint) *corev1.ServiceAccount {
+func newServiceAccount(instance *klusterletv1beta1.Klusterlet) *corev1.ServiceAccount {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
@@ -189,7 +189,7 @@ func newServiceAccount(instance *multicloudv1beta1.Endpoint) *corev1.ServiceAcco
 	return serviceAccount
 }
 
-func newDeployment(instance *multicloudv1beta1.Endpoint) (*appsv1.Deployment, error) {
+func newDeployment(instance *klusterletv1beta1.Klusterlet) (*appsv1.Deployment, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
@@ -227,7 +227,7 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) (*appsv1.Deployment, er
 					ServiceAccountName: instance.Name + "-component-operator",
 					Containers: []corev1.Container{
 						{
-							Name:            "endpoint-component-operator",
+							Name:            "klusterlet-component-operator",
 							Image:           deploymentImage,
 							ImagePullPolicy: instance.Spec.ImagePullPolicy,
 							Env: []corev1.EnvVar{
@@ -237,7 +237,7 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) (*appsv1.Deployment, er
 								},
 								{
 									Name:  "OPERATOR_NAME",
-									Value: "endpoint-component-operator",
+									Value: "klusterlet-component-operator",
 								},
 								{
 									Name: "POD_NAME",
@@ -271,7 +271,7 @@ func newDeployment(instance *multicloudv1beta1.Endpoint) (*appsv1.Deployment, er
 
 // TODO need to change this mechanism, version of operator shouldn't have
 // to align with that of the component operator
-func watchesFile(instance *multicloudv1beta1.Endpoint) string {
+func watchesFile(instance *klusterletv1beta1.Klusterlet) string {
 	versionSplit := strings.Split(instance.Spec.Version, "-")
 	version := versionSplit[0]
 	if version == "3.2.1.1910" {

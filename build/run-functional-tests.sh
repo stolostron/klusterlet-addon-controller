@@ -79,14 +79,14 @@ cat ${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml
 #Create local directory to hold coverage results
 mkdir -p ${FUNCT_TEST_TMPDIR}/test/coverage-functional/endpoint-operator
 
-kind create cluster --name endpoint-operator-test --config=${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml  || exit 1
+kind create cluster --name klusterlet-operator-test --config=${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml  || exit 1
 
 # setup kubeconfig
-kind export kubeconfig --name=endpoint-operator-test --kubeconfig ${KIND_KUBECONFIG}
+kind export kubeconfig --name=klusterlet-operator-test --kubeconfig ${KIND_KUBECONFIG} 
 
-echo "installing endpoint-operator"
+echo "installing klusterlet-operator"
 
-kind load docker-image $DOCKER_IMAGE --name=endpoint-operator-test
+kind load docker-image $DOCKER_IMAGE --name=klusterlet-operator-test 
 
 #Create the namespace
 kubectl apply -f ${PROJECT_DIR}/deploy/namespace.yaml
@@ -95,7 +95,7 @@ kubectl create secret docker-registry ${PULL_SECRET} \
       --docker-server=quay.io/open-cluster-management \
       --docker-username=$DOCKER_USER \
       --docker-password=$DOCKER_PASS \
-      -n multicluster-endpoint
+      -n klusterlet
 
 #Loop on scenario
 for dir in overlays/test/* ; do
@@ -103,14 +103,14 @@ for dir in overlays/test/* ; do
   echo "Executing test "$dir
   echo "=========================================="
   kubectl apply -k $dir
-  kubectl patch deployment endpoint-operator -n multicluster-endpoint -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"endpoint-operator\",\"image\":\"${DOCKER_IMAGE}\"}]}}}}"
-  kubectl rollout status -n multicluster-endpoint deployment endpoint-operator --timeout=120s
+  kubectl patch deployment klusterlet-operator -n klusterlet -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"klusterlet-operator\",\"image\":\"${DOCKER_IMAGE}\"}]}}}}"
+  kubectl rollout status -n klusterlet deployment klusterlet-operator --timeout=120s
   sleep 10
-  ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/endpoint-operator-test/... -- --v=1
-  kubectl delete deployment endpoint-operator -n multicluster-endpoint
+  ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/klusterlet-operator-test/... -- --v=1
+  kubectl delete deployment klusterlet-operator -n klusterlet
 done
 
-kind delete cluster --name endpoint-operator-test
+kind delete cluster --name klusterlet-operator-test 
 
 rm -rf ${PROJECT_DIR}/test/coverage-functional
 mkdir -p ${PROJECT_DIR}/test/coverage-functional

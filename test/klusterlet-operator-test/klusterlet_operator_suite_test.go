@@ -8,7 +8,7 @@
 //
 // Copyright (c) 2020 Red Hat, Inc.
 
-package endpoint_operator_test
+package klusterlet_operator_test
 
 import (
 	"flag"
@@ -34,12 +34,12 @@ import (
 )
 
 const (
-	endpointOperator           = "endpoint-operator"
-	endpointOperatorContainer  = "endpoint-operator"
-	defaultImageRegistry       = "quay.io/open-cluster-management"
-	defaultImagePullSecretName = "multicloud-image-pull-secret"
-	testEndpointName           = "endpoint"
-	testNamespace              = "multicluster-endpoint"
+	klusterletOperator          = "klusterlet-operator"
+	klusterletOperatorContainer = "klusterlet-operator"
+	defaultImageRegistry        = "quay.io/open-cluster-management"
+	defaultImagePullSecretName  = "multicloud-image-pull-secret"
+	testKlusterletName          = "klusterlet"
+	testNamespace               = "klusterlet"
 )
 
 var (
@@ -48,7 +48,7 @@ var (
 	clientCluster        kubernetes.Interface
 	clientClusterDynamic dynamic.Interface
 
-	gvrEndpoint               schema.GroupVersionResource
+	gvrKlusterlet             schema.GroupVersionResource
 	gvrApplicationmanager     schema.GroupVersionResource
 	gvrCertpoliciescontroller schema.GroupVersionResource
 	gvrCiscontroller          schema.GroupVersionResource
@@ -65,11 +65,11 @@ var (
 	kubeconfig          string
 )
 
-func newEndpoint(name, namespace string) *unstructured.Unstructured {
+func newKlusterlet(name, namespace string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "multicloud.ibm.com/v1beta1",
-			"kind":       "Endpoint",
+			"apiVersion": "agent.open-cluster-management.io/v1beta1",
+			"kind":       "Klusterlet",
 			"metadata": map[string]interface{}{
 				"name":      name,
 				"namespace": namespace,
@@ -137,23 +137,23 @@ func init() {
 	flag.StringVar(&optionsFile, "options", "", "Location of an \"options.yaml\" file to provide input for various tests")
 
 }
-func TestEndpointOperator(t *testing.T) {
+func TestKlusterletOperator(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecs(t, "EndpointOperator Suite")
+	RunSpecs(t, "KlusterletOperator Suite")
 }
 
 var _ = BeforeSuite(func() {
 	By("Setup Kube client")
-	gvrEndpoint = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "endpoints"}
-	gvrApplicationmanager = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "applicationmanagers"}
-	gvrCertpoliciescontroller = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "certpoliciescontroller"}
-	gvrCiscontroller = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "ciscontrollers"}
-	gvrConnectionmanager = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "connectionmanagers"}
-	gvrIampoliciescontroller = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "iampoliciescontroller"}
-	gvrPolicycontroller = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "policycontrollers"}
-	gvrSearchcollector = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "searchcollectors"}
-	gvrWorkmanagers = schema.GroupVersionResource{Group: "multicloud.ibm.com", Version: "v1beta1", Resource: "workmanagers"}
+	gvrKlusterlet = schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1beta1", Resource: "klusterlets"}
+	gvrApplicationmanager = schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1beta1", Resource: "applicationmanagers"}
+	gvrCertpoliciescontroller = schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1beta1", Resource: "certpoliciescontroller"}
+	gvrCiscontroller = schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1beta1", Resource: "ciscontrollers"}
+	gvrConnectionmanager = schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1beta1", Resource: "connectionmanagers"}
+	gvrIampoliciescontroller = schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1beta1", Resource: "iampoliciescontroller"}
+	gvrPolicycontroller = schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1beta1", Resource: "policycontrollers"}
+	gvrSearchcollector = schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1beta1", Resource: "searchcollectors"}
+	gvrWorkmanagers = schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1beta1", Resource: "workmanagers"}
 
 	clientCluster = NewKubeClient("", "", "")
 	clientClusterDynamic = NewKubeClientDynamic("", "", "")
@@ -166,15 +166,15 @@ var _ = BeforeSuite(func() {
 			},
 		})).NotTo(BeNil())
 	}
-	d, err := clientCluster.AppsV1().Deployments(testNamespace).Get(endpointOperator, metav1.GetOptions{})
+	d, err := clientCluster.AppsV1().Deployments(testNamespace).Get(klusterletOperator, metav1.GetOptions{})
 	if err != nil {
-		klog.V(5).Infof("endpoint-operator:\n%#v", d)
+		klog.V(5).Infof("klusterlet-operator:\n%#v", d)
 	}
 	Expect(err).To(BeNil())
 	useSha = false
 	tagPostfix = ""
 	for _, c := range d.Spec.Template.Spec.Containers {
-		if c.Name == endpointOperatorContainer {
+		if c.Name == klusterletOperatorContainer {
 			for _, e := range c.Env {
 				if e.Name == "USE_SHA_MANIFEST" {
 					useSha = e.Value == strings.ToLower("true")

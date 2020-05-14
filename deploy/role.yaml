@@ -2,8 +2,8 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: endpoint-operator
-  namespace: multicluster-endpoint
+  name: klusterlet-operator
+  namespace: klusterlet
 rules:
 - apiGroups:
   - ""
@@ -11,7 +11,7 @@ rules:
   - pods
   - services
   - services/finalizers
-  - endpoints
+  - klusterlets
   - persistentvolumeclaims
   - events
   - configmaps
@@ -49,7 +49,7 @@ rules:
 - apiGroups:
   - apps
   resourceNames:
-  - endpoint-operator
+  - klusterlet-operator
   resources:
   - deployments/finalizers
   verbs:
@@ -68,12 +68,12 @@ rules:
   verbs:
   - get
 - apiGroups:
-  - multicloud.ibm.com
+  - agent.open-cluster-management.io
   resources:
   - '*'
   - applicationmanagers
   - connectionmanagers
-  - endpoints
+  - klusterlets
   - monitorings
   - policycontrollers
   - searchcollectors

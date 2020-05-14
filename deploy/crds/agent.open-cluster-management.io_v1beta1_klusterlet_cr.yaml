@@ -1,0 +1,32 @@
+apiVersion: agent.open-cluster-management.io/v1beta1
+kind: Klusterlet
+metadata:
+  name: klusterlet
+  namespace: klusterlet
+spec:
+  applicationManager:
+    enabled: true
+  bootstrapConfig:
+    hubSecret: multicluster-endpoint/klusterlet-bootstrap
+  certPolicyController:
+    enabled: true
+  cisController:
+    enabled: false
+  clusterLabels:
+    cloud: Azure
+    vendor: OpenShift
+  clusterName: ljawale-azure
+  clusterNamespace: ljawale-azure
+  connectionManager: {}
+  iamPolicyController:
+    enabled: true
+  imagePullSecret: multiclusterhub-operator-pull-secret
+  policyController:
+    enabled: true
+  searchCollector:
+    enabled: true
+  serviceRegistry:
+    dnsSuffix: mcm.svc
+    enabled: true
+    plugins: kube-service
+  version: 1.0.0

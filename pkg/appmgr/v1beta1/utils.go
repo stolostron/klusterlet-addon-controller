@@ -17,11 +17,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	multicloudv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/multicloud/v1beta1"
+	klusterletv1beta1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1beta1"
 )
 
 // IsReady helps the other components to check whether the connmgr pod is ready
-func IsReady(instance *multicloudv1beta1.Endpoint, c client.Client) (bool, error) {
+func IsReady(instance *klusterletv1beta1.Klusterlet, c client.Client) (bool, error) {
 	foundDeployment := &appsv1.Deployment{}
 
 	err := c.Get(context.TODO(), types.NamespacedName{Name: instance.Name + "-appmgr", Namespace: instance.Namespace}, foundDeployment)

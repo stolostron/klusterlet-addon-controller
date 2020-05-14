@@ -6,9 +6,13 @@
 //
 // Copyright (c) 2020 Red Hat, Inc.
 
-// Package multicloud contains multicloud API versions.
-//
-// This file ensures Go source parsers acknowledge the multicloud package
-// and any child packages. It can be removed if any other Go source files are
-// added to this package.
-package multicloud
+package apis
+
+import (
+	"github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1beta1"
+)
+
+func init() {
+	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
+	AddToSchemes = append(AddToSchemes, v1beta1.SchemeBuilder.AddToScheme)
+}

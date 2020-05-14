@@ -40,7 +40,7 @@ func TestGetImage(t *testing.T) {
 	}
 	imageTagPostfixKey := "IMAGE_TAG_POSTFIX"
 	type args struct {
-		endpoint        *Endpoint
+		klusterlet      *Klusterlet
 		component       string
 		imageTagPostfix string
 	}
@@ -54,8 +54,8 @@ func TestGetImage(t *testing.T) {
 		{
 			name: "Use Default Component Tag",
 			args: args{
-				endpoint: &Endpoint{
-					Spec: EndpointSpec{
+				klusterlet: &Klusterlet{
+					Spec: KlusterletSpec{
 						ImageRegistry: "sample-registry/uniquePath",
 					},
 				},
@@ -64,7 +64,7 @@ func TestGetImage(t *testing.T) {
 			},
 			want: GlobalValues{
 				ImageOverrides: map[string]string{
-					"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator:1.0.0",
+					"klusterlet_component_operator": "sample-registry/uniquePath/klusterlet-component-operator:1.0.0",
 				},
 			},
 			wantErr: false,
@@ -72,7 +72,7 @@ func TestGetImage(t *testing.T) {
 		{
 			name: "Not Exists Component",
 			args: args{
-				endpoint:        &Endpoint{},
+				klusterlet:      &Klusterlet{},
 				component:       "notExistsComponent",
 				imageTagPostfix: "",
 			},
@@ -82,8 +82,8 @@ func TestGetImage(t *testing.T) {
 		{
 			name: "With Postfix Set",
 			args: args{
-				endpoint: &Endpoint{
-					Spec: EndpointSpec{
+				klusterlet: &Klusterlet{
+					Spec: KlusterletSpec{
 						ImageRegistry: "sample-registry-2/uniquePath",
 					},
 				},
@@ -100,8 +100,8 @@ func TestGetImage(t *testing.T) {
 		{
 			name: "Use Component Image Tag",
 			args: args{
-				endpoint: &Endpoint{
-					Spec: EndpointSpec{
+				klusterlet: &Klusterlet{
+					Spec: KlusterletSpec{
 						ImageRegistry: "sample-registry/uniquePath",
 					},
 				},
@@ -124,7 +124,7 @@ func TestGetImage(t *testing.T) {
 			if err != nil {
 				t.Errorf("Cannot set env %s", imageTagPostfixKey)
 			}
-			imgKey, imgRepository, err := tt.args.endpoint.GetImage(tt.args.component)
+			imgKey, imgRepository, err := tt.args.klusterlet.GetImage(tt.args.component)
 			if tt.wantErr != (err != nil) {
 				t.Errorf("Should return error correctly.")
 			} else if !tt.wantErr {
@@ -142,8 +142,8 @@ func TestGetImageWithManifest(t *testing.T) {
 		t.Error(err)
 	}
 	type args struct {
-		endpoint  *Endpoint
-		component string
+		klusterlet *Klusterlet
+		component  string
 	}
 
 	tests := []struct {
@@ -155,8 +155,8 @@ func TestGetImageWithManifest(t *testing.T) {
 		{
 			name: "Use Component Sha",
 			args: args{
-				endpoint: &Endpoint{
-					Spec: EndpointSpec{
+				klusterlet: &Klusterlet{
+					Spec: KlusterletSpec{
 						ImageRegistry: "sample-registry/uniquePath",
 					},
 				},
@@ -164,7 +164,7 @@ func TestGetImageWithManifest(t *testing.T) {
 			},
 			want: GlobalValues{
 				ImageOverrides: map[string]string{
-					"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256",
+					"klusterlet_component_operator": "sample-registry/uniquePath/klusterlet-component-operator@sha256:fake-sha256",
 				},
 			},
 			wantErr: false,
@@ -172,8 +172,8 @@ func TestGetImageWithManifest(t *testing.T) {
 		{
 			name: "Not Exists Component",
 			args: args{
-				endpoint:  &Endpoint{},
-				component: "notExistsComponent",
+				klusterlet: &Klusterlet{},
+				component:  "notExistsComponent",
 			},
 			want:    GlobalValues{},
 			wantErr: true,
@@ -183,7 +183,7 @@ func TestGetImageWithManifest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Logf("Running tests %s", tt.name)
-			imgKey, imgRepository, err := tt.args.endpoint.GetImage(tt.args.component)
+			imgKey, imgRepository, err := tt.args.klusterlet.GetImage(tt.args.component)
 			if tt.wantErr != (err != nil) {
 				t.Errorf("Should return error correctly. Error:%s", err)
 			} else if !tt.wantErr {
