@@ -108,14 +108,7 @@ func newApplicationManagerCR(instance *klusterletv1beta1.Klusterlet, client clie
 		ImageOverrides:  make(map[string]string, 2),
 	}
 
-	imageKey, imageRepository, err := instance.GetImage("deployable")
-	if err != nil {
-		log.Error(err, "Fail to get Image", "Component.Name", "deployable")
-		return nil, err
-	}
-	gv.ImageOverrides[imageKey] = imageRepository
-
-	imageKey, imageRepository, err = instance.GetImage("subscription")
+	imageKey, imageRepository, err := instance.GetImage("subscription")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "subscription")
 		return nil, err
