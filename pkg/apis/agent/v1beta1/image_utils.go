@@ -28,7 +28,7 @@ var defaultComponentImageKeyMap = map[string]string{
 	"cis-controller-drishti":       "drishti_cis",
 	"cis-controller-minio":         "img_minio",
 	"cis-controller-minio-cleaner": "img_minio_mc",
-	"component-operator":           "klusterlet_component_operator",
+	"component-operator":           "endpoint_component_operator",
 	"connection-manager":           "multicloud_manager",
 	"coredns":                      "coredns",
 	"deployable":                   "multicluster_operators_deployable",
