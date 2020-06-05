@@ -64,7 +64,7 @@ func TestGetImage(t *testing.T) {
 			},
 			want: GlobalValues{
 				ImageOverrides: map[string]string{
-					"klusterlet_component_operator": "sample-registry/uniquePath/klusterlet-component-operator:1.0.0",
+					"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator:1.0.0",
 				},
 			},
 			wantErr: false,
@@ -164,7 +164,7 @@ func TestGetImageWithManifest(t *testing.T) {
 			},
 			want: GlobalValues{
 				ImageOverrides: map[string]string{
-					"klusterlet_component_operator": "sample-registry/uniquePath/klusterlet-component-operator@sha256:fake-sha256",
+					"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256",
 				},
 			},
 			wantErr: false,

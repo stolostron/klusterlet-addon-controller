@@ -150,8 +150,8 @@
     "image-digest": "sha256:fake-sha256"
   },
   {
-    "image-key": "klusterlet_component_operator",
-    "image-name": "klusterlet-component-operator",
+    "image-key": "endpoint_component_operator",
+    "image-name": "endpoint-component-operator",
     "image-version": "1.0.0",
     "image-tag": "1.0.0-fake-sha256",
     "git-sha256": "fake-sha256",
