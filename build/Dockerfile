@@ -13,7 +13,8 @@ RUN GOFLAGS="" go build ./cmd/manager
 RUN GOFLAGS="" go build -o $REMOTE_SOURCE_DIR/app/build/bin/selfdestruct ./selfdestruct
 
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1-398
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+RUN microdnf update
 
 ARG IMAGE_DESCRIPTION
 ARG IMAGE_NAME
