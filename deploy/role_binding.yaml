@@ -1,12 +1,12 @@
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: klusterlet-operator
+  name: klusterlet-addon-controller
 subjects:
 - kind: ServiceAccount
-  name: klusterlet-operator
-  namespace: klusterlet
+  name: klusterlet-addon-controller
+  namespace: open-cluster-management
 roleRef:
   kind: ClusterRole
-  name: cluster-admin
+  name: klusterlet-addon-controller
   apiGroup: rbac.authorization.k8s.io

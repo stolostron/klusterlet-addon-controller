@@ -23,3 +23,8 @@ if ! which ossc > /dev/null; then
 	cd $(mktemp -d) && GOSUMDB=off go get -u github.com/open-cluster-management/go-ossc/ossc
 fi
 
+if ! which go-bindata > /dev/null; then
+	echo "Installing go-bindata..."
+	cd $(mktemp -d) && GOSUMDB=off go get -u github.com/go-bindata/go-bindata/...
+fi
+go-bindata --version

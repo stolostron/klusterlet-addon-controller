@@ -32,6 +32,8 @@ export DOCKER_IMAGE      ?= $(COMPONENT_NAME)
 export DOCKER_BUILD_TAG  ?= latest
 export DOCKER_TAG        ?= $(shell whoami)
 
+export BINDATA_TEMP_DIR := $(shell mktemp -d)
+
 export DOCKER_BUILD_OPTS  = --build-arg REMOTE_SOURCE=. \
 	--build-arg REMOTE_SOURCE_DIR=/remote-source \
 	--build-arg GITHUB_TOKEN=$(GITHUB_TOKEN) \
@@ -67,7 +69,7 @@ deps: init component/init
 
 .PHONY: check
 ## Runs a set of required checks
-check: lint ossccheck copyright-check
+check: lint ossccheck copyright-check go-bindata-check go-mod-check
 
 .PHONY: test
 ## Runs go unit tests
@@ -77,6 +79,24 @@ test: component/test/unit
 ## Builds operator binary inside of an image
 build: component/build
 	
+.PHONY: go-bindata
+go-bindata:
+	go-bindata -nometadata -pkg bindata -o pkg/bindata/bindata_generated.go -prefix deploy/ deploy/resources/ deploy/crds/ deploy/resources/...
+
+.PHONY: gobindata-check
+go-bindata-check:
+	@go-bindata -nometadata -pkg bindata -o $(BINDATA_TEMP_DIR)/bindata_generated.go -prefix deploy/ deploy/resources/ deploy/crds/ deploy/resources/...; \
+	diff $(BINDATA_TEMP_DIR)/bindata_generated.go pkg/bindata/bindata_generated.go > go-bindata.diff; \
+	if [ $$? != 0 ]; then \
+	  echo "Run 'make go-bindata' to regenerate the bindata_generated.go"; \
+	  exit 1; \
+	fi
+	rm go-bindata.diff
+	@echo "##### go-bindata-check #### Success"
+
+.PHONY: go-mod-check
+go-mod-check:
+	./build/go-mod-check.sh $(TRAVIS_BRANCH)
 
 .PHONY: copyright-check
 copyright-check:
@@ -93,7 +113,7 @@ clean::
 .PHONY: run
 ## Run the operator against the kubeconfig targeted cluster
 run:
-	operator-sdk run --local --namespace="" --operator-flags="--zap-devel=true"
+	operator-sdk run local --watch-namespace="" --operator-flags="--zap-devel=true"
 
 .PHONE: request-destruct
 request-destruct:
@@ -111,7 +131,7 @@ ossc:
 ## Runs linter against go files
 lint:
 	@echo "Running linting tool ..."
-	@golangci-lint run --timeout 5m
+	@golangci-lint run --timeout 5m -E lll
 
 .PHONY: helpz
 helpz:
@@ -123,11 +143,11 @@ endif
 
 .PHONY: utils\crds\install
 utils\crds\install:
-	kubectl apply -f deploy/crds/agent.open-cluster-management.io_klusterlets_crd.yaml
+	kubectl apply -f deploy/crds/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
 
 .PHONY: utils\crds\uninstall
 utils\crds\uninstall:
-	kubectl delete -f deploy/crds/agent.open-cluster-management.io_klusterlets_crd.yaml
+	kubectl delete -f deploy/crds/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
 
 ### FUNCTIONAL TESTS UTILS ###########
 
@@ -140,7 +160,7 @@ deploy:
 
 .PHONY: functional-test
 functional-test: 
-	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/klusterlet-operator-test/... -- --v=5
+	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/klusterlet-addon-controller-test -- --v=1
 
 .PHONY: functional-test-full
 functional-test-full: build-coverage component/test/functional

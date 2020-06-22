@@ -2,8 +2,8 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: klusterlet-operator
-  namespace: klusterlet
+  name: klusterlet-addon-controller
+  namespace: open-cluster-management
 rules:
 - apiGroups:
   - ""
@@ -16,6 +16,8 @@ rules:
   - events
   - configmaps
   - secrets
+  - serviceaccounts
+  - namespaces
   verbs:
   - create
   - delete
@@ -49,7 +51,7 @@ rules:
 - apiGroups:
   - apps
   resourceNames:
-  - klusterlet-operator
+  - klusterlet-addon-controller
   resources:
   - deployments/finalizers
   verbs:
@@ -71,13 +73,6 @@ rules:
   - agent.open-cluster-management.io
   resources:
   - '*'
-  - applicationmanagers
-  - connectionmanagers
-  - klusterlets
-  - monitorings
-  - policycontrollers
-  - searchcollectors
-  - workmanagers
   verbs:
   - create
   - delete
@@ -86,3 +81,143 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - cluster.open-cluster-management.io
+  resources:
+  - managedclusters
+  - managedclusters/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - work.open-cluster-management.io
+  resources:
+  - manifestworks
+  - manifestworks/finalizers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  - rolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - config.openshift.io
+  resources:
+  - infrastructures
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+# appmgr
+- apiGroups:
+  - compliance.mcm.ibm.com
+  resources:
+  - compliances
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - policy.mcm.ibm.com
+  resources:
+  - policies
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - klusterlets
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - update
+- apiGroups:
+  - apps.open-cluster-management.io
+  resources:
+  - deployables
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps.open-cluster-management.io
+  resources:
+  - deployables/status
+  verbs:
+  - patch
+  - update
+- apiGroups: ["cluster.open-cluster-management.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["action.open-cluster-management.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["view.open-cluster-management.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["internal.open-cluster-management.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["mcm.ibm.com"]
+  resources: ["*"]
+  verbs: ["*"]

@@ -4,7 +4,7 @@ A Go operator built with the [operator-sdk](https://github.com/operator-framewor
 
 ## Prerequisites
 
-- Must have [operator-sdk](https://github.com/operator-framework/operator-sdk) v0.15.1 installed
+- Must have [operator-sdk](https://github.com/operator-framework/operator-sdk) v0.18.1 installed
 
 ```shell
 # can be installed with the following command
@@ -16,7 +16,7 @@ A Go operator built with the [operator-sdk](https://github.com/operator-framewor
 1. Create namespace
 
 ```shell
-kubectl create namespace klusterlet
+kubectl create namespace open-cluster-management-agent-addon
 ```
 
 2. Create image pull secret for artifactory
@@ -40,7 +40,7 @@ kubectl create namespace klusterlet
 4. Install klusterlet CRD
 
 ```shell
-make utils:crds:install
+make utils\crds\install
 ```
 
 ## Running Klusterlet Operator locally for development
@@ -48,7 +48,7 @@ make utils:crds:install
 1. Run Klusterlet Operator locally
 
 ```shell
-make operator:run
+make run
 ```
 
 ## Running Klusterlet Operator in-cluster for deployment
@@ -61,11 +61,11 @@ kubectl apply -f deploy/deploy.yaml
 
 NOTE: this will use the amd64 version of the operator
 
-## Installing Klusterlet using Klusterlet Operator
+## Installing klusterlet addons using Klusterletaddon Controller
 
 To create a klusterlet deployment with the klusterlet operator you need to create the klusterlet CR
 
-Example of Klusterlet CR `/deploy/crds/agent.open-cluster-management.io_v1beta1_klusterlet_cr.yaml`
+Example of KlusterletAddonConfig CR `/deploy/crds/agent.open-cluster-management.io_v1beta1_klusterletaddonconfig_cr.yaml`
 
 ## Rebuilding zz_generated.deepcopy.go file
 Any modifications to files pkg/apis/agent/v1beta1/*types.go will require you to run the
@@ -80,7 +80,7 @@ to regenerate the zz_generated.deepcopy.go file.
 - `export GITHUB_USER=<GITHUB_USER>`
 - `export GITHUB_TOKEN=<GITHUB_TOKEN>`
 - `make init`
-- `make operator:build`
+- `make build`
 - `make docker:tag`
 - `make docker:push`
 

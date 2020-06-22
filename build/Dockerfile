@@ -10,8 +10,6 @@ WORKDIR $REMOTE_SOURCE_DIR/app
 RUN git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 
 RUN GOFLAGS="" go build ./cmd/manager
-RUN GOFLAGS="" go build -o $REMOTE_SOURCE_DIR/app/build/bin/selfdestruct ./selfdestruct
-
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 RUN microdnf update
@@ -25,12 +23,13 @@ ARG COMPONENT_NAME
 ARG COMPONENT_VERSION
 ARG REMOTE_SOURCE_DIR
 
+ENV IMAGE_MANIFEST_PATH=/
+
 ENV OPERATOR=/usr/local/bin/$COMPONENT_NAME \
     USER_UID=10001 \
     USER_NAME=$COMPONENT_NAME
 
-COPY image-manifests image-manifests
-
+COPY --from=builder $REMOTE_SOURCE_DIR/app/image-manifests image-manifests
 COPY --from=builder $REMOTE_SOURCE_DIR/app/deploy/crds deploy/crds
 COPY --from=builder $REMOTE_SOURCE_DIR/app/manager ${OPERATOR}
 COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin /usr/local/bin
