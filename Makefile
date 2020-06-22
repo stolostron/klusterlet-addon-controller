@@ -78,7 +78,7 @@ test: component/test/unit
 .PHONY: build
 ## Builds operator binary inside of an image
 build: component/build
-	
+
 .PHONY: go-bindata
 go-bindata:
 	go-bindata -nometadata -pkg bindata -o pkg/bindata/bindata_generated.go -prefix deploy/ deploy/resources/ deploy/crds/ deploy/resources/...
