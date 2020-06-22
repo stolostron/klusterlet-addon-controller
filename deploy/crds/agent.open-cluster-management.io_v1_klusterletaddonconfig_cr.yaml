@@ -1,0 +1,29 @@
+apiVersion: agent.open-cluster-management.io/v1
+kind: KlusterletAddonConfig
+metadata:
+  name: managedcluster1
+  namespace: managedcluster1
+spec:
+  applicationManager:
+    enabled: true
+  certPolicyController:
+    enabled: true
+  cisController:
+    enabled: false
+  clusterLabels:
+    cloud: Azure
+    vendor: OpenShift
+  clusterName: managedcluster1
+  clusterNamespace: managedcluster1
+  iamPolicyController:
+    enabled: true
+  imagePullSecret: multiclusterhub-operator-pull-secret
+  policyController:
+    enabled: true
+  searchCollector:
+    enabled: true
+  serviceRegistry:
+    dnsSuffix: mcm.svc
+    enabled: true
+    plugins: kube-service
+  version: 2.0.0

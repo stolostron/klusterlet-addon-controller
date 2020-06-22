@@ -1,0 +1,12 @@
+[
+    {
+    "image-name": "multicluster-operators-subscription",
+    "image-version": "1.0.0",
+    "image-tag": "1.0.0-3152ef895a25c62bea2037d487786e82fcb818b7",
+    "git-sha256": "3152ef895a25c62bea2037d487786e82fcb818b7",
+    "git-repository": "open-cluster-management/multicloud-operators-subscription",
+    "image-remote": "quay.io/open-cluster-management",
+    "image-digest": "sha256:4f09511e2e0ecf3ed335cb4d9b8e20abb8bf5fc284bdb0199fde048635de4621",
+    "image-key": "multicluster_operators_subscription"
+  }
+]

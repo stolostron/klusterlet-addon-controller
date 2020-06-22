@@ -12,17 +12,15 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"runtime"
-	"strings"
 
-	"github.com/ghodss/yaml"
+	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
+	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/apis"
 	"github.com/open-cluster-management/endpoint-operator/pkg/controller"
-	"github.com/open-cluster-management/endpoint-operator/pkg/inspect"
 	"github.com/open-cluster-management/endpoint-operator/version"
+	ocinfrav1 "github.com/openshift/api/config/v1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -31,10 +29,6 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
-	crdv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	crdclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	kerrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
@@ -102,16 +96,6 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-	// Get cluster info
-	if err := inspect.InitClusterInfo(cfg); err != nil {
-		log.Error(err, "Failed to get cluster info. Skipping.")
-	}
-
-	log.Info("Installing CRDs")
-	if err := installCRDs(cfg); err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
@@ -127,6 +111,21 @@ func main() {
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := managedclusterv1.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := manifestworkv1.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := ocinfrav1.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
@@ -162,8 +161,24 @@ func addMetrics(ctx context.Context, cfg *rest.Config, namespace string) {
 
 	// Add to the below struct any other metrics ports you want to expose.
 	servicePorts := []v1.ServicePort{
-		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
-		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
+		{
+			Port:     metricsPort,
+			Name:     metrics.OperatorPortName,
+			Protocol: v1.ProtocolTCP,
+			TargetPort: intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: metricsPort,
+			},
+		},
+		{
+			Port:     operatorMetricsPort,
+			Name:     metrics.CRPortName,
+			Protocol: v1.ProtocolTCP,
+			TargetPort: intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: operatorMetricsPort,
+			},
+		},
 	}
 
 	// Create Service object to expose the metrics port(s).
@@ -207,71 +222,5 @@ func serveCRMetrics(cfg *rest.Config) error {
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func installCRDs(cfg *rest.Config) error {
-	crdClient := crdclientset.NewForConfigOrDie(cfg)
-
-	crdsPath := "deploy/crds"
-	files, err := ioutil.ReadDir(crdsPath)
-	if err != nil {
-		log.Error(err, "Fail to read CRDs directory", "path", crdsPath)
-		return err
-	}
-	for _, file := range files {
-		if !file.IsDir() && strings.Contains(file.Name(), "crd.yaml") {
-			crdFilePath := filepath.Join(crdsPath, file.Name())
-			log.V(1).Info("Found CRD Yaml", "file", crdFilePath)
-			crdYaml, err := ioutil.ReadFile(filepath.Join(crdsPath, file.Name()))
-			if err != nil {
-				log.Error(err, "Fail to read file", "path", crdFilePath)
-				return err
-			}
-			crd := &crdv1beta1.CustomResourceDefinition{}
-			if err := yaml.Unmarshal(crdYaml, crd); err != nil {
-				log.Error(err, "Fail to unmarshal crd yaml", "content", crdYaml)
-				return err
-			}
-			if err := createOrUpdateCRD(crd, crdClient); err != nil {
-				log.Error(err, "Failed to create/update crd", "path", crdFilePath)
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func createOrUpdateCRD(crd *crdv1beta1.CustomResourceDefinition, crdClient *crdclientset.Clientset) error {
-	log.Info("Create or update component CRD", "name", crd.Name)
-
-	log.V(1).Info("Looking for CRD", "name", crd.Name)
-	foundCRD, err := crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Get(crd.Name, metav1.GetOptions{})
-	if err != nil {
-		if !kerrors.IsNotFound(err) {
-			log.Error(err, "Unexpected error get CRD", "name", crd.Name)
-			return err
-		}
-
-		log.V(1).Info("Creating CRD", "name", crd.Name)
-		if _, err := crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crd); err != nil {
-			log.Error(err, "Fail to create CRD", "name", crd.Name)
-			return err
-		}
-		return nil
-	}
-
-	// NOTE: the UPDATE will always run since API server add additional stuff to the Spec but that's ok
-	// 	However this does present a problem for when rolling back the version of klusterlet operator...
-	//  If the newer version have a newer API than if we rollback to older version and it try to call Update
-	//  the Update will fail
-	log.V(1).Info("Updating CRD", "name", crd.Name)
-	foundCRD.Spec = crd.Spec
-	if _, err = crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Update(foundCRD); err != nil {
-		log.Error(err, "Fail to update CRD", "name", foundCRD.Name)
-		return err
-	}
-
 	return nil
 }

@@ -1,0 +1,94 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "{{ .ManagedClusterName }}"
+  namespace: "{{ .ManagedClusterNamespace }}"
+rules:
+- apiGroups:
+  - compliance.mcm.ibm.com
+  resources:
+  - compliances
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - policy.mcm.ibm.com
+  resources:
+  - policies
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - klusterlets
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - update
+- apiGroups:
+  - apps.open-cluster-management.io
+  resources:
+  - deployables
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps.open-cluster-management.io
+  resources:
+  - deployables/status
+  verbs:
+  - patch
+  - update
+- apiGroups: ["cluster.open-cluster-management.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["action.open-cluster-management.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["view.open-cluster-management.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["internal.open-cluster-management.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["mcm.ibm.com"]
+  resources: ["*"]
+  verbs: ["*"]

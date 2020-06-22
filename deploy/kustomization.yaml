@@ -1,5 +1,5 @@
 # Adds namespace to all resources.
-namespace: klusterlet
+namespace: open-cluster-management
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named
@@ -26,5 +26,6 @@ namespace: klusterlet
 resources:
 - ./namespace.yaml
 - ./service_account.yaml
+- ./role.yaml
 - ./role_binding.yaml
 - ./deployment.yaml

@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: klusterlet-operator
-  namespace: klusterlet
+  name: klusterlet-addon-controller
+  namespace: open-cluster-management
 spec:
   template:
     spec:
@@ -11,14 +11,13 @@ spec:
       imagePullSecrets:
       - name: multicloud-image-pull-secret
       containers:
-      - name: klusterlet-operator
-        command:
+      - name: klusterlet-addon-controller
         volumeMounts:
         - mountPath: /tmp/coverage
           name: coverage-dir       
         env:
-        - name: USE_SHA_MANIFEST
-          value: "true"
+        - name: DEFAULT_IMAGE_PULL_SECRET
+          value: "multicloud-image-pull-secret"
       volumes:
       - name: coverage-dir
         hostPath:

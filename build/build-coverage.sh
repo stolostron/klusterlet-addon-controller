@@ -10,7 +10,7 @@
 
 # PARAMETERS
 # $1 - Final image name and tag to be produced
-echo Building selfdestruct and operator
+echo Building klusterlet addon controller
 echo GOOS: $GOOS
 echo GOARCH: $GOARCH
 

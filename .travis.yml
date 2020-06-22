@@ -10,6 +10,7 @@ branches:
   only:
     - master
     - /^release-[0-9]+\..*$/
+    - new-design
 
 addons:
   sonarcloud:
@@ -32,6 +33,7 @@ jobs:
   include:
     - stage: build
       name: "Run all checks, unit tests, build and push image"
+      if: type = pull_request
       script:
         - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
         - ./build/travis.sh   # to remove overhead and keep output clean
@@ -39,12 +41,14 @@ jobs:
 
     - stage: unit-test
       name: "Run unit tests"
+      if: type = pull_request
       script:
         - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
         - make sonar/go
 
     - stage: functional-test
       name: "Run functional-test"
+      if: type = pull_request
       script:
         - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
         - make component/init

@@ -155,17 +155,17 @@
     "image-version": "1.0.0",
     "image-tag": "1.0.0-fake-sha256",
     "git-sha256": "fake-sha256",
-    "git-repository": "open-cluster-management/klusterlet-component-operator",
+    "git-repository": "open-cluster-management/endpoint-component-operator",
     "image-remote": "quay.io/open-cluster-management",
     "image-digest": "sha256:fake-sha256"
   },
   {
-    "image-key": "klusterlet_operator",
-    "image-name": "klusterlet-operator",
+    "image-key": "endpoint_operator",
+    "image-name": "endpoint-operator",
     "image-version": "1.0.0",
     "image-tag": "1.0.0-fake-sha256",
     "git-sha256": "fake-sha256",
-    "git-repository": "open-cluster-management/klusterlet-operator",
+    "git-repository": "open-cluster-management/endpoint-operator",
     "image-remote": "quay.io/open-cluster-management",
     "image-digest": "sha256:fake-sha256"
   },

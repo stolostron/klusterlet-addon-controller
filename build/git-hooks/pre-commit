@@ -11,4 +11,4 @@ set -e
 # ```
 # So for now:
 #make go:check go:copyright:check
-#make check
+make check
