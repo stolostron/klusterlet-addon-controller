@@ -80,3 +80,6 @@ rules:
 - apiGroups: ["mcm.ibm.com"]
   resources: ["*"]
   verbs: ["*"]
+- apiGroups: ["proxy.open-cluster-management.io"]
+  resources: ["*"]
+  verbs: ["*"]
