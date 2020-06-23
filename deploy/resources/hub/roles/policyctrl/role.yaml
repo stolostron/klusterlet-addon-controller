@@ -5,20 +5,13 @@ metadata:
   namespace: "{{ .ManagedClusterNamespace }}"
 rules:
 - apiGroups:
-  - compliance.mcm.ibm.com
+  - policy.open-cluster-management.io
   resources:
-  - compliances
+  - '*'
   verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - policy.mcm.ibm.com
-  resources:
-  - policies
-  verbs:
+  - create
+  - delete
+  - deletecollection
   - get
   - list
   - patch
