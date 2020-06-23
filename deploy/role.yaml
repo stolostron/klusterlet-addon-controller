@@ -224,3 +224,6 @@ rules:
 - apiGroups: ["proxy.open-cluster-management.io"]
   resources: ["*"]
   verbs: ["*"]
+- apiGroups: ["policy.open-cluster-management.io"]
+  resources: ["*"]
+  verbs: ["*"]
