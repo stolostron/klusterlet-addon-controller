@@ -240,14 +240,44 @@
     "image-digest": "sha256:fake-sha256"
   },
   {
-    "image-key": "mcm_compliance",
-    "image-name": "mcm-compliance",
-    "image-version": "3.6.0",
-    "image-tag": "3.6.0-fake-sha256",
+    "image-name": "governance-policy-spec-sync",
+    "image-version": "1.0.0",
+    "image-tag": "1.0.0",
     "git-sha256": "fake-sha256",
-    "git-repository": "open-cluster-management/hcm-compliance",
+    "git-repository": "open-cluster-management/governance-policy-spec-sync",
     "image-remote": "quay.io/open-cluster-management",
-    "image-digest": "sha256:fake-sha256"
+    "image-digest": "sha256:fake-sha256",
+    "image-key": "governance_policy_spec_sync"
+  },
+  {
+    "image-name": "governance-policy-status-sync",
+    "image-version": "1.0.0",
+    "image-tag": "1.0.0",
+    "git-sha256": "fake-sha256",
+    "git-repository": "open-cluster-management/governance-policy-status-sync",
+    "image-remote": "quay.io/open-cluster-management",
+    "image-digest": "sha256:fake-sha256",
+    "image-key": "governance_policy_status_sync"
+  },
+  {
+    "image-name": "governance-policy-template-sync",
+    "image-version": "1.0.0",
+    "image-tag": "1.0.0",
+    "git-sha256": "fake-sha256",
+    "git-repository": "open-cluster-management/governance-policy-template-sync",
+    "image-remote": "quay.io/open-cluster-management",
+    "image-digest": "sha256:fake-sha256",
+    "image-key": "governance_policy_template_sync"
+  },
+  {
+    "image-name": "config-policy-controller",
+    "image-version": "1.0.0",
+    "image-tag": "1.0.0",
+    "git-sha256": "fake-sha256",
+    "git-repository": "open-cluster-management/config-policy-controller",
+    "image-remote": "quay.io/open-cluster-management",
+    "image-digest": "sha256:fake-sha256",
+    "image-key": "config_policy_controller"
   },
   {
     "image-key": "mcm_topology",
