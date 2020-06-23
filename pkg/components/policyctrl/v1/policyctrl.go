@@ -50,6 +50,30 @@ func NewPolicyControllerCR(instance *agentv1.KlusterletAddonConfig,
 
 	gv.ImageOverrides[imageKey] = imageRepository
 
+	imageKey, imageRepository, err = instance.GetImage("governance-policy-spec-sync")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "governance-policy-spec-sync")
+		return nil, err
+	}
+
+	gv.ImageOverrides[imageKey] = imageRepository
+
+	imageKey, imageRepository, err = instance.GetImage("governance-policy-status-sync")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "governance-policy-status-sync")
+		return nil, err
+	}
+
+	gv.ImageOverrides[imageKey] = imageRepository
+
+	imageKey, imageRepository, err = instance.GetImage("governance-policy-template-sync")
+	if err != nil {
+		log.Error(err, "Fail to get Image", "Component.Name", "governance-policy-template-sync")
+		return nil, err
+	}
+
+	gv.ImageOverrides[imageKey] = imageRepository
+
 	return &agentv1.PolicyController{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: agentv1.SchemeGroupVersion.String(),
