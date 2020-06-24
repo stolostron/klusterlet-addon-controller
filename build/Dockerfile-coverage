@@ -32,7 +32,8 @@ ENV OPERATOR=/usr/local/bin/$COMPONENT_NAME \
 COPY --from=builder $REMOTE_SOURCE_DIR/app/image-manifests image-manifests
 COPY --from=builder $REMOTE_SOURCE_DIR/app/deploy/crds deploy/crds
 COPY --from=builder $REMOTE_SOURCE_DIR/app/manager ${OPERATOR}
-COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin /usr/local/bin
+COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin/entrypoint-coverage /usr/local/bin
+COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin/user_setup /usr/local/bin
 
 LABEL org.label-schema.vendor="Red Hat" \
       org.label-schema.name="$IMAGE_NAME" \

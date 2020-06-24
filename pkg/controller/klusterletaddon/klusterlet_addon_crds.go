@@ -24,7 +24,7 @@ import (
 
 // constants for delete work and finalizer
 const (
-	KlusterletAddonFinalizer   = "klusterletaddonconfig.controller"
+	KlusterletAddonFinalizer   = "agent.open-cluster-management.io/klusterletaddonconfig-cleanup"
 	KlusterletAddonCRDsPostfix = "-crds"
 )
 

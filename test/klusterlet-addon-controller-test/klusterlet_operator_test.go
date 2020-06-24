@@ -42,7 +42,7 @@ const (
 )
 
 const (
-	klusterletAddonFinalizer = "klusterletaddonconfig.controller"
+	klusterletAddonFinalizer = "agent.open-cluster-management.io/klusterletaddonconfig-cleanup"
 	manifestWorkFinalizer    = "cluster.open-cluster-management.io/manifest-work-cleanup"
 )
 
