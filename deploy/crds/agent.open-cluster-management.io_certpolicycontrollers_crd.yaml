@@ -1,20 +1,21 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: searchcollectors.agent.open-cluster-management.io
+  name: certpolicycontrollers.agent.open-cluster-management.io
 spec:
   group: agent.open-cluster-management.io
   names:
-    kind: SearchCollector
-    listKind: SearchCollectorList
-    plural: searchcollectors
-    singular: searchcollector
+    kind: CertPolicyController
+    listKind: CertPolicyControllerList
+    plural: certpolicycontrollers
+    singular: certpolicycontroller
   scope: Namespaced
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: SearchCollector is the Schema for the searchcollectors API
+      description: CertPolicyController is the Schema for the certpolicycontrollercontroller
+        API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -29,7 +30,7 @@ spec:
         metadata:
           type: object
         spec:
-          description: SearchCollectorSpec defines the desired state of SearchCollector
+          description: CertPolicyControllerSpec defines the desired state of CertPolicyController
           properties:
             clusterName:
               minLength: 1
@@ -61,10 +62,11 @@ spec:
           - clusterName
           - clusterNamespace
           - fullnameOverride
+          - global
           - hubKubeconfigSecret
           type: object
         status:
-          description: SearchCollectorStatus defines the observed state of SearchCollector
+          description: CertPolicyControllerStatus defines the observed state of CertPolicyController
           type: object
   version: v1
   versions:

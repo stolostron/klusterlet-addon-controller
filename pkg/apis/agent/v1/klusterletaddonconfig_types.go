@@ -37,7 +37,7 @@ type KlusterletAddonConfigSpec struct {
 	PolicyController           KlusterletAddonConfigPolicyControllerSpec     `json:"policyController"`
 	ApplicationManagerConfig   KlusterletAddonConfigApplicationManagerSpec   `json:"applicationManager"`
 	CertPolicyControllerConfig KlusterletAddonConfigCertPolicyControllerSpec `json:"certPolicyController"`
-	CISControllerConfig        KlusterletAddonConfigCISControllerSpec        `json:"cisController"`
+	CISPolicyControllerConfig  KlusterletAddonConfigCISPolicyControllerSpec  `json:"cisPolicyController"`
 	IAMPolicyControllerConfig  KlusterletAddonConfigIAMPolicyControllerSpec  `json:"iamPolicyController"`
 
 	ImageRegistry    string `json:"imageRegistry,omitempty"`
@@ -92,8 +92,8 @@ type KlusterletPrometheusIntegrationSpec struct {
 	Enabled bool `json:"enabled"`
 }
 
-// KlusterletAddonConfigCISControllerSpec defines configuration for the CISController component
-type KlusterletAddonConfigCISControllerSpec struct {
+// KlusterletAddonConfigCISPolicyControllerSpec defines configuration for the CISPolicyController component
+type KlusterletAddonConfigCISPolicyControllerSpec struct {
 	Enabled bool `json:"enabled"`
 }
 

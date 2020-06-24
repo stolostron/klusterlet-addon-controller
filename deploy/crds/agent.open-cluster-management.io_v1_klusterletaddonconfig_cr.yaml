@@ -8,7 +8,7 @@ spec:
     enabled: true
   certPolicyController:
     enabled: true
-  cisController:
+  cisPolicyController:
     enabled: false
   clusterLabels:
     cloud: Azure

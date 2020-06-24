@@ -15,21 +15,24 @@ import (
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
 )
 
-// const of cisctrl
+// const of cispolicyctrl
 const (
-	CISController = "klusterlet-addon-cisctrl"
-	CISCtrl       = "cisctrl"
+	CISPolicyController = "klusterlet-addon-cispolicyctrl"
+	CISPolicyCtrl       = "cispolicyctrl"
 )
 
-var log = logf.Log.WithName("cisctrl")
+var log = logf.Log.WithName("cispolicyctrl")
 
-// IsEnabled - check whether cisctrl is enabled
+// IsEnabled - check whether cispolicyctrl is enabled
 func IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
-	return instance.Spec.CISControllerConfig.Enabled
+	return instance.Spec.CISPolicyControllerConfig.Enabled
 }
 
-// NewCISControllerCR - create CR for component cis controller
-func NewCISControllerCR(instance *agentv1.KlusterletAddonConfig, namespace string) (*agentv1.CISController, error) {
+// NewCISPolicyControllerCR - create CR for component cis policy controller
+func NewCISPolicyControllerCR(
+	instance *agentv1.KlusterletAddonConfig,
+	namespace string,
+) (*agentv1.CISPolicyController, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
@@ -80,21 +83,21 @@ func NewCISControllerCR(instance *agentv1.KlusterletAddonConfig, namespace strin
 
 	gv.ImageOverrides[imageKey] = imageRepository
 
-	return &agentv1.CISController{
+	return &agentv1.CISPolicyController{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: agentv1.SchemeGroupVersion.String(),
-			Kind:       "CISController",
+			Kind:       "CISPolicyController",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      CISController,
+			Name:      CISPolicyController,
 			Namespace: namespace,
 			Labels:    labels,
 		},
-		Spec: agentv1.CISControllerSpec{
-			FullNameOverride:    CISController,
+		Spec: agentv1.CISPolicyControllerSpec{
+			FullNameOverride:    CISPolicyController,
 			ClusterName:         instance.Spec.ClusterName,
 			ClusterNamespace:    instance.Spec.ClusterNamespace,
-			HubKubeconfigSecret: CISCtrl + "-hub-kubeconfig",
+			HubKubeconfigSecret: CISPolicyCtrl + "-hub-kubeconfig",
 			GlobalValues:        gv,
 		},
 	}, err

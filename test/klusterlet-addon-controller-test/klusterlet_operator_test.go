@@ -32,7 +32,7 @@ const (
 const (
 	applicationManager      = testKlusterletAddonConfigName + "-appmgr"
 	certPolicyController    = testKlusterletAddonConfigName + "-certpolicyctrl"
-	cisController           = testKlusterletAddonConfigName + "-cisctrl"
+	cisPolicyController     = testKlusterletAddonConfigName + "-cispolicyctrl"
 	iamPolicyController     = testKlusterletAddonConfigName + "-iampolicyctrl"
 	policyController        = testKlusterletAddonConfigName + "-policyctrl"
 	searchCollector         = testKlusterletAddonConfigName + "-search"
@@ -60,9 +60,9 @@ var deletePatchStrings = map[string]string{
 		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
 		"replace", "/spec/certPolicyController/enabled", false,
 	),
-	cisController: fmt.Sprintf(
+	cisPolicyController: fmt.Sprintf(
 		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
-		"replace", "/spec/cisController/enabled", false,
+		"replace", "/spec/cisPolicyController/enabled", false,
 	),
 	iamPolicyController: fmt.Sprintf(
 		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
@@ -87,9 +87,9 @@ var addPatchStrings = map[string]string{
 		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
 		"replace", "/spec/certPolicyController/enabled", true,
 	),
-	cisController: fmt.Sprintf(
+	cisPolicyController: fmt.Sprintf(
 		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
-		"replace", "/spec/cisController/enabled", true,
+		"replace", "/spec/cisPolicyController/enabled", true,
 	),
 	iamPolicyController: fmt.Sprintf(
 		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
@@ -109,7 +109,7 @@ var addPatchStrings = map[string]string{
 var addonCRs = []string{
 	applicationManager,
 	certPolicyController,
-	cisController,
+	cisPolicyController,
 	iamPolicyController,
 	policyController,
 	searchCollector,
@@ -130,11 +130,11 @@ var validations = map[string][]string{
 		`"kubeconfig":`,
 		`"name":"certpolicyctrl-hub-kubeconfig"`,
 	},
-	cisController: []string{
-		`"kind":"CISController"`,
-		`"name":"klusterlet-addon-cisctrl"`,
+	cisPolicyController: []string{
+		`"kind":"CISPolicyController"`,
+		`"name":"klusterlet-addon-cispolicyctrl"`,
 		`"kubeconfig":`,
-		`"name":"cisctrl-hub-kubeconfig"`,
+		`"name":"cispolicyctrl-hub-kubeconfig"`,
 	},
 	iamPolicyController: []string{
 		`"kind":"IAMPolicyController"`,
@@ -168,9 +168,9 @@ var validations = map[string][]string{
 	},
 	allCRDs: []string{
 		`"name":"applicationmanagers.agent.open-cluster-management.io"`,
-		`"name":"certpoliciescontroller.agent.open-cluster-management.io"`,
-		`"name":"ciscontrollers.agent.open-cluster-management.io"`,
-		`"name":"iampoliciescontroller.agent.open-cluster-management.io"`,
+		`"name":"certpolicycontrollers.agent.open-cluster-management.io"`,
+		`"name":"cispolicycontrollers.agent.open-cluster-management.io"`,
+		`"name":"iampolicycontrollers.agent.open-cluster-management.io"`,
 		`"name":"policycontrollers.agent.open-cluster-management.io"`,
 		`"name":"searchcollectors.agent.open-cluster-management.io"`,
 		`"name":"workmanagers.agent.open-cluster-management.io"`,

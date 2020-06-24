@@ -15,8 +15,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// CISControllerSpec defines the desired state of CISController
-type CISControllerSpec struct {
+// CISPolicyControllerSpec defines the desired state of CISPolicyController
+type CISPolicyControllerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
@@ -36,8 +36,8 @@ type CISControllerSpec struct {
 	GlobalValues GlobalValues `json:"global"`
 }
 
-// CISControllerStatus defines the observed state of CISController
-type CISControllerStatus struct {
+// CISPolicyControllerStatus defines the observed state of CISPolicyController
+type CISPolicyControllerStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
@@ -45,26 +45,26 @@ type CISControllerStatus struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// CISController is the Schema for the CISControllers API
+// CISPolicyController is the Schema for the CISPolicyControllers API
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=ciscontrollers,scope=Namespaced
-type CISController struct {
+// +kubebuilder:resource:path=cispolicycontrollers,scope=Namespaced
+type CISPolicyController struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CISControllerSpec   `json:"spec,omitempty"`
-	Status CISControllerStatus `json:"status,omitempty"`
+	Spec   CISPolicyControllerSpec   `json:"spec,omitempty"`
+	Status CISPolicyControllerStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// CISControllerList contains a list of CISController
-type CISControllerList struct {
+// CISPolicyControllerList contains a list of CISPolicyController
+type CISPolicyControllerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CISController `json:"items"`
+	Items           []CISPolicyController `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&CISController{}, &CISControllerList{})
+	SchemeBuilder.Register(&CISPolicyController{}, &CISPolicyControllerList{})
 }

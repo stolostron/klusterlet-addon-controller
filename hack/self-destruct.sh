@@ -16,10 +16,10 @@ kubectl delete deployment klusterlet-operator -n ${OPERATOR_NAMESPACE}
 # Force delete all component CRDs if they still exist
 component_crds=(
 	applicationmanagers.agent.open-cluster-management.io
-	certpoliciescontroller.agent.open-cluster-management.io
-	ciscontrollers.agent.open-cluster-management.io
+	certpolicycontrollers.agent.open-cluster-management.io
+	cispolicycontrollers.agent.open-cluster-management.io
 	connectionmanagers.agent.open-cluster-management.io
-	iampoliciescontroller.agent.open-cluster-management.io
+	iampolicycontrollers.agent.open-cluster-management.io
 	policycontrollers.agent.open-cluster-management.io
 	searchcollectors.agent.open-cluster-management.io
 	workmanagers.agent.open-cluster-management.io

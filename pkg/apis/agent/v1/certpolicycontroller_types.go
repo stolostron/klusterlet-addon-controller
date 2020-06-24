@@ -47,7 +47,7 @@ type CertPolicyControllerStatus struct {
 
 // CertPolicyController is the Schema for the certpolicycontrollercontroller API
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=certpoliciescontroller,scope=Namespaced
+// +kubebuilder:resource:path=certpolicycontrollers,scope=Namespaced
 type CertPolicyController struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

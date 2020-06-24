@@ -6,5 +6,5 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
 rules:
 - apiGroups: ["agent.open-cluster-management.io"]
-  resources: ["applicationmanagers","certpoliciescontroller","ciscontrollers","iampoliciescontroller","policycontrollers","searchcollectors","workmanagers"]
+  resources: ["applicationmanagers","certpolicycontrollers","cispolicycontrollers","iampolicycontrollers","policycontrollers","searchcollectors","workmanagers"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
