@@ -47,7 +47,7 @@ type IAMPolicyControllerStatus struct {
 
 // IAMPolicyController is the Schema for the iampolicycontroller API
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=iampoliciescontroller,scope=Namespaced
+// +kubebuilder:resource:path=iampolicycontrollers,scope=Namespaced
 type IAMPolicyController struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

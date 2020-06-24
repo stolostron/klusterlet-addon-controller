@@ -13,7 +13,7 @@ function destroyOrDetach {
   oc annotate klusterletaddonconfig -n ${CLUSTERNAME} ${CLUSTERNAME} klusterletaddonconfig-pause=true --overwrite=true
   oc delete manifestwork -n ${CLUSTERNAME} ${CLUSTERNAME}-appmgr --wait=false
   oc delete manifestwork -n ${CLUSTERNAME} ${CLUSTERNAME}-certpolicyctrl --wait=false
-  oc delete manifestwork -n ${CLUSTERNAME} ${CLUSTERNAME}-cisctrl --wait=false
+  oc delete manifestwork -n ${CLUSTERNAME} ${CLUSTERNAME}-cispolicyctrl --wait=false
   oc delete manifestwork -n ${CLUSTERNAME} ${CLUSTERNAME}-iampolicyctrl --wait=false
   oc delete manifestwork -n ${CLUSTERNAME} ${CLUSTERNAME}-policyctrl --wait=false
   oc delete manifestwork -n ${CLUSTERNAME} ${CLUSTERNAME}-search --wait=false
