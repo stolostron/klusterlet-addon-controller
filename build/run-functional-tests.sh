@@ -72,12 +72,12 @@ fi
 
 echo "creating cluster"
 
-sed "s#REPLACE_DIR#${FUNCT_TEST_TMPDIR}/test/coverage-functional/endpoint-operator#" ${PROJECT_DIR}/build/kind-config/kind-config.yaml > ${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml
+sed "s#REPLACE_DIR#${FUNCT_TEST_TMPDIR}/test/functional/coverage/endpoint-operator#" ${PROJECT_DIR}/build/kind-config/kind-config.yaml > ${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml
 
 cat ${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml
 
 #Create local directory to hold coverage results
-mkdir -p ${FUNCT_TEST_TMPDIR}/test/coverage-functional/endpoint-operator
+mkdir -p ${FUNCT_TEST_TMPDIR}/test/functional/coverage/endpoint-operator
 
 kind create cluster --name klusterlet-addon-controller-test  --config=${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml  || exit 1
 
@@ -117,29 +117,29 @@ for dir in overlays/test/* ; do
   kubectl patch deployment klusterlet-addon-controller -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"klusterlet-addon-controller\",\"image\":\"${DOCKER_IMAGE}\"}]}}}}"
   kubectl rollout status -n open-cluster-management deployment klusterlet-addon-controller --timeout=120s
   sleep 10
-  ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/klusterlet-addon-controller-test/... -- --v=1
+  ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional/... -- --v=1
   kubectl delete deployment klusterlet-addon-controller -n open-cluster-management
   sleep 10
 done
 
 kind delete cluster --name klusterlet-addon-controller-test 
 
-rm -rf ${PROJECT_DIR}/test/coverage-functional
-mkdir -p ${PROJECT_DIR}/test/coverage-functional
+rm -rf ${PROJECT_DIR}/test/functional/coverage
+mkdir -p ${PROJECT_DIR}/test/functional/coverage
 
-mv ${FUNCT_TEST_TMPDIR}/test/coverage-functional/endpoint-operator/* ${PROJECT_DIR}/test/coverage-functional/
+mv ${FUNCT_TEST_TMPDIR}/test/functional/coverage/endpoint-operator/* ${PROJECT_DIR}/test/functional/coverage/
 
-gocovmerge ${PROJECT_DIR}/test/coverage-functional/* >> ${PROJECT_DIR}/test/coverage-functional/cover-functional.out
-COVERAGE=$(go tool cover -func=${PROJECT_DIR}/test/coverage-functional/cover-functional.out | grep "total:" | awk '{ print $3 }' | sed 's/[][()><%]/ /g')
+gocovmerge ${PROJECT_DIR}/test/functional/coverage/* >> ${PROJECT_DIR}/test/functional/coverage/cover-functional.out
+COVERAGE=$(go tool cover -func=${PROJECT_DIR}/test/functional/coverage/cover-functional.out | grep "total:" | awk '{ print $3 }' | sed 's/[][()><%]/ /g')
 echo "-------------------------------------------------------------------------"
 echo "TOTAL COVERAGE IS ${COVERAGE}%"
 echo "-------------------------------------------------------------------------"
 
-cat ${PROJECT_DIR}/test/coverage-functional/cover-functional.out | grep -v "zz_generated.deepcopy.go" > ${PROJECT_DIR}/test/coverage-functional/cover-functional-filtered.out
-COVERAGE_FILTERED=$(go tool cover -func=${PROJECT_DIR}/test/coverage-functional/cover-functional-filtered.out | grep "total:" | awk '{ print $3 }' | sed 's/[][()><%]/ /g')
+cat ${PROJECT_DIR}/test/functional/coverage/cover-functional.out | grep -v "zz_generated.deepcopy.go" > ${PROJECT_DIR}/test/functional/coverage/cover-functional-filtered.out
+COVERAGE_FILTERED=$(go tool cover -func=${PROJECT_DIR}/test/functional/coverage/cover-functional-filtered.out | grep "total:" | awk '{ print $3 }' | sed 's/[][()><%]/ /g')
 echo "-------------------------------------------------------------------------"
 echo "TOTAL FILTERED (ie: exclude zz_generated.deepcopy.go) COVERAGE IS ${COVERAGE_FILTERED}%"
 echo "-------------------------------------------------------------------------"
 
-go tool cover -html ${PROJECT_DIR}/test/coverage-functional/cover-functional.out -o ${PROJECT_DIR}/test/coverage-functional/cover-functional.html
-go tool cover -html ${PROJECT_DIR}/test/coverage-functional/cover-functional-filtered.out -o ${PROJECT_DIR}/test/coverage-functional/cover-functional-filtered.html
+go tool cover -html ${PROJECT_DIR}/test/functional/coverage/cover-functional.out -o ${PROJECT_DIR}/test/functional/coverage/cover-functional.html
+go tool cover -html ${PROJECT_DIR}/test/functional/coverage/cover-functional-filtered.out -o ${PROJECT_DIR}/test/functional/coverage/cover-functional-filtered.html

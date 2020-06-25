@@ -19,6 +19,9 @@ build-harness
 build-harness-extensions
 vendor
 
+test/e2e/resources/clusters
+test/e2e/resources/hubs
+
 !vbh/.build-harness-vendorized
 !vbh/build-harness
 !vbh/build-harness-extensions

@@ -1,0 +1,28 @@
+apiVersion: agent.open-cluster-management.io/v1
+kind: KlusterletAddonConfig
+metadata:
+  name: {{ .ManagedClusterName }}
+  namespace: {{ .ManagedClusterName }}
+spec:
+  clusterName: {{ .ManagedClusterName }}
+  clusterNamespace: {{ .ManagedClusterName }}
+  applicationManager:
+    enabled: true
+  clusterLabels:
+    cloud: auto-detect
+    vendor: auto-detect
+  connectionManager:
+    enabledGlobalView: false
+  policyController:
+    enabled: true
+  prometheusIntegration:
+    enabled: true
+  searchCollector:
+    enabled: true
+  certPolicyController:
+    enabled: true
+  cisPolicyController:
+    enabled: true
+  iamPolicyController:
+    enabled: true
+  version: 2.0.0
