@@ -7,17 +7,21 @@ require (
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
 	github.com/open-cluster-management/api v0.0.0-20200602195039-a516cac2e038
-	github.com/open-cluster-management/library-go v0.0.0-20200609203936-8f869be52948
+	github.com/open-cluster-management/library-e2e-go v0.0.0-20200620112055-c80fc3c14997
+	github.com/open-cluster-management/library-go v0.0.0-20200619234924-ec3f983fe4f2
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/operator-framework/operator-sdk v0.18.1
+	github.com/sclevine/agouti v3.0.0+incompatible
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1
+	gopkg.in/yaml.v2 v2.2.8
 	gotest.tools v2.2.0+incompatible
-	k8s.io/api v0.18.3
-	k8s.io/apimachinery v0.18.3
+	k8s.io/api v0.18.4
+	k8s.io/apiextensions-apiserver v0.18.3
+	k8s.io/apimachinery v0.18.4
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog v1.0.0
-	k8s.io/kubectl v0.18.2
+	k8s.io/kubectl v0.18.4
 	sigs.k8s.io/controller-runtime v0.6.0
 )
 

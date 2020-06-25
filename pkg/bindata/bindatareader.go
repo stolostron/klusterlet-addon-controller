@@ -12,8 +12,8 @@ func (*Bindata) Asset(name string) ([]byte, error) {
 	return Asset(name)
 }
 
-func (*Bindata) AssetNames() []string {
-	return AssetNames()
+func (*Bindata) AssetNames() ([]string, error) {
+	return AssetNames(), nil
 }
 
 func (*Bindata) ToJSON(b []byte) ([]byte, error) {

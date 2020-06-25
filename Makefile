@@ -79,6 +79,10 @@ test: component/test/unit
 ## Builds operator binary inside of an image
 build: component/build
 
+.PHONY: build-e2e
+build-e2e:
+	$(SELF) component/build COMPONENT_TAG_EXTENSION=-e2e COMPONENT_BUILD_COMMAND=$(PWD)/build/build-e2e.sh 
+	
 .PHONY: go-bindata
 go-bindata:
 	go-bindata -nometadata -pkg bindata -o pkg/bindata/bindata_generated.go -prefix deploy/ deploy/resources/ deploy/crds/ deploy/resources/...
