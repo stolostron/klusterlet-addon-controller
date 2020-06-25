@@ -37,6 +37,12 @@ function destroyOrDetach {
   oc delete managedcluster ${CLUSTERNAME} --wait=false
   sleep 60
   oc patch managedcluster ${CLUSTERNAME} -p '{"metadata":{"finalizers":[]}}' --type=merge
+  oc -n ${CLUSTERNAME} delete rolebinding.authorization.openshift.io/${CLUSTERNAME}:managed-cluster-work --wait=false
+  sleep 10
+  oc -n ${CLUSTERNAME} patch rolebinding.authorization.openshift.io ${CLUSTERNAME}:managed-cluster-work  -p '{"metadata":{"finalizers":[]}}' --type=merge
+  oc -n ${CLUSTERNAME} delete role.authorization.openshift.io/${CLUSTERNAME}:managed-cluster-work --wait=false
+  sleep 10
+  oc -n ${CLUSTERNAME} patch role.authorization.openshift.io/${CLUSTERNAME}:managed-cluster-work  -p '{"metadata":{"finalizers":[]}}' --type=merge
   exit
 }
 
