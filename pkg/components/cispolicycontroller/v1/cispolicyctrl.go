@@ -94,11 +94,10 @@ func NewCISPolicyControllerCR(
 			Labels:    labels,
 		},
 		Spec: agentv1.CISPolicyControllerSpec{
-			FullNameOverride:    CISPolicyController,
-			ClusterName:         instance.Spec.ClusterName,
-			ClusterNamespace:    instance.Spec.ClusterNamespace,
-			HubKubeconfigSecret: CISPolicyCtrl + "-hub-kubeconfig",
-			GlobalValues:        gv,
+			FullNameOverride: CISPolicyController,
+			ClusterName:      instance.Spec.ClusterName,
+			ClusterNamespace: instance.Spec.ClusterNamespace,
+			GlobalValues:     gv,
 		},
 	}, err
 }

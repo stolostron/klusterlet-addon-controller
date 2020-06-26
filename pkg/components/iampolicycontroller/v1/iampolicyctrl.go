@@ -62,11 +62,10 @@ func NewIAMPolicyControllerCR(
 			Labels:    labels,
 		},
 		Spec: agentv1.IAMPolicyControllerSpec{
-			FullNameOverride:    IAMPolicyController,
-			ClusterName:         instance.Spec.ClusterName,
-			ClusterNamespace:    instance.Spec.ClusterNamespace,
-			HubKubeconfigSecret: IAMPolicyCtrl + "-hub-kubeconfig",
-			GlobalValues:        gv,
+			FullNameOverride: IAMPolicyController,
+			ClusterName:      instance.Spec.ClusterName,
+			ClusterNamespace: instance.Spec.ClusterNamespace,
+			GlobalValues:     gv,
 		},
 	}, err
 }

@@ -30,9 +30,6 @@ type IAMPolicyControllerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ClusterNamespace string `json:"clusterNamespace"`
 
-	// +kubebuilder:validation:MinLength=1
-	HubKubeconfigSecret string `json:"hubKubeconfigSecret"`
-
 	GlobalValues GlobalValues `json:"global,omitempty"`
 }
 

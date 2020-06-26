@@ -62,11 +62,10 @@ func NewCertPolicyControllerCR(
 			Labels:    labels,
 		},
 		Spec: agentv1.CertPolicyControllerSpec{
-			FullNameOverride:    CertPolicyController,
-			ClusterName:         instance.Spec.ClusterName,
-			ClusterNamespace:    instance.Spec.ClusterNamespace,
-			HubKubeconfigSecret: CertPolicyCtrl + "-hub-kubeconfig",
-			GlobalValues:        gv,
+			FullNameOverride: CertPolicyController,
+			ClusterName:      instance.Spec.ClusterName,
+			ClusterNamespace: instance.Spec.ClusterNamespace,
+			GlobalValues:     gv,
 		},
 	}, err
 }
