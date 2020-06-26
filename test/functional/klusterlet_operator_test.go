@@ -30,15 +30,15 @@ const (
 )
 
 const (
-	applicationManager      = testKlusterletAddonConfigName + "-appmgr"
-	certPolicyController    = testKlusterletAddonConfigName + "-certpolicyctrl"
-	cisPolicyController     = testKlusterletAddonConfigName + "-cispolicyctrl"
-	iamPolicyController     = testKlusterletAddonConfigName + "-iampolicyctrl"
-	policyController        = testKlusterletAddonConfigName + "-policyctrl"
-	searchCollector         = testKlusterletAddonConfigName + "-search"
-	workManager             = testKlusterletAddonConfigName + "-workmgr"
-	allCRDs                 = testKlusterletAddonConfigName + "-crds"
-	klusterletAddonOperator = testKlusterletAddonConfigName + "-addon-operator"
+	applicationManager      = testKlusterletAddonConfigName + "-klusterlet-addon-appmgr"
+	certPolicyController    = testKlusterletAddonConfigName + "-klusterlet-addon-certpolicyctrl"
+	cisPolicyController     = testKlusterletAddonConfigName + "-klusterlet-addon-cispolicyctrl"
+	iamPolicyController     = testKlusterletAddonConfigName + "-klusterlet-addon-iampolicyctrl"
+	policyController        = testKlusterletAddonConfigName + "-klusterlet-addon-policyctrl"
+	searchCollector         = testKlusterletAddonConfigName + "-klusterlet-addon-search"
+	workManager             = testKlusterletAddonConfigName + "-klusterlet-addon-workmgr"
+	allCRDs                 = testKlusterletAddonConfigName + "-klusterlet-addon-crds"
+	klusterletAddonOperator = testKlusterletAddonConfigName + "-klusterlet-addon-operator"
 )
 
 const (
