@@ -18,8 +18,9 @@ import (
 
 // constants for work manager
 const (
-	WorkManager = "klusterlet-addon-workmgr"
-	WorkMgr     = "workmgr"
+	WorkManager           = "klusterlet-addon-workmgr"
+	WorkMgr               = "workmgr"
+	RequiresHubKubeConfig = true
 )
 
 var log = logf.Log.WithName("workmgr")

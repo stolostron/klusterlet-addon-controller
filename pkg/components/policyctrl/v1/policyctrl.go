@@ -18,8 +18,9 @@ import (
 
 // constants for policy controller
 const (
-	PolicyController = "klusterlet-addon-policyctrl"
-	PolicyCtrl       = "policyctrl"
+	PolicyController      = "klusterlet-addon-policyctrl"
+	PolicyCtrl            = "policyctrl"
+	RequiresHubKubeConfig = true
 )
 
 var log = logf.Log.WithName("policyctrl")

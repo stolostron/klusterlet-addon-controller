@@ -99,6 +99,25 @@ func Test_checkComponentIsEnabled(t *testing.T) {
 	}
 }
 
+func Test_checkHubKubeconfigRequired(t *testing.T) {
+
+	tests := []struct {
+		name          string
+		componentName string
+		Expected      bool
+	}{
+		{"required", "appmgr", true},
+		{"not-required", "certpolicyctrl", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := checkHubKubeconfigRequired(tt.componentName)
+			assert.Equal(t, actual, tt.Expected)
+
+		})
+	}
+}
 func Test_syncManifestWorkCRs(t *testing.T) {
 	testscheme := scheme.Scheme
 
