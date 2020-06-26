@@ -17,8 +17,9 @@ import (
 
 // constants for cert policy controller
 const (
-	CertPolicyController = "klusterlet-addon-certpolicyctrl"
-	CertPolicyCtrl       = "certpolicyctrl"
+	CertPolicyController  = "klusterlet-addon-certpolicyctrl"
+	CertPolicyCtrl        = "certpolicyctrl"
+	RequiresHubKubeConfig = false
 )
 
 var log = logf.Log.WithName("certpolicyctrl")

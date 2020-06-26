@@ -17,8 +17,9 @@ import (
 
 // constants for search collector
 const (
-	SearchCollector = "klusterlet-addon-search"
-	Search          = "search"
+	SearchCollector       = "klusterlet-addon-search"
+	Search                = "search"
+	RequiresHubKubeConfig = true
 )
 
 var log = logf.Log.WithName("search")

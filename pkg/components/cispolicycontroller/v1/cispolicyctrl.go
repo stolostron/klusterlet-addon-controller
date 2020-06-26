@@ -17,8 +17,9 @@ import (
 
 // const of cispolicyctrl
 const (
-	CISPolicyController = "klusterlet-addon-cispolicyctrl"
-	CISPolicyCtrl       = "cispolicyctrl"
+	CISPolicyController   = "klusterlet-addon-cispolicyctrl"
+	CISPolicyCtrl         = "cispolicyctrl"
+	RequiresHubKubeConfig = false
 )
 
 var log = logf.Log.WithName("cispolicyctrl")

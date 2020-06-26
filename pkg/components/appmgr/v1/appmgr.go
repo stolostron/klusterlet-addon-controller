@@ -17,8 +17,9 @@ import (
 
 // const of appmgr
 const (
-	ApplicationManager = "klusterlet-addon-appmgr"
-	AppMgr             = "appmgr"
+	ApplicationManager    = "klusterlet-addon-appmgr"
+	AppMgr                = "appmgr"
+	RequiresHubKubeConfig = true
 )
 
 var log = logf.Log.WithName("appmgr")

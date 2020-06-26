@@ -17,8 +17,9 @@ import (
 
 // constants for component CRs
 const (
-	IAMPolicyController = "klusterlet-addon-iampolicyctrl"
-	IAMPolicyCtrl       = "iampolicyctrl"
+	IAMPolicyController   = "klusterlet-addon-iampolicyctrl"
+	IAMPolicyCtrl         = "iampolicyctrl"
+	RequiresHubKubeConfig = false
 )
 
 var log = logf.Log.WithName("iampolicyctrl")

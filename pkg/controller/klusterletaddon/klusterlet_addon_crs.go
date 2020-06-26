@@ -147,6 +147,27 @@ func checkComponentIsEnabled(componentName string, klusterletaddonconfig *agentv
 	return false, fmt.Errorf("%s is not supported", componentName)
 }
 
+// checkHubKubeconfigRequired checks if a hub-kube-config is required
+func checkHubKubeconfigRequired(componentName string) bool {
+	switch componentName {
+	case appmgr.AppMgr:
+		return appmgr.RequiresHubKubeConfig
+	case certpolicyctrl.CertPolicyCtrl:
+		return certpolicyctrl.RequiresHubKubeConfig
+	case cispolicyctrl.CISPolicyCtrl:
+		return cispolicyctrl.RequiresHubKubeConfig
+	case iampolicyctrl.IAMPolicyCtrl:
+		return iampolicyctrl.RequiresHubKubeConfig
+	case policyctrl.PolicyCtrl:
+		return policyctrl.RequiresHubKubeConfig
+	case search.Search:
+		return search.RequiresHubKubeConfig
+	case workmgr.WorkMgr:
+		return workmgr.RequiresHubKubeConfig
+	}
+	return false
+}
+
 // newCRManifestWork returns ManifestWork of a component CR
 func newCRManifestWork(
 	componentName string,
@@ -178,21 +199,24 @@ func newCRManifestWork(
 		return nil, err
 	}
 
-	var secret runtime.Object
-	secret, err = newHubKubeconfigSecret(
-		klusterletaddonconfig,
-		client,
-		componentName,
-		addonoperator.KlusterletAddonNamespace,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	// construct manifestwork
 	var manifests []manifestworkv1.Manifest
-	manifest := manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret}}
-	manifests = append(manifests, manifest)
+	var manifest manifestworkv1.Manifest
+	if checkHubKubeconfigRequired(componentName) {
+		var secret runtime.Object
+		secret, err = newHubKubeconfigSecret(
+			klusterletaddonconfig,
+			client,
+			componentName,
+			addonoperator.KlusterletAddonNamespace,
+		)
+		if err != nil {
+			return nil, err
+		}
+		manifest = manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret}}
+		manifests = append(manifests, manifest)
+	}
+
 	manifest = manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: cr}}
 	manifests = append(manifests, manifest)
 
@@ -218,12 +242,13 @@ func syncManifestWorkCRs(klusterletaddonconfig *agentv1.KlusterletAddonConfig, r
 
 	for _, component := range componentsArray {
 		// create sa/clusterrole/clusterrolebindig for each component
-		if err := createOrUpdateResources(klusterletaddonconfig, r, component); err != nil {
-			log.Error(err, fmt.Sprintf("Failed to create sa/clusterrole/clusterrolebindig for componnet %s", component))
-			lastErr = err
-			continue
+		if checkHubKubeconfigRequired(component) {
+			if err := createOrUpdateResources(klusterletaddonconfig, r, component); err != nil {
+				log.Error(err, fmt.Sprintf("Failed to create sa/clusterrole/clusterrolebindig for componnet %s", component))
+				lastErr = err
+				continue
+			}
 		}
-
 		if isEnabled, err := checkComponentIsEnabled(component, klusterletaddonconfig); err != nil {
 			log.Error(err, fmt.Sprintf("Failed to check if component %s is enabled or not", component))
 			lastErr = err
