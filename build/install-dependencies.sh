@@ -25,6 +25,6 @@ fi
 
 if ! which go-bindata > /dev/null; then
 	echo "Installing go-bindata..."
-	cd $(mktemp -d) && GOSUMDB=off go get -u github.com/go-bindata/go-bindata/...
+	cd $(mktemp -d) && GO111MODULE=off go get -u github.com/go-bindata/go-bindata/...
 fi
 go-bindata --version
