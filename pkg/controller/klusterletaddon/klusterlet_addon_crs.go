@@ -198,7 +198,7 @@ func newCRManifestWork(
 
 	manifestWork := &manifestworkv1.ManifestWork{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      klusterletaddonconfig.Name + "-" + componentName,
+			Name:      klusterletaddonconfig.Name + "-klusterlet-addon-" + componentName,
 			Namespace: klusterletaddonconfig.Namespace,
 		},
 		Spec: manifestworkv1.ManifestWorkSpec{
@@ -243,7 +243,7 @@ func syncManifestWorkCRs(klusterletaddonconfig *agentv1.KlusterletAddonConfig, r
 		} else {
 			// delete Manifestwork if disabled
 			if err := utils.DeleteManifestWork(
-				klusterletaddonconfig.Name+"-"+component,
+				klusterletaddonconfig.Name+"-klusterlet-addon-"+component,
 				klusterletaddonconfig.Namespace,
 				r.client,
 				false,
@@ -268,7 +268,7 @@ func deleteManifestWorkCRs(
 	lastErr = nil
 	for _, component := range componentsArray {
 		err := utils.DeleteManifestWork(
-			klusterletaddonconfig.Name+"-"+component,
+			klusterletaddonconfig.Name+"-klusterlet-addon-"+component,
 			klusterletaddonconfig.Namespace,
 			client,
 			removeFinalizers,

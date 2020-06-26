@@ -25,7 +25,7 @@ import (
 // constants for delete work and finalizer
 const (
 	KlusterletAddonFinalizer   = "agent.open-cluster-management.io/klusterletaddonconfig-cleanup"
-	KlusterletAddonCRDsPostfix = "-crds"
+	KlusterletAddonCRDsPostfix = "-klusterlet-addon-crds"
 )
 
 // createManifestWorkCRD - create manifest work for CRD

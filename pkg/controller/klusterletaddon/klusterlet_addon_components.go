@@ -21,7 +21,7 @@ import (
 
 // const for addon operator
 const (
-	KlusterletAddonOperatorPostfix = "-addon-operator"
+	KlusterletAddonOperatorPostfix = "-klusterlet-addon-operator"
 )
 
 // createManifestWorkComponentOperator - creates manifest work for klusterlet addon operator
