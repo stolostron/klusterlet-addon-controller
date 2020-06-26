@@ -55,15 +55,11 @@ spec:
                 imagePullSecret:
                   type: string
               type: object
-            hubKubeconfigSecret:
-              minLength: 1
-              type: string
           required:
           - clusterName
           - clusterNamespace
           - fullnameOverride
           - global
-          - hubKubeconfigSecret
           type: object
         status:
           description: CertPolicyControllerStatus defines the observed state of CertPolicyController

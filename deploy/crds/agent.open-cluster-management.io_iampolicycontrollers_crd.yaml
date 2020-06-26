@@ -54,14 +54,10 @@ spec:
                 imagePullSecret:
                   type: string
               type: object
-            hubKubeconfigSecret:
-              minLength: 1
-              type: string
           required:
           - clusterName
           - clusterNamespace
           - fullnameOverride
-          - hubKubeconfigSecret
           type: object
         status:
           description: IAMPolicyControllerStatus defines the observed state of IAMPolicyController
