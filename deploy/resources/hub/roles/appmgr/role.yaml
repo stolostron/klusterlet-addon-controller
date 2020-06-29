@@ -5,67 +5,31 @@ metadata:
   namespace: "{{ .ManagedClusterNamespace }}"
 rules:
 - apiGroups:
-  - compliance.mcm.ibm.com
-  resources:
-  - compliances
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - policy.mcm.ibm.com
-  resources:
-  - policies
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - klusterlets
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
   - ""
   resources:
   - events
   verbs:
   - create
+  - get
+  - list
   - patch
   - update
+  - watch
 - apiGroups:
   - ""
   resources:
   - secrets
+  - configmaps
   verbs:
-  - create
-  - delete
-  - update
+  - get
+  - list
+  - watch
 - apiGroups:
   - apps.open-cluster-management.io
   resources:
   - deployables
+  - channels
+  - channels/status
   verbs:
   - get
   - list
