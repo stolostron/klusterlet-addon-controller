@@ -149,11 +149,11 @@ endif
 
 .PHONY: utils\crds\install
 utils\crds\install:
-	kubectl apply -f deploy/crds/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
+	kubectl apply -f deploy/dev-crds/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
 
 .PHONY: utils\crds\uninstall
 utils\crds\uninstall:
-	kubectl delete -f deploy/crds/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
+	kubectl delete -f deploy/dev-crds/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
 
 ### FUNCTIONAL TESTS UTILS ###########
 

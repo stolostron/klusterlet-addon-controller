@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -200,23 +201,23 @@ var _ = Describe("Manual import cluster", func() {
 				gvrManifestwork := schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
 				var crds *unstructured.Unstructured
 				Eventually(func() error {
-					klog.V(1).Infof("Wait ManifestWork %s...", clusterName+"-crds")
-					crds, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-crds", metav1.GetOptions{})
+					klog.V(1).Infof("Wait ManifestWork %s...", clusterName+"-klusterlet-addon-crds")
+					crds, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-klusterlet-addon-crds", metav1.GetOptions{})
 					if err != nil {
 						klog.V(1).Info(err)
 					}
 					return err
 				}).Should(BeNil())
 				validateUnstructured(crds, validations["crds"])
-				klog.V(1).Infof("ManifestWork %s created", clusterName+"-crds")
+				klog.V(1).Infof("ManifestWork %s created", clusterName+"-klusterlet-addon-crds")
 			})
 
 			When("the klusterletaddonconfig is created, wait for manifestwork for addon operator", func() {
 				gvrManifestwork := schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
 				var addonOperator *unstructured.Unstructured
 				Eventually(func() error {
-					klog.V(1).Infof("Wait ManifestWork %s...", clusterName+"-addon-operator")
-					addonOperator, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-addon-operator", metav1.GetOptions{})
+					klog.V(1).Infof("Wait ManifestWork %s...", clusterName+"-klusterlet-addon-operator")
+					addonOperator, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-klusterlet-addon-operator", metav1.GetOptions{})
 					if err != nil {
 						klog.V(1).Info(err)
 					}
@@ -224,7 +225,7 @@ var _ = Describe("Manual import cluster", func() {
 				}).Should(BeNil())
 
 				validateUnstructured(addonOperator, validations["addon-operator"])
-				klog.V(1).Infof("ManifestWork %s created", clusterName+"-addon-operator")
+				klog.V(1).Infof("ManifestWork %s created", clusterName+"-klusterlet-addon-operator")
 			})
 
 			When("the klusterletaddonconfig is created, wait for manifestwork for CRs", func() {
@@ -233,15 +234,15 @@ var _ = Describe("Manual import cluster", func() {
 					By("Checking " + crName)
 					var cr *unstructured.Unstructured
 					Eventually(func() error {
-						klog.V(1).Infof("Wait ManifestWork CRs %s...", clusterName+"-"+crName)
-						cr, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-"+crName, metav1.GetOptions{})
+						klog.V(1).Infof("Wait ManifestWork CRs %s...", clusterName+"-klusterlet-addon-"+crName)
+						cr, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-klusterlet-addon-"+crName, metav1.GetOptions{})
 						if err != nil {
 							klog.V(1).Info(err)
 						}
 						return err
 					}).Should(BeNil())
 					validateUnstructured(cr, validations[crName])
-					klog.V(1).Infof("ManifestWork %s created", clusterName+"-"+crName)
+					klog.V(1).Infof("ManifestWork %s created", clusterName+"-klusterlet-addon-"+crName)
 				}
 			})
 
@@ -296,118 +297,117 @@ var _ = Describe("Manual import cluster", func() {
 				klog.V(1).Infof("Pods in open-cluster-management-agent-addon are running")
 			})
 
-			// By(fmt.Sprintf("Deleting the klusterletaddonconfig %s on the hub", clusterName), func() {
-			// 	klog.V(1).Infof("Deleting the klusterletaddonconfig %s on the hub", clusterName)
-			// 	gvr := schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1", Resource: "klusterletaddonconfigs"}
-			// 	Expect(clientHubDynamic.Resource(gvr).Namespace(clusterName).Delete(context.TODO(), clusterName, metav1.DeleteOptions{})).NotTo(HaveOccurred())
-			// })
+			By(fmt.Sprintf("Deleting the klusterletaddonconfig %s on the hub", clusterName), func() {
+				klog.V(1).Infof("Deleting the klusterletaddonconfig %s on the hub", clusterName)
+				gvr := schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1", Resource: "klusterletaddonconfigs"}
+				Expect(clientHubDynamic.Resource(gvr).Namespace(clusterName).Delete(context.TODO(), clusterName, metav1.DeleteOptions{})).NotTo(HaveOccurred())
+			})
 
-			// When("the klusterletaddonconfig is deleted, wait for deletion of components crs on managed cluster", func() {
-			// 	for crName, crCrd := range addonCRs {
-			// 		Eventually(func() bool {
-			// 			gvr := schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1", Resource: crCrd}
-			// 			klog.V(1).Infof("Wait component CR klusterlet-addon-%s...", crName)
-			// 			_, err = clientManagedDynamic.Resource(gvr).Namespace("open-cluster-management-agent-addon").Get(context.TODO(), "klusterlet-addon-"+crName, metav1.GetOptions{})
-			// 			if err != nil {
-			// 				klog.V(1).Info(err)
-			// 				return errors.IsNotFound(err)
-			// 			}
-			// 			return false
-			// 		}).Should(BeTrue())
-			// 		klog.V(1).Infof("component CR klusterlet-addon-%s deleted...", crName)
-			// 	}
-			// })
+			When("the klusterletaddonconfig is deleted, wait for deletion of components crs on managed cluster", func() {
+				for crName, crCrd := range addonCRs {
+					Eventually(func() bool {
+						gvr := schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1", Resource: crCrd}
+						klog.V(1).Infof("Wait component CR klusterlet-addon-%s...", crName)
+						_, err = clientManagedDynamic.Resource(gvr).Namespace("open-cluster-management-agent-addon").Get(context.TODO(), "klusterlet-addon-"+crName, metav1.GetOptions{})
+						if err != nil {
+							klog.V(1).Info(err)
+							return errors.IsNotFound(err)
+						}
+						return false
+					}).Should(BeTrue())
+					klog.V(1).Infof("component CR klusterlet-addon-%s deleted...", crName)
+				}
+			})
 
-			// When("the klusterletaddonconfig is deleted, wait for deployment klusterlet-addon-operator deletion on managed cluster", func() {
-			// 	Eventually(func() bool {
-			// 		klog.V(1).Infof("Wait deployment klusterlet-addon-operator...")
-			// 		_, err = clientManagedCluster.AppsV1().Deployments("open-cluster-management-agent-addon").Get(context.TODO(), "klusterlet-addon-operator", metav1.GetOptions{})
-			// 		if err != nil {
-			// 			klog.V(1).Info(err)
-			// 			return errors.IsNotFound(err)
-			// 		}
-			// 		return false
-			// 	}).Should(BeTrue())
-			// 	klog.V(1).Infof("Deployment klusterlet-addon-operator deleted")
-			// })
+			When("the klusterletaddonconfig is deleted, wait for deployment klusterlet-addon-operator deletion on managed cluster", func() {
+				Eventually(func() bool {
+					klog.V(1).Infof("Wait deployment klusterlet-addon-operator...")
+					_, err = clientManagedCluster.AppsV1().Deployments("open-cluster-management-agent-addon").Get(context.TODO(), "klusterlet-addon-operator", metav1.GetOptions{})
+					if err != nil {
+						klog.V(1).Info(err)
+						return errors.IsNotFound(err)
+					}
+					return false
+				}).Should(BeTrue())
+				klog.V(1).Infof("Deployment klusterlet-addon-operator deleted")
+			})
 
-			// When("the klusterletaddonconfig is deleted, wait for deletion of manifestwork for CRs", func() {
-			// 	gvrManifestwork := schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
-			// 	for crName, _ := range addonCRs {
-			// 		By("Checking " + crName)
-			// 		//var cr *unstructured.Unstructured
-			// 		Eventually(func() bool {
-			// 			klog.V(1).Infof("Wait ManifestWork CRs %s...", clusterName+"-"+crName)
-			// 			_, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-"+crName, metav1.GetOptions{})
-			// 			if err != nil {
-			// 				klog.V(1).Info(err)
-			// 				return errors.IsNotFound(err)
-			// 			}
-			// 			return false
-			// 		}).Should(BeTrue())
-			// 		klog.V(1).Infof("ManifestWork %s deleted", clusterName+"-"+crName)
-			// 	}
-			// })
+			When("the klusterletaddonconfig is deleted, wait for deletion of manifestwork for CRs", func() {
+				gvrManifestwork := schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
+				for crName, _ := range addonCRs {
+					By("Checking " + crName)
+					Eventually(func() bool {
+						klog.V(1).Infof("Wait ManifestWork CRs %s...", clusterName+"-klusterlet-addon-"+crName)
+						_, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-klusterlet-addon-"+crName, metav1.GetOptions{})
+						if err != nil {
+							klog.V(1).Info(err)
+							return errors.IsNotFound(err)
+						}
+						return false
+					}).Should(BeTrue())
+					klog.V(1).Infof("ManifestWork %s deleted", clusterName+"-klusterlet-addon-"+crName)
+				}
+			})
 
-			// When("the klusterletaddonconfig is deleted, wait for deletion of manifestwork for addon operator", func() {
-			// 	gvrManifestwork := schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
-			// 	//var addonOperator *unstructured.Unstructured
-			// 	Eventually(func() bool {
-			// 		klog.V(1).Infof("Wait ManifestWork %s...", clusterName+"-addon-operator")
-			// 		_, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-addon-operator", metav1.GetOptions{})
-			// 		if err != nil {
-			// 			klog.V(1).Info(err)
-			// 			return errors.IsNotFound(err)
-			// 		}
-			// 		return false
-			// 	}).Should(BeTrue())
-			// 	klog.V(1).Infof("ManifestWork %s deleted", clusterName+"-addon-operator")
-			// })
+			When("the klusterletaddonconfig is deleted, wait for deletion of manifestwork for addon operator", func() {
+				gvrManifestwork := schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
+				//var addonOperator *unstructured.Unstructured
+				Eventually(func() bool {
+					klog.V(1).Infof("Wait ManifestWork %s...", clusterName+"-klusterlet-addon-operator")
+					_, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-klusterlet-addon-operator", metav1.GetOptions{})
+					if err != nil {
+						klog.V(1).Info(err)
+						return errors.IsNotFound(err)
+					}
+					return false
+				}).Should(BeTrue())
+				klog.V(1).Infof("ManifestWork %s deleted", clusterName+"-klusterlet-addon-operator")
+			})
 
-			// When("the klusterletaddonconfig is deleted, wait for deletion of manifestwork for crds", func() {
-			// 	gvrManifestwork := schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
-			// 	Eventually(func() bool {
-			// 		klog.V(1).Infof("Wait ManifestWork %s...", clusterName+"-crds")
-			// 		_, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-crds", metav1.GetOptions{})
-			// 		if err != nil {
-			// 			klog.V(1).Info(err)
-			// 			return errors.IsNotFound(err)
-			// 		}
-			// 		return false
-			// 	}).Should(BeTrue())
-			// 	klog.V(1).Infof("ManifestWork %s created", clusterName+"-crds")
-			// })
+			When("the klusterletaddonconfig is deleted, wait for deletion of manifestwork for crds", func() {
+				gvrManifestwork := schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
+				Eventually(func() bool {
+					klog.V(1).Infof("Wait ManifestWork %s...", clusterName+"-klusterlet-addon-crds")
+					_, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-klusterlet-addon-crds", metav1.GetOptions{})
+					if err != nil {
+						klog.V(1).Info(err)
+						return errors.IsNotFound(err)
+					}
+					return false
+				}).Should(BeTrue())
+				klog.V(1).Infof("ManifestWork %s created", clusterName+"-klusterlet-addon-crds")
+			})
 
-			// When("the deletion of the klusterletaddonconfig is requested, wait for the effective deletion", func() {
-			// 	By(fmt.Sprintf("Checking the deletion of the klusterletaddonconfig %s on the hub", clusterName), func() {
-			// 		klog.V(1).Infof("Checking the deletion of the klusterletaddonconfig %s on the hub", clusterName)
-			// 		gvr := schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1", Resource: "klusterletaddonconfigs"}
-			// 		Eventually(func() bool {
-			// 			klog.V(1).Infof("Wait %s CR deletion...", clusterName)
-			// 			_, err := clientHubDynamic.Resource(gvr).Namespace(clusterName).Get(context.TODO(), clusterName, metav1.GetOptions{})
-			// 			if err != nil {
-			// 				klog.V(1).Info(err)
-			// 				return errors.IsNotFound(err)
-			// 			}
-			// 			return false
-			// 		}).Should(BeTrue())
-			// 		klog.V(1).Infof("%s CR deleted", clusterName)
-			// 	})
+			By("Checking the deletion of the namespace open-cluster-management-agent-addon on the managed cluster", func() {
+				klog.V(1).Info("Checking the deletion of the namespace open-cluster-management-agent-addon on the managed cluster")
+				Eventually(func() bool {
+					klog.V(1).Info("Wait namespace open-cluster-management-agent-addon deletion...")
+					_, err := clientManagedCluster.CoreV1().Namespaces().Get(context.TODO(), "open-cluster-management-agent-addon", metav1.GetOptions{})
+					if err != nil {
+						klog.V(1).Info(err)
+						return errors.IsNotFound(err)
+					}
+					return false
+				}).Should(BeTrue())
+				klog.V(1).Info("namespace open-cluster-management-agent-addon deleted")
+			})
 
-			// By("Checking the deletion of the namespace open-cluster-management-agent-addon on the managed cluster", func() {
-			// 	klog.V(1).Info("Checking the deletion of the namespace open-cluster-management-agent-addon on the managed cluster")
-			// 	Eventually(func() bool {
-			// 		klog.V(1).Info("Wait namespace open-cluster-management-agent-addon deletion...")
-			// 		_, err := clientManagedCluster.CoreV1().Namespaces().Get(context.TODO(), "open-cluster-management-agent-addon", metav1.GetOptions{})
-			// 		if err != nil {
-			// 			klog.V(1).Info(err)
-			// 			return errors.IsNotFound(err)
-			// 		}
-			// 		return false
-			// 	}).Should(BeTrue())
-			// 	klog.V(1).Info("namespace open-cluster-management-agent-addon deleted")
-			// })
-			//})
+			When("the deletion of the klusterletaddonconfig is requested, wait for the effective deletion", func() {
+				By(fmt.Sprintf("Checking the deletion of the klusterletaddonconfig %s on the hub", clusterName), func() {
+					klog.V(1).Infof("Checking the deletion of the klusterletaddonconfig %s on the hub", clusterName)
+					gvr := schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1", Resource: "klusterletaddonconfigs"}
+					Eventually(func() bool {
+						klog.V(1).Infof("Wait %s CR deletion...", clusterName)
+						_, err := clientHubDynamic.Resource(gvr).Namespace(clusterName).Get(context.TODO(), clusterName, metav1.GetOptions{})
+						if err != nil {
+							klog.V(1).Info(err)
+							return errors.IsNotFound(err)
+						}
+						return false
+					}).Should(BeTrue())
+					klog.V(1).Infof("%s klusterletaddonconfig CR deleted", clusterName)
+				})
+			})
 
 		}
 	})

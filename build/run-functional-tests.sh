@@ -86,7 +86,7 @@ kind export kubeconfig --name=klusterlet-addon-controller-test --kubeconfig ${KI
 
 #Apply all dependent crds
 echo "installing crds"
-kubectl apply -f deploy/crds/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
+kubectl apply -f deploy/dev-crds/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
 for file in `ls deploy/dev-crds/*.crd.yaml`; do kubectl apply -f $file; done
 sleep 5
 
