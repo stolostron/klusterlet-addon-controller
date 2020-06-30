@@ -62,6 +62,7 @@ spec:
         status:
           description: IAMPolicyControllerStatus defines the observed state of IAMPolicyController
           type: object
+      type: object
   version: v1
   versions:
   - name: v1

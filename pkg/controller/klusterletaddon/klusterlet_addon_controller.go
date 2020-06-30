@@ -220,7 +220,7 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 	}
 
 	// Create manifest work for crds
-	if err := createManifestWorkCRD(klusterletAddonConfig, r); err != nil {
+	if err := createManifestWorkCRD(klusterletAddonConfig, managedCluster.Status.Version.Kubernetes, r); err != nil {
 		reqLogger.Error(err, "Fail to create manifest work for CRD")
 		return reconcile.Result{}, err
 	}

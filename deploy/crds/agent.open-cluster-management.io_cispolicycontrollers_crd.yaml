@@ -64,6 +64,7 @@ spec:
         status:
           description: CISPolicyControllerStatus defines the observed state of CISPolicyController
           type: object
+      type: object
   version: v1
   versions:
   - name: v1

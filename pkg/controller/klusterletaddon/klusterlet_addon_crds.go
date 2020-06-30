@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
@@ -29,7 +30,10 @@ const (
 )
 
 // createManifestWorkCRD - create manifest work for CRD
-func createManifestWorkCRD(klusterletaddonconfig *agentv1.KlusterletAddonConfig, r *ReconcileKlusterletAddon) error {
+func createManifestWorkCRD(klusterletaddonconfig *agentv1.KlusterletAddonConfig,
+	kubeVersion string,
+	r *ReconcileKlusterletAddon) error {
+
 	allFiles := bindata.AssetNames()
 	installFiles := []string{}
 
@@ -40,6 +44,34 @@ func createManifestWorkCRD(klusterletaddonconfig *agentv1.KlusterletAddonConfig,
 		}
 		if strings.HasPrefix(file, "resources/managed") && strings.Contains(file, "admin_aggregate_clusterrole.yaml") {
 			installFiles = append(installFiles, file)
+		}
+	}
+
+	var kubeV *semver.Version
+	var err error
+
+	if kubeVersion != "" {
+		kubeV, err = semver.NewVersion(kubeVersion)
+		if err != nil {
+			log.Error(err, "Invalid kubernetes version")
+			return err
+		}
+		version, err := semver.NewVersion("1.12.0")
+		if err != nil {
+			log.Error(err, "Invalid version")
+			return err
+		}
+		if kubeV.LessThan(version) {
+			installFiles = []string{}
+			// get crds & aggregate clusterroles
+			for _, file := range allFiles {
+				if strings.HasPrefix(file, "crds-kube1.11/") && strings.Contains(file, "crd.yaml") {
+					installFiles = append(installFiles, file)
+				}
+				if strings.HasPrefix(file, "resources/managed") && strings.Contains(file, "admin_aggregate_clusterrole.yaml") {
+					installFiles = append(installFiles, file)
+				}
+			}
 		}
 	}
 
