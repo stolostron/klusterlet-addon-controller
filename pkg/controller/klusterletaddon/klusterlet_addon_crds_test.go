@@ -45,6 +45,7 @@ func Test_createManifestWorkCRD(t *testing.T) {
 	type args struct {
 		r                  *ReconcileKlusterletAddon
 		klusterletaddoncfg *agentv1.KlusterletAddonConfig
+		kubeversion        string
 	}
 
 	tests := []struct {
@@ -53,7 +54,7 @@ func Test_createManifestWorkCRD(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "create manifestwork for crds",
+			name: "create manifestwork for crds with kubeversion 0.17.0",
 			args: args{
 				r: &ReconcileKlusterletAddon{
 					client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{
@@ -62,6 +63,21 @@ func Test_createManifestWorkCRD(t *testing.T) {
 					scheme: testscheme,
 				},
 				klusterletaddoncfg: testKlusterletAddonConfig,
+				kubeversion:        "1.17.0",
+			},
+			wantErr: false,
+		},
+		{
+			name: "create manifestwork for crds with kubeversion 0.11.0",
+			args: args{
+				r: &ReconcileKlusterletAddon{
+					client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{
+						testKlusterletAddonConfig,
+					}...),
+					scheme: testscheme,
+				},
+				klusterletaddoncfg: testKlusterletAddonConfig,
+				kubeversion:        "1.11.0",
 			},
 			wantErr: false,
 		},
@@ -69,7 +85,7 @@ func Test_createManifestWorkCRD(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := createManifestWorkCRD(tt.args.klusterletaddoncfg, tt.args.r)
+			err := createManifestWorkCRD(tt.args.klusterletaddoncfg, tt.args.kubeversion, tt.args.r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("syncManifestWorkCRs() error = %v, wantErr %v", err, tt.wantErr)
 				return

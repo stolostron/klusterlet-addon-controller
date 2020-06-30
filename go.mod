@@ -3,6 +3,7 @@ module github.com/open-cluster-management/endpoint-operator
 go 1.13
 
 require (
+	github.com/Masterminds/semver v1.5.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0

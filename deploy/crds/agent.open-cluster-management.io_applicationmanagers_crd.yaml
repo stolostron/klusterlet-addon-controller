@@ -67,6 +67,7 @@ spec:
         status:
           description: ApplicationManagerStatus defines the observed state of ApplicationManager
           type: object
+      type: object
   version: v1
   versions:
   - name: v1
