@@ -4,82 +4,9 @@ metadata:
   name: "{{ .ManagedClusterName }}"
   namespace: "{{ .ManagedClusterNamespace }}"
 rules:
-- apiGroups:
-  - compliance.mcm.ibm.com
-  resources:
-  - compliances
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - policy.mcm.ibm.com
-  resources:
-  - policies
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
+- verbs:
   - create
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
+  apiGroups:
+  - proxy.open-cluster-management.io
   resources:
-  - klusterlets
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-  - delete
-  - update
-- apiGroups:
-  - apps.open-cluster-management.io
-  resources:
-  - deployables
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - apps.open-cluster-management.io
-  resources:
-  - deployables/status
-  verbs:
-  - patch
-  - update
-- apiGroups: ["mcm.ibm.com"]
-  resources: ["*"]
-  verbs: ["*"]
-- apiGroups: ["proxy.open-cluster-management.io"]
-  resources: ["*"]
-  verbs: ["*"]
+  - clusterstatuses/aggregator
