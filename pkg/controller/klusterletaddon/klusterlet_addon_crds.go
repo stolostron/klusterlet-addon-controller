@@ -61,11 +61,28 @@ func createManifestWorkCRD(klusterletaddonconfig *agentv1.KlusterletAddonConfig,
 			log.Error(err, "Invalid version")
 			return err
 		}
+		maxversion, err := semver.NewVersion("1.16.0")
+		if err != nil {
+			log.Error(err, "Invalid version")
+			return err
+		}
 		if kubeV.LessThan(version) {
 			installFiles = []string{}
 			// get crds & aggregate clusterroles
 			for _, file := range allFiles {
 				if strings.HasPrefix(file, "crds-kube1.11/") && strings.Contains(file, "crd.yaml") {
+					installFiles = append(installFiles, file)
+				}
+				if strings.HasPrefix(file, "resources/managed") && strings.Contains(file, "admin_aggregate_clusterrole.yaml") {
+					installFiles = append(installFiles, file)
+				}
+			}
+		}
+		if kubeV.GreaterThan(maxversion) {
+			installFiles = []string{}
+			// get crds & aggregate clusterroles
+			for _, file := range allFiles {
+				if strings.HasPrefix(file, "crds-v1/") && strings.Contains(file, "crd.yaml") {
 					installFiles = append(installFiles, file)
 				}
 				if strings.HasPrefix(file, "resources/managed") && strings.Contains(file, "admin_aggregate_clusterrole.yaml") {
