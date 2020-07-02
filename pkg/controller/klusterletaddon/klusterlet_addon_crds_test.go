@@ -81,6 +81,20 @@ func Test_createManifestWorkCRD(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "create manifestwork for crds with kubeversion 0.15.0",
+			args: args{
+				r: &ReconcileKlusterletAddon{
+					client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{
+						testKlusterletAddonConfig,
+					}...),
+					scheme: testscheme,
+				},
+				klusterletaddoncfg: testKlusterletAddonConfig,
+				kubeversion:        "1.15.0",
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
