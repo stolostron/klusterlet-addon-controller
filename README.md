@@ -1,4 +1,4 @@
-# klusterlet operator
+# klusterlet addon controller
 
 A Go operator built with the [operator-sdk](https://github.com/operator-framework/operator-sdk) that is used to manage the Create Update Delete of the component CR in the Klusterlet Component Operator.
 
@@ -9,49 +9,29 @@ A Go operator built with the [operator-sdk](https://github.com/operator-framewor
 ```shell
 # can be installed with the following command
 > make deps
-
+```
 
 ## Prepare your cluster 
 
-1. Create namespace
+1. Import a managed cluster. Follow this guidelines to import cluster manually.
+
+- [manual-import](https://github.com/open-cluster-management/rcm-controller/blob/master/docs/managedcluster_manual_import.md)
+
+2. Install klusterlet CRD
 
 ```shell
-kubectl create namespace open-cluster-management-agent-addon
+make utils-crds-install
 ```
 
-2. Create image pull secret for artifactory
+## Running Klusterlet addon controller locally for development
 
-- https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-- please name the image pull secret `multicluster-endpoint-operator-pull-secret` the instruction after will refer to it
-
-3. Create klusterlet-bootstrap secret (use to register to hub)
-
-- log into your hub cluster
-- click the *user icon* (upper right corner)
-- click *Configure client*
-- click the "Copy to clipboard" button
-- `export tmpKUBECONFIG=$(mktemp /tmp/kubeconfigXXXX)`
-- `export KUBECONFIG=$tmpKUBECONFIG`
-- paste from clipboard
-- `unset KUBECONFIG`
-- log into the cluster you want to install klusterlet on
-- `kubectl create secret generic klusterlet-bootstrap -n klusterlet --from-file=kubeconfig=$tmpKUBECONFIG`
-
-4. Install klusterlet CRD
-
-```shell
-make utils\crds\install
-```
-
-## Running Klusterlet Operator locally for development
-
-1. Run Klusterlet Operator locally
+1. Run Klusterlet Addon Controller locally
 
 ```shell
 make run
 ```
 
-## Running Klusterlet Operator in-cluster for deployment
+## Running Klusterlet addon controller in-cluster for deployment
 
 1. Apply the `deploy/deploy.yaml` to create the ServiceAccount, ClusterRole, ClusterRoleBinding and Deployment for the operator
 
@@ -61,14 +41,14 @@ kubectl apply -f deploy/deploy.yaml
 
 NOTE: this will use the amd64 version of the operator
 
-## Installing klusterlet addons using Klusterletaddon Controller
+## Installing klusterlet addons using Klusterlet addon controller
 
-To create a klusterlet deployment with the klusterlet operator you need to create the klusterlet CR
+To create a klusterlet addon operator deployment with the klusterlet addon controller you need to create the klusterlet CR
 
-Example of KlusterletAddonConfig CR `/deploy/crds/agent.open-cluster-management.io_v1beta1_klusterletaddonconfig_cr.yaml`
+Example of KlusterletAddonConfig CR <https://github.com/open-cluster-management/endpoint-operator/blob/master/deploy/crds/agent.open-cluster-management.io_v1_klusterletaddonconfig_cr.yaml>
 
 ## Rebuilding zz_generated.deepcopy.go file
-Any modifications to files pkg/apis/agent/v1beta1/*types.go will require you to run the
+Any modifications to files pkg/apis/agent/v1/*types.go will require you to run the
 following:
 ```
 operator-sdk generate k8s
