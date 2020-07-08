@@ -30,7 +30,6 @@ import (
 	addonoperator "github.com/open-cluster-management/endpoint-operator/pkg/components/addon-operator/v1"
 	appmgr "github.com/open-cluster-management/endpoint-operator/pkg/components/appmgr/v1"
 	certpolicyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/certpolicycontroller/v1"
-	cispolicyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/cispolicycontroller/v1"
 	iampolicyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/iampolicycontroller/v1"
 	policyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/policyctrl/v1"
 	search "github.com/open-cluster-management/endpoint-operator/pkg/components/searchcollector/v1"
@@ -44,7 +43,7 @@ const (
 	infrastructureConfigName = "cluster"
 )
 
-var componentsArray = []string{appmgr.AppMgr, certpolicyctrl.CertPolicyCtrl, cispolicyctrl.CISPolicyCtrl,
+var componentsArray = []string{appmgr.AppMgr, certpolicyctrl.CertPolicyCtrl,
 	iampolicyctrl.IAMPolicyCtrl, policyctrl.PolicyCtrl, search.Search, workmgr.WorkMgr}
 
 var merger applier.Merger = func(current,
@@ -133,8 +132,6 @@ func checkComponentIsEnabled(componentName string, klusterletaddonconfig *agentv
 		return appmgr.IsEnabled(klusterletaddonconfig), nil
 	case certpolicyctrl.CertPolicyCtrl:
 		return certpolicyctrl.IsEnabled(klusterletaddonconfig), nil
-	case cispolicyctrl.CISPolicyCtrl:
-		return cispolicyctrl.IsEnabled(klusterletaddonconfig), nil
 	case iampolicyctrl.IAMPolicyCtrl:
 		return iampolicyctrl.IsEnabled(klusterletaddonconfig), nil
 	case policyctrl.PolicyCtrl:
@@ -154,8 +151,6 @@ func checkHubKubeconfigRequired(componentName string) bool {
 		return appmgr.RequiresHubKubeConfig
 	case certpolicyctrl.CertPolicyCtrl:
 		return certpolicyctrl.RequiresHubKubeConfig
-	case cispolicyctrl.CISPolicyCtrl:
-		return cispolicyctrl.RequiresHubKubeConfig
 	case iampolicyctrl.IAMPolicyCtrl:
 		return iampolicyctrl.RequiresHubKubeConfig
 	case policyctrl.PolicyCtrl:
@@ -181,8 +176,6 @@ func newCRManifestWork(
 		cr, err = appmgr.NewApplicationManagerCR(klusterletaddonconfig, addonoperator.KlusterletAddonNamespace)
 	case certpolicyctrl.CertPolicyCtrl:
 		cr, err = certpolicyctrl.NewCertPolicyControllerCR(klusterletaddonconfig, addonoperator.KlusterletAddonNamespace)
-	case cispolicyctrl.CISPolicyCtrl:
-		cr, err = cispolicyctrl.NewCISPolicyControllerCR(klusterletaddonconfig, addonoperator.KlusterletAddonNamespace)
 	case iampolicyctrl.IAMPolicyCtrl:
 		cr, err = iampolicyctrl.NewIAMPolicyControllerCR(klusterletaddonconfig, addonoperator.KlusterletAddonNamespace)
 	case policyctrl.PolicyCtrl:

@@ -8,8 +8,6 @@ spec:
     enabled: true
   certPolicyController:
     enabled: true
-  cisPolicyController:
-    enabled: false
   clusterLabels:
     cloud: Azure
     vendor: OpenShift

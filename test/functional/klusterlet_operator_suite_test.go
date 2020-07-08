@@ -114,9 +114,6 @@ func newKlusterletAddonConfig(name, namespace string) *unstructured.Unstructured
 				"searchCollector": map[string]interface{}{
 					"enabled": true,
 				},
-				"cisPolicyController": map[string]interface{}{
-					"enabled": true,
-				},
 				"iamPolicyController": map[string]interface{}{
 					"enabled": true,
 				},

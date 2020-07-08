@@ -95,6 +95,7 @@ go-bindata-check:
 	diff $(BINDATA_TEMP_DIR)/bindata_generated.go pkg/bindata/bindata_generated.go > go-bindata.diff; \
 	if [ $$? != 0 ]; then \
 	  echo "Run 'make go-bindata' to regenerate the bindata_generated.go"; \
+	  cat go-bindata.diff; \
 	  exit 1; \
 	fi
 	rm go-bindata.diff
