@@ -148,12 +148,12 @@ endif
 
 ### HELPER UTILS #######################
 
-.PHONY: utils\crds\install
-utils\crds\install:
+.PHONY: utils-crds-install
+utils-crds-install:
 	kubectl apply -f deploy/dev-crds/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
 
-.PHONY: utils\crds\uninstall
-utils\crds\uninstall:
+.PHONY: utils-crds-uninstall
+utils-crds-uninstall:
 	kubectl delete -f deploy/dev-crds/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
 
 ### FUNCTIONAL TESTS UTILS ###########
