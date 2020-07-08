@@ -32,7 +32,6 @@ const (
 const (
 	applicationManager      = testKlusterletAddonConfigName + "-klusterlet-addon-appmgr"
 	certPolicyController    = testKlusterletAddonConfigName + "-klusterlet-addon-certpolicyctrl"
-	cisPolicyController     = testKlusterletAddonConfigName + "-klusterlet-addon-cispolicyctrl"
 	iamPolicyController     = testKlusterletAddonConfigName + "-klusterlet-addon-iampolicyctrl"
 	policyController        = testKlusterletAddonConfigName + "-klusterlet-addon-policyctrl"
 	searchCollector         = testKlusterletAddonConfigName + "-klusterlet-addon-search"
@@ -60,10 +59,6 @@ var deletePatchStrings = map[string]string{
 		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
 		"replace", "/spec/certPolicyController/enabled", false,
 	),
-	cisPolicyController: fmt.Sprintf(
-		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
-		"replace", "/spec/cisPolicyController/enabled", false,
-	),
 	iamPolicyController: fmt.Sprintf(
 		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
 		"replace", "/spec/iamPolicyController/enabled", false,
@@ -87,10 +82,6 @@ var addPatchStrings = map[string]string{
 		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
 		"replace", "/spec/certPolicyController/enabled", true,
 	),
-	cisPolicyController: fmt.Sprintf(
-		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
-		"replace", "/spec/cisPolicyController/enabled", true,
-	),
 	iamPolicyController: fmt.Sprintf(
 		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
 		"replace", "/spec/iamPolicyController/enabled", true,
@@ -109,7 +100,6 @@ var addPatchStrings = map[string]string{
 var addonCRs = []string{
 	applicationManager,
 	certPolicyController,
-	cisPolicyController,
 	iamPolicyController,
 	policyController,
 	searchCollector,
@@ -127,10 +117,6 @@ var validations = map[string][]string{
 	certPolicyController: []string{
 		`"kind":"CertPolicyController"`,
 		`"name":"klusterlet-addon-certpolicyctrl"`,
-	},
-	cisPolicyController: []string{
-		`"kind":"CISPolicyController"`,
-		`"name":"klusterlet-addon-cispolicyctrl"`,
 	},
 	iamPolicyController: []string{
 		`"kind":"IAMPolicyController"`,
@@ -163,7 +149,6 @@ var validations = map[string][]string{
 	allCRDs: []string{
 		`"name":"applicationmanagers.agent.open-cluster-management.io"`,
 		`"name":"certpolicycontrollers.agent.open-cluster-management.io"`,
-		`"name":"cispolicycontrollers.agent.open-cluster-management.io"`,
 		`"name":"iampolicycontrollers.agent.open-cluster-management.io"`,
 		`"name":"policycontrollers.agent.open-cluster-management.io"`,
 		`"name":"searchcollectors.agent.open-cluster-management.io"`,

@@ -30,7 +30,7 @@ import (
 
 const MANAGEDCLUSTERS_KUBECONFIGS_DIR = "test/e2e/resources/clusters"
 const HUBCLUSTER_KUBECONFIG_DIR = "test/e2e/resources/hubs"
-const NumberOfPods = 13
+const NumberOfPods = 8
 
 const (
 	//	MANUAL_IMPORT_IMAGE_PULL_SECRET = "image-pull-secret"
@@ -41,7 +41,6 @@ const (
 var addonCRs = map[string]string{
 	"appmgr":         "applicationmanagers",
 	"certpolicyctrl": "certpolicycontrollers",
-	"cispolicyctrl":  "cispolicycontrollers",
 	"iampolicyctrl":  "iampolicycontrollers",
 	"policyctrl":     "policycontrollers",
 	"search":         "searchcollectors",
@@ -61,12 +60,6 @@ var validations = map[string][]string{
 		`"name":"klusterlet-addon-certpolicyctrl"`,
 		`"kubeconfig":`,
 		`"name":"certpolicyctrl-hub-kubeconfig"`,
-	},
-	"cisctrl": []string{
-		`"kind":"CISController"`,
-		`"name":"klusterlet-addon-cisctrl"`,
-		`"kubeconfig":`,
-		`"name":"cisctrl-hub-kubeconfig"`,
 	},
 	"iampolicyctrl": []string{
 		`"kind":"IAMPolicyController"`,
@@ -101,7 +94,6 @@ var validations = map[string][]string{
 	"crds": []string{
 		`"name":"applicationmanagers.agent.open-cluster-management.io"`,
 		`"name":"certpolicycontrollers.agent.open-cluster-management.io"`,
-		`"name":"cispolicycontrollers.agent.open-cluster-management.io"`,
 		`"name":"iampolicycontrollers.agent.open-cluster-management.io"`,
 		`"name":"policycontrollers.agent.open-cluster-management.io"`,
 		`"name":"searchcollectors.agent.open-cluster-management.io"`,

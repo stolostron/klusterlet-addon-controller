@@ -22,11 +22,6 @@ import (
 
 var defaultComponentImageKeyMap = map[string]string{
 	"cert-policy-controller":          "cert_policy_controller",
-	"cis-controller-controller":       "cis_controller",
-	"cis-controller-crawler":          "cis_crawler",
-	"cis-controller-drishti":          "drishti_cis",
-	"cis-controller-minio":            "img_minio",
-	"cis-controller-minio-cleaner":    "img_minio_mc",
 	"addon-operator":                  "endpoint_component_operator",
 	"coredns":                         "coredns",
 	"deployable":                      "multicluster_operators_deployable",
