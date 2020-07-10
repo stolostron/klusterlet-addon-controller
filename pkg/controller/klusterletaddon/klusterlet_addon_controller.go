@@ -219,6 +219,11 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 		klusterletAddonConfig.Spec.ImagePullSecret = os.Getenv("DEFAULT_IMAGE_PULL_SECRET")
 	}
 
+	// Fill with default imageRegistry if empty
+	if klusterletAddonConfig.Spec.ImageRegistry == "" {
+		klusterletAddonConfig.Spec.ImageRegistry = os.Getenv("DEFAULT_IMAGE_REGISTRY")
+	}
+
 	// Create manifest work for crds
 	if err := createManifestWorkCRD(klusterletAddonConfig, managedCluster.Status.Version.Kubernetes, r); err != nil {
 		reqLogger.Error(err, "Fail to create manifest work for CRD")
