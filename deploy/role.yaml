@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: klusterlet-addon-controller
+  name: open-cluster-management:klusterlet-addon-controller
   namespace: open-cluster-management
 rules:
 - apiGroups:
