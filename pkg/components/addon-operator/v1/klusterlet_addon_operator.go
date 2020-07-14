@@ -29,6 +29,7 @@ import (
 const (
 	KlusterletAddonOperator  = "klusterlet-addon-operator"
 	KlusterletAddonNamespace = "open-cluster-management-agent-addon"
+	ClusterRolePrefix        = "open-cluster-management:"
 )
 
 // NewClusterRoleBinding - template for cluster role bindiing
@@ -43,7 +44,7 @@ func NewClusterRoleBinding(instance *agentv1.KlusterletAddonConfig) *rbacv1.Clus
 			Kind:       "ClusterRoleBinding",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   KlusterletAddonOperator,
+			Name:   ClusterRolePrefix + KlusterletAddonOperator,
 			Labels: labels,
 		},
 		Subjects: []rbacv1.Subject{
@@ -55,7 +56,7 @@ func NewClusterRoleBinding(instance *agentv1.KlusterletAddonConfig) *rbacv1.Clus
 		},
 		RoleRef: rbacv1.RoleRef{
 			Kind: "ClusterRole",
-			Name: KlusterletAddonOperator,
+			Name: ClusterRolePrefix + KlusterletAddonOperator,
 		},
 	}
 }
@@ -72,7 +73,7 @@ func NewClusterRole(instance *agentv1.KlusterletAddonConfig) *rbacv1.ClusterRole
 			Kind:       "ClusterRole",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   KlusterletAddonOperator,
+			Name:   ClusterRolePrefix + KlusterletAddonOperator,
 			Labels: labels,
 		},
 		Rules: []rbacv1.PolicyRule{
