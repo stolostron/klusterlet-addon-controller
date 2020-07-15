@@ -1,6 +1,8 @@
 # klusterlet addon controller
 
-A Go operator built with the [operator-sdk](https://github.com/operator-framework/operator-sdk) that is used to manage the Create Update Delete of the component CR in the Klusterlet Component Operator.
+[![Build Status](https://travis-ci.com/open-cluster-management/endpoint-operator.svg?token=fGeoi8xiXpYyWSE7xgqp&branch=master)](https://travis-ci.com/open-cluster-management/endpoint-operator)[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=open-cluster-management_endpoint-operator&metric=coverage&token=fcb5fc506f425e17f0fb9986bf3dd9b98ffaae15)](https://sonarcloud.io/dashboard?id=open-cluster-management_endpoint-operator)[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=open-cluster-management_endpoint-operator&metric=vulnerabilities&token=fcb5fc506f425e17f0fb9986bf3dd9b98ffaae15)](https://sonarcloud.io/dashboard?id=open-cluster-management_endpoint-operator)
+
+Kubernetes controller for the [KlusterletAddonConfig](https://github.com/open-cluster-management/endpoint-operator/blob/master/pkg/apis/agent/v1/klusterletaddonconfig_types.go) custom resource that manages the Create/Update/Delete of [klusterlet addon operator and klusterlet addons](https://github.com/open-cluster-management/endpoint-component-operator) on the managed cluster via [ManifestWork](https://github.com/open-cluster-management/api/blob/master/work/v1/types.go).
 
 ## Prerequisites
 
@@ -43,7 +45,7 @@ NOTE: this will use the amd64 version of the operator
 
 ## Installing klusterlet addons using Klusterlet addon controller
 
-To create a klusterlet addon operator deployment with the klusterlet addon controller you need to create the klusterlet CR
+To create a klusterlet addon operator deployment with the klusterlet addon controller you need to create the KlusterletAddonConfig CR
 
 Example of KlusterletAddonConfig CR <https://github.com/open-cluster-management/endpoint-operator/blob/master/deploy/crds/agent.open-cluster-management.io_v1_klusterletaddonconfig_cr.yaml>
 
@@ -54,15 +56,6 @@ following:
 operator-sdk generate k8s
 ```
 to regenerate the zz_generated.deepcopy.go file.
-
-## Build and publish a personal build to scratch artifactory
-
-- `export GITHUB_USER=<GITHUB_USER>`
-- `export GITHUB_TOKEN=<GITHUB_TOKEN>`
-- `make init`
-- `make build`
-- `make docker:tag`
-- `make docker:push`
 
 ## Run Functional Test
 
