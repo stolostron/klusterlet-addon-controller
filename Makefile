@@ -138,7 +138,7 @@ ossc:
 ## Runs linter against go files
 lint:
 	@echo "Running linting tool ..."
-	@golangci-lint run --timeout 5m -E lll
+	@golangci-lint run --timeout 5m 
 
 .PHONY: helpz
 helpz:

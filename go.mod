@@ -12,6 +12,7 @@ require (
 	github.com/open-cluster-management/library-go v0.0.0-20200619234924-ec3f983fe4f2
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/operator-framework/operator-sdk v0.18.1
+	github.com/prometheus/common v0.9.1
 	github.com/sclevine/agouti v3.0.0+incompatible
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1

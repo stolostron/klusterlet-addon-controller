@@ -19,6 +19,7 @@ import (
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/apis"
 	"github.com/open-cluster-management/endpoint-operator/pkg/controller"
+	"github.com/open-cluster-management/endpoint-operator/pkg/webhook"
 	"github.com/open-cluster-management/endpoint-operator/version"
 	ocinfrav1 "github.com/openshift/api/config/v1"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -138,6 +139,12 @@ func main() {
 
 	// Add the Metrics Service
 	addMetrics(ctx, cfg, namespace)
+
+	// Setup webhooks
+	err = webhook.Setup(mgr)
+	if err != nil {
+		log.Error(err, "Failed to setup webhooks")
+	}
 
 	log.Info("Starting the Cmd.")
 
