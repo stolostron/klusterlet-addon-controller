@@ -24,12 +24,11 @@ import (
 
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
-	"github.com/open-cluster-management/endpoint-operator/version"
 	ocinfrav1 "github.com/openshift/api/config/v1"
 )
 
 var (
-	manifestPath = filepath.Join("..", "..", "..", "image-manifests", version.Version+".json")
+	manifestPath = filepath.Join("..", "..", "..", "image-manifests")
 )
 
 func TestMain(m *testing.M) {
@@ -43,7 +42,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() error {
-	return agentv1.LoadManifest(manifestPath)
+	return agentv1.LoadManifests(manifestPath)
 }
 
 func teardown() {
@@ -70,6 +69,7 @@ func Test_checkComponentIsEnabled(t *testing.T) {
 			PolicyController: agentv1.KlusterletAddonConfigPolicyControllerSpec{
 				Enabled: false,
 			},
+			Version: "2.0.0",
 		},
 	}
 
@@ -191,6 +191,7 @@ func Test_syncManifestWorkCRs(t *testing.T) {
 			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
 				Enabled: true,
 			},
+			Version: "2.0.0",
 		},
 	}
 
@@ -250,6 +251,7 @@ func Test_newCRManifestWork(t *testing.T) {
 			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
 				Enabled: true,
 			},
+			Version: "2.0.0",
 		},
 	}
 	testSecret := &corev1.Secret{
@@ -389,6 +391,7 @@ func Test_deleteManifestWorkCRs(t *testing.T) {
 			IAMPolicyControllerConfig: agentv1.KlusterletAddonConfigIAMPolicyControllerSpec{
 				Enabled: true,
 			},
+			Version: "2.0.0",
 		},
 	}
 	manifestWorkAppMgr := &manifestworkv1.ManifestWork{
@@ -506,6 +509,7 @@ func Test_getServiceAccountToken(t *testing.T) {
 			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
 				Enabled: true,
 			},
+			Version: "2.0.0",
 		},
 	}
 
@@ -685,6 +689,7 @@ func Test_newHubKubeconfigSecret(t *testing.T) {
 			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
 				Enabled: true,
 			},
+			Version: "2.0.0",
 		},
 	}
 

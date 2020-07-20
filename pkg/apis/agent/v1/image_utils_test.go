@@ -25,14 +25,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/open-cluster-management/endpoint-operator/version"
 	"github.com/stretchr/testify/assert"
 )
 
-var manifestPath = filepath.Join("..", "..", "..", "..", "image-manifests", version.Version+".json")
+var manifestPath = filepath.Join("..", "..", "..", "..", "image-manifests")
 
 func TestGetImageWithManifest(t *testing.T) {
-	err := LoadManifest(manifestPath)
+	err := LoadManifests(manifestPath)
 	defaultComponentImageKeyMap["fakeKey"] = "fake_image_name"
 	if err != nil {
 		t.Error(err)
@@ -49,11 +48,12 @@ func TestGetImageWithManifest(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Use Component Sha",
+			name: "Use Component Sha in 2.0.0",
 			args: args{
 				klusterletaddonconfig: &KlusterletAddonConfig{
 					Spec: KlusterletAddonConfigSpec{
 						ImageRegistry: "sample-registry/uniquePath",
+						Version:       "2.0.0",
 					},
 				},
 				component: "addon-operator",
@@ -61,6 +61,24 @@ func TestGetImageWithManifest(t *testing.T) {
 			want: GlobalValues{
 				ImageOverrides: map[string]string{
 					"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Use Component Sha in 2.1.0",
+			args: args{
+				klusterletaddonconfig: &KlusterletAddonConfig{
+					Spec: KlusterletAddonConfigSpec{
+						ImageRegistry: "sample-registry/uniquePath",
+						Version:       "2.1.0",
+					},
+				},
+				component: "addon-operator",
+			},
+			want: GlobalValues{
+				ImageOverrides: map[string]string{
+					"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
 				},
 			},
 			wantErr: false,
