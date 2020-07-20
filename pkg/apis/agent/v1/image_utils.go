@@ -13,7 +13,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -41,6 +43,8 @@ var defaultComponentImageKeyMap = map[string]string{
 //The Manifest is loaded using the LoadManifest method.
 var Manifest manifest
 
+var versionList []*semver.Version
+
 var log = logf.Log.WithName("image_utils")
 
 type manifest struct {
@@ -60,6 +64,7 @@ type manifestElement struct {
 
 func init() {
 	Manifest.Images = make([]manifestElement, 0)
+
 	manifestPath := filepath.Join("image-manifests", version.Version+".json")
 	homeDir := os.Getenv("IMAGE_MANIFEST_PATH")
 
@@ -70,6 +75,11 @@ func init() {
 	err := LoadManifest(manifestPath)
 	if err != nil {
 		log.Error(err, "Error while reading the manifest")
+	}
+
+	err = GetVersionsManifest("image-manifests")
+	if err != nil {
+		log.Error(err, "Error while getting version lists")
 	}
 }
 
@@ -130,4 +140,43 @@ func LoadManifest(manifestPath string) error {
 	}
 
 	return nil
+}
+
+// GetVersionsManifest returns the available version list of klusterlet
+func GetVersionsManifest(manifestPath string) error {
+	files, err := ioutil.ReadDir(manifestPath)
+	if err != nil {
+		log.Error(err, "Fail to read manifest directory", "path", manifestPath)
+		return err
+	}
+
+	c, err := semver.NewConstraint(">= 2.0.0")
+	if err != nil {
+		log.Error(err, "Invalid semantic constraint")
+	}
+
+	for _, file := range files {
+		if !file.IsDir() && strings.Contains(file.Name(), ".json") {
+			version := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name()))
+			v, err := semver.NewVersion(version)
+			if err != nil {
+				log.Error(err, "Invalid semantic version found in image-manifests")
+				return err
+			}
+			if c.Check(v) {
+				versionList = append(versionList, v)
+			}
+		}
+	}
+
+	return nil
+}
+
+// GetAvailableVersions returns the available version list of klusterlet
+func (instance KlusterletAddonConfig) GetAvailableVersions() ([]*semver.Version, error) {
+	if len(versionList) == 0 {
+		return nil, fmt.Errorf("Version list is empty")
+	}
+
+	return versionList, nil
 }
