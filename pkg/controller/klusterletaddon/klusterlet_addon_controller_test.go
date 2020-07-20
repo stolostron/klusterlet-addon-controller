@@ -48,6 +48,7 @@ func TestReconcileKlusterletAddon_Reconcile(t *testing.T) {
 			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
 				Enabled: true,
 			},
+			Version: "2.0.0",
 		},
 	}
 

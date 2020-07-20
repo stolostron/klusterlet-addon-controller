@@ -13,13 +13,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-
-	"github.com/open-cluster-management/endpoint-operator/version"
 )
 
 var defaultComponentImageKeyMap = map[string]string{
@@ -41,7 +40,6 @@ var defaultComponentImageKeyMap = map[string]string{
 
 //Manifest contains the manifest.
 //The Manifest is loaded using the LoadManifest method.
-var Manifest manifest
 
 var versionList []*semver.Version
 
@@ -50,6 +48,8 @@ var log = logf.Log.WithName("image_utils")
 type manifest struct {
 	Images []manifestElement `json:"inline"`
 }
+
+var manifests map[string]manifest
 
 type manifestElement struct {
 	ImageKey        string `json:"image-key,omitempty"`
@@ -63,21 +63,16 @@ type manifestElement struct {
 }
 
 func init() {
-	Manifest.Images = make([]manifestElement, 0)
+	manifests = make(map[string]manifest)
 
-	manifestPath := filepath.Join("image-manifests", version.Version+".json")
-	homeDir := os.Getenv("IMAGE_MANIFEST_PATH")
+	manifestDir := "image-manifests"
+	parentDir := os.Getenv("IMAGE_MANIFEST_PATH")
 
-	if homeDir != "" {
-		manifestPath = filepath.Join(homeDir, manifestPath)
+	if parentDir != "" {
+		manifestDir = filepath.Join(parentDir, "image-manifests")
 	}
 
-	err := LoadManifest(manifestPath)
-	if err != nil {
-		log.Error(err, "Error while reading the manifest")
-	}
-
-	err = GetVersionsManifest("image-manifests")
+	err := LoadManifests(manifestDir)
 	if err != nil {
 		log.Error(err, "Error while getting version lists")
 	}
@@ -92,7 +87,7 @@ func (instance KlusterletAddonConfig) GetImage(component string) (imageKey, imag
 		return "", "", fmt.Errorf("unable to locate default image name for component %s", component)
 	}
 
-	imageManifest, err := getImageManifest(imageKey)
+	imageManifest, err := getImageManifestElement(instance.Spec.Version, imageKey)
 	if err != nil {
 		return "", "", err
 	}
@@ -110,43 +105,84 @@ func (instance KlusterletAddonConfig) GetImage(component string) (imageKey, imag
 	return imageKey, imageRepository, nil
 }
 
-//getImageManifest returns the *manifestElement and nil if not found
+//getImageManifestElement returns the *manifestElement and nil if not found
 //Return an error only if the manifest is malformed
-func getImageManifest(imageKey string) (*manifestElement, error) {
-	for i, im := range Manifest.Images {
+func getImageManifestElement(version, imageKey string) (*manifestElement, error) {
+	m, err := getManifest(version)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, im := range m.Images {
 		if im.ImageKey == imageKey {
-			return &Manifest.Images[i], nil
+			return &m.Images[i], nil
 		}
 	}
 	return nil, fmt.Errorf("ImageManifest not found for %s", imageKey)
 }
 
-//LoadManifest returns the *manifestElement and nil if not found
-//Return an error only if the manifest is malformed
-func LoadManifest(manifestPath string) error {
-	//Check if already loaded
-	if len(Manifest.Images) != 0 {
-		return nil
-	}
-
+//readManifestFile returns the *manifest and nil if not found
+func readManifestFile(manifestPath string) (*manifest, error) {
 	b, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = yaml.Unmarshal(b, &Manifest.Images)
+	m := manifest{}
+	m.Images = make([]manifestElement, 0)
+	err = yaml.Unmarshal(b, &m.Images)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &m, nil
 }
 
-// GetVersionsManifest returns the available version list of klusterlet
-func GetVersionsManifest(manifestPath string) error {
-	files, err := ioutil.ReadDir(manifestPath)
+// getManifest returns the manifest that is best matching the required version
+// if no version can match (major version), will return error
+func getManifest(version string) (*manifest, error) {
+	if len(versionList) == 0 || manifests == nil {
+		return nil, fmt.Errorf("image manifest not loaded")
+	}
+
+	// find exact version first
+	if m, ok := manifests[version]; ok {
+		return &m, nil
+	}
+	log.Error(fmt.Errorf("Failed to find image manifest in version %s", version), "version not found")
+
+	// find the version use ^
+	currVersion, err := semver.NewVersion(version)
 	if err != nil {
-		log.Error(err, "Fail to read manifest directory", "path", manifestPath)
+		log.Error(err, "not valid version "+version)
+		return nil, err
+	}
+
+	versionConstraint, err := semver.NewConstraint(
+		fmt.Sprintf("^%d.%d.%d", currVersion.Major(), currVersion.Minor(), currVersion.Patch()),
+	)
+	if err != nil {
+		log.Error(err, "failed to generate semver constraint")
+		return nil, err
+	}
+	// search for the first possible version
+	// (used linear because versionList is very short)
+	for _, v := range versionList {
+		if isValid := versionConstraint.Check(v); isValid {
+			if m, ok := manifests[v.Original()]; ok {
+				return &m, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("version %s not supported", version)
+}
+
+// LoadManifests loads the available version list of klusterlet
+func LoadManifests(manifestDirPath string) error {
+	files, err := ioutil.ReadDir(manifestDirPath)
+	if err != nil {
+		log.Error(err, "Fail to read manifest directory", "path", manifestDirPath)
 		return err
 	}
 
@@ -157,17 +193,27 @@ func GetVersionsManifest(manifestPath string) error {
 
 	for _, file := range files {
 		if !file.IsDir() && strings.Contains(file.Name(), ".json") {
+			manifestFileName := filepath.Join(manifestDirPath, file.Name())
 			version := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name()))
 			v, err := semver.NewVersion(version)
 			if err != nil {
 				log.Error(err, "Invalid semantic version found in image-manifests")
 				return err
 			}
-			if c.Check(v) {
+			if !c.Check(v) {
+				continue
+			}
+			// load manifest.json
+			if m, err := readManifestFile(manifestFileName); err != nil {
+				log.Error(err, "Failed to read image-manifests "+manifestFileName)
+				return err
+			} else {
+				manifests[v.Original()] = *m
 				versionList = append(versionList, v)
 			}
 		}
 	}
+	sort.Sort(semver.Collection(versionList))
 
 	return nil
 }

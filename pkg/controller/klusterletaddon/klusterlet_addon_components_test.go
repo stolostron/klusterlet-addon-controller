@@ -41,6 +41,7 @@ func Test_createManifestWorkComponentOperator(t *testing.T) {
 				Enabled: true,
 			},
 			ImagePullSecret: "test-managedcluster",
+			Version:         "2.0.0",
 		},
 	}
 
