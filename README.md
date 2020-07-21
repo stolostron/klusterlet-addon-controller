@@ -122,7 +122,9 @@ If you want to patch deployments directly on the managed cluster.
 
 You can scale down the klusterlet-addon-operator on the managed cluster.
 
-To do so, on hub, edit the manifestwork of `${CLUSTER_NAME}-klusterlet-addon-operator` on hub, and find the line for replicas, set it to 0:
+To do so, on hub, edit the manifestwork of `${CLUSTER_NAME}-klusterlet-addon-operator` on hub, and search for `Deployment`. Set spec.replicas to 0:
 ```
-oc edit manifestwork -n ${CLUSTER_NAME}  ${CLUSTER_NAME}-klusterlet-addon-operatoorr
+oc edit manifestwork -n ${CLUSTER_NAME}  ${CLUSTER_NAME}-klusterlet-addon-operator
 ```
+
+Please remember to restore the replicas when you finishing the devs. Otherwise you will not able to cleanup the managed cluster properly when detach.
