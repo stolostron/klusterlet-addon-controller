@@ -38,6 +38,7 @@ const (
 	workManager             = testKlusterletAddonConfigName + "-klusterlet-addon-workmgr"
 	allCRDs                 = testKlusterletAddonConfigName + "-klusterlet-addon-crds"
 	klusterletAddonOperator = testKlusterletAddonConfigName + "-klusterlet-addon-operator"
+	validVersion            = "2.0.0"
 )
 
 const (
@@ -168,7 +169,7 @@ var _ = Describe("Creating KlusterletAddonConfig", func() {
 			managedCluster = newManagedCluster(testKlusterletAddonConfigName, testNamespace)
 			createNewUnstructured(clientClusterDynamic, gvrManagedCluster,
 				managedCluster, testKlusterletAddonConfigName, "")
-			klusterletAddonConfig = newKlusterletAddonConfig(testKlusterletAddonConfigName, testNamespace)
+			klusterletAddonConfig = newKlusterletAddonConfig(testKlusterletAddonConfigName, testNamespace, validVersion)
 			createNewUnstructured(clientClusterDynamic, gvrKlusterletAddonConfig,
 				klusterletAddonConfig, testKlusterletAddonConfigName, testNamespace)
 		})
@@ -285,7 +286,7 @@ var _ = Describe("Disabling & Enabling Addons", func() {
 			managedCluster = newManagedCluster(testKlusterletAddonConfigName, testNamespace)
 			createNewUnstructured(clientClusterDynamic, gvrManagedCluster,
 				managedCluster, testKlusterletAddonConfigName, "")
-			klusterletAddonConfig = newKlusterletAddonConfig(testKlusterletAddonConfigName, testNamespace)
+			klusterletAddonConfig = newKlusterletAddonConfig(testKlusterletAddonConfigName, testNamespace, validVersion)
 			createNewUnstructured(clientClusterDynamic, gvrKlusterletAddonConfig,
 				klusterletAddonConfig, testKlusterletAddonConfigName, testNamespace)
 			setClusterOnline(clientClusterDynamic, testKlusterletAddonConfigName)
@@ -355,7 +356,7 @@ var _ = Describe("Deleting Managedcluster Which Has Never Been Online", func() {
 			createNewUnstructured(clientClusterDynamic, gvrManagedCluster,
 				managedCluster, testKlusterletAddonConfigName, "")
 			setClusterOffline(clientClusterDynamic, testKlusterletAddonConfigName)
-			klusterletAddonConfig = newKlusterletAddonConfig(testKlusterletAddonConfigName, testNamespace)
+			klusterletAddonConfig = newKlusterletAddonConfig(testKlusterletAddonConfigName, testNamespace, validVersion)
 			createNewUnstructured(clientClusterDynamic, gvrKlusterletAddonConfig,
 				klusterletAddonConfig, testKlusterletAddonConfigName, testNamespace)
 		})
@@ -392,7 +393,7 @@ var _ = Describe("Deleting A Joined ManagedCluster", func() {
 			managedCluster = newManagedCluster(testKlusterletAddonConfigName, testNamespace)
 			createNewUnstructured(clientClusterDynamic, gvrManagedCluster,
 				managedCluster, testKlusterletAddonConfigName, "")
-			klusterletAddonConfig = newKlusterletAddonConfig(testKlusterletAddonConfigName, testNamespace)
+			klusterletAddonConfig = newKlusterletAddonConfig(testKlusterletAddonConfigName, testNamespace, validVersion)
 			createNewUnstructured(clientClusterDynamic, gvrKlusterletAddonConfig,
 				klusterletAddonConfig, testKlusterletAddonConfigName, testNamespace)
 			setClusterOnline(clientClusterDynamic, testKlusterletAddonConfigName)
@@ -504,7 +505,7 @@ var _ = Describe("Deleting KlusterletAddonConfig Only", func() {
 			managedCluster = newManagedCluster(testKlusterletAddonConfigName, testNamespace)
 			createNewUnstructured(clientClusterDynamic, gvrManagedCluster,
 				managedCluster, testKlusterletAddonConfigName, "")
-			klusterletAddonConfig = newKlusterletAddonConfig(testKlusterletAddonConfigName, testNamespace)
+			klusterletAddonConfig = newKlusterletAddonConfig(testKlusterletAddonConfigName, testNamespace, validVersion)
 			createNewUnstructured(clientClusterDynamic, gvrKlusterletAddonConfig,
 				klusterletAddonConfig, testKlusterletAddonConfigName, testNamespace)
 			setClusterOnline(clientClusterDynamic, testKlusterletAddonConfigName)
