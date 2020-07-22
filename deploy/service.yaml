@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: klusterlet-addon-webhook
+  namespace: open-cluster-management
+spec:
+  type: ClusterIP
+  ports:
+  - name: https
+    port: 443
+    targetPort: 6443
+  selector:
+    name: klusterlet-addon-controller
