@@ -7,6 +7,7 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -21,6 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	libgooptions "github.com/open-cluster-management/library-e2e-go/pkg/options"
+	"github.com/open-cluster-management/library-go/pkg/applier"
 	libgoapplier "github.com/open-cluster-management/library-go/pkg/applier"
 	libgoclient "github.com/open-cluster-management/library-go/pkg/client"
 	"k8s.io/client-go/dynamic"
@@ -35,6 +37,10 @@ const NumberOfPods = 8
 const (
 	//	MANUAL_IMPORT_IMAGE_PULL_SECRET = "image-pull-secret"
 	MANUAL_IMPORT_CLUSTER_SCENARIO = "manual-import"
+	invalidSemanticVersion         = "2.0.0.12"
+	unavailableVersion             = "1.0.0"
+	versionList                    = "2.0.0 2.1.0"
+	admissionName                  = "klusterletaddonconfig.validating-webhook.open-cluster-management.io"
 )
 
 // list of manifestwork name for addon crs
@@ -58,14 +64,10 @@ var validations = map[string][]string{
 	"certpolicyctrl": []string{
 		`"kind":"CertPolicyController"`,
 		`"name":"klusterlet-addon-certpolicyctrl"`,
-		`"kubeconfig":`,
-		`"name":"certpolicyctrl-hub-kubeconfig"`,
 	},
 	"iampolicyctrl": []string{
 		`"kind":"IAMPolicyController"`,
 		`"name":"klusterlet-addon-iampolicyctrl"`,
-		`"kubeconfig":`,
-		`"name":"iampolicyctrl-hub-kubeconfig"`,
 	},
 	"policyctrl": []string{
 		`"kind":"PolicyController"`,
@@ -102,11 +104,27 @@ var validations = map[string][]string{
 	},
 }
 
+var merger applier.Merger = func(current,
+	new *unstructured.Unstructured,
+) (
+	future *unstructured.Unstructured,
+	update bool,
+) {
+	if spec, ok := new.Object["spec"]; ok &&
+		!reflect.DeepEqual(spec, current.Object["spec"]) {
+		update = true
+		current.Object["spec"] = spec
+	}
+
+	return current, update
+}
+
 var _ = Describe("Manual import cluster", func() {
 
 	var err error
 	var managedClustersForManualImport map[string]string
 	var hubClient client.Client
+	var clientHub kubernetes.Interface
 	var clientHubDynamic dynamic.Interface
 	var clientHubClientset clientset.Interface
 	var templateProcessor *libgoapplier.TemplateProcessor
@@ -123,6 +141,8 @@ var _ = Describe("Manual import cluster", func() {
 		SetDefaultEventuallyTimeout(10 * time.Minute)
 		SetDefaultEventuallyPollingInterval(10 * time.Second)
 		kubeconfig := libgooptions.GetHubKubeConfig(testOptions.Hub.ConfigDir)
+		clientHub, err = libgoclient.NewDefaultKubeClient(kubeconfig)
+		Expect(err).To(BeNil())
 		clientHubDynamic, err = libgoclient.NewDefaultKubeClientDynamic(kubeconfig)
 		Expect(err).To(BeNil())
 		clientHubClientset, err = libgoclient.NewDefaultKubeClientAPIExtension(kubeconfig)
@@ -132,7 +152,7 @@ var _ = Describe("Manual import cluster", func() {
 		Expect(err).To(BeNil())
 		hubClient, err = libgoclient.NewDefaultClient(kubeconfig, client.Options{})
 		Expect(err).To(BeNil())
-		hubApplier, err = libgoapplier.NewApplier(templateProcessor, hubClient, nil, nil, nil)
+		hubApplier, err = libgoapplier.NewApplier(templateProcessor, hubClient, nil, nil, merger)
 		Expect(err).To(BeNil())
 	})
 
@@ -152,34 +172,81 @@ var _ = Describe("Manual import cluster", func() {
 						"klusterletaddonconfigs.agent.open-cluster-management.io",
 					})
 			}).Should(BeNil())
-			// Eventually(func() error {
-			// 	return libgoclient.HaveDeploymentsInNamespace(testOptions.HubCluster, testOptions.KubeConfig,
-			// 		"open-cluster-management",
-			// 		[]string{"cert-manager-webhook",
-			// 			"console-header",
-			// 			"etcd-operator",
-			// 			"mcm-apiserver",
-			// 			"mcm-controller",
-			// 			"mcm-webhook",
-			// 			"multicluster-operators-application",
-			// 			"multicluster-operators-hub-subscription",
-			// 			"multicluster-operators-standalone-subscription",
-			// 			"multiclusterhub-repo",
-			// 			"multiclusterhub-operator",
-			// 			"rcm-controller",
-			// 			"search-operator",
-			// 			"mcm-controller",
-			// 		})
-			// }).Should(BeNil())
+			Eventually(func() error {
+				klog.V(1).Info("Check Deployment")
+				return libgoclient.HaveDeploymentsInNamespace(clientHub,
+					"open-cluster-management",
+					[]string{
+						"klusterlet-addon-controller",
+					})
+			}).Should(BeNil())
+
+			Eventually(func() error {
+				klog.V(1).Info("Check webhook")
+				_, err := clientHub.AdmissionregistrationV1().ValidatingWebhookConfigurations().Get(context.TODO(), "klusterlet-addon-controller-validating-webhook", metav1.GetOptions{})
+				return err
+			}).Should(BeNil())
+
+			Eventually(func() error {
+				klog.V(1).Info("Check service")
+				_, err := clientHub.CoreV1().Services("open-cluster-management").Get(context.TODO(), "klusterlet-addon-webhook", metav1.GetOptions{})
+				return err
+			}).Should(BeNil())
+
+			// Create klusterletaddonconfig
+			By("creating the klusterletaddonconfig with invalid semantic version", func() {
+				klog.V(1).Info("Creating the klusterletaddonconfig with invalid semantic version")
+				values := struct {
+					ManagedClusterName string
+					Version            string
+				}{
+					ManagedClusterName: clusterName,
+					Version:            invalidSemanticVersion,
+				}
+
+				names, err := templateProcessor.AssetNamesInPath("./klusterletaddonconfig_cr.yaml", nil, false)
+				Expect(err).To(BeNil())
+				klog.V(1).Infof("names: %s", names)
+				err = hubApplier.CreateOrUpdateAsset("klusterletaddonconfig_cr.yaml", values)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).Should(Equal(fmt.Sprintf(
+					"admission webhook \"%s\" denied the request: Version \"%s\" is invalid semantic version",
+					admissionName,
+					invalidSemanticVersion,
+				)))
+			})
+
+			By("creating the klusterletaddonconfig with unavailable version", func() {
+				klog.V(1).Info("Creating the klusterletaddonconfig with unavailable version")
+				values := struct {
+					ManagedClusterName string
+					Version            string
+				}{
+					ManagedClusterName: clusterName,
+					Version:            unavailableVersion,
+				}
+
+				names, err := templateProcessor.AssetNamesInPath("./klusterletaddonconfig_cr.yaml", nil, false)
+				Expect(err).To(BeNil())
+				klog.V(1).Infof("names: %s", names)
+				err = hubApplier.CreateOrUpdateAsset("klusterletaddonconfig_cr.yaml", values)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).Should(Equal(fmt.Sprintf(
+					"admission webhook \"%s\" denied the request: Version %s is not available. Available Versions are: [%s]",
+					admissionName,
+					unavailableVersion,
+					versionList,
+				)))
+			})
 
 			By("creating the klusterletaddonconfig", func() {
 				klog.V(1).Info("Creating the klusterletaddonconfig")
 				values := struct {
 					ManagedClusterName string
-					//ImagePullSecret    string
+					Version            string
 				}{
 					ManagedClusterName: clusterName,
-					//ImagePullSecret:    MANUAL_IMPORT_IMAGE_PULL_SECRET,
+					Version:            "2.0.0",
 				}
 				names, err := templateProcessor.AssetNamesInPath("./klusterletaddonconfig_cr.yaml", nil, false)
 				Expect(err).To(BeNil())
@@ -289,6 +356,55 @@ var _ = Describe("Manual import cluster", func() {
 				klog.V(1).Infof("Pods in open-cluster-management-agent-addon are running")
 			})
 
+			// Update klusterletaddonconfig
+			By(fmt.Sprintf("Updating the klusterletaddonconfig %s on the hub with invalid semantic version", clusterName), func() {
+				klog.V(1).Infof("Updating the klusterletaddonconfig %s on the hub with invalid semantic version", clusterName)
+
+				values := struct {
+					ManagedClusterName string
+					Version            string
+				}{
+					ManagedClusterName: clusterName,
+					Version:            invalidSemanticVersion,
+				}
+
+				names, err := templateProcessor.AssetNamesInPath("./klusterletaddonconfig_cr.yaml", nil, false)
+				Expect(err).To(BeNil())
+				klog.V(1).Infof("names: %s", names)
+				err = hubApplier.CreateOrUpdateAsset("klusterletaddonconfig_cr.yaml", values)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).Should(Equal(fmt.Sprintf(
+					"admission webhook \"%s\" denied the request: Version \"%s\" is invalid semantic version",
+					admissionName,
+					invalidSemanticVersion,
+				)))
+			})
+
+			By(fmt.Sprintf("Updating the klusterletaddonconfig %s on the hub with unavailable version", clusterName), func() {
+				klog.V(1).Infof("Updating the klusterletaddonconfig %s on the hub with unavailable version", clusterName)
+
+				values := struct {
+					ManagedClusterName string
+					Version            string
+				}{
+					ManagedClusterName: clusterName,
+					Version:            unavailableVersion,
+				}
+
+				names, err := templateProcessor.AssetNamesInPath("./klusterletaddonconfig_cr.yaml", nil, false)
+				Expect(err).To(BeNil())
+				klog.V(1).Infof("names: %s", names)
+				err = hubApplier.CreateOrUpdateAsset("klusterletaddonconfig_cr.yaml", values)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).Should(Equal(fmt.Sprintf(
+					"admission webhook \"%s\" denied the request: Version %s is not available. Available Versions are: [%s]",
+					admissionName,
+					unavailableVersion,
+					versionList,
+				)))
+			})
+
+			// Delete klusterletaddonconfig
 			By(fmt.Sprintf("Deleting the klusterletaddonconfig %s on the hub", clusterName), func() {
 				klog.V(1).Infof("Deleting the klusterletaddonconfig %s on the hub", clusterName)
 				gvr := schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1", Resource: "klusterletaddonconfigs"}
@@ -343,7 +459,6 @@ var _ = Describe("Manual import cluster", func() {
 
 			When("the klusterletaddonconfig is deleted, wait for deletion of manifestwork for addon operator", func() {
 				gvrManifestwork := schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
-				//var addonOperator *unstructured.Unstructured
 				Eventually(func() bool {
 					klog.V(1).Infof("Wait ManifestWork %s...", clusterName+"-klusterlet-addon-operator")
 					_, err = clientHubDynamic.Resource(gvrManifestwork).Namespace(clusterName).Get(context.TODO(), clusterName+"-klusterlet-addon-operator", metav1.GetOptions{})
