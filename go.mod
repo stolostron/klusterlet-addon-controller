@@ -9,7 +9,7 @@ require (
 	github.com/onsi/gomega v1.9.0
 	github.com/open-cluster-management/api v0.0.0-20200602195039-a516cac2e038
 	github.com/open-cluster-management/library-e2e-go v0.0.0-20200620112055-c80fc3c14997
-	github.com/open-cluster-management/library-go v0.0.0-20200619234924-ec3f983fe4f2
+	github.com/open-cluster-management/library-go v0.0.0-20200717185358-0f041928bcef
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/operator-framework/operator-sdk v0.18.1
 	github.com/prometheus/common v0.9.1
