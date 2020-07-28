@@ -5,6 +5,7 @@ OPENSOURCE.check
 .vscode
 cover.html
 cover-functional.html
+cover-functional-filtered.html
 *.out
 *.tap
 *.test

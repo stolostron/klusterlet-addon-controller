@@ -101,8 +101,10 @@ kind load docker-image $DOCKER_IMAGE --name=klusterlet-addon-controller-test
 #Create the namespace
 kubectl apply -f ${PROJECT_DIR}/deploy/namespace.yaml
 
+COMPONENT_DOCKER_REPO=`echo "$DOCKER_IMAGE" | cut -f1 -d:`
+
 kubectl create secret docker-registry ${PULL_SECRET} \
-      --docker-server=quay.io/open-cluster-management \
+      --docker-server=${COMPONENT_DOCKER_REPO} \
       --docker-username=$DOCKER_USER \
       --docker-password=$DOCKER_PASS \
       -n open-cluster-management
@@ -117,7 +119,7 @@ for dir in overlays/test/* ; do
   kubectl patch deployment klusterlet-addon-controller -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"klusterlet-addon-controller\",\"image\":\"${DOCKER_IMAGE}\"}]}}}}"
   kubectl rollout status -n open-cluster-management deployment klusterlet-addon-controller --timeout=120s
   sleep 10
-  ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional/... -- --v=1
+  ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional/... -- --v=1 --image-registry=$COMPONENT_DOCKER_REPO
   kubectl delete deployment klusterlet-addon-controller -n open-cluster-management
   sleep 10
 done
