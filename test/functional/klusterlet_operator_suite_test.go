@@ -58,11 +58,8 @@ var (
 	gvrManifestwork          schema.GroupVersionResource
 	gvrManagedCluster        schema.GroupVersionResource
 
-	optionsFile         string
-	baseDomain          string
-	kubeadminUser       string
-	kubeadminCredential string
-	kubeconfig          string
+	kubeconfig    string
+	imageRegistry string
 )
 
 func newManagedCluster(name, namespace string) *unstructured.Unstructured {
@@ -112,7 +109,7 @@ func newKlusterletAddonConfig(name, namespace, version string) *unstructured.Uns
 				},
 				"clusterName":      "testCluster",
 				"clusterNamespace": "testCluster",
-				"imageRegistry":    defaultImageRegistry,
+				"imageRegistry":    imageRegistry,
 				"imagePullSecret":  "multicloud-image-pull-secret",
 				"policyController": map[string]interface{}{
 					"enabled": true,
@@ -183,12 +180,8 @@ func init() {
 	klog.SetOutput(GinkgoWriter)
 	klog.InitFlags(nil)
 
-	flag.StringVar(&kubeadminUser, "kubeadmin-user", "kubeadmin", "Provide the kubeadmin credential for the cluster under test (e.g. -kubeadmin-user=\"xxxxx\").")
-	flag.StringVar(&kubeadminCredential, "kubeadmin-credential", "", "Provide the kubeadmin credential for the cluster under test (e.g. -kubeadmin-credential=\"xxxxx-xxxxx-xxxxx-xxxxx\").")
-	flag.StringVar(&baseDomain, "base-domain", "", "Provide the base domain for the cluster under test (e.g. -base-domain=\"demo.red-chesterfield.com\").")
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Location of the kubeconfig to use; defaults to KUBECONFIG if not set")
-
-	flag.StringVar(&optionsFile, "options", "", "Location of an \"options.yaml\" file to provide input for various tests")
+	flag.StringVar(&imageRegistry, "image-registry", defaultImageRegistry, fmt.Sprintf("URL if the image registry (ie: %s", defaultImageRegistry))
 
 }
 func TestKlusterletOperator(t *testing.T) {

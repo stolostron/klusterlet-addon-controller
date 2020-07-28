@@ -167,7 +167,7 @@ deploy:
 
 .PHONY: functional-test
 functional-test: 
-	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/klusterlet-addon-controller-test -- --v=1
+	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/klusterlet-addon-controller-test -- --v=1 --image-registry=${COMPONENT_DOCKER_REPO}
 
 .PHONY: functional-test-full
 functional-test-full: build-coverage component/test/functional
