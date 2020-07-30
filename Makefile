@@ -69,7 +69,7 @@ deps: init component/init
 
 .PHONY: check
 ## Runs a set of required checks
-check: lint ossccheck copyright-check go-bindata-check go-mod-check
+check: lint copyright-check go-bindata-check go-mod-check
 
 .PHONY: test
 ## Runs go unit tests
@@ -125,14 +125,6 @@ run:
 .PHONE: request-destruct
 request-destruct:
 	build/bin/self-destruct.sh
-
-.PHONY: ossccheck
-ossccheck:
-	ossc --check
-
-.PHONY: ossc
-ossc:
-	ossc
 
 .PHONY: lint
 ## Runs linter against go files
