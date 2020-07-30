@@ -12,7 +12,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -126,12 +125,6 @@ func NewNamespace() *corev1.Namespace {
 	}
 }
 
-func watchesFile(instance *agentv1.KlusterletAddonConfig) string {
-	versionSplit := strings.Split(instance.Spec.Version, "-")
-	version := versionSplit[0]
-	return "/opt/helm/versions/" + version + "/watches.yaml"
-}
-
 // NewDeployment -  template for klusterlet addon operator
 func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*appsv1.Deployment, error) {
 	labels := map[string]string{
@@ -195,9 +188,6 @@ func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*
 										},
 									},
 								},
-							},
-							Args: []string{
-								"--watches-file=" + watchesFile(instance),
 							},
 						},
 					},
