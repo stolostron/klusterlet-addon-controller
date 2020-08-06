@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/Masterminds/semver"
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
 )
 
@@ -125,6 +127,12 @@ func NewNamespace() *corev1.Namespace {
 	}
 }
 
+func watchesFile(instance *agentv1.KlusterletAddonConfig) string {
+	versionSplit := strings.Split(instance.Spec.Version, "-")
+	version := versionSplit[0]
+	return "/opt/helm/versions/" + version + "/watches.yaml"
+}
+
 // NewDeployment -  template for klusterlet addon operator
 func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*appsv1.Deployment, error) {
 	labels := map[string]string{
@@ -201,6 +209,21 @@ func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*
 			{
 				Name: instance.Spec.ImagePullSecret,
 			},
+		}
+	}
+
+	v, err := semver.NewVersion(instance.Spec.Version)
+	if err != nil {
+		return nil, err
+	}
+	c, err := semver.NewConstraint("< 2.1.0")
+	if err != nil {
+		return nil, err
+	}
+
+	if c.Check(v) {
+		deployment.Spec.Template.Spec.Containers[0].Args = []string{
+			"--watches-file=" + watchesFile(instance),
 		}
 	}
 
