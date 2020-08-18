@@ -120,7 +120,7 @@ clean::
 .PHONY: run
 ## Run the operator against the kubeconfig targeted cluster
 run:
-	operator-sdk run local --watch-namespace="" --operator-flags="--zap-devel=true"
+	operator-sdk run local --watch-namespace="" 
 
 .PHONE: request-destruct
 request-destruct:
