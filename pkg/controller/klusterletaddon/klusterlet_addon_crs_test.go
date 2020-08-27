@@ -14,6 +14,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
+	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
+	addons "github.com/open-cluster-management/endpoint-operator/pkg/components"
+	appmgr "github.com/open-cluster-management/endpoint-operator/pkg/components/appmgr/v1"
+	certpolicyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/certpolicycontroller/v1"
+	iampolicyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/iampolicycontroller/v1"
+	ocinfrav1 "github.com/openshift/api/config/v1"
 	"gotest.tools/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,10 +28,6 @@ import (
 	"k8s.io/kubectl/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
-	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
-	ocinfrav1 "github.com/openshift/api/config/v1"
 )
 
 var (
@@ -48,76 +51,6 @@ func setup() error {
 func teardown() {
 }
 
-func Test_checkComponentIsEnabled(t *testing.T) {
-
-	testscheme := scheme.Scheme
-
-	testscheme.AddKnownTypes(agentv1.SchemeGroupVersion, &agentv1.KlusterletAddonConfig{})
-	testKlusterletAddonConfig := &agentv1.KlusterletAddonConfig{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: agentv1.SchemeGroupVersion.String(),
-			Kind:       "KlusterletAddonConfig",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-managedcluster",
-			Namespace: "test-managedcluster",
-		},
-		Spec: agentv1.KlusterletAddonConfigSpec{
-			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
-				Enabled: true,
-			},
-			PolicyController: agentv1.KlusterletAddonConfigPolicyControllerSpec{
-				Enabled: false,
-			},
-			Version: "2.0.0",
-		},
-	}
-
-	tests := []struct {
-		name               string
-		klusterletaddoncfg *agentv1.KlusterletAddonConfig
-		componentName      string
-		Expected           bool
-		wantErr            bool
-	}{
-		{"enabled", testKlusterletAddonConfig, "appmgr", true, false},
-		{"disable", testKlusterletAddonConfig, "policyctrl", false, false},
-		{"not supported", testKlusterletAddonConfig, "fakecomponent", false, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			actual, err := checkComponentIsEnabled(tt.componentName, tt.klusterletaddoncfg)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("checkComponentIsEnabled() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if err == nil {
-				assert.Equal(t, actual, tt.Expected)
-			}
-		})
-	}
-}
-
-func Test_checkHubKubeconfigRequired(t *testing.T) {
-
-	tests := []struct {
-		name          string
-		componentName string
-		Expected      bool
-	}{
-		{"required", "appmgr", true},
-		{"not-required", "certpolicyctrl", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			actual := checkHubKubeconfigRequired(tt.componentName)
-			assert.Equal(t, actual, tt.Expected)
-
-		})
-	}
-}
 func Test_syncManifestWorkCRs(t *testing.T) {
 	testscheme := scheme.Scheme
 
@@ -296,7 +229,7 @@ func Test_newCRManifestWork(t *testing.T) {
 	type args struct {
 		r                  *ReconcileKlusterletAddon
 		klusterletaddoncfg *agentv1.KlusterletAddonConfig
-		name               string
+		addon              addons.KlusterletAddon
 	}
 
 	tests := []struct {
@@ -305,7 +238,7 @@ func Test_newCRManifestWork(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "empty name",
+			name: "create manifestwork for cert policy controller",
 			args: args{
 				r: &ReconcileKlusterletAddon{
 					client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{
@@ -314,23 +247,23 @@ func Test_newCRManifestWork(t *testing.T) {
 					scheme: testscheme,
 				},
 				klusterletaddoncfg: testKlusterletAddonConfig,
-				name:               "",
+				addon:              certpolicyctrl.AddonCertPolicyCtrl{},
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
-			name: "wrong name",
+			name: "create manifestwork for iam policy controller",
 			args: args{
 				r: &ReconcileKlusterletAddon{
 					client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{
-						testKlusterletAddonConfig,
+						testKlusterletAddonConfig, testServiceAccountAppmgr, testSecret, infrastructConfig,
 					}...),
 					scheme: testscheme,
 				},
 				klusterletaddoncfg: testKlusterletAddonConfig,
-				name:               "invalidname",
+				addon:              iampolicyctrl.AddonIAMPolicyCtrl{},
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "create manifestwork for application manager",
@@ -342,7 +275,7 @@ func Test_newCRManifestWork(t *testing.T) {
 					scheme: testscheme,
 				},
 				klusterletaddoncfg: testKlusterletAddonConfig,
-				name:               "appmgr",
+				addon:              appmgr.AddonAppMgr{},
 			},
 			wantErr: false,
 		},
@@ -350,7 +283,7 @@ func Test_newCRManifestWork(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mw, err := newCRManifestWork(tt.args.name, tt.args.klusterletaddoncfg, tt.args.r.client)
+			mw, err := newCRManifestWork(tt.args.addon, tt.args.klusterletaddoncfg, tt.args.r.client)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("newCRManifestWork() error = %v, wantErr %v", err, tt.wantErr)
 				return

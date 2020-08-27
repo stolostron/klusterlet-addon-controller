@@ -10,6 +10,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
@@ -24,13 +25,26 @@ const (
 
 var log = logf.Log.WithName("search")
 
-// IsEnabled - check whether search is enabled
-func IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
+type AddonSearch struct{}
+
+func (addon AddonSearch) IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
 	return instance.Spec.SearchCollectorConfig.Enabled
 }
 
-// NewSearchCollectorCR - create CR for component search collector
-func NewSearchCollectorCR(instance *agentv1.KlusterletAddonConfig, namespace string) (*agentv1.SearchCollector, error) {
+func (addon AddonSearch) CheckHubKubeconfigRequired() bool {
+	return RequiresHubKubeConfig
+}
+
+func (addon AddonSearch) GetAddonName() string {
+	return Search
+}
+
+func (addon AddonSearch) NewAddonCR(instance *agentv1.KlusterletAddonConfig, namespace string) (runtime.Object, error) {
+	return newSearchCollectorCR(instance, namespace)
+}
+
+// newSearchCollectorCR - create CR for component search collector
+func newSearchCollectorCR(instance *agentv1.KlusterletAddonConfig, namespace string) (*agentv1.SearchCollector, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}

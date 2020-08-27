@@ -10,6 +10,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
@@ -24,13 +25,28 @@ const (
 
 var log = logf.Log.WithName("iampolicyctrl")
 
-// IsEnabled - check whether iampolicyctrl is enabled
-func IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
+type AddonIAMPolicyCtrl struct{}
+
+func (addon AddonIAMPolicyCtrl) IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
 	return instance.Spec.IAMPolicyControllerConfig.Enabled
 }
+func (addon AddonIAMPolicyCtrl) CheckHubKubeconfigRequired() bool {
+	return RequiresHubKubeConfig
+}
 
-// NewIAMPolicyControllerCR - create CR for component iam poliicy controller
-func NewIAMPolicyControllerCR(
+func (addon AddonIAMPolicyCtrl) GetAddonName() string {
+	return IAMPolicyCtrl
+}
+
+func (addon AddonIAMPolicyCtrl) NewAddonCR(
+	instance *agentv1.KlusterletAddonConfig,
+	namespace string,
+) (runtime.Object, error) {
+	return newIAMPolicyControllerCR(instance, namespace)
+}
+
+// newIAMPolicyControllerCR - create CR for component iam poliicy controller
+func newIAMPolicyControllerCR(
 	instance *agentv1.KlusterletAddonConfig,
 	namespace string,
 ) (*agentv1.IAMPolicyController, error) {

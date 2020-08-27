@@ -13,6 +13,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // const of appmgr
@@ -24,13 +25,27 @@ const (
 
 var log = logf.Log.WithName("appmgr")
 
+type AddonAppMgr struct{}
+
 // IsEnabled - check whether appmgr is enabled
-func IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
+func (addon AddonAppMgr) IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
 	return instance.Spec.ApplicationManagerConfig.Enabled
 }
 
-// NewApplicationManagerCR - create CR for component application manager
-func NewApplicationManagerCR(
+func (addon AddonAppMgr) CheckHubKubeconfigRequired() bool {
+	return RequiresHubKubeConfig
+}
+
+func (addon AddonAppMgr) GetAddonName() string {
+	return AppMgr
+}
+
+func (addon AddonAppMgr) NewAddonCR(instance *agentv1.KlusterletAddonConfig, namespace string) (runtime.Object, error) {
+	return newApplicationManagerCR(instance, namespace)
+}
+
+// newApplicationManagerCR - create CR for component application manager
+func newApplicationManagerCR(
 	instance *agentv1.KlusterletAddonConfig,
 	namespace string,
 ) (*agentv1.ApplicationManager, error) {

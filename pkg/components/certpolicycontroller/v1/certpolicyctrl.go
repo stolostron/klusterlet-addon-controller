@@ -10,6 +10,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
@@ -24,13 +25,29 @@ const (
 
 var log = logf.Log.WithName("certpolicyctrl")
 
-// IsEnabled - check whether certpolicyctrl is enabled
-func IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
+type AddonCertPolicyCtrl struct{}
+
+func (addon AddonCertPolicyCtrl) IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
 	return instance.Spec.CertPolicyControllerConfig.Enabled
 }
 
-// NewCertPolicyControllerCR - create CR for component cert policy controller
-func NewCertPolicyControllerCR(
+func (addon AddonCertPolicyCtrl) CheckHubKubeconfigRequired() bool {
+	return RequiresHubKubeConfig
+}
+
+func (addon AddonCertPolicyCtrl) GetAddonName() string {
+	return CertPolicyCtrl
+}
+
+func (addon AddonCertPolicyCtrl) NewAddonCR(
+	instance *agentv1.KlusterletAddonConfig,
+	namespace string,
+) (runtime.Object, error) {
+	return newCertPolicyControllerCR(instance, namespace)
+}
+
+// newCertPolicyControllerCR - create CR for component cert policy controller
+func newCertPolicyControllerCR(
 	instance *agentv1.KlusterletAddonConfig,
 	namespace string,
 ) (*agentv1.CertPolicyController, error) {
