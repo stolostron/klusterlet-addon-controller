@@ -13,6 +13,8 @@ package klusterlet_addon_controller_test
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -293,9 +295,13 @@ var _ = Describe("Disabling & Enabling Addons", func() {
 		})
 	})
 	It("Should update Addons' Manifestwork when KlusterletAddonConfig changed", func() {
+		By("Shaffling addon orders")
+		tmpAddonCRs := append([]string{}, addonCRs...)
+		rand.Seed(time.Now().UnixNano())
+		rand.Shuffle(len(tmpAddonCRs), func(i, j int) { tmpAddonCRs[i], tmpAddonCRs[j] = tmpAddonCRs[j], tmpAddonCRs[i] })
 		var err error
 		By("Disabling all addons one by one", func() {
-			for _, addon := range addonCRs {
+			for _, addon := range tmpAddonCRs {
 				// workmgr is always enabled
 				if addon == workManager {
 					continue
@@ -325,8 +331,10 @@ var _ = Describe("Disabling & Enabling Addons", func() {
 				return nil
 			}, 3, 1).Should(BeNil())
 		})
+		By("Shaffling addon orders")
+		rand.Shuffle(len(tmpAddonCRs), func(i, j int) { tmpAddonCRs[i], tmpAddonCRs[j] = tmpAddonCRs[j], tmpAddonCRs[i] })
 		By("Enabling all Addons one by one", func() {
-			for _, addon := range addonCRs {
+			for _, addon := range tmpAddonCRs {
 				// workmgr is always enabled
 				if addon == workManager {
 					continue

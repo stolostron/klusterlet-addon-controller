@@ -12,7 +12,7 @@ import (
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
 	addonoperator "github.com/open-cluster-management/endpoint-operator/pkg/components/addon-operator/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -25,14 +25,32 @@ const (
 
 var log = logf.Log.WithName("policyctrl")
 
-// IsEnabled - check whether policyctrl is enabled
-func IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
+type AddonPolicyCtrl struct{}
+
+func (addon AddonPolicyCtrl) IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
 	return instance.Spec.PolicyController.Enabled
 }
 
-// NewPolicyControllerCR - create CR for component poliicy controller
-func NewPolicyControllerCR(instance *agentv1.KlusterletAddonConfig,
-	client client.Client, namespace string) (*agentv1.PolicyController, error) {
+func (addon AddonPolicyCtrl) CheckHubKubeconfigRequired() bool {
+	return RequiresHubKubeConfig
+}
+
+func (addon AddonPolicyCtrl) GetAddonName() string {
+	return PolicyCtrl
+}
+
+func (addon AddonPolicyCtrl) NewAddonCR(
+	instance *agentv1.KlusterletAddonConfig,
+	namespace string,
+) (runtime.Object, error) {
+	return newPolicyControllerCR(instance, namespace)
+}
+
+// newPolicyControllerCR - create CR for component poliicy controller
+func newPolicyControllerCR(
+	instance *agentv1.KlusterletAddonConfig,
+	namespace string,
+) (*agentv1.PolicyController, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}

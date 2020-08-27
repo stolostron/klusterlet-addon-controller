@@ -27,6 +27,7 @@ import (
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/bindata"
+	addons "github.com/open-cluster-management/endpoint-operator/pkg/components"
 	addonoperator "github.com/open-cluster-management/endpoint-operator/pkg/components/addon-operator/v1"
 	appmgr "github.com/open-cluster-management/endpoint-operator/pkg/components/appmgr/v1"
 	certpolicyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/certpolicycontroller/v1"
@@ -43,6 +44,14 @@ const (
 	infrastructureConfigName = "cluster"
 )
 
+var addonsArray = []addons.KlusterletAddon{
+	appmgr.AddonAppMgr{},
+	certpolicyctrl.AddonCertPolicyCtrl{},
+	iampolicyctrl.AddonIAMPolicyCtrl{},
+	policyctrl.AddonPolicyCtrl{},
+	search.AddonSearch{},
+	workmgr.AddonWorkMgr{},
+}
 var componentsArray = []string{appmgr.AppMgr, certpolicyctrl.CertPolicyCtrl,
 	iampolicyctrl.IAMPolicyCtrl, policyctrl.PolicyCtrl, search.Search, workmgr.WorkMgr}
 
@@ -75,7 +84,7 @@ var merger applier.Merger = func(current,
 	return current, update
 }
 
-func createOrUpdateResources(
+func createOrUpdateHubKubeConfigResources(
 	klusterletaddonconfig *agentv1.KlusterletAddonConfig,
 	r *ReconcileKlusterletAddon,
 	componentName string) error {
@@ -125,68 +134,15 @@ func createOrUpdateResources(
 	return nil
 }
 
-// checkComponentIsEnabled checks if a component is enabled, if componentName is invalid, will return error
-func checkComponentIsEnabled(componentName string, klusterletaddonconfig *agentv1.KlusterletAddonConfig) (bool, error) {
-	switch componentName {
-	case appmgr.AppMgr:
-		return appmgr.IsEnabled(klusterletaddonconfig), nil
-	case certpolicyctrl.CertPolicyCtrl:
-		return certpolicyctrl.IsEnabled(klusterletaddonconfig), nil
-	case iampolicyctrl.IAMPolicyCtrl:
-		return iampolicyctrl.IsEnabled(klusterletaddonconfig), nil
-	case policyctrl.PolicyCtrl:
-		return policyctrl.IsEnabled(klusterletaddonconfig), nil
-	case search.Search:
-		return search.IsEnabled(klusterletaddonconfig), nil
-	case workmgr.WorkMgr:
-		return true, nil // workmanager is always enabled
-	}
-	return false, fmt.Errorf("%s is not supported", componentName)
-}
-
-// checkHubKubeconfigRequired checks if a hub-kube-config is required
-func checkHubKubeconfigRequired(componentName string) bool {
-	switch componentName {
-	case appmgr.AppMgr:
-		return appmgr.RequiresHubKubeConfig
-	case certpolicyctrl.CertPolicyCtrl:
-		return certpolicyctrl.RequiresHubKubeConfig
-	case iampolicyctrl.IAMPolicyCtrl:
-		return iampolicyctrl.RequiresHubKubeConfig
-	case policyctrl.PolicyCtrl:
-		return policyctrl.RequiresHubKubeConfig
-	case search.Search:
-		return search.RequiresHubKubeConfig
-	case workmgr.WorkMgr:
-		return workmgr.RequiresHubKubeConfig
-	}
-	return false
-}
-
 // newCRManifestWork returns ManifestWork of a component CR
 func newCRManifestWork(
-	componentName string,
+	addon addons.KlusterletAddon,
 	klusterletaddonconfig *agentv1.KlusterletAddonConfig,
 	client client.Client) (*manifestworkv1.ManifestWork, error) {
 	var cr runtime.Object
 
 	var err error
-	switch componentName {
-	case appmgr.AppMgr:
-		cr, err = appmgr.NewApplicationManagerCR(klusterletaddonconfig, addonoperator.KlusterletAddonNamespace)
-	case certpolicyctrl.CertPolicyCtrl:
-		cr, err = certpolicyctrl.NewCertPolicyControllerCR(klusterletaddonconfig, addonoperator.KlusterletAddonNamespace)
-	case iampolicyctrl.IAMPolicyCtrl:
-		cr, err = iampolicyctrl.NewIAMPolicyControllerCR(klusterletaddonconfig, addonoperator.KlusterletAddonNamespace)
-	case policyctrl.PolicyCtrl:
-		cr, err = policyctrl.NewPolicyControllerCR(klusterletaddonconfig, client, addonoperator.KlusterletAddonNamespace)
-	case search.Search:
-		cr, err = search.NewSearchCollectorCR(klusterletaddonconfig, addonoperator.KlusterletAddonNamespace)
-	case workmgr.WorkMgr:
-		cr, err = workmgr.NewWorkManagerCR(klusterletaddonconfig, client, addonoperator.KlusterletAddonNamespace)
-	default:
-		err = fmt.Errorf("%s is not supported", componentName)
-	}
+	cr, err = addon.NewAddonCR(klusterletaddonconfig, addonoperator.KlusterletAddonNamespace)
 
 	if err != nil {
 		return nil, err
@@ -195,12 +151,12 @@ func newCRManifestWork(
 	// construct manifestwork
 	var manifests []manifestworkv1.Manifest
 	var manifest manifestworkv1.Manifest
-	if checkHubKubeconfigRequired(componentName) {
+	if addon.CheckHubKubeconfigRequired() {
 		var secret runtime.Object
 		secret, err = newHubKubeconfigSecret(
 			klusterletaddonconfig,
 			client,
-			componentName,
+			addon.GetAddonName(),
 			addonoperator.KlusterletAddonNamespace,
 		)
 		if err != nil {
@@ -215,7 +171,7 @@ func newCRManifestWork(
 
 	manifestWork := &manifestworkv1.ManifestWork{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      klusterletaddonconfig.Name + "-klusterlet-addon-" + componentName,
+			Name:      klusterletaddonconfig.Name + "-klusterlet-addon-" + addon.GetAddonName(),
 			Namespace: klusterletaddonconfig.Namespace,
 		},
 		Spec: manifestworkv1.ManifestWorkSpec{
@@ -233,21 +189,19 @@ func syncManifestWorkCRs(klusterletaddonconfig *agentv1.KlusterletAddonConfig, r
 	var lastErr error
 	lastErr = nil
 
-	for _, component := range componentsArray {
-		// create sa/clusterrole/clusterrolebindig for each component
-		if checkHubKubeconfigRequired(component) {
-			if err := createOrUpdateResources(klusterletaddonconfig, r, component); err != nil {
-				log.Error(err, fmt.Sprintf("Failed to create sa/clusterrole/clusterrolebindig for componnet %s", component))
+	for _, addon := range addonsArray {
+		addonName := addon.GetAddonName()
+		// create sa/clusterrole/clusterrolebindig for each addon
+		if addon.CheckHubKubeconfigRequired() {
+			if err := createOrUpdateHubKubeConfigResources(klusterletaddonconfig, r, addonName); err != nil {
+				log.Error(err, fmt.Sprintf("Failed to create sa/clusterrole/clusterrolebindig for componnet %s", addonName))
 				lastErr = err
 				continue
 			}
 		}
-		if isEnabled, err := checkComponentIsEnabled(component, klusterletaddonconfig); err != nil {
-			log.Error(err, fmt.Sprintf("Failed to check if component %s is enabled or not", component))
-			lastErr = err
-		} else if isEnabled {
+		if addon.IsEnabled(klusterletaddonconfig) {
 			// create Manifestwork if enabled
-			if manifestWork, err := newCRManifestWork(component, klusterletaddonconfig, r.client); err != nil {
+			if manifestWork, err := newCRManifestWork(addon, klusterletaddonconfig, r.client); err != nil {
 				lastErr = err
 			} else if err = utils.CreateOrUpdateManifestWork(
 				manifestWork,
@@ -255,18 +209,18 @@ func syncManifestWorkCRs(klusterletaddonconfig *agentv1.KlusterletAddonConfig, r
 				klusterletaddonconfig,
 				r.scheme,
 			); err != nil {
-				log.Error(err, "Failed to create manifest work for component "+component)
+				log.Error(err, "Failed to create manifest work for addon "+addonName)
 				lastErr = err
 			}
 		} else {
 			// delete Manifestwork if disabled
 			if err := utils.DeleteManifestWork(
-				klusterletaddonconfig.Name+"-klusterlet-addon-"+component,
+				klusterletaddonconfig.Name+"-klusterlet-addon-"+addonName,
 				klusterletaddonconfig.Namespace,
 				r.client,
 				false,
 			); err != nil && !errors.IsNotFound(err) {
-				log.Error(err, fmt.Sprintf("Failed to delete %s ManifestWork", component))
+				log.Error(err, fmt.Sprintf("Failed to delete %s ManifestWork", addonName))
 				lastErr = err
 			}
 		}

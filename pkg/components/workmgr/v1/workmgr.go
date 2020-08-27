@@ -10,7 +10,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
@@ -25,9 +25,32 @@ const (
 
 var log = logf.Log.WithName("workmgr")
 
-// NewWorkManagerCR - create CR for component work manager
-func NewWorkManagerCR(instance *agentv1.KlusterletAddonConfig,
-	client client.Client, namespace string) (*agentv1.WorkManager, error) {
+type AddonWorkMgr struct{}
+
+func (addon AddonWorkMgr) IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
+	return true
+}
+
+func (addon AddonWorkMgr) CheckHubKubeconfigRequired() bool {
+	return RequiresHubKubeConfig
+}
+
+func (addon AddonWorkMgr) GetAddonName() string {
+	return WorkMgr
+}
+
+func (addon AddonWorkMgr) NewAddonCR(
+	instance *agentv1.KlusterletAddonConfig,
+	namespace string,
+) (runtime.Object, error) {
+	return newWorkManagerCR(instance, namespace)
+}
+
+// newWorkManagerCR - create CR for component work manager
+func newWorkManagerCR(
+	instance *agentv1.KlusterletAddonConfig,
+	namespace string,
+) (*agentv1.WorkManager, error) {
 	labels := map[string]string{
 		"app": instance.Name,
 	}
