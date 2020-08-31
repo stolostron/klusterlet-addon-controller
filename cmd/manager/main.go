@@ -17,7 +17,6 @@ import (
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/apis"
 	"github.com/open-cluster-management/endpoint-operator/pkg/controller"
-	"github.com/open-cluster-management/endpoint-operator/pkg/webhook"
 	"github.com/open-cluster-management/endpoint-operator/version"
 	ocinfrav1 "github.com/openshift/api/config/v1"
 
@@ -105,12 +104,6 @@ func main() {
 	if err := controller.AddToManager(mgr); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
-	}
-
-	// Setup webhooks
-	err = webhook.Setup(mgr)
-	if err != nil {
-		log.Error(err, "Failed to setup webhooks")
 	}
 
 	log.Info("Starting the Cmd.")

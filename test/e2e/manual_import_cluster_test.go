@@ -38,9 +38,6 @@ const (
 	//	MANUAL_IMPORT_IMAGE_PULL_SECRET = "image-pull-secret"
 	MANUAL_IMPORT_CLUSTER_SCENARIO = "manual-import"
 	invalidSemanticVersion         = "2.0.0.12"
-	unavailableVersion             = "1.0.0"
-	versionList                    = "2.0.0 2.1.0"
-	admissionName                  = "klusterletaddonconfig.validating-webhook.open-cluster-management.io"
 )
 
 // list of manifestwork name for addon crs
@@ -181,64 +178,6 @@ var _ = Describe("Manual import cluster", func() {
 					})
 			}).Should(BeNil())
 
-			Eventually(func() error {
-				klog.V(1).Info("Check webhook")
-				_, err := clientHub.AdmissionregistrationV1().ValidatingWebhookConfigurations().Get(context.TODO(), "klusterlet-addon-controller-validating-webhook", metav1.GetOptions{})
-				return err
-			}).Should(BeNil())
-
-			Eventually(func() error {
-				klog.V(1).Info("Check service")
-				_, err := clientHub.CoreV1().Services("open-cluster-management").Get(context.TODO(), "klusterlet-addon-webhook", metav1.GetOptions{})
-				return err
-			}).Should(BeNil())
-
-			// Create klusterletaddonconfig
-			By("creating the klusterletaddonconfig with invalid semantic version", func() {
-				klog.V(1).Info("Creating the klusterletaddonconfig with invalid semantic version")
-				values := struct {
-					ManagedClusterName string
-					Version            string
-				}{
-					ManagedClusterName: clusterName,
-					Version:            invalidSemanticVersion,
-				}
-
-				names, err := templateProcessor.AssetNamesInPath("./klusterletaddonconfig_cr.yaml", nil, false)
-				Expect(err).To(BeNil())
-				klog.V(1).Infof("names: %s", names)
-				err = hubApplier.CreateOrUpdateAsset("klusterletaddonconfig_cr.yaml", values)
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).Should(Equal(fmt.Sprintf(
-					"admission webhook \"%s\" denied the request: Version \"%s\" is invalid semantic version",
-					admissionName,
-					invalidSemanticVersion,
-				)))
-			})
-
-			By("creating the klusterletaddonconfig with unavailable version", func() {
-				klog.V(1).Info("Creating the klusterletaddonconfig with unavailable version")
-				values := struct {
-					ManagedClusterName string
-					Version            string
-				}{
-					ManagedClusterName: clusterName,
-					Version:            unavailableVersion,
-				}
-
-				names, err := templateProcessor.AssetNamesInPath("./klusterletaddonconfig_cr.yaml", nil, false)
-				Expect(err).To(BeNil())
-				klog.V(1).Infof("names: %s", names)
-				err = hubApplier.CreateOrUpdateAsset("klusterletaddonconfig_cr.yaml", values)
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).Should(Equal(fmt.Sprintf(
-					"admission webhook \"%s\" denied the request: Version %s is not available. Available Versions are: [%s]",
-					admissionName,
-					unavailableVersion,
-					versionList,
-				)))
-			})
-
 			By("creating the klusterletaddonconfig", func() {
 				klog.V(1).Info("Creating the klusterletaddonconfig")
 				values := struct {
@@ -354,54 +293,6 @@ var _ = Describe("Manual import cluster", func() {
 					return err
 				}).Should(BeNil())
 				klog.V(1).Infof("Pods in open-cluster-management-agent-addon are running")
-			})
-
-			// Update klusterletaddonconfig
-			By(fmt.Sprintf("Updating the klusterletaddonconfig %s on the hub with invalid semantic version", clusterName), func() {
-				klog.V(1).Infof("Updating the klusterletaddonconfig %s on the hub with invalid semantic version", clusterName)
-
-				values := struct {
-					ManagedClusterName string
-					Version            string
-				}{
-					ManagedClusterName: clusterName,
-					Version:            invalidSemanticVersion,
-				}
-
-				names, err := templateProcessor.AssetNamesInPath("./klusterletaddonconfig_cr.yaml", nil, false)
-				Expect(err).To(BeNil())
-				klog.V(1).Infof("names: %s", names)
-				err = hubApplier.CreateOrUpdateAsset("klusterletaddonconfig_cr.yaml", values)
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).Should(Equal(fmt.Sprintf(
-					"admission webhook \"%s\" denied the request: Version \"%s\" is invalid semantic version",
-					admissionName,
-					invalidSemanticVersion,
-				)))
-			})
-
-			By(fmt.Sprintf("Updating the klusterletaddonconfig %s on the hub with unavailable version", clusterName), func() {
-				klog.V(1).Infof("Updating the klusterletaddonconfig %s on the hub with unavailable version", clusterName)
-
-				values := struct {
-					ManagedClusterName string
-					Version            string
-				}{
-					ManagedClusterName: clusterName,
-					Version:            unavailableVersion,
-				}
-
-				names, err := templateProcessor.AssetNamesInPath("./klusterletaddonconfig_cr.yaml", nil, false)
-				Expect(err).To(BeNil())
-				klog.V(1).Infof("names: %s", names)
-				err = hubApplier.CreateOrUpdateAsset("klusterletaddonconfig_cr.yaml", values)
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).Should(Equal(fmt.Sprintf(
-					"admission webhook \"%s\" denied the request: Version %s is not available. Available Versions are: [%s]",
-					admissionName,
-					unavailableVersion,
-					versionList,
-				)))
 			})
 
 			// Delete klusterletaddonconfig
