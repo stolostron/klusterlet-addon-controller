@@ -40,12 +40,9 @@ const (
 	defaultImageRegistry       = "quay.io/open-cluster-management"
 	defaultImagePullSecretName = "multicloud-image-pull-secret"
 	testNamespace              = "test-klusterlet-addon-controller"
-	testWebhookNamespace       = "webhook-test"
-	klusterletAddonNamespace   = "open-cluster-management"
-	resourceName               = "klusterletaddonconfigs"
-	validatingCfgName          = "klusterlet-addon-controller-validating-webhook"
-	webhookserviceName         = "klusterlet-addon-webhook"
-	webhookSecretName          = "klusterlet-webhook-secret"
+
+	klusterletAddonNamespace = "open-cluster-management"
+	resourceName             = "klusterletaddonconfigs"
 )
 
 var (
@@ -213,21 +210,6 @@ var _ = BeforeSuite(func() {
 		klog.V(1).Infof("klusterlet-addon-controller:\n%#v", d)
 	}
 	Expect(err).To(BeNil())
-	s, err := clientCluster.CoreV1().Secrets(klusterletAddonNamespace).Get(context.TODO(), webhookSecretName, metav1.GetOptions{})
-	if err != nil {
-		klog.V(1).Infof("webhook secret not found:\n%#v", s)
-	}
-	Expect(err).To(BeNil())
-	By("Create webhook Namesapce if needed")
-	if _, err := clientCluster.CoreV1().Namespaces().Get(context.TODO(), testWebhookNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
-		Expect(namespaces.Create(context.TODO(), &corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: testWebhookNamespace,
-			},
-		}, metav1.CreateOptions{})).NotTo(BeNil())
-	}
-
-	Expect(namespaces.Get(context.TODO(), testNamespace, metav1.GetOptions{})).NotTo(BeNil())
 
 })
 

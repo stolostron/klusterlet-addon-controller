@@ -29,6 +29,3 @@ resources:
 - ./role.yaml
 - ./role_binding.yaml
 - ./deployment.yaml
-- ./fake_secret.yaml
-- ./service.yaml
-- ./webhook.yaml
