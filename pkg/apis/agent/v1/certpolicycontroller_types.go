@@ -31,6 +31,10 @@ type CertPolicyControllerSpec struct {
 	ClusterNamespace string `json:"clusterNamespace"`
 
 	GlobalValues GlobalValues `json:"global"`
+
+	// +kubebuilder:validation:MinLength=1
+	// +optional
+	HubKubeconfigSecret string `json:"hubKubeconfigSecret"`
 }
 
 // CertPolicyControllerStatus defines the observed state of CertPolicyController

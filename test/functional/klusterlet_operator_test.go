@@ -120,10 +120,14 @@ var validations = map[string][]string{
 	certPolicyController: []string{
 		`"kind":"CertPolicyController"`,
 		`"name":"klusterlet-addon-certpolicyctrl"`,
+		`"kubeconfig":`,
+		`"name":"certpolicyctrl-hub-kubeconfig"`,
 	},
 	iamPolicyController: []string{
 		`"kind":"IAMPolicyController"`,
 		`"name":"klusterlet-addon-iampolicyctrl"`,
+		`"kubeconfig":`,
+		`"name":"iampolicyctrl-hub-kubeconfig"`,
 	},
 	policyController: []string{
 		`"kind":"PolicyController"`,

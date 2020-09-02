@@ -4,12 +4,6 @@ metadata:
   name: "{{ .ManagedClusterName }}"
   namespace: "{{ .ManagedClusterNamespace }}"
 rules:
-- verbs:
-  - create
-  apiGroups:
-  - proxy.open-cluster-management.io
-  resources:
-  - clusterstatuses/aggregator
 - apiGroups:
   - coordination.k8s.io
   resources:

@@ -20,7 +20,7 @@ import (
 const (
 	IAMPolicyController   = "klusterlet-addon-iampolicyctrl"
 	IAMPolicyCtrl         = "iampolicyctrl"
-	RequiresHubKubeConfig = false
+	RequiresHubKubeConfig = true
 )
 
 var log = logf.Log.WithName("iampolicyctrl")
@@ -79,10 +79,11 @@ func newIAMPolicyControllerCR(
 			Labels:    labels,
 		},
 		Spec: agentv1.IAMPolicyControllerSpec{
-			FullNameOverride: IAMPolicyController,
-			ClusterName:      instance.Spec.ClusterName,
-			ClusterNamespace: instance.Spec.ClusterNamespace,
-			GlobalValues:     gv,
+			FullNameOverride:    IAMPolicyController,
+			HubKubeconfigSecret: IAMPolicyCtrl + "-hub-kubeconfig",
+			ClusterName:         instance.Spec.ClusterName,
+			ClusterNamespace:    instance.Spec.ClusterNamespace,
+			GlobalValues:        gv,
 		},
 	}, err
 }
