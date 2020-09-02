@@ -59,12 +59,12 @@ func newApplicationManagerCR(
 		ImageOverrides:  make(map[string]string, 2),
 	}
 
-	imageKey, imageRepository, err := instance.GetImage("subscription")
+	imageRepository, err := instance.GetImage("multicluster_operators_subscription")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "subscription")
 		return nil, err
 	}
-	gv.ImageOverrides[imageKey] = imageRepository
+	gv.ImageOverrides["multicluster_operators_subscription"] = imageRepository
 
 	return &agentv1.ApplicationManager{
 		TypeMeta: metav1.TypeMeta{

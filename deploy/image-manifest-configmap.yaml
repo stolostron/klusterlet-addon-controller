@@ -1,0 +1,66 @@
+apiVersion: v1
+data:
+  application_ui: quay.io/open-cluster-management/application-ui@sha256:54825d95d96e821670c1eb67f35017412eb4584df78290cddf7ac491ae726f2c
+  application_ui_tests: quay.io/open-cluster-management/application-ui-tests@sha256:f03980c86dd3f0abbaf188d24a40438ac11c2b4b466fb5fb84265b724e41e8b6
+  cert_manager_acmesolver: quay.io/open-cluster-management/cert-manager-acmesolver@sha256:9bea06e45d4a71e2dfee537e3201e544c72c766a79d5cc605abc9aa7e9f3e678
+  cert_manager_cainjector: quay.io/open-cluster-management/cert-manager-cainjector@sha256:040367a05035e8160874d03b120e31d09e82342f8256e065efa98828a88d80a4
+  cert_manager_controller: quay.io/open-cluster-management/cert-manager-controller@sha256:b9ad209fee442d43d57dc9576ab5ccce82e6edd0defee8fbeb21337dfd4a2336
+  cert_manager_webhook: quay.io/open-cluster-management/cert-manager-webhook@sha256:e548a35fa54bbe7b5542f44da22b625d20dcdccd8dcca59c8a6a59bddedbdcbb
+  cert_policy_controller: quay.io/open-cluster-management/cert-policy-controller@sha256:2430f5e9cbd2395f373823946e77dfe1ea7c44a21aa11ad684ecd192b1563b17
+  config_policy_controller: quay.io/open-cluster-management/config-policy-controller@sha256:2db929090a02f16e4dbd67b1e2c2e502e3fae6642596ff3475b5f60c1a64304e
+  configmap_watcher: quay.io/open-cluster-management/configmap-watcher@sha256:40088eb87dc9ec2917c4cff6b85855d5627adc9d17baeeb93f9592bc491e7608
+  console_api: quay.io/open-cluster-management/console-api@sha256:19e4a14e79acfeff0681f444f55eda1e5d166dc58abfb2b61a5f0953f69b7cac
+  console_header: quay.io/open-cluster-management/console-header@sha256:d7f1bf4c66946b623b5e3eecb9218afaa9e7e483425f40c7307010a93946ed0c
+  console_ui: quay.io/open-cluster-management/console-ui@sha256:585bdde8a0f741ee9b03eda11e0b58b188e73e61bd21606065ad6aeaff1ba3b6
+  console_ui_tests: quay.io/open-cluster-management/console-ui-tests@sha256:b1137a6c64392b65738a7c49d77fcbe7cd42aa5813d21a343e8952d8d2669ec9
+  endpoint_component_operator: quay.io/open-cluster-management/endpoint-component-operator@sha256:f214eff19c64bd0d864fe11d0e272179e926d0707dda9d580606f89cad76c25e
+  endpoint_monitoring_operator: quay.io/open-cluster-management/endpoint-monitoring-operator@sha256:310e277ef42111036215e9ea0982569bc117d02afe91b89052f0e760ee5735a0
+  endpoint_operator: quay.io/open-cluster-management/endpoint-operator@sha256:c99081a8a82d58a7e0705b45e82cf04f90279cd4a7dcf34a7e065c8cdda8fbfd
+  governance_policy_propagator: quay.io/open-cluster-management/governance-policy-propagator@sha256:c574409989813724b3ac6ad1b30e5b956856a8051d0c75bce55208c1e412f34e
+  governance_policy_spec_sync: quay.io/open-cluster-management/governance-policy-spec-sync@sha256:c91d425d733e4331ae610b7d2d7e1e0420b5f5f6157c3a349423c520b4f97d53
+  governance_policy_status_sync: quay.io/open-cluster-management/governance-policy-status-sync@sha256:82491e047a124a86e9185d84f056027a311b2ec9af7ee694aaed2fae380b81fd
+  governance_policy_template_sync: quay.io/open-cluster-management/governance-policy-template-sync@sha256:9316d67e3f15c3f55f4416140a679c69fb80a771f766b68d3c336c608fc643c4
+  grc_ui: quay.io/open-cluster-management/grc-ui@sha256:a1b3bd0ccd3951bc83ceb11d24bc5ea2e660f2647f5e7f1bb215ddceb00699d0
+  grc_ui_api: quay.io/open-cluster-management/grc-ui-api@sha256:4f53657561b2dcac2d6e311c74799f9c3cb38f479237fc742ab1e8a35b3c5718
+  grc_ui_tests: quay.io/open-cluster-management/grc-ui-tests@sha256:d9334927737366a2c593df09e8ca935715bc1658463f6c7a444c865c09436f16
+  helloworld: quay.io/open-cluster-management/helloworld@sha256:bc5a23f1746c01634fbf57dc09bdccd0b027ab153013e414c9c0d521f73cb53f
+  iam_policy_controller: quay.io/open-cluster-management/iam-policy-controller@sha256:8e994ac2ee4bbd2fc21a67c5e4884f1040d726e0193fc3e8acd3c4b9da4d921c
+  kui_web_terminal: quay.io/open-cluster-management/kui-web-terminal@sha256:3206b5e1c22aff31176565e03ec08d80123a9b1887365919f76ab30f16f32f7d
+  kui_web_terminal_tests: quay.io/open-cluster-management/kui-web-terminal-tests@sha256:c36abd3aec4f3d8f7ec85f1d793c976b2c94a8e83aff6de6a943223ab819f43a
+  management_ingress: quay.io/open-cluster-management/management-ingress@sha256:eea8be2c7d29180aa52ad3743ff771858d231f772a5f0801d1d7e028b857a074
+  mcm_topology: quay.io/open-cluster-management/mcm-topology@sha256:dd970598aa3ddda10c5aaa19daa2c1bb0fcb1a87f7ecf2c06f7569fe8e178002
+  mcm_topology_api: quay.io/open-cluster-management/mcm-topology-api@sha256:6c7e3e457f2006464c11e0546701d192b8e69d7624412b02d5150ef48954a21e
+  metrics_collector: quay.io/open-cluster-management/metrics-collector@sha256:6f3f16c1698452c7fb66da1b8249eb906694817909f56ea58cbec0c54ebbe1ef
+  multicloud_manager: quay.io/open-cluster-management/multicloud-manager@sha256:73393a8c99c6674dce8371e55c6973d9d8ced8b8013310d1700b2cee14912fc9
+  multicluster_observability_operator: quay.io/open-cluster-management/multicluster-observability-operator@sha256:3c8c667e0f49ecf90ebd810cb8e99acb09ae4e84e0d05430d9d0c0b19f38bac8
+  multicluster_operators_application: quay.io/open-cluster-management/multicluster-operators-application@sha256:67409c42c38acf5228d6064ba587b2905632c8d268ed821313ec989e8248c951
+  multicluster_operators_channel: quay.io/open-cluster-management/multicluster-operators-channel@sha256:aec6294a188643f6de542386f0ddee79c627cb31b2958f9a49a5af8c826ff0a5
+  multicluster_operators_deployable: quay.io/open-cluster-management/multicluster-operators-deployable@sha256:40ed4d41d97d1d7804d869dfd08b18adad12cf453bbab4f8ec3ec75e162d381b
+  multicluster_operators_placementrule: quay.io/open-cluster-management/multicluster-operators-placementrule@sha256:01e7b19c74558fbea1c319c5b518cabac3dee74a0008f5c75e9b941cfbb21e02
+  multicluster_operators_subscription: quay.io/open-cluster-management/multicluster-operators-subscription@sha256:797380244221ff75d7923abfbe3a3972dd14daa3a5b32b438a48c69cbca3e0fc
+  multicluster_operators_subscription_release: quay.io/open-cluster-management/multicluster-operators-subscription-release@sha256:4d575de188ba743fa7bb51ad243cc276b27102085f1752e84f697ed3c66f28f6
+  multiclusterhub_operator: quay.io/open-cluster-management/multiclusterhub-operator@sha256:d74d4ab649eff218a690d243c73aaadc2270bd9036c3ed3dcbba1cdbd3e31fc9
+  multiclusterhub_operator_bundle: quay.io/open-cluster-management/multiclusterhub-operator-bundle@sha256:38a5cf63a74a879ee6b634bf96135eb93089c224aa6df87de3345012943f2252
+  multiclusterhub_operator_tests: quay.io/open-cluster-management/multiclusterhub-operator-tests@sha256:8998a5c38725aad9d541dc4f5df5577c17ab921db70b29dd8d9a94230eee3d77
+  multiclusterhub_repo: quay.io/open-cluster-management/multiclusterhub-repo@sha256:feb7b256f9f43bb199d48f46e784b352d86ac09a7a1138ae8ba87a39f780696e
+  must_gather: quay.io/open-cluster-management/must-gather@sha256:8548969449f088006993d0ddcb54d139a74f453d3b6b54b756fe36c011dc070e
+  oauth_proxy: quay.io/open-cluster-management/origin-oauth-proxy@sha256:ae1b3ad6a9e76271de5c6d16abe5586abac043da032d686d1fc78f43ed7f3606
+  openshift_hive: quay.io/open-cluster-management/hive@sha256:dd2b436d30c6e6a000436189542dcf392d34c1e0762523cf980d750147c29f8e
+  rcm_controller: quay.io/open-cluster-management/rcm-controller@sha256:64043ac223d21cd244ecfbc19bf099f044c768f4492c0bbb556adfc03fd6a50d
+  redisgraph_tls: quay.io/open-cluster-management/redisgraph-tls@sha256:583c49be73dac748999c2437eb78021aaf41c0fe0d11d1ad3d1ae53e5ed3248a
+  registration: quay.io/open-cluster-management/registration@sha256:f35ca58473522e3621fb407d0e27df6b5ad12f829126e22cbf15e57447ef9f2f
+  registration_operator: quay.io/open-cluster-management/registration-operator@sha256:483a3d0c52132c7b541af90a73df657388621f57ca3db3c40d28dc8174f5420f
+  search_aggregator: quay.io/open-cluster-management/search-aggregator@sha256:a93421c38e97f2d880566e77e382bd0d42f79501c46d1f4f7f3f2549df759adc
+  search_api: quay.io/open-cluster-management/search-api@sha256:cca4585ddda7adcba8700172706b1d8dc8a08a9abda7b6671dcec316c816c219
+  search_collector: quay.io/open-cluster-management/search-collector@sha256:9ffeea9528897b9444877d31fdd3b818ec76c30dcc1afa016ff68f95fe363b6a
+  search_e2e: quay.io/open-cluster-management/search-e2e@sha256:a2f762bb4f79c088d6d03420f997e5e6434a447a39c56a35aebf67c4652d18a8
+  search_operator: quay.io/open-cluster-management/search-operator@sha256:b7760ede6f757c809c006b0356414096d3bb5a07e7d5336eb0cf7439ff00ddff
+  work: quay.io/open-cluster-management/work@sha256:6d2162915f9513d3f2222ffce9beff3d694093976a368875ead963c6436c0074
+kind: ConfigMap
+metadata:
+  labels:
+    ocm-configmap-type: image-manifest
+    ocm-release-version: 2.1.0
+  name: mch-image-manifest-2.1.0
+  namespace: open-cluster-management
+

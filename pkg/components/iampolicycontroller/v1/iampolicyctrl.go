@@ -60,13 +60,13 @@ func newIAMPolicyControllerCR(
 		ImageOverrides:  make(map[string]string, 1),
 	}
 
-	imageKey, imageRepository, err := instance.GetImage("iam-policy-controller")
+	imageRepository, err := instance.GetImage("iam_policy_controller")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "iam-policy")
 		return nil, err
 	}
 
-	gv.ImageOverrides[imageKey] = imageRepository
+	gv.ImageOverrides["iam_policy_controller"] = imageRepository
 
 	return &agentv1.IAMPolicyController{
 		TypeMeta: metav1.TypeMeta{

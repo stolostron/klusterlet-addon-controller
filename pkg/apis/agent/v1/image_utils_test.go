@@ -22,19 +22,42 @@
 package v1
 
 import (
-	"path/filepath"
 	"testing"
 
+	"github.com/open-cluster-management/endpoint-operator/version"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-var manifestPath = filepath.Join("..", "..", "..", "..", "image-manifests")
-
 func TestGetImageWithManifest(t *testing.T) {
-	err := LoadManifests(manifestPath)
-	defaultComponentImageKeyMap["fakeKey"] = "fake_image_name"
+	testConfigMap := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-configmap-2.1.0",
+			Namespace: "test-namespace",
+			Labels: map[string]string{
+				"ocm-configmap-type":  "image-manifest",
+				"ocm-release-version": version.Version,
+			},
+		},
+		Data: map[string]string{
+			"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+			"cert_policy_controller":      "sample-registry/uniquePath/cert-policy-controller@sha256:fake-sha256-2-1-0",
+		},
+	}
+
+	client := fake.NewFakeClient([]runtime.Object{
+		testConfigMap,
+	}...)
+	err := LoadConfigmaps(client)
 	if err != nil {
-		t.Error(err)
+		return
 	}
 	type args struct {
 		klusterletaddonconfig *KlusterletAddonConfig
@@ -48,33 +71,14 @@ func TestGetImageWithManifest(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Use Component Sha in 2.0.0",
+			name: "Use Component Sha in " + version.Version,
 			args: args{
 				klusterletaddonconfig: &KlusterletAddonConfig{
 					Spec: KlusterletAddonConfigSpec{
 						ImageRegistry: "sample-registry/uniquePath",
-						Version:       "2.0.0",
 					},
 				},
-				component: "addon-operator",
-			},
-			want: GlobalValues{
-				ImageOverrides: map[string]string{
-					"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:8cda370c82c0c5e67fec6a8d516633e982a2aea87968524890c4f119c6a623ac",
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "Use Component Sha in 2.1.0",
-			args: args{
-				klusterletaddonconfig: &KlusterletAddonConfig{
-					Spec: KlusterletAddonConfigSpec{
-						ImageRegistry: "sample-registry/uniquePath",
-						Version:       "2.1.0",
-					},
-				},
-				component: "addon-operator",
+				component: "endpoint_component_operator",
 			},
 			want: GlobalValues{
 				ImageOverrides: map[string]string{
@@ -106,11 +110,137 @@ func TestGetImageWithManifest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Logf("Running tests %s", tt.name)
-			imgKey, imgRepository, err := tt.args.klusterletaddonconfig.GetImage(tt.args.component)
+			imgRepository, err := tt.args.klusterletaddonconfig.GetImage(tt.args.component)
 			if tt.wantErr != (err != nil) {
 				t.Errorf("Should return error correctly. Error:%s", err)
 			} else if !tt.wantErr {
-				assert.Equal(t, tt.want.ImageOverrides[imgKey], imgRepository, "repository should match")
+				assert.Equal(t, tt.want.ImageOverrides[tt.args.component], imgRepository, "repository should match")
+			}
+		})
+	}
+}
+
+func TestGetImageWithManyConfigmapManifest(t *testing.T) {
+	testConfigMap := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-configmap-2.1.0",
+			Namespace: "test-namespace",
+			Labels: map[string]string{
+				"ocm-configmap-type":  "image-manifest",
+				"ocm-release-version": version.Version,
+			},
+		},
+		Data: map[string]string{
+			"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+			"cert_policy_controller":      "sample-registry/uniquePath/cert-policy-controller@sha256:fake-sha256-2-1-0",
+		},
+	}
+
+	testConfigMap1 := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-configmap-2.1.1",
+			Namespace: "test-namespace",
+			Labels: map[string]string{
+				"ocm-configmap-type":  "image-manifest",
+				"ocm-release-version": "2.1.1",
+			},
+		},
+		Data: map[string]string{
+			"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+			"cert_policy_controller":      "sample-registry/uniquePath/cert-policy-controller@sha256:fake-sha256-2-1-0",
+		},
+	}
+
+	testConfigMapInvalidVersion := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-configmap-2.1.1.12",
+			Namespace: "test-namespace",
+			Labels: map[string]string{
+				"ocm-configmap-type":  "image-manifest",
+				"ocm-release-version": "2.1.1.12",
+			},
+		},
+		Data: map[string]string{
+			"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+			"cert_policy_controller":      "sample-registry/uniquePath/cert-policy-controller@sha256:fake-sha256-2-1-0",
+		},
+	}
+
+	client := fake.NewFakeClient([]runtime.Object{
+		testConfigMap, testConfigMap1, testConfigMapInvalidVersion,
+	}...)
+	err := LoadConfigmaps(client)
+	if err != nil {
+		return
+	}
+	type args struct {
+		klusterletaddonconfig *KlusterletAddonConfig
+		component             string
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		want    GlobalValues
+		wantErr bool
+	}{
+		{
+			name: "Use Component Sha in " + version.Version,
+			args: args{
+				klusterletaddonconfig: &KlusterletAddonConfig{
+					Spec: KlusterletAddonConfigSpec{
+						ImageRegistry: "sample-registry/uniquePath",
+					},
+				},
+				component: "endpoint_component_operator",
+			},
+			want: GlobalValues{
+				ImageOverrides: map[string]string{
+					"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Not Exists Component",
+			args: args{
+				klusterletaddonconfig: &KlusterletAddonConfig{},
+				component:             "notExistsComponent",
+			},
+			want:    GlobalValues{},
+			wantErr: true,
+		},
+		{
+			name: "Image not in manifest.json",
+			args: args{
+				klusterletaddonconfig: &KlusterletAddonConfig{},
+				component:             "fakeKey",
+			},
+			want:    GlobalValues{},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("Running tests %s", tt.name)
+			imgRepository, err := tt.args.klusterletaddonconfig.GetImage(tt.args.component)
+			if tt.wantErr != (err != nil) {
+				t.Errorf("Should return error correctly. Error:%s", err)
+			} else if !tt.wantErr {
+				assert.Equal(t, tt.want.ImageOverrides[tt.args.component], imgRepository, "repository should match")
 			}
 		})
 	}

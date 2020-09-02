@@ -16,6 +16,7 @@ import (
 	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/apis"
+	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/controller"
 	"github.com/open-cluster-management/endpoint-operator/version"
 	ocinfrav1 "github.com/openshift/api/config/v1"
@@ -24,7 +25,9 @@ import (
 	//kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -62,6 +65,18 @@ func main() {
 	cfg, err := config.GetConfig()
 	if err != nil {
 		setupLog.Error(err, "unable to get config")
+		os.Exit(1)
+	}
+
+	kubeclient, err := newK8s(cfg)
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	err = agentv1.LoadConfigmaps(kubeclient)
+	if err != nil {
+		log.Error(err, "")
 		os.Exit(1)
 	}
 
@@ -113,4 +128,13 @@ func main() {
 		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
 	}
+}
+
+func newK8s(conf *rest.Config) (client.Client, error) {
+	kubeClient, err := client.New(conf, client.Options{})
+	if err != nil {
+		log.Info("Failed to initialize a client connection to the cluster", "error", err.Error())
+		return nil, fmt.Errorf("Failed to initialize a client connection to the cluster")
+	}
+	return kubeClient, nil
 }

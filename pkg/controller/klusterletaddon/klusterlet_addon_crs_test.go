@@ -10,8 +10,6 @@ package klusterletaddon
 
 import (
 	"context"
-	"os"
-	"path/filepath"
 	"testing"
 
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
@@ -30,26 +28,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-var (
-	manifestPath = filepath.Join("..", "..", "..", "image-manifests")
-)
+// var (
+// 	manifestPath = filepath.Join("..", "..", "..", "image-manifests")
+// )
 
-func TestMain(m *testing.M) {
-	err := setup()
-	if err != nil {
-		os.Exit(999)
-	}
-	code := m.Run()
-	teardown()
-	os.Exit(code)
-}
+// func TestMain(m *testing.M) {
+// 	// err := setup()
+// 	// if err != nil {
+// 	// 	os.Exit(999)
+// 	// }
+// 	code := m.Run()
+// 	teardown()
+// 	os.Exit(code)
+// }
 
-func setup() error {
-	return agentv1.LoadManifests(manifestPath)
-}
-
-func teardown() {
-}
+// func teardown() {
+// }
 
 func Test_syncManifestWorkCRs(t *testing.T) {
 	testscheme := scheme.Scheme
@@ -69,6 +63,25 @@ func Test_syncManifestWorkCRs(t *testing.T) {
 		},
 		Data: map[string][]byte{
 			"token": []byte("fake-token"),
+		},
+	}
+
+	testConfigMap := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-configmap-2.1.0",
+			Namespace: "test-namespace",
+			Labels: map[string]string{
+				"ocm-configmap-type":  "image-manifest",
+				"ocm-release-version": "2.1.0",
+			},
+		},
+		Data: map[string]string{
+			"endpoint_component_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+			"cert_policy_controller":      "sample-registry/uniquePath/cert-policy-controller@sha256:fake-sha256-2-1-0",
 		},
 	}
 
@@ -143,7 +156,7 @@ func Test_syncManifestWorkCRs(t *testing.T) {
 			args: args{
 				r: &ReconcileKlusterletAddon{
 					client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{
-						testKlusterletAddonConfig, testServiceAccountAppmgr, testServiceAccountWorkmgr, infrastructConfig, testSecret,
+						testKlusterletAddonConfig, testServiceAccountAppmgr, testServiceAccountWorkmgr, infrastructConfig, testSecret, testConfigMap,
 					}...),
 					scheme: testscheme,
 				},
