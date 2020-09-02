@@ -55,13 +55,13 @@ func newSearchCollectorCR(instance *agentv1.KlusterletAddonConfig, namespace str
 		ImageOverrides:  make(map[string]string, 1),
 	}
 
-	imageKey, imageRepository, err := instance.GetImage("search-collector")
+	imageRepository, err := instance.GetImage("search_collector")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "search-collector")
 		return nil, err
 	}
 
-	gv.ImageOverrides[imageKey] = imageRepository
+	gv.ImageOverrides["search_collector"] = imageRepository
 
 	return &agentv1.SearchCollector{
 		TypeMeta: metav1.TypeMeta{

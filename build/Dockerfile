@@ -29,7 +29,6 @@ ENV OPERATOR=/usr/local/bin/$COMPONENT_NAME \
     USER_UID=10001 \
     USER_NAME=$COMPONENT_NAME
 
-COPY --from=builder $REMOTE_SOURCE_DIR/app/image-manifests image-manifests
 COPY --from=builder $REMOTE_SOURCE_DIR/app/deploy/crds deploy/crds
 COPY --from=builder $REMOTE_SOURCE_DIR/app/manager ${OPERATOR}
 COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin/entrypoint /usr/local/bin

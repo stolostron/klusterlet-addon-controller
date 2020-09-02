@@ -61,37 +61,37 @@ func newPolicyControllerCR(
 		ImageOverrides:  make(map[string]string, 1),
 	}
 
-	imageKey, imageRepository, err := instance.GetImage("policy-controller")
+	imageRepository, err := instance.GetImage("config_policy_controller")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "policy-controller")
 		return nil, err
 	}
 
-	gv.ImageOverrides[imageKey] = imageRepository
+	gv.ImageOverrides["config_policy_controller"] = imageRepository
 
-	imageKey, imageRepository, err = instance.GetImage("governance-policy-spec-sync")
+	imageRepository, err = instance.GetImage("governance_policy_spec_sync")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "governance-policy-spec-sync")
 		return nil, err
 	}
 
-	gv.ImageOverrides[imageKey] = imageRepository
+	gv.ImageOverrides["governance_policy_spec_sync"] = imageRepository
 
-	imageKey, imageRepository, err = instance.GetImage("governance-policy-status-sync")
+	imageRepository, err = instance.GetImage("governance_policy_status_sync")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "governance-policy-status-sync")
 		return nil, err
 	}
 
-	gv.ImageOverrides[imageKey] = imageRepository
+	gv.ImageOverrides["governance_policy_status_sync"] = imageRepository
 
-	imageKey, imageRepository, err = instance.GetImage("governance-policy-template-sync")
+	imageRepository, err = instance.GetImage("governance_policy_template_sync")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "governance-policy-template-sync")
 		return nil, err
 	}
 
-	gv.ImageOverrides[imageKey] = imageRepository
+	gv.ImageOverrides["governance_policy_template_sync"] = imageRepository
 
 	return &agentv1.PolicyController{
 		TypeMeta: metav1.TypeMeta{

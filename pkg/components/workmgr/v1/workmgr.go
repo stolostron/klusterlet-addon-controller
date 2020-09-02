@@ -61,13 +61,13 @@ func newWorkManagerCR(
 		ImageOverrides:  make(map[string]string, 1),
 	}
 
-	imageKey, imageRepository, err := instance.GetImage("work-manager")
+	imageRepository, err := instance.GetImage("multicloud_manager")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "work-manager")
 		return nil, err
 	}
 
-	gv.ImageOverrides[imageKey] = imageRepository
+	gv.ImageOverrides["multicloud_manager"] = imageRepository
 
 	clusterLabels := instance.Spec.ClusterLabels
 

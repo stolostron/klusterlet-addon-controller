@@ -9,6 +9,7 @@
 package klusterletaddon
 
 import (
+	"os"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -20,6 +21,55 @@ import (
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
 )
+
+func TestMain(m *testing.M) {
+	err := setup()
+	if err != nil {
+		os.Exit(999)
+	}
+	code := m.Run()
+	teardown()
+	os.Exit(code)
+}
+
+func setup() error {
+	testConfigMap := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-configmap-2.1.0",
+			Namespace: "test-namespace",
+			Labels: map[string]string{
+				"ocm-configmap-type":  "image-manifest",
+				"ocm-release-version": "2.1.0",
+			},
+		},
+		Data: map[string]string{
+			"endpoint_component_operator":         "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+			"cert_policy_controller":              "sample-registry/uniquePath/cert-policy-controller@sha256:fake-sha256-2-1-0",
+			"iam_policy_controller":               "sample-registry/uniquePath/iam-policy-controller@sha256:fake-sha256-2-1-0",
+			"config_policy_controller":            "sample-registry/uniquePath/config-policy-controller@sha256:fake-sha256-2-1-0",
+			"governance_policy_spec_sync":         "sample-registry/uniquePath/governance-policy-spec-sync@sha256:fake-sha256-2-1-0",
+			"governance_policy_status_sync":       "sample-registry/uniquePath/governance-policy-status-sync@sha256:fake-sha256-2-1-0",
+			"governance_policy_template_sync":     "sample-registry/uniquePath/governance-policy-template-sync@sha256:fake-sha256-2-1-0",
+			"search_collector":                    "sample-registry/uniquePath/search-collector@sha256:fake-sha256-2-1-0",
+			"multicloud_manager":                  "sample-registry/uniquePath/multicloud-manager@sha256:fake-sha256-2-1-0",
+			"multicluster_operators_subscription": "sample-registry/uniquePath/multicluster-operators-subscription@sha256:fake-sha256-2-1-0",
+		},
+	}
+
+	client := fake.NewFakeClient([]runtime.Object{
+		testConfigMap,
+	}...)
+
+	return agentv1.LoadConfigmaps(client)
+
+}
+
+func teardown() {
+}
 
 func Test_createManifestWorkComponentOperator(t *testing.T) {
 	testscheme := scheme.Scheme
@@ -41,7 +91,6 @@ func Test_createManifestWorkComponentOperator(t *testing.T) {
 				Enabled: true,
 			},
 			ImagePullSecret: "test-managedcluster",
-			Version:         "2.0.0",
 		},
 	}
 

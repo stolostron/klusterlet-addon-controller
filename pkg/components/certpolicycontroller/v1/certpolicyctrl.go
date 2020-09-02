@@ -61,13 +61,13 @@ func newCertPolicyControllerCR(
 		ImageOverrides:  make(map[string]string, 1),
 	}
 
-	imageKey, imageRepository, err := instance.GetImage("cert-policy-controller")
+	imageRepository, err := instance.GetImage("cert_policy_controller")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cert-policy")
 		return nil, err
 	}
 
-	gv.ImageOverrides[imageKey] = imageRepository
+	gv.ImageOverrides["cert_policy_controller"] = imageRepository
 
 	return &agentv1.CertPolicyController{
 		TypeMeta: metav1.TypeMeta{
