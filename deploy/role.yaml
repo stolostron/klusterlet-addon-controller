@@ -229,3 +229,14 @@ rules:
 - apiGroups: ["policy.open-cluster-management.io"]
   resources: ["*"]
   verbs: ["*"]
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch

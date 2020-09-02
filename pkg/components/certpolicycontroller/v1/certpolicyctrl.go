@@ -20,7 +20,7 @@ import (
 const (
 	CertPolicyController  = "klusterlet-addon-certpolicyctrl"
 	CertPolicyCtrl        = "certpolicyctrl"
-	RequiresHubKubeConfig = false
+	RequiresHubKubeConfig = true
 )
 
 var log = logf.Log.WithName("certpolicyctrl")
@@ -80,10 +80,11 @@ func newCertPolicyControllerCR(
 			Labels:    labels,
 		},
 		Spec: agentv1.CertPolicyControllerSpec{
-			FullNameOverride: CertPolicyController,
-			ClusterName:      instance.Spec.ClusterName,
-			ClusterNamespace: instance.Spec.ClusterNamespace,
-			GlobalValues:     gv,
+			FullNameOverride:    CertPolicyController,
+			HubKubeconfigSecret: CertPolicyCtrl + "-hub-kubeconfig",
+			ClusterName:         instance.Spec.ClusterName,
+			ClusterNamespace:    instance.Spec.ClusterNamespace,
+			GlobalValues:        gv,
 		},
 	}, err
 }

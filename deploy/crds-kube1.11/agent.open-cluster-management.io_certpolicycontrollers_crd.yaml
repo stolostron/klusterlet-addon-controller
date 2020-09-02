@@ -55,6 +55,9 @@ spec:
                 imagePullSecret:
                   type: string
               type: object
+            hubKubeconfigSecret:
+              minLength: 1
+              type: string
           required:
           - clusterName
           - clusterNamespace

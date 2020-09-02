@@ -31,6 +31,10 @@ type IAMPolicyControllerSpec struct {
 	ClusterNamespace string `json:"clusterNamespace"`
 
 	GlobalValues GlobalValues `json:"global,omitempty"`
+
+	// +kubebuilder:validation:MinLength=1
+	// +optional
+	HubKubeconfigSecret string `json:"hubKubeconfigSecret"`
 }
 
 // IAMPolicyControllerStatus defines the observed state of IAMPolicyController

@@ -238,6 +238,36 @@ func Test_newCRManifestWork(t *testing.T) {
 			},
 		},
 	}
+	testServiceAccountCert := &corev1.ServiceAccount{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ServiceAccount",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-managedcluster-certpolicyctrl",
+			Namespace: "test-managedcluster",
+		},
+		Secrets: []corev1.ObjectReference{
+			{
+				Name: "test-managedcluster",
+			},
+		},
+	}
+	testServiceAccountIAM := &corev1.ServiceAccount{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ServiceAccount",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-managedcluster-iampolicyctrl",
+			Namespace: "test-managedcluster",
+		},
+		Secrets: []corev1.ObjectReference{
+			{
+				Name: "test-managedcluster",
+			},
+		},
+	}
 
 	type args struct {
 		r                  *ReconcileKlusterletAddon
@@ -255,7 +285,8 @@ func Test_newCRManifestWork(t *testing.T) {
 			args: args{
 				r: &ReconcileKlusterletAddon{
 					client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{
-						testKlusterletAddonConfig,
+						testKlusterletAddonConfig, testServiceAccountCert, testSecret,
+						infrastructConfig,
 					}...),
 					scheme: testscheme,
 				},
@@ -270,6 +301,7 @@ func Test_newCRManifestWork(t *testing.T) {
 				r: &ReconcileKlusterletAddon{
 					client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{
 						testKlusterletAddonConfig, testServiceAccountAppmgr, testSecret, infrastructConfig,
+						testServiceAccountIAM,
 					}...),
 					scheme: testscheme,
 				},
