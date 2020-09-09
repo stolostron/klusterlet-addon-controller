@@ -66,8 +66,13 @@ func newCertPolicyControllerCR(
 		log.Error(err, "Fail to get Image", "Component.Name", "cert-policy")
 		return nil, err
 	}
-
 	gv.ImageOverrides["cert_policy_controller"] = imageRepository
+
+	if imageRepositoryLease, err := instance.GetImage("klusterlet_addon_lease_controller"); err != nil {
+		log.Error(err, "Fail to get Image", "Image.Key", "klusterlet_addon_lease_controller")
+	} else {
+		gv.ImageOverrides["klusterlet_addon_lease_controller"] = imageRepositoryLease
+	}
 
 	return &agentv1.CertPolicyController{
 		TypeMeta: metav1.TypeMeta{

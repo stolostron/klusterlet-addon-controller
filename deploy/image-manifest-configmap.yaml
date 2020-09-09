@@ -56,6 +56,7 @@ data:
   search_e2e: quay.io/open-cluster-management/search-e2e@sha256:a2f762bb4f79c088d6d03420f997e5e6434a447a39c56a35aebf67c4652d18a8
   search_operator: quay.io/open-cluster-management/search-operator@sha256:b7760ede6f757c809c006b0356414096d3bb5a07e7d5336eb0cf7439ff00ddff
   work: quay.io/open-cluster-management/work@sha256:6d2162915f9513d3f2222ffce9beff3d694093976a368875ead963c6436c0074
+  klusterlet_addon_lease_controller: quay.io/open-cluster-management/klusterlet-addon-lease-controller@sha256:be79719cba7c720c4b30c06cb0254a9d3d460da6b990cd1511dd6eba5dff6619
 kind: ConfigMap
 metadata:
   labels:

@@ -66,8 +66,13 @@ func newWorkManagerCR(
 		log.Error(err, "Fail to get Image", "Component.Name", "work-manager")
 		return nil, err
 	}
-
 	gv.ImageOverrides["multicloud_manager"] = imageRepository
+
+	if imageRepositoryLease, err := instance.GetImage("klusterlet_addon_lease_controller"); err != nil {
+		log.Error(err, "Fail to get Image", "Image.Key", "klusterlet_addon_lease_controller")
+	} else {
+		gv.ImageOverrides["klusterlet_addon_lease_controller"] = imageRepositoryLease
+	}
 
 	clusterLabels := instance.Spec.ClusterLabels
 
