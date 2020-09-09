@@ -51,9 +51,10 @@ var (
 	clientCluster        kubernetes.Interface
 	clientClusterDynamic dynamic.Interface
 
-	gvrKlusterletAddonConfig schema.GroupVersionResource
-	gvrManifestwork          schema.GroupVersionResource
-	gvrManagedCluster        schema.GroupVersionResource
+	gvrKlusterletAddonConfig  schema.GroupVersionResource
+	gvrManifestwork           schema.GroupVersionResource
+	gvrManagedCluster         schema.GroupVersionResource
+	gvrClusterManagementAddOn schema.GroupVersionResource
 
 	kubeconfig    string
 	imageRegistry string
@@ -193,6 +194,7 @@ var _ = BeforeSuite(func() {
 	gvrKlusterletAddonConfig = schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1", Resource: "klusterletaddonconfigs"}
 	gvrManifestwork = schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
 	gvrManagedCluster = schema.GroupVersionResource{Group: "cluster.open-cluster-management.io", Version: "v1", Resource: "managedclusters"}
+	gvrClusterManagementAddOn = schema.GroupVersionResource{Group: "addon.open-cluster-management.io", Version: "v1alpha1", Resource: "clustermanagementaddons"}
 
 	clientCluster = NewKubeClient("", "", "")
 	clientClusterDynamic = NewKubeClientDynamic("", "", "")

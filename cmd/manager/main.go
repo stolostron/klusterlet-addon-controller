@@ -13,11 +13,13 @@ import (
 	"os"
 	"runtime"
 
+	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
 	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/apis"
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/controller"
+	"github.com/open-cluster-management/endpoint-operator/pkg/controller/clustermanagementaddon"
 	"github.com/open-cluster-management/endpoint-operator/version"
 	ocinfrav1 "github.com/openshift/api/config/v1"
 
@@ -82,10 +84,11 @@ func main() {
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
-		Namespace:          os.Getenv("WATCH_NAMESPACE"),
-		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
-		LeaderElection:     true,
-		LeaderElectionID:   "klusterlet-addon-controller-lock",
+		Namespace:               os.Getenv("WATCH_NAMESPACE"),
+		MetricsBindAddress:      fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		LeaderElection:          true,
+		LeaderElectionID:        "klusterlet-addon-controller-lock",
+		LeaderElectionNamespace: "open-cluster-management",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -114,6 +117,14 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+
+	if err := addonv1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// create all ClusterManagementAddons for monolith addons
+	clustermanagementaddon.CreateClusterManagementAddon(kubeclient)
 
 	// Setup all Controllers
 	if err := controller.AddToManager(mgr); err != nil {
