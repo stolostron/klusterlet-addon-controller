@@ -54,11 +54,30 @@ var (
 	gvrKlusterletAddonConfig  schema.GroupVersionResource
 	gvrManifestwork           schema.GroupVersionResource
 	gvrManagedCluster         schema.GroupVersionResource
+	gvrManagedClusterAddOn    schema.GroupVersionResource
 	gvrClusterManagementAddOn schema.GroupVersionResource
+	gvrLease                  schema.GroupVersionResource
 
 	kubeconfig    string
 	imageRegistry string
 )
+
+func newLease(name, namespace string, renewTime string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "coordination.k8s.io/v1",
+			"kind":       "Lease",
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+			"spec": map[string]interface{}{
+				"leaseDurationSeconds": 60,
+				"renewTime":            renewTime,
+			},
+		},
+	}
+}
 
 func newManagedCluster(name, namespace string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
@@ -195,6 +214,8 @@ var _ = BeforeSuite(func() {
 	gvrManifestwork = schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
 	gvrManagedCluster = schema.GroupVersionResource{Group: "cluster.open-cluster-management.io", Version: "v1", Resource: "managedclusters"}
 	gvrClusterManagementAddOn = schema.GroupVersionResource{Group: "addon.open-cluster-management.io", Version: "v1alpha1", Resource: "clustermanagementaddons"}
+	gvrManagedClusterAddOn = schema.GroupVersionResource{Group: "addon.open-cluster-management.io", Version: "v1alpha1", Resource: "managedclusteraddons"}
+	gvrLease = schema.GroupVersionResource{Group: "coordination.k8s.io", Version: "v1", Resource: "leases"}
 
 	clientCluster = NewKubeClient("", "", "")
 	clientClusterDynamic = NewKubeClientDynamic("", "", "")

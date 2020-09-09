@@ -18,9 +18,10 @@ import (
 
 // constants for policy controller
 const (
-	PolicyController      = "klusterlet-addon-policyctrl"
-	PolicyCtrl            = "policyctrl"
-	RequiresHubKubeConfig = true
+	PolicyController        = "klusterlet-addon-policyctrl"
+	PolicyCtrl              = "policyctrl"
+	RequiresHubKubeConfig   = true
+	managedClusterAddOnName = "policy-controller"
 )
 
 var log = logf.Log.WithName("policyctrl")
@@ -44,6 +45,10 @@ func (addon AddonPolicyCtrl) NewAddonCR(
 	namespace string,
 ) (runtime.Object, error) {
 	return newPolicyControllerCR(instance, namespace)
+}
+
+func (addon AddonPolicyCtrl) GetManagedClusterAddOnName() string {
+	return managedClusterAddOnName
 }
 
 // newPolicyControllerCR - create CR for component poliicy controller

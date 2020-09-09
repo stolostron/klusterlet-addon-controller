@@ -10,8 +10,10 @@ package klusterletaddon
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
+	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
 	addons "github.com/open-cluster-management/endpoint-operator/pkg/components"
@@ -23,6 +25,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/kubectl/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -51,6 +54,7 @@ func Test_syncManifestWorkCRs(t *testing.T) {
 	testscheme.AddKnownTypes(agentv1.SchemeGroupVersion, &agentv1.KlusterletAddonConfig{})
 	testscheme.AddKnownTypes(manifestworkv1.SchemeGroupVersion, &manifestworkv1.ManifestWork{})
 	testscheme.AddKnownTypes(ocinfrav1.SchemeGroupVersion, &ocinfrav1.Infrastructure{})
+	testscheme.AddKnownTypes(addonv1alpha1.SchemeGroupVersion, &addonv1alpha1.ManagedClusterAddOn{})
 
 	testSecret := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
@@ -156,7 +160,8 @@ func Test_syncManifestWorkCRs(t *testing.T) {
 			args: args{
 				r: &ReconcileKlusterletAddon{
 					client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{
-						testKlusterletAddonConfig, testServiceAccountAppmgr, testServiceAccountWorkmgr, infrastructConfig, testSecret, testConfigMap,
+						testKlusterletAddonConfig, testServiceAccountAppmgr, testServiceAccountWorkmgr,
+						infrastructConfig, testSecret, testConfigMap,
 					}...),
 					scheme: testscheme,
 				},
@@ -783,4 +788,138 @@ func Test_newHubKubeconfigSecret(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_updateManagedClusterAddon(t *testing.T) {
+	testscheme := scheme.Scheme
+
+	testscheme.AddKnownTypes(agentv1.SchemeGroupVersion, &agentv1.KlusterletAddonConfig{})
+	testscheme.AddKnownTypes(addonv1alpha1.SchemeGroupVersion, &addonv1alpha1.ManagedClusterAddOn{})
+
+	testKlusterletAddonConfig := &agentv1.KlusterletAddonConfig{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: agentv1.SchemeGroupVersion.String(),
+			Kind:       "KlusterletAddonConfig",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-managedcluster-name",
+			Namespace: "test-managedcluster-namespace",
+		},
+		Spec: agentv1.KlusterletAddonConfigSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+				Enabled: true,
+			},
+			Version: "2.0.0",
+		},
+	}
+
+	addon1 := certpolicyctrl.AddonCertPolicyCtrl{}
+	addon2 := appmgr.AddonAppMgr{}
+	addonResource := addonv1alpha1.ObjectReference{
+		Name:     "test-managedcluster-name",
+		Group:    "agent.open-cluster-management.io",
+		Resource: "klusterletaddonconfigs",
+	}
+	mca1 := &addonv1alpha1.ManagedClusterAddOn{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: addonv1alpha1.SchemeGroupVersion.String(),
+			Kind:       "ManagedClusterAddon",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      addon1.GetManagedClusterAddOnName(),
+			Namespace: "test-managedcluster-namespace",
+		},
+	}
+	mca2 := &addonv1alpha1.ManagedClusterAddOn{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: addonv1alpha1.SchemeGroupVersion.String(),
+			Kind:       "ManagedClusterAddon",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      addon2.GetManagedClusterAddOnName(),
+			Namespace: "test-managedcluster-namespace",
+		},
+		Status: addonv1alpha1.ManagedClusterAddOnStatus{
+			RelatedObjects: []addonv1alpha1.ObjectReference{addonResource},
+		},
+	}
+	// if not exist will create one with correct name & ref
+
+	// if exist but not right ref, will add ref
+	type args struct {
+		client             client.Client
+		klusterletaddoncfg *agentv1.KlusterletAddonConfig
+		addon              addons.KlusterletAddon
+		scheme             *runtime.Scheme
+	}
+	tests := []struct {
+		name              string
+		args              args
+		wantAddonResource []addonv1alpha1.ObjectReference
+		wantErr           bool
+	}{
+		{
+			name: "create when not created",
+			args: args{
+				client:             fake.NewFakeClientWithScheme(testscheme, []runtime.Object{}...),
+				klusterletaddoncfg: testKlusterletAddonConfig,
+				addon:              addon1,
+				scheme:             testscheme,
+			},
+			wantAddonResource: []addonv1alpha1.ObjectReference{addonResource},
+			wantErr:           false,
+		},
+		{
+			name: "update when not complete",
+			args: args{
+				client:             fake.NewFakeClientWithScheme(testscheme, []runtime.Object{mca1}...),
+				klusterletaddoncfg: testKlusterletAddonConfig,
+				addon:              addon1,
+				scheme:             testscheme,
+			},
+			wantAddonResource: []addonv1alpha1.ObjectReference{addonResource},
+			wantErr:           false,
+		},
+		{
+			name: "do nothing when same",
+			args: args{
+				client:             fake.NewFakeClientWithScheme(testscheme, []runtime.Object{mca2}...),
+				klusterletaddoncfg: testKlusterletAddonConfig,
+				addon:              addon2,
+				scheme:             testscheme,
+			},
+			wantAddonResource: []addonv1alpha1.ObjectReference{addonResource},
+			wantErr:           false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := updateManagedClusterAddon(tt.args.addon, tt.args.klusterletaddoncfg,
+				tt.args.client, tt.args.scheme)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("updateManagedClusterAddon() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			} else if err == nil && !tt.wantErr {
+				//get it should succeed
+				getMca := &addonv1alpha1.ManagedClusterAddOn{}
+				getErr := tt.args.client.Get(context.TODO(),
+					types.NamespacedName{
+						Name:      tt.args.addon.GetManagedClusterAddOnName(),
+						Namespace: "test-managedcluster-namespace",
+					},
+					getMca,
+				)
+				if getErr != nil {
+					t.Errorf("failed to get ManagedClusterAddon")
+					return
+				}
+				if !reflect.DeepEqual(tt.wantAddonResource, getMca.Status.RelatedObjects) {
+					t.Errorf("wrong addonResource in ManagedClusterAddon, want %v got %v",
+						tt.wantAddonResource, getMca.Status.RelatedObjects)
+					return
+				}
+			}
+		})
+	}
+
 }
