@@ -65,8 +65,13 @@ func newIAMPolicyControllerCR(
 		log.Error(err, "Fail to get Image", "Component.Name", "iam-policy")
 		return nil, err
 	}
-
 	gv.ImageOverrides["iam_policy_controller"] = imageRepository
+
+	if imageRepositoryLease, err := instance.GetImage("klusterlet_addon_lease_controller"); err != nil {
+		log.Error(err, "Fail to get Image", "Image.Key", "klusterlet_addon_lease_controller")
+	} else {
+		gv.ImageOverrides["klusterlet_addon_lease_controller"] = imageRepositoryLease
+	}
 
 	return &agentv1.IAMPolicyController{
 		TypeMeta: metav1.TypeMeta{

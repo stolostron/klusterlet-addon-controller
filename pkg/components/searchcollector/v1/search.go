@@ -60,8 +60,13 @@ func newSearchCollectorCR(instance *agentv1.KlusterletAddonConfig, namespace str
 		log.Error(err, "Fail to get Image", "Component.Name", "search-collector")
 		return nil, err
 	}
-
 	gv.ImageOverrides["search_collector"] = imageRepository
+
+	if imageRepositoryLease, err := instance.GetImage("klusterlet_addon_lease_controller"); err != nil {
+		log.Error(err, "Fail to get Image", "Image.Key", "klusterlet_addon_lease_controller")
+	} else {
+		gv.ImageOverrides["klusterlet_addon_lease_controller"] = imageRepositoryLease
+	}
 
 	return &agentv1.SearchCollector{
 		TypeMeta: metav1.TypeMeta{

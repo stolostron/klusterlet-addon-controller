@@ -90,8 +90,13 @@ func newPolicyControllerCR(
 		log.Error(err, "Fail to get Image", "Component.Name", "governance-policy-template-sync")
 		return nil, err
 	}
-
 	gv.ImageOverrides["governance_policy_template_sync"] = imageRepository
+
+	if imageRepositoryLease, err := instance.GetImage("klusterlet_addon_lease_controller"); err != nil {
+		log.Error(err, "Fail to get Image", "Image.Key", "klusterlet_addon_lease_controller")
+	} else {
+		gv.ImageOverrides["klusterlet_addon_lease_controller"] = imageRepositoryLease
+	}
 
 	return &agentv1.PolicyController{
 		TypeMeta: metav1.TypeMeta{
