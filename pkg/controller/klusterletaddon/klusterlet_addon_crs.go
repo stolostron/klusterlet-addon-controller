@@ -14,16 +14,9 @@ import (
 	"fmt"
 	"reflect"
 
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/bindata"
@@ -35,9 +28,19 @@ import (
 	policyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/policyctrl/v1"
 	search "github.com/open-cluster-management/endpoint-operator/pkg/components/searchcollector/v1"
 	workmgr "github.com/open-cluster-management/endpoint-operator/pkg/components/workmgr/v1"
+	"github.com/open-cluster-management/endpoint-operator/pkg/controller/clustermanagementaddon"
 	"github.com/open-cluster-management/endpoint-operator/pkg/utils"
 	"github.com/open-cluster-management/library-go/pkg/applier"
 	ocinfrav1 "github.com/openshift/api/config/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -52,9 +55,6 @@ var addonsArray = []addons.KlusterletAddon{
 	search.AddonSearch{},
 	workmgr.AddonWorkMgr{},
 }
-var componentsArray = []string{appmgr.AppMgr, certpolicyctrl.CertPolicyCtrl,
-	iampolicyctrl.IAMPolicyCtrl, policyctrl.PolicyCtrl, search.Search, workmgr.WorkMgr}
-
 var merger applier.Merger = func(current,
 	new *unstructured.Unstructured,
 ) (
@@ -171,7 +171,7 @@ func newCRManifestWork(
 
 	manifestWork := &manifestworkv1.ManifestWork{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      klusterletaddonconfig.Name + "-klusterlet-addon-" + addon.GetAddonName(),
+			Name:      addons.ConstructManifestWorkName(klusterletaddonconfig, addon),
 			Namespace: klusterletaddonconfig.Namespace,
 		},
 		Spec: manifestworkv1.ManifestWorkSpec{
@@ -200,6 +200,13 @@ func syncManifestWorkCRs(klusterletaddonconfig *agentv1.KlusterletAddonConfig, r
 			}
 		}
 		if addon.IsEnabled(klusterletaddonconfig) {
+			// create ManagedClusterAddon if enabled, and will not block if failed.
+			// created ManagedClusterAddon should has controller reference points to the klusterletaddonconfig
+			// and it should has the correct AddonRef in status
+			if err := updateManagedClusterAddon(addon, klusterletaddonconfig, r.client, r.scheme); err != nil {
+				log.Error(err, "Failed to create ManagedClusterAddon "+addonName)
+				lastErr = err
+			}
 			// create Manifestwork if enabled
 			if manifestWork, err := newCRManifestWork(addon, klusterletaddonconfig, r.client); err != nil {
 				lastErr = err
@@ -215,7 +222,7 @@ func syncManifestWorkCRs(klusterletaddonconfig *agentv1.KlusterletAddonConfig, r
 		} else {
 			// delete Manifestwork if disabled
 			if err := utils.DeleteManifestWork(
-				klusterletaddonconfig.Name+"-klusterlet-addon-"+addonName,
+				addons.ConstructManifestWorkName(klusterletaddonconfig, addon),
 				klusterletaddonconfig.Namespace,
 				r.client,
 				false,
@@ -229,6 +236,80 @@ func syncManifestWorkCRs(klusterletaddonconfig *agentv1.KlusterletAddonConfig, r
 	return lastErr
 }
 
+// updateManagedClusterAddon updates ManagedClusterAddon to make sure it has correct reference in status
+// if ManagedClusterAddon for an addon is not exist, will create the ManagedClusterAddon
+// and will set controller reference to be the given klusterletaddonconfig
+func updateManagedClusterAddon(
+	addon addons.KlusterletAddon,
+	klusterletaddonconfig *agentv1.KlusterletAddonConfig,
+	client client.Client,
+	scheme *runtime.Scheme,
+) error {
+	managedClusterAddon := &addonv1alpha1.ManagedClusterAddOn{}
+	// check if it exists
+	if err := client.Get(
+		context.TODO(),
+		types.NamespacedName{
+			Name:      addon.GetManagedClusterAddOnName(),
+			Namespace: klusterletaddonconfig.Namespace,
+		},
+		managedClusterAddon,
+	); err != nil && errors.IsNotFound(err) {
+		// create new
+		newManagedClusterAddon := &addonv1alpha1.ManagedClusterAddOn{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: addonv1alpha1.SchemeGroupVersion.String(),
+				Kind:       "ManagedClusterAddOn",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      addon.GetManagedClusterAddOnName(),
+				Namespace: klusterletaddonconfig.Namespace,
+			},
+		}
+		if err := controllerutil.SetControllerReference(klusterletaddonconfig, newManagedClusterAddon, scheme); err != nil {
+			log.Error(err, "failed to set controller of ManagedClusterAddOn "+addon.GetManagedClusterAddOnName())
+			return err
+		}
+		if err := client.Create(context.TODO(), newManagedClusterAddon); err != nil {
+			log.Error(err, "")
+			return err
+		}
+		managedClusterAddon = newManagedClusterAddon
+	} else if err != nil {
+		return err
+	}
+	ref := []addonv1alpha1.ObjectReference{
+		addonv1alpha1.ObjectReference{
+			Group:    agentv1.SchemeGroupVersion.Group,
+			Resource: "klusterletaddonconfigs",
+			Name:     klusterletaddonconfig.Name,
+		},
+	}
+	addonMeta := addonv1alpha1.AddOnMeta{}
+	addonConf := addonv1alpha1.ConfigCoordinates{}
+	if addonMap, ok := clustermanagementaddon.ClusterManagementAddOnMap[addon.GetManagedClusterAddOnName()]; ok {
+		addonMeta.Description = addonMap.Description
+		addonMeta.DisplayName = addonMap.DisplayName
+		addonConf.CRDName = addonMap.CRDName
+		addonConf.CRName = klusterletaddonconfig.Name
+	}
+
+	if !reflect.DeepEqual(managedClusterAddon.Status.RelatedObjects, ref) ||
+		!reflect.DeepEqual(managedClusterAddon.Status.AddOnMeta, addonMeta) ||
+		!reflect.DeepEqual(managedClusterAddon.Status.AddOnConfiguration, addonConf) {
+		managedClusterAddon.Status.RelatedObjects = ref
+		managedClusterAddon.Status.AddOnMeta = addonMeta
+		managedClusterAddon.Status.AddOnConfiguration = addonConf
+
+		if err := client.Status().Update(context.TODO(), managedClusterAddon); err != nil {
+			log.Error(err, fmt.Sprintf("Failed to update ManagedClusterAddon %s status", managedClusterAddon.Name))
+			return err
+		}
+	}
+
+	return nil
+}
+
 // deleteManifestWorkCRs deletes all CR Manifestworks
 // returns true if deletion of all components is completed or component not found
 func deleteManifestWorkCRs(
@@ -238,9 +319,9 @@ func deleteManifestWorkCRs(
 	allCompleted := true
 	var lastErr error
 	lastErr = nil
-	for _, component := range componentsArray {
+	for _, addon := range addonsArray {
 		err := utils.DeleteManifestWork(
-			klusterletaddonconfig.Name+"-klusterlet-addon-"+component,
+			addons.ConstructManifestWorkName(klusterletaddonconfig, addon),
 			klusterletaddonconfig.Namespace,
 			client,
 			removeFinalizers,

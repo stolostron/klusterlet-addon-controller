@@ -18,9 +18,10 @@ import (
 
 // const of appmgr
 const (
-	ApplicationManager    = "klusterlet-addon-appmgr"
-	AppMgr                = "appmgr"
-	RequiresHubKubeConfig = true
+	ApplicationManager      = "klusterlet-addon-appmgr"
+	AppMgr                  = "appmgr"
+	RequiresHubKubeConfig   = true
+	managedClusterAddOnName = "application-manager"
 )
 
 var log = logf.Log.WithName("appmgr")
@@ -42,6 +43,10 @@ func (addon AddonAppMgr) GetAddonName() string {
 
 func (addon AddonAppMgr) NewAddonCR(instance *agentv1.KlusterletAddonConfig, namespace string) (runtime.Object, error) {
 	return newApplicationManagerCR(instance, namespace)
+}
+
+func (addon AddonAppMgr) GetManagedClusterAddOnName() string {
+	return managedClusterAddOnName
 }
 
 // newApplicationManagerCR - create CR for component application manager

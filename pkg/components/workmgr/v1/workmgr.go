@@ -18,9 +18,10 @@ import (
 
 // constants for work manager
 const (
-	WorkManager           = "klusterlet-addon-workmgr"
-	WorkMgr               = "workmgr"
-	RequiresHubKubeConfig = true
+	WorkManager             = "klusterlet-addon-workmgr"
+	WorkMgr                 = "workmgr"
+	RequiresHubKubeConfig   = true
+	managedClusterAddOnName = "work-manager"
 )
 
 var log = logf.Log.WithName("workmgr")
@@ -37,6 +38,10 @@ func (addon AddonWorkMgr) CheckHubKubeconfigRequired() bool {
 
 func (addon AddonWorkMgr) GetAddonName() string {
 	return WorkMgr
+}
+
+func (addon AddonWorkMgr) GetManagedClusterAddOnName() string {
+	return managedClusterAddOnName
 }
 
 func (addon AddonWorkMgr) NewAddonCR(

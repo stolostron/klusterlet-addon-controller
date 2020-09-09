@@ -18,9 +18,10 @@ import (
 
 // constants for search collector
 const (
-	SearchCollector       = "klusterlet-addon-search"
-	Search                = "search"
-	RequiresHubKubeConfig = true
+	SearchCollector         = "klusterlet-addon-search"
+	Search                  = "search"
+	RequiresHubKubeConfig   = true
+	managedClusterAddOnName = "search-collector"
 )
 
 var log = logf.Log.WithName("search")
@@ -41,6 +42,10 @@ func (addon AddonSearch) GetAddonName() string {
 
 func (addon AddonSearch) NewAddonCR(instance *agentv1.KlusterletAddonConfig, namespace string) (runtime.Object, error) {
 	return newSearchCollectorCR(instance, namespace)
+}
+
+func (addon AddonSearch) GetManagedClusterAddOnName() string {
+	return managedClusterAddOnName
 }
 
 // newSearchCollectorCR - create CR for component search collector

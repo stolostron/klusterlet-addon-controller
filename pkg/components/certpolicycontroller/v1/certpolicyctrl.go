@@ -18,9 +18,10 @@ import (
 
 // constants for cert policy controller
 const (
-	CertPolicyController  = "klusterlet-addon-certpolicyctrl"
-	CertPolicyCtrl        = "certpolicyctrl"
-	RequiresHubKubeConfig = true
+	CertPolicyController    = "klusterlet-addon-certpolicyctrl"
+	CertPolicyCtrl          = "certpolicyctrl"
+	RequiresHubKubeConfig   = true
+	managedClusterAddOnName = "cert-policy-controller"
 )
 
 var log = logf.Log.WithName("certpolicyctrl")
@@ -44,6 +45,10 @@ func (addon AddonCertPolicyCtrl) NewAddonCR(
 	namespace string,
 ) (runtime.Object, error) {
 	return newCertPolicyControllerCR(instance, namespace)
+}
+
+func (addon AddonCertPolicyCtrl) GetManagedClusterAddOnName() string {
+	return managedClusterAddOnName
 }
 
 // newCertPolicyControllerCR - create CR for component cert policy controller

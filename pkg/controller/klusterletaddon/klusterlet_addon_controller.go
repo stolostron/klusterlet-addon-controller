@@ -15,14 +15,17 @@ import (
 	"strings"
 	"time"
 
+	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
@@ -76,6 +79,19 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 				}
 			},
 		)},
+	)
+	if err != nil {
+		return err
+	}
+
+	// watch for deletion of managedclusteraddons owned by a klusterletaddonconfig
+	err = c.Watch(
+		&source.Kind{Type: &addonv1alpha1.ManagedClusterAddOn{}},
+		&handler.EnqueueRequestForOwner{
+			OwnerType:    &agentv1.KlusterletAddonConfig{},
+			IsController: true,
+		},
+		newManagedClusterAddonDeletionPredicate(),
 	)
 	if err != nil {
 		return err
@@ -283,4 +299,19 @@ func isPaused(instance *agentv1.KlusterletAddonConfig) bool {
 	}
 
 	return false
+}
+
+func newManagedClusterAddonDeletionPredicate() predicate.Predicate {
+	return predicate.Predicate(predicate.Funcs{
+		GenericFunc: func(e event.GenericEvent) bool { return false },
+		CreateFunc:  func(e event.CreateEvent) bool { return false },
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			if e.Object == nil {
+				log.Error(nil, "Delete event has no runtime object to delete", "event", e)
+				return false
+			}
+			return true
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool { return false },
+	})
 }

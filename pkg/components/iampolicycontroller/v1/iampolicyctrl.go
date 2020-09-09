@@ -18,9 +18,10 @@ import (
 
 // constants for component CRs
 const (
-	IAMPolicyController   = "klusterlet-addon-iampolicyctrl"
-	IAMPolicyCtrl         = "iampolicyctrl"
-	RequiresHubKubeConfig = true
+	IAMPolicyController     = "klusterlet-addon-iampolicyctrl"
+	IAMPolicyCtrl           = "iampolicyctrl"
+	RequiresHubKubeConfig   = true
+	managedClusterAddOnName = "iam-policy-controller"
 )
 
 var log = logf.Log.WithName("iampolicyctrl")
@@ -43,6 +44,10 @@ func (addon AddonIAMPolicyCtrl) NewAddonCR(
 	namespace string,
 ) (runtime.Object, error) {
 	return newIAMPolicyControllerCR(instance, namespace)
+}
+
+func (addon AddonIAMPolicyCtrl) GetManagedClusterAddOnName() string {
+	return managedClusterAddOnName
 }
 
 // newIAMPolicyControllerCR - create CR for component iam poliicy controller
