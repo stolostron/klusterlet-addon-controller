@@ -41,7 +41,7 @@ var (
 	metricsPort int32 = 8383
 )
 var (
-	setupLog = ctrl.Log.WithName("setup")
+	setupLog = logf.Log.WithName("setup")
 )
 var log = logf.Log.WithName("cmd")
 
