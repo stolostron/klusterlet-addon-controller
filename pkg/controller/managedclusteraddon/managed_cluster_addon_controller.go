@@ -40,18 +40,38 @@ const (
 	leaseDurationSecondsLowerBound = 30
 	leaseDurationSecondsUpperBound = 90
 	requeueAfterSecondsLowerBound  = 30
-	processingReasonMissing        = "ManifestWorkCreating"
-	processingReasonCreated        = "ManifestWorkCreated"
-	processingReasonApplied        = "ManifestWorkApplied"
-	processingReasonDeleting       = "AddonTerminating"
-	availableReasonMissing         = "AddonNotReady"
-	availableReasonReady           = "AddonAvailable"
-	availableReasonTimeout         = "AddonTimeout"
-	degradedReasonTimeout          = "AddonTimeout"
-	degradedReasonInstallError     = "AddonInstallationError"
-	addonAvailable                 = "Available"
-	addonDegraded                  = "Degraded"
-	addonProgressing               = "Progressing"
+
+	// types of condition
+	addonAvailable   = "Available"
+	addonDegraded    = "Degraded"
+	addonProgressing = "Progressing"
+
+	// reasons of condition
+	processingReasonMissing    = "ManifestWorkCreating"
+	processingReasonCreated    = "ManifestWorkCreated"
+	processingReasonApplied    = "ManifestWorkApplied"
+	processingReasonDeleting   = "AddonTerminating"
+	availableReasonMissing     = "AddonNotReady"
+	availableReasonReady       = "AddonAvailable"
+	availableReasonTimeout     = "AddonTimeout"
+	degradedReasonTimeout      = "AddonTimeout"
+	degradedReasonInstallError = "AddonInstallationError"
+
+	// messages of condition
+	processingMSGMissing            = "Creating manifests for addon installation"  // message will show when we are waiting to create the manifests of addons
+	processingMSGCreated            = "Installing manifests"                       // message when we are still in installation
+	processingMSGApplied            = "All manifests installed"                    // message when the manifestwork is applied (manifest is installed)
+	processingMsgDeleting           = "Addon is terminating"                       // message when addon is in deletion
+	availableMsgMissing             = "Addon is not available"                     // message when addon is not in ready status yet
+	availableMSGReady               = "Addon is available"                         // message when addon is in ready status
+	availableMSGTimeout             = "Get addon status timeout"                   // message when addon has not sent message to hub for a while (default 5 minutes)
+	degradedMSGTimeoutTemplate      = "Failed to check addon available status: %s" // message when we have problem to know if addon is alive or not, %s can be errorTimeout or errorLease
+	degradedMSGInstallErrorTemplate = "Failed to complete addon installation: %s"  // message when we detect error in addon's manifests installation, %s is errorFailedApplyTemplate
+
+	// possible error messages
+	errorFailedApplyTemplate = "%d of %d manifests failed to apply"
+	errorTimeout             = "request timeout"
+	errorLease               = "lease malformat"
 )
 
 /**
@@ -307,10 +327,10 @@ func updateDegradedStatus(mca *addonv1alpha1.ManagedClusterAddOn,
 	// show progressing issues as higher priority
 	if errProgressing != nil {
 		conditionReason = degradedReasonInstallError
-		conditionMsg = fmt.Sprintf("Failed to complete addon installation: %s", errProgressing.Error())
+		conditionMsg = fmt.Sprintf(degradedMSGInstallErrorTemplate, errProgressing.Error())
 	} else {
 		conditionReason = degradedReasonTimeout
-		conditionMsg = fmt.Sprintf("Failed to check addon available status: %s", errAvailable.Error())
+		conditionMsg = fmt.Sprintf(degradedMSGTimeoutTemplate, errAvailable.Error())
 	}
 	condition := createCondition(conditionType, conditionStatus, conditionReason, conditionMsg)
 	setStatusCondition(&mca.Status.Conditions, condition)
@@ -336,24 +356,24 @@ func updateProcessingStatus(
 	if !isEnabled {
 		// when disabled, until completely deleted, should always show terminating
 		conditionReason = processingReasonDeleting
-		conditionMsg = "Addon Terminating"
+		conditionMsg = processingMsgDeleting
 	} else if manifestWorkIsNotFound {
 		// when waiting for manifestwork to create
 		conditionReason = processingReasonMissing
-		conditionMsg = "Creating ManifestWork"
+		conditionMsg = processingMSGMissing
 	} else {
 		numFailed, numSucceeded, numTotal := checkManifestWorkStatus(mw)
 		// check if it's done, if applied > total, then it's done, otherwise it's not
 		if numFailed+numSucceeded >= numTotal {
 			conditionStatus = metav1.ConditionFalse
 			conditionReason = processingReasonApplied
-			conditionMsg = fmt.Sprintf("Applied ManifestWork")
+			conditionMsg = processingMSGApplied
 		} else {
 			conditionReason = processingReasonCreated
-			conditionMsg = fmt.Sprintf("Applying ManifestWork")
+			conditionMsg = processingMSGCreated
 		}
 		if numFailed > 0 {
-			err = fmt.Errorf("%d of %d manifests failed to apply", numFailed, numTotal)
+			err = fmt.Errorf(errorFailedApplyTemplate, numFailed, numTotal)
 		}
 	}
 	// update condition
@@ -391,7 +411,7 @@ func updateAvailableStatus(
 	conditionType := addonAvailable
 	conditionStatus := metav1.ConditionFalse
 	conditionReason := availableReasonMissing
-	conditionMsg := "Addon is not available"
+	conditionMsg := availableMsgMissing
 	err = nil
 	// if found, will use lease to get expiration time & decide available or not
 	if !leaseIsNotFound {
@@ -399,15 +419,15 @@ func updateAvailableStatus(
 			if time.Now().Before(expireTime) {
 				conditionStatus = metav1.ConditionTrue
 				conditionReason = availableReasonReady
-				conditionMsg = "Addon is available"
+				conditionMsg = availableMSGReady
 			} else {
 				conditionStatus = metav1.ConditionUnknown
 				conditionReason = availableReasonTimeout
-				conditionMsg = "Get addon status timeout"
-				err = fmt.Errorf("request timeout")
+				conditionMsg = availableMSGTimeout
+				err = fmt.Errorf(errorTimeout)
 			}
 		} else {
-			err = fmt.Errorf("lease malformat")
+			err = fmt.Errorf(errorLease)
 		}
 	}
 
