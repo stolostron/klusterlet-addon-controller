@@ -12,6 +12,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/open-cluster-management/library-go/pkg/templateprocessor"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -30,14 +31,13 @@ import (
 	"k8s.io/klog"
 )
 
-const MANAGEDCLUSTERS_KUBECONFIGS_DIR = "test/e2e/resources/clusters"
-const HUBCLUSTER_KUBECONFIG_DIR = "test/e2e/resources/hubs"
+//const MANAGEDCLUSTERS_KUBECONFIGS_DIR = "test/e2e/resources/clusters"
+//const HUBCLUSTER_KUBECONFIG_DIR = "test/e2e/resources/hubs"
 const NumberOfPods = 8
 
 const (
 	//	MANUAL_IMPORT_IMAGE_PULL_SECRET = "image-pull-secret"
 	MANUAL_IMPORT_CLUSTER_SCENARIO = "manual-import"
-	invalidSemanticVersion         = "2.0.0.12"
 )
 
 // list of manifestwork name for addon crs
@@ -124,7 +124,7 @@ var _ = Describe("Manual import cluster", func() {
 	var clientHub kubernetes.Interface
 	var clientHubDynamic dynamic.Interface
 	var clientHubClientset clientset.Interface
-	var templateProcessor *libgoapplier.TemplateProcessor
+	var templateProcessor *templateprocessor.TemplateProcessor
 	var hubApplier *libgoapplier.Applier
 	var clientManagedCluster kubernetes.Interface
 	var clientManagedDynamic dynamic.Interface
@@ -144,12 +144,13 @@ var _ = Describe("Manual import cluster", func() {
 		Expect(err).To(BeNil())
 		clientHubClientset, err = libgoclient.NewDefaultKubeClientAPIExtension(kubeconfig)
 		Expect(err).To(BeNil())
-		yamlReader := libgoapplier.NewYamlFileReader("resources")
-		templateProcessor, err = libgoapplier.NewTemplateProcessor(yamlReader, &libgoapplier.Options{})
+		yamlReader := templateprocessor.NewYamlFileReader("resources")
+		templateProcessor, err = templateprocessor.NewTemplateProcessor(yamlReader, &templateprocessor.Options{})
 		Expect(err).To(BeNil())
 		hubClient, err = libgoclient.NewDefaultClient(kubeconfig, client.Options{})
 		Expect(err).To(BeNil())
-		hubApplier, err = libgoapplier.NewApplier(templateProcessor, hubClient, nil, nil, merger)
+		hubApplier, err = libgoapplier.NewApplier(yamlReader, &templateprocessor.Options{},
+			hubClient, nil, nil, merger, &libgoapplier.Options{})
 		Expect(err).To(BeNil())
 	})
 
@@ -190,7 +191,7 @@ var _ = Describe("Manual import cluster", func() {
 				names, err := templateProcessor.AssetNamesInPath("./klusterletaddonconfig_cr.yaml", nil, false)
 				Expect(err).To(BeNil())
 				klog.V(1).Infof("names: %s", names)
-				Expect(hubApplier.CreateOrUpdateAsset("klusterletaddonconfig_cr.yaml", values)).To(BeNil())
+				Expect(hubApplier.CreateOrUpdateResource("klusterletaddonconfig_cr.yaml", values)).To(BeNil())
 				gvr := schema.GroupVersionResource{Group: "agent.open-cluster-management.io", Version: "v1", Resource: "klusterletaddonconfigs"}
 				Expect(clientHubDynamic.Resource(gvr).Namespace(clusterName).Get(context.TODO(), clusterName, metav1.GetOptions{})).NotTo(BeNil())
 			})
@@ -228,7 +229,7 @@ var _ = Describe("Manual import cluster", func() {
 
 			When("the klusterletaddonconfig is created, wait for manifestwork for CRs", func() {
 				gvrManifestwork := schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
-				for crName, _ := range addonCRs {
+				for crName := range addonCRs {
 					By("Checking " + crName)
 					var cr *unstructured.Unstructured
 					Eventually(func() error {
@@ -333,7 +334,7 @@ var _ = Describe("Manual import cluster", func() {
 
 			When("the klusterletaddonconfig is deleted, wait for deletion of manifestwork for CRs", func() {
 				gvrManifestwork := schema.GroupVersionResource{Group: "work.open-cluster-management.io", Version: "v1", Resource: "manifestworks"}
-				for crName, _ := range addonCRs {
+				for crName := range addonCRs {
 					By("Checking " + crName)
 					Eventually(func() bool {
 						klog.V(1).Infof("Wait ManifestWork CRs %s...", clusterName+"-klusterlet-addon-"+crName)
@@ -411,13 +412,12 @@ var _ = Describe("Manual import cluster", func() {
 	})
 })
 
-func validateUnstructured(obj *unstructured.Unstructured, regexps []string) error {
+func validateUnstructured(obj *unstructured.Unstructured, regexps []string) {
 	resources, err := obj.MarshalJSON()
 	Expect(err).To(BeNil())
 	for _, r := range regexps {
 		Expect(string(resources)).To(MatchRegexp(r))
 	}
-	return err
 }
 
 func waitForPodsRunning(numPods int, c kubernetes.Interface, namespace string) error {

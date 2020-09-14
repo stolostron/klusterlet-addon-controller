@@ -365,9 +365,9 @@ func hasStatusHelper(lientHubDynamic dynamic.Interface, name, namespace, condTyp
 		}
 		checkType := `"type":"` + condType + `"`
 		checkStatus := `"status":"` + condStatus + `"`
-		if strings.Index(string(b), checkType) >= 0 {
+		if strings.Contains(string(b), checkType) {
 			countType++
-			if strings.Index(string(b), checkStatus) >= 0 {
+			if strings.Contains(string(b), checkStatus) {
 				countMatch++
 			}
 		}

@@ -13,8 +13,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"time"
 
 	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
@@ -31,6 +30,7 @@ import (
 	"github.com/open-cluster-management/endpoint-operator/pkg/controller/clustermanagementaddon"
 	"github.com/open-cluster-management/endpoint-operator/pkg/utils"
 	"github.com/open-cluster-management/library-go/pkg/applier"
+	"github.com/open-cluster-management/library-go/pkg/templateprocessor"
 	ocinfrav1 "github.com/openshift/api/config/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -38,9 +38,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const (
@@ -87,24 +89,36 @@ var merger applier.Merger = func(current,
 func createOrUpdateHubKubeConfigResources(
 	klusterletaddonconfig *agentv1.KlusterletAddonConfig,
 	r *ReconcileKlusterletAddon,
-	componentName string) error {
+	addon addons.KlusterletAddon) error {
+	componentName := addon.GetAddonName()
 	//Create the values for the yamls
 	config := struct {
 		ManagedClusterName      string
 		ManagedClusterNamespace string
 		ServiceAccountName      string
+		ManagedClusterAddonName string
 	}{
 		ManagedClusterName:      klusterletaddonconfig.Name + "-" + componentName,
 		ManagedClusterNamespace: klusterletaddonconfig.Name,
 		ServiceAccountName:      klusterletaddonconfig.Name + "-" + componentName,
+		ManagedClusterAddonName: addon.GetManagedClusterAddOnName(),
 	}
 
-	template, err := applier.NewTemplateProcessor(bindata.NewBindataReader(), nil)
-	if err != nil {
-		return err
-	}
-
-	newApplier, err := applier.NewApplier(template, r.client, klusterletaddonconfig, r.scheme, merger)
+	newApplier, err := applier.NewApplier(
+		bindata.NewBindataReader(),
+		&templateprocessor.Options{},
+		r.client,
+		klusterletaddonconfig,
+		r.scheme,
+		merger,
+		&applier.Options{
+			Backoff: &wait.Backoff{
+				Steps:    1,
+				Duration: 10 * time.Millisecond,
+				Factor:   1.0,
+			},
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -115,7 +129,6 @@ func createOrUpdateHubKubeConfigResources(
 		false,
 		config,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -126,7 +139,6 @@ func createOrUpdateHubKubeConfigResources(
 		false,
 		config,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -193,7 +205,7 @@ func syncManifestWorkCRs(klusterletaddonconfig *agentv1.KlusterletAddonConfig, r
 		addonName := addon.GetAddonName()
 		// create sa/clusterrole/clusterrolebindig for each addon
 		if addon.CheckHubKubeconfigRequired() {
-			if err := createOrUpdateHubKubeConfigResources(klusterletaddonconfig, r, addonName); err != nil {
+			if err := createOrUpdateHubKubeConfigResources(klusterletaddonconfig, r, addon); err != nil {
 				log.Error(err, fmt.Sprintf("Failed to create sa/clusterrole/clusterrolebindig for componnet %s", addonName))
 				lastErr = err
 				continue

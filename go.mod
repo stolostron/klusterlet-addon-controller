@@ -9,12 +9,13 @@ require (
 	github.com/onsi/gomega v1.10.1
 	github.com/open-cluster-management/api v0.0.0-20200903203421-64b667f5455c
 	github.com/open-cluster-management/library-e2e-go v0.0.0-20200620112055-c80fc3c14997
-	github.com/open-cluster-management/library-go v0.0.0-20200717185358-0f041928bcef
+	github.com/open-cluster-management/library-go v0.0.0-20200828173847-299c21e6c3fc
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/sclevine/agouti v3.0.0+incompatible
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.14.1 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
+	golang.org/x/tools v0.0.0-20200713235242-6acd2ab80ede // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.19.0

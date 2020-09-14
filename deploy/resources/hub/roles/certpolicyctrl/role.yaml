@@ -8,10 +8,17 @@ rules:
   - coordination.k8s.io
   resources:
   - leases
+  resourceNames:
+  - {{ .ManagedClusterAddonName }}
   verbs:
-  - create
   - get
   - list
   - patch
   - update
   - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
