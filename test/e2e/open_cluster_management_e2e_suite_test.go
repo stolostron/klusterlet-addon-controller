@@ -29,11 +29,7 @@ var kubeadminUser string
 var kubeadminCredential string
 var reportFile string
 
-var registry string
-var registryUser string
-var registryPassword string
-
-var optionsFile, clusterDeployFile, installConfigFile string
+var optionsFile string
 var clusterDeploy libgoapis.ClusterDeploy
 var installConfig libgoapis.InstallConfig
 var testOptionsContainer libgooptions.TestOptionsContainer
@@ -45,8 +41,6 @@ var testIdentityProvider int
 
 var ownerPrefix string
 
-var hubNamespace string
-var pullSecretName string
 var installConfigAWS, installConfigGCP, installConfigAzure string
 var hiveClusterName, hiveGCPClusterName, hiveAzureClusterName string
 

@@ -126,6 +126,11 @@ run:
 request-destruct:
 	build/bin/self-destruct.sh
 
+.PHONY: lint-all
+lint-all:
+	@echo "Running linting tool ..."
+	@golangci-lint run --timeout 5m --build-tags e2e,functional
+
 .PHONY: lint
 ## Runs linter against go files
 lint:

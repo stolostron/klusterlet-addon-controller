@@ -35,14 +35,11 @@ import (
 )
 
 const (
-	klusterletAddonController  = "klusterlet-addon-controller"
-	klusterletAddonContainer   = "klusterlet-addon"
-	defaultImageRegistry       = "quay.io/open-cluster-management"
-	defaultImagePullSecretName = "multicloud-image-pull-secret"
-	testNamespace              = "test-klusterlet-addon-controller"
+	klusterletAddonController = "klusterlet-addon-controller"
+	defaultImageRegistry      = "quay.io/open-cluster-management"
+	testNamespace             = "test-klusterlet-addon-controller"
 
 	klusterletAddonNamespace = "open-cluster-management"
-	resourceName             = "klusterletaddonconfigs"
 )
 
 var (

@@ -48,11 +48,6 @@ const (
 	manifestWorkFinalizer    = "cluster.open-cluster-management.io/manifest-work-cleanup"
 )
 
-const (
-	//We can not test on the sha value as the image manifest is overwriten by CICD
-	klusterletAddonOperatorContainer = klusterletAddonOperator
-)
-
 var deletePatchStrings = map[string]string{
 	applicationManager: fmt.Sprintf(
 		"[{\"op\":\"%s\",\"path\":\"%s\",\"value\":%t}]",
