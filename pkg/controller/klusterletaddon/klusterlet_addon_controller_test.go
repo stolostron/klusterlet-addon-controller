@@ -134,6 +134,16 @@ func TestReconcileKlusterletAddon_Reconcile(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-managedcluster",
 		},
+		Status: managedclusterv1.ManagedClusterStatus{
+			Conditions: []metav1.Condition{
+				metav1.Condition{
+					Type:    managedclusterv1.ManagedClusterConditionAvailable,
+					Status:  metav1.ConditionTrue,
+					Reason:  "ManagedClusterAvailable",
+					Message: "Managed cluster is available",
+				},
+			},
+		},
 	}
 	terminatingManagedCluster := &managedclusterv1.ManagedCluster{
 		TypeMeta: metav1.TypeMeta{
@@ -143,6 +153,27 @@ func TestReconcileKlusterletAddon_Reconcile(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "test-managedcluster",
 			DeletionTimestamp: &metav1.Time{Time: time.Now()},
+		},
+	}
+
+	testManifestWorkCRD := &manifestworkv1.ManifestWork{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: manifestworkv1.SchemeGroupVersion.String(),
+			Kind:       "ManifestWork",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-managedcluster" + KlusterletAddonCRDsPostfix,
+			Namespace: "test-managedcluster",
+		},
+		Status: manifestworkv1.ManifestWorkStatus{
+			Conditions: []metav1.Condition{
+				metav1.Condition{
+					Type:    "Available",
+					Status:  metav1.ConditionTrue,
+					Reason:  "AppliedManifestWorkComplete",
+					Message: "Apply manifest work complete",
+				},
+			},
 		},
 	}
 
@@ -212,6 +243,27 @@ func TestReconcileKlusterletAddon_Reconcile(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "waiting for CRD manifestwork to update status",
+			fields: fields{
+				client: fake.NewFakeClientWithScheme(testscheme,
+					testKlusterletAddonConfig,
+					testManagedCluster,
+					testSecret,
+					infrastructConfig,
+					testServiceAccountAppmgr,
+					testServiceAccountWorkmgr),
+				scheme: testscheme,
+			},
+			args: args{
+				request: req,
+			},
+			want: reconcile.Result{
+				Requeue:      true,
+				RequeueAfter: 30 * time.Second,
+			},
+			wantErr: false,
+		},
+		{
 			name: "success",
 			fields: fields{
 				client: fake.NewFakeClientWithScheme(testscheme,
@@ -219,6 +271,7 @@ func TestReconcileKlusterletAddon_Reconcile(t *testing.T) {
 					testManagedCluster,
 					testSecret,
 					infrastructConfig,
+					testManifestWorkCRD,
 					testServiceAccountAppmgr,
 					testServiceAccountWorkmgr),
 				scheme: testscheme,

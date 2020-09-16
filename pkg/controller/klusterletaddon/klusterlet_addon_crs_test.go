@@ -31,23 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-// var (
-// 	manifestPath = filepath.Join("..", "..", "..", "image-manifests")
-// )
-
-// func TestMain(m *testing.M) {
-// 	// err := setup()
-// 	// if err != nil {
-// 	// 	os.Exit(999)
-// 	// }
-// 	code := m.Run()
-// 	teardown()
-// 	os.Exit(code)
-// }
-
-// func teardown() {
-// }
-
 func Test_syncManifestWorkCRs(t *testing.T) {
 	testscheme := scheme.Scheme
 
@@ -182,6 +165,67 @@ func Test_syncManifestWorkCRs(t *testing.T) {
 	}
 }
 
+func Test_syncManagedClusterAddonCRs(t *testing.T) {
+	testscheme := scheme.Scheme
+
+	testscheme.AddKnownTypes(agentv1.SchemeGroupVersion, &agentv1.KlusterletAddonConfig{})
+	testscheme.AddKnownTypes(addonv1alpha1.SchemeGroupVersion, &addonv1alpha1.ManagedClusterAddOn{})
+
+	testKlusterletAddonConfig := &agentv1.KlusterletAddonConfig{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: agentv1.SchemeGroupVersion.String(),
+			Kind:       "KlusterletAddonConfig",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-managedcluster",
+			Namespace: "test-managedcluster",
+		},
+		Spec: agentv1.KlusterletAddonConfigSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+				Enabled: true,
+			},
+			SearchCollectorConfig: agentv1.KlusterletAddonConfigSearchCollectorSpec{
+				Enabled: true,
+			},
+			Version: "2.1.0",
+		},
+	}
+
+	type args struct {
+		r                  *ReconcileKlusterletAddon
+		klusterletaddoncfg *agentv1.KlusterletAddonConfig
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "create ManagedClusterAddons for all components crs in klusterletaddonconfig",
+			args: args{
+				r: &ReconcileKlusterletAddon{
+					client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{
+						testKlusterletAddonConfig,
+					}...),
+					scheme: testscheme,
+				},
+				klusterletaddoncfg: testKlusterletAddonConfig,
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := syncManagedClusterAddonCRs(tt.args.klusterletaddoncfg, tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("syncManagedClusterAddonCRs() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
 func Test_newCRManifestWork(t *testing.T) {
 	testscheme := scheme.Scheme
 

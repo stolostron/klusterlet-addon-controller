@@ -212,7 +212,10 @@ var _ = Describe("Creating KlusterletAddonConfig", func() {
 				validateUnstructured(crds, validations[allCRDs])
 				Expect(isOwner(ownerKlusterletAddonConfig, crds)).Should(BeTrue(), "OwnerRef of "+allCRDs+" should be set correctly")
 			})
-
+			By("Updating manifestwork of CRDs with all applied.", func() {
+				setManifestWorkStatusAvailable(clientClusterDynamic, allCRDs, testNamespace)
+			})
+			time.Sleep(30 * time.Second)
 			By("Checking manifestwork of Addon Operator is created", func() {
 				var addon *unstructured.Unstructured
 				Eventually(func() error {
@@ -242,7 +245,7 @@ var _ = Describe("Creating KlusterletAddonConfig", func() {
 		BeforeEach(func() {
 			setClusterOffline(clientClusterDynamic, testKlusterletAddonConfigName)
 		})
-		It("Should also create Manifestworks for CRDs, Addon Operator, and CRs; should set OwnerRef=klusterletaddonconfig for created Manifestworks", func() {
+		It("Should also create Manifestworks for CRDs, Addon Operator; should set OwnerRef=klusterletaddonconfig for created Manifestworks", func() {
 			var err error
 			ownerKlusterletAddonConfig, err := clientClusterDynamic.Resource(gvrKlusterletAddonConfig).Namespace(testKlusterletAddonConfigName).Get(context.TODO(), testKlusterletAddonConfigName, metav1.GetOptions{})
 			Expect(err).Should(BeNil())
@@ -265,20 +268,6 @@ var _ = Describe("Creating KlusterletAddonConfig", func() {
 				validateUnstructured(addon, validations[klusterletAddonOperator])
 				Expect(isOwner(ownerKlusterletAddonConfig, addon)).Should(BeTrue(), "OwnerRef of "+klusterletAddonOperator+" should be set correctly")
 			})
-
-			By("Checking manifestwork of all CRs are created", func() {
-				for _, crName := range addonCRs {
-					By("Checking " + crName)
-					var cr *unstructured.Unstructured
-					Eventually(func() error {
-						cr, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), crName, metav1.GetOptions{})
-						return err
-					}, 5, 1).Should(BeNil())
-					By("Validating " + crName)
-					validateUnstructured(cr, validations[crName])
-					Expect(isOwner(ownerKlusterletAddonConfig, cr)).Should(BeTrue(), "OwnerRef of "+crName+" should be set correctly")
-				}
-			})
 		})
 	})
 })
@@ -297,6 +286,7 @@ var _ = Describe("Disabling & Enabling Addons", func() {
 			createNewUnstructured(clientClusterDynamic, gvrKlusterletAddonConfig,
 				klusterletAddonConfig, testKlusterletAddonConfigName, testNamespace)
 			setClusterOnline(clientClusterDynamic, testKlusterletAddonConfigName)
+
 		})
 	})
 	It("Should update Addons' Manifestwork when KlusterletAddonConfig changed", func() {
@@ -305,6 +295,21 @@ var _ = Describe("Disabling & Enabling Addons", func() {
 		rand.Seed(time.Now().UnixNano())
 		rand.Shuffle(len(tmpAddonCRs), func(i, j int) { tmpAddonCRs[i], tmpAddonCRs[j] = tmpAddonCRs[j], tmpAddonCRs[i] })
 		var err error
+		ownerKlusterletAddonConfig, err := clientClusterDynamic.Resource(gvrKlusterletAddonConfig).Namespace(testKlusterletAddonConfigName).Get(context.TODO(), testKlusterletAddonConfigName, metav1.GetOptions{})
+		Expect(err).Should(BeNil())
+		By("Checking manifestwork of CRDs is created", func() {
+			var crds *unstructured.Unstructured
+			Eventually(func() error {
+				crds, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), allCRDs, metav1.GetOptions{})
+				return err
+			}, 5, 1).Should(BeNil())
+			validateUnstructured(crds, validations[allCRDs])
+			Expect(isOwner(ownerKlusterletAddonConfig, crds)).Should(BeTrue(), "OwnerRef of "+allCRDs+" should be set correctly")
+		})
+		By("Updating manifestwork of CRDs with all applied.", func() {
+			setManifestWorkStatusAvailable(clientClusterDynamic, allCRDs, testNamespace)
+		})
+		time.Sleep(30 * time.Second)
 		By("Disabling all addons one by one", func() {
 			for _, addon := range tmpAddonCRs {
 				// workmgr is always enabled
@@ -373,7 +378,20 @@ var _ = Describe("Deleting Managedcluster Which Has Never Been Online", func() {
 			createNewUnstructured(clientClusterDynamic, gvrKlusterletAddonConfig,
 				klusterletAddonConfig, testKlusterletAddonConfigName, testNamespace)
 		})
-
+		ownerKlusterletAddonConfig, err := clientClusterDynamic.Resource(gvrKlusterletAddonConfig).Namespace(testKlusterletAddonConfigName).Get(context.TODO(), testKlusterletAddonConfigName, metav1.GetOptions{})
+		Expect(err).Should(BeNil())
+		By("Checking manifestwork of CRDs is created", func() {
+			var crds *unstructured.Unstructured
+			Eventually(func() error {
+				crds, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), allCRDs, metav1.GetOptions{})
+				return err
+			}, 5, 1).Should(BeNil())
+			validateUnstructured(crds, validations[allCRDs])
+			Expect(isOwner(ownerKlusterletAddonConfig, crds)).Should(BeTrue(), "OwnerRef of "+allCRDs+" should be set correctly")
+		})
+		By("Updating manifestwork of CRDs with all applied.", func() {
+			setManifestWorkStatusAvailable(clientClusterDynamic, allCRDs, testNamespace)
+		})
 		By("Deleting ManagedCluster", func() {
 			Expect(func() error {
 				return clientClusterDynamic.Resource(gvrManagedCluster).Namespace("").Delete(context.TODO(), testKlusterletAddonConfigName, metav1.DeleteOptions{})
@@ -411,7 +429,21 @@ var _ = Describe("Deleting A Joined ManagedCluster", func() {
 				klusterletAddonConfig, testKlusterletAddonConfigName, testNamespace)
 			setClusterOnline(clientClusterDynamic, testKlusterletAddonConfigName)
 		})
-
+		ownerKlusterletAddonConfig, err := clientClusterDynamic.Resource(gvrKlusterletAddonConfig).Namespace(testKlusterletAddonConfigName).Get(context.TODO(), testKlusterletAddonConfigName, metav1.GetOptions{})
+		Expect(err).Should(BeNil())
+		By("Checking manifestwork of CRDs is created", func() {
+			var crds *unstructured.Unstructured
+			Eventually(func() error {
+				crds, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), allCRDs, metav1.GetOptions{})
+				return err
+			}, 5, 1).Should(BeNil())
+			validateUnstructured(crds, validations[allCRDs])
+			Expect(isOwner(ownerKlusterletAddonConfig, crds)).Should(BeTrue(), "OwnerRef of "+allCRDs+" should be set correctly")
+		})
+		By("Updating manifestwork of CRDs with all applied.", func() {
+			setManifestWorkStatusAvailable(clientClusterDynamic, allCRDs, testNamespace)
+		})
+		time.Sleep(30 * time.Second)
 		// wait for ManagedCluster to have finalizer
 		By("Waiting for reconcile", func() {
 			checkFinalizerIsSet(clientClusterDynamic, gvrManagedCluster, testKlusterletAddonConfigName, "", klusterletAddonFinalizer)
@@ -523,7 +555,21 @@ var _ = Describe("Deleting KlusterletAddonConfig Only", func() {
 				klusterletAddonConfig, testKlusterletAddonConfigName, testNamespace)
 			setClusterOnline(clientClusterDynamic, testKlusterletAddonConfigName)
 		})
-
+		ownerKlusterletAddonConfig, err := clientClusterDynamic.Resource(gvrKlusterletAddonConfig).Namespace(testKlusterletAddonConfigName).Get(context.TODO(), testKlusterletAddonConfigName, metav1.GetOptions{})
+		Expect(err).Should(BeNil())
+		By("Checking manifestwork of CRDs is created", func() {
+			var crds *unstructured.Unstructured
+			Eventually(func() error {
+				crds, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), allCRDs, metav1.GetOptions{})
+				return err
+			}, 5, 1).Should(BeNil())
+			validateUnstructured(crds, validations[allCRDs])
+			Expect(isOwner(ownerKlusterletAddonConfig, crds)).Should(BeTrue(), "OwnerRef of "+allCRDs+" should be set correctly")
+		})
+		By("Updating manifestwork of CRDs with all applied.", func() {
+			setManifestWorkStatusAvailable(clientClusterDynamic, allCRDs, testNamespace)
+			time.Sleep(time.Second * 30)
+		})
 		// wait for ManagedCluster to have finalizer
 		By("Waiting for reconcile", func() {
 			checkFinalizerIsSet(clientClusterDynamic, gvrManagedCluster, testKlusterletAddonConfigName, "", klusterletAddonFinalizer)
@@ -777,4 +823,15 @@ func isOwner(owner *unstructured.Unstructured, obj interface{}) bool {
 		}
 	}
 	return false
+}
+
+func setManifestWorkStatusAvailable(clientHubDynamic dynamic.Interface, name, namespace string) {
+	patchString := `{"status":{"conditions":[{"type":"Available","status":"True","message":"All resources are available","reason":"ResourcesAvailable"`
+	//	patchString = patchString + `"lastTransitionTime":` + metav1.Time{Time: time.Now()}
+	patchString = patchString + `}]}}`
+
+	Expect(func() error {
+		_, err := clientHubDynamic.Resource(gvrManifestwork).Namespace(namespace).Patch(context.TODO(), name, types.MergePatchType, []byte(patchString), metav1.PatchOptions{}, "status")
+		return err
+	}()).Should(BeNil())
 }
