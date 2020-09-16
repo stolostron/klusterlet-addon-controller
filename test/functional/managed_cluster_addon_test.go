@@ -93,6 +93,22 @@ var _ = Describe("ManagedClusterAddOns", func() {
 				klusterletAddonConfig, testKlusterletAddonConfigName, testNamespace)
 			setClusterOnline(clientClusterDynamic, testKlusterletAddonConfigName)
 		})
+		var err error
+		ownerKlusterletAddonConfig, err := clientClusterDynamic.Resource(gvrKlusterletAddonConfig).Namespace(testKlusterletAddonConfigName).Get(context.TODO(), testKlusterletAddonConfigName, metav1.GetOptions{})
+		Expect(err).Should(BeNil())
+		By("Checking manifestwork of CRDs is created", func() {
+			var crds *unstructured.Unstructured
+			Eventually(func() error {
+				crds, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), allCRDs, metav1.GetOptions{})
+				return err
+			}, 5, 1).Should(BeNil())
+			validateUnstructured(crds, validations[allCRDs])
+			Expect(isOwner(ownerKlusterletAddonConfig, crds)).Should(BeTrue(), "OwnerRef of "+allCRDs+" should be set correctly")
+		})
+		By("Updating manifestwork of CRDs with all applied.", func() {
+			setManifestWorkStatusAvailable(clientClusterDynamic, allCRDs, testNamespace)
+			time.Sleep(time.Second * 30)
+		})
 	})
 	It("Should create ManagedClusterAddOn Operator for enabled addons, delete when disabled, delete all when klusterletaddonconfig is deleted", func() {
 		By("Check all addons has managedclusteraddons", func() {
@@ -106,7 +122,7 @@ var _ = Describe("ManagedClusterAddOns", func() {
 				Eventually(func() error {
 					mca, err = clientClusterDynamic.Resource(gvrManagedClusterAddOn).Namespace(testNamespace).Get(context.TODO(), mcaName, metav1.GetOptions{})
 					return err
-				}, 5, 1).Should(BeNil())
+				}, 10, 2).Should(BeNil())
 				By("Validating " + mcaName)
 				validateUnstructured(mca, mcaValidations[mcaName])
 				Expect(isOwner(ownerKlusterletAddonConfig, mca)).Should(BeTrue(), "OwnerRef of "+mcaName+" should be set correctly")

@@ -212,13 +212,6 @@ func syncManifestWorkCRs(klusterletaddonconfig *agentv1.KlusterletAddonConfig, r
 			}
 		}
 		if addon.IsEnabled(klusterletaddonconfig) {
-			// create ManagedClusterAddon if enabled, and will not block if failed.
-			// created ManagedClusterAddon should has controller reference points to the klusterletaddonconfig
-			// and it should has the correct AddonRef in status
-			if err := updateManagedClusterAddon(addon, klusterletaddonconfig, r.client, r.scheme); err != nil {
-				log.Error(err, "Failed to create ManagedClusterAddon "+addonName)
-				lastErr = err
-			}
 			// create Manifestwork if enabled
 			if manifestWork, err := newCRManifestWork(addon, klusterletaddonconfig, r.client); err != nil {
 				lastErr = err
@@ -245,6 +238,25 @@ func syncManifestWorkCRs(klusterletaddonconfig *agentv1.KlusterletAddonConfig, r
 		}
 	}
 
+	return lastErr
+}
+
+// syncManagedClusterAddonCRs creates/updates/deletes all CR ManagedClusterAddon according to klusterletAddonConfig's configuration
+// loops through all the components, and return the last error if there are errors, or return nil if succeeded
+func syncManagedClusterAddonCRs(klusterletaddonconfig *agentv1.KlusterletAddonConfig, r *ReconcileKlusterletAddon) error {
+	var lastErr error
+	lastErr = nil
+	for _, addon := range addonsArray {
+		if addon.IsEnabled(klusterletaddonconfig) {
+			// create ManagedClusterAddon if enabled, and will not block if failed.
+			// created ManagedClusterAddon should has controller reference points to the klusterletaddonconfig
+			// and it should has the correct AddonRef in status
+			if err := updateManagedClusterAddon(addon, klusterletaddonconfig, r.client, r.scheme); err != nil {
+				log.Error(err, "Failed to create ManagedClusterAddon "+addon.GetAddonName())
+				lastErr = err
+			}
+		}
+	}
 	return lastErr
 }
 

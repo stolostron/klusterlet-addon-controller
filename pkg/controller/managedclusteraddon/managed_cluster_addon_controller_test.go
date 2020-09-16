@@ -266,7 +266,7 @@ func Test_checkManifestWorkStatus(t *testing.T) {
 			wantTotal:     3,
 		},
 		{
-			name: "in pprogress",
+			name: "in progress",
 			args: &manifestworkv1.ManifestWork{
 				Spec: manifestworkv1.ManifestWorkSpec{
 					Workload: manifestworkv1.ManifestsTemplate{

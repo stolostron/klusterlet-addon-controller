@@ -150,3 +150,17 @@ func DeleteManifestWork(name, namespace string, client client.Client, removeFina
 
 	return retErr
 }
+
+func GetManifestWork(name, namespace string, client client.Client) (*manifestworkv1.ManifestWork, error) {
+	manifestWork := &manifestworkv1.ManifestWork{}
+
+	if err := client.Get(
+		context.TODO(),
+		types.NamespacedName{Name: name, Namespace: namespace},
+		manifestWork,
+	); err != nil {
+		return nil, err
+	}
+
+	return manifestWork, nil
+}

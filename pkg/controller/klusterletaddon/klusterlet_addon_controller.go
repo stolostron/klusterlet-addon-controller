@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
+	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
 	"github.com/open-cluster-management/endpoint-operator/pkg/utils"
 )
@@ -252,10 +253,29 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
-	// sync manifestWork for component crs according to klusterletAddonConfig enable/disable settings
-	if err := syncManifestWorkCRs(klusterletAddonConfig, r); err != nil {
-		reqLogger.Error(err, "Fail to create manifest work for CRs")
+	// Sync ManagedClusterAddon for component crs according to klusterletAddonConfig enable/disable settings
+	if err := syncManagedClusterAddonCRs(klusterletAddonConfig, r); err != nil {
+		reqLogger.Error(err, "Fail to create ManagedClusterAddon for CRs")
 		return reconcile.Result{}, err
+	}
+
+	manifestWork, err := utils.GetManifestWork(request.Namespace+KlusterletAddonCRDsPostfix, request.Namespace, r.client)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	if manifestWork != nil && len(manifestWork.Status.Conditions) > 0 {
+		if IsCRDManfestWorkAvailable(manifestWork) {
+			// sync manifestWork for component crs according to klusterletAddonConfig enable/disable settings
+			if err := syncManifestWorkCRs(klusterletAddonConfig, r); err != nil {
+				reqLogger.Error(err, "Fail to create manifest work for CRs")
+				return reconcile.Result{}, err
+			}
+		} else {
+			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
+		}
+	} else if IsManagedClusterOnline(managedCluster) {
+		return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
 	}
 
 	return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Minute}, nil
@@ -314,4 +334,17 @@ func newManagedClusterAddonDeletionPredicate() predicate.Predicate {
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool { return false },
 	})
+}
+
+// IsCRDManfestWorkAvailable - if manifestwork for crd is applied and resource is available on managed cluster it will return true
+func IsCRDManfestWorkAvailable(manifestWork *manifestworkv1.ManifestWork) bool {
+	for _, condition := range manifestWork.Status.Conditions {
+		if condition.Type == manifestworkv1.WorkAvailable { //not sure which condition is valid
+			if condition.Status == "True" {
+				return true
+			}
+		}
+	}
+
+	return false
 }
