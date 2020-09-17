@@ -12,7 +12,9 @@ package klusterletaddon
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"reflect"
+	"strings"
 	"time"
 
 	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
@@ -47,6 +49,8 @@ import (
 
 const (
 	infrastructureConfigName = "cluster"
+	apiserverConfigName      = "cluster"
+	openshiftConfigNamespace = "openshift-config"
 )
 
 var addonsArray = []addons.KlusterletAddon{
@@ -365,7 +369,7 @@ func deleteManifestWorkCRs(
 func getServiceAccountToken(
 	client client.Client,
 	klusterletaddonconfig *agentv1.KlusterletAddonConfig,
-	componentName string) ([]byte, error) {
+	componentName string) (token []byte, cert []byte, retErr error) {
 	// get service account created for component
 	sa := &corev1.ServiceAccount{}
 
@@ -377,7 +381,7 @@ func getServiceAccountToken(
 		},
 		sa,
 	); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	saSecret := &corev1.Secret{}
@@ -398,10 +402,14 @@ func getServiceAccountToken(
 
 	token, ok := saSecret.Data["token"]
 	if !ok {
-		return nil, fmt.Errorf("data of serviceaccount token secret does not contain token")
+		return nil, nil, fmt.Errorf("data of serviceaccount token secret does not contain token")
+	}
+	cert, ok = saSecret.Data["ca.crt"]
+	if !ok {
+		return token, nil, nil
 	}
 
-	return token, nil
+	return token, cert, nil
 }
 
 // getKubeAPIServerAddress - Get the API server address
@@ -415,27 +423,109 @@ func getKubeAPIServerAddress(client client.Client) (string, error) {
 	return infraConfig.Status.APIServerURL, nil
 }
 
+// getKubeAPIServerSecretName iterate through all namespacedCertificates
+// returns the first one which has a name matches the given dnsName
+func getKubeAPIServerSecretName(client client.Client, dnsName string) (string, error) {
+	apiserver := &ocinfrav1.APIServer{}
+	if err := client.Get(
+		context.TODO(),
+		types.NamespacedName{Name: apiserverConfigName},
+		apiserver,
+	); err != nil {
+		if errors.IsNotFound(err) {
+			log.Info("APIServer cluster not found")
+			return "", nil
+		}
+		return "", err
+	}
+	// iterate through all namedcertificates
+	for _, namedCert := range apiserver.Spec.ServingCerts.NamedCertificates {
+		for _, name := range namedCert.Names {
+			if strings.EqualFold(name, dnsName) {
+				return namedCert.ServingCertificate.Name, nil
+			}
+		}
+	}
+	return "", nil
+}
+
+// getKubeAPIServerCertificate looks for secret in openshift-config namespace, and returns tls.crt
+func getKubeAPIServerCertificate(client client.Client, secretName string) ([]byte, error) {
+	secret := &corev1.Secret{}
+	if err := client.Get(
+		context.TODO(),
+		types.NamespacedName{Name: secretName, Namespace: openshiftConfigNamespace},
+		secret,
+	); err != nil {
+		log.Error(err, fmt.Sprintf("Failed to get secret %s/%s", openshiftConfigNamespace, secretName))
+		if errors.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if secret.Type != corev1.SecretTypeTLS {
+		return nil, fmt.Errorf(
+			"secret %s/%s should have type=kubernetes.io/tls",
+			openshiftConfigNamespace,
+			secretName,
+		)
+	}
+	res, ok := secret.Data["tls.crt"]
+	if !ok {
+		return nil, fmt.Errorf(
+			"failed to find data[tls.crt] in secret %s/%s",
+			openshiftConfigNamespace,
+			secretName,
+		)
+	}
+	return res, nil
+}
+
 // newHubKubeconfigSecret -  creates a new hub-kubeconfig-secret
 func newHubKubeconfigSecret(klusterletaddonconfig *agentv1.KlusterletAddonConfig,
 	client client.Client,
 	componentName string,
 	namespace string) (*corev1.Secret, error) {
-
-	saToken, err := getServiceAccountToken(client, klusterletaddonconfig, componentName)
-	if err != nil {
-		return nil, err
-	}
-
+	insecureSkipTLSVerify := false
+	var certData []byte
 	kubeAPIServer, err := getKubeAPIServerAddress(client)
 	if err != nil {
 		return nil, err
 	}
 
+	saToken, caCert, err := getServiceAccountToken(client, klusterletaddonconfig, componentName)
+	if err != nil {
+		return nil, err
+	}
+	if len(caCert) > 0 {
+		certData = caCert
+	}
+
+	if u, err := url.Parse(kubeAPIServer); err == nil {
+		apiServerCertSecretName, err := getKubeAPIServerSecretName(client, u.Hostname())
+		if err != nil {
+			return nil, err
+		}
+		if len(apiServerCertSecretName) > 0 {
+			apiServerCert, err := getKubeAPIServerCertificate(client, apiServerCertSecretName)
+			if err != nil {
+				log.Error(err, "failed to get apiserver certificate, use default instead")
+			} else if len(apiServerCert) > 0 {
+				certData = apiServerCert
+			}
+		}
+	}
+
+	if len(certData) == 0 {
+		insecureSkipTLSVerify = true
+	}
+
 	kubeConfig := clientcmdapi.Config{
 		// Define a cluster stanza based on the bootstrap kubeconfig.
 		Clusters: map[string]*clientcmdapi.Cluster{"default-cluster": {
-			Server:                kubeAPIServer,
-			InsecureSkipTLSVerify: true,
+			Server:                   kubeAPIServer,
+			InsecureSkipTLSVerify:    insecureSkipTLSVerify,
+			CertificateAuthorityData: certData,
 		}},
 		// Define auth based on the obtained client cert.
 		AuthInfos: map[string]*clientcmdapi.AuthInfo{"default-auth": {
