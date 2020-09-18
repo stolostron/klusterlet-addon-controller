@@ -123,14 +123,12 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 
 	// Fetch the ManagedCluster instance
 	managedCluster := &managedclusterv1.ManagedCluster{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: request.Namespace}, managedCluster); err != nil {
-		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			return reconcile.Result{}, nil
-		}
-		// Error reading the object - requeue the request.
+	managedClusterIsNotFound := false
+	if err := r.client.Get(context.TODO(), types.NamespacedName{
+		Name: request.Namespace,
+	}, managedCluster); err != nil && errors.IsNotFound(err) {
+		managedClusterIsNotFound = true
+	} else if err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -139,7 +137,7 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 	if err := r.client.Get(context.TODO(), request.NamespacedName, klusterletAddonConfig); err != nil {
 		if errors.IsNotFound(err) {
 			// remove finalizer on ManagedCluster if klusterlet not found
-			if utils.HasFinalizer(managedCluster, KlusterletAddonFinalizer) {
+			if !managedClusterIsNotFound && utils.HasFinalizer(managedCluster, KlusterletAddonFinalizer) {
 				utils.RemoveFinalizer(managedCluster, KlusterletAddonFinalizer)
 				if err := r.client.Update(context.TODO(), managedCluster); err != nil {
 					return reconcile.Result{}, err
@@ -153,7 +151,7 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 
 	if klusterletAddonConfig.DeletionTimestamp != nil {
 		// if ManagedCluster not online, force delete all manifestwork
-		removeFinalizers := !IsManagedClusterOnline(managedCluster)
+		removeFinalizers := managedClusterIsNotFound || !IsManagedClusterOnline(managedCluster)
 
 		// delete & wait all CRs
 		if isCompleted, err := deleteManifestWorkCRs(klusterletAddonConfig, r.client, removeFinalizers); err != nil {
@@ -194,10 +192,16 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 			return reconcile.Result{}, err
 		}
 		// remove finalizer on managedCluster when all things are removed
-		utils.RemoveFinalizer(managedCluster, KlusterletAddonFinalizer)
-		if err := r.client.Update(context.TODO(), managedCluster); err != nil {
-			return reconcile.Result{}, err
+		if !managedClusterIsNotFound {
+			utils.RemoveFinalizer(managedCluster, KlusterletAddonFinalizer)
+			if err := r.client.Update(context.TODO(), managedCluster); err != nil {
+				return reconcile.Result{}, err
+			}
 		}
+		return reconcile.Result{}, nil
+	}
+	// don't do anything when there is no managedcluster
+	if managedClusterIsNotFound {
 		return reconcile.Result{}, nil
 	}
 
@@ -283,6 +287,9 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 
 // IsManagedClusterOnline - if cluster is online returns true otherwise returns false
 func IsManagedClusterOnline(managedCluster *managedclusterv1.ManagedCluster) bool {
+	if managedCluster == nil {
+		return false
+	}
 	for _, condition := range managedCluster.Status.Conditions {
 		if condition.Type == managedclusterv1.ManagedClusterConditionAvailable { //not sure which condition is valid
 			if condition.Status == "True" {
