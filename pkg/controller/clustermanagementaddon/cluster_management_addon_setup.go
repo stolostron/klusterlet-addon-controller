@@ -9,6 +9,7 @@ import (
 	"time"
 
 	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
+	addons "github.com/open-cluster-management/endpoint-operator/pkg/components"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	//"github.com/prometheus/common/log"
@@ -18,14 +19,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Constants for CLusterManagementAddons Names
-const (
-	ApplicationManager   = "application-manager"
-	CertPolicyController = "cert-policy-controller"
-	IamPolicyController  = "iam-policy-controller"
-	PolicyController     = "policy-controller"
-	SearchCollector      = "search-collector"
-	WorkManager          = "work-manager"
+// Constants for ClusterManagementAddons Names
+var (
+	ApplicationManager   = addons.AppMgr.GetManagedClusterAddOnName()
+	CertPolicyController = addons.CertCtrl.GetManagedClusterAddOnName()
+	IamPolicyController  = addons.IAMCtrl.GetManagedClusterAddOnName()
+	PolicyController     = addons.PolicyCtrl.GetManagedClusterAddOnName()
+	SearchCollector      = addons.Search.GetManagedClusterAddOnName()
+	WorkManager          = addons.WorkMgr.GetManagedClusterAddOnName()
 )
 
 // ClusterManagementAddOnNames - list of clustermanagementaddon name for addon
