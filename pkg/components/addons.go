@@ -13,11 +13,16 @@ import (
 	search "github.com/open-cluster-management/endpoint-operator/pkg/components/searchcollector/v1"
 	workmgr "github.com/open-cluster-management/endpoint-operator/pkg/components/workmgr/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 const (
 	manifestworkMidName = "-klusterlet-addon-"
 )
+
+var log = logf.Log.WithName("addons")
 
 type KlusterletAddon interface {
 	// GetAddonName retuns the addon name
@@ -32,16 +37,23 @@ type KlusterletAddon interface {
 	GetManagedClusterAddOnName() string
 }
 
+var AppMgr = appmgr.AddonAppMgr{}
+var CertCtrl = certpolicyctrl.AddonCertPolicyCtrl{}
+var IAMCtrl = iampolicyctrl.AddonIAMPolicyCtrl{}
+var PolicyCtrl = policyctrl.AddonPolicyCtrl{}
+var Search = search.AddonSearch{}
+var WorkMgr = workmgr.AddonWorkMgr{}
+
 // AddonsArray are all addons we support in this repo
 // each one's GetAddonName() should be unique
 // each one's GetManagedClusterAddOnName() should also be unique
 var AddonsArray = []KlusterletAddon{
-	appmgr.AddonAppMgr{},
-	certpolicyctrl.AddonCertPolicyCtrl{},
-	iampolicyctrl.AddonIAMPolicyCtrl{},
-	policyctrl.AddonPolicyCtrl{},
-	search.AddonSearch{},
-	workmgr.AddonWorkMgr{},
+	AppMgr,
+	CertCtrl,
+	IAMCtrl,
+	PolicyCtrl,
+	Search,
+	WorkMgr,
 }
 var addonMap map[string]KlusterletAddon
 
@@ -92,4 +104,47 @@ func GetAddonFromManagedClusterAddonName(name string) (KlusterletAddon, error) {
 		return addon, nil
 	}
 	return nil, err
+}
+
+// NewAddonNamePredicate allows addon object with a name can be converted to an addon
+// to reconcile. The addon object can be ManagedClusterAddons, ClusterManagementAddons,
+// or Leases.
+func NewAddonNamePredicate() predicate.Predicate {
+	return predicate.Predicate(predicate.Funcs{
+		GenericFunc: func(e event.GenericEvent) bool { return false },
+		CreateFunc: func(e event.CreateEvent) bool {
+			if e.Object == nil {
+				log.Error(nil, "Create event has no runtime object to create", "event", e)
+				return false
+			}
+			if _, err := GetAddonFromManagedClusterAddonName(e.Meta.GetName()); err != nil {
+				return false
+			}
+			return true
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			if e.Object == nil {
+				log.Error(nil, "Delete event has no runtime object to delete", "event", e)
+				return false
+			}
+			if _, err := GetAddonFromManagedClusterAddonName(e.Meta.GetName()); err != nil {
+				return false
+			}
+			return true
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			if e.MetaOld == nil || e.MetaNew == nil ||
+				e.ObjectOld == nil || e.ObjectNew == nil {
+				log.Error(nil, "Update event is invalid", "event", e)
+				return false
+			}
+			if _, err := GetAddonFromManagedClusterAddonName(e.MetaOld.GetName()); err != nil {
+				return false
+			}
+			if _, err := GetAddonFromManagedClusterAddonName(e.MetaNew.GetName()); err != nil {
+				return false
+			}
+			return true
+		},
+	})
 }

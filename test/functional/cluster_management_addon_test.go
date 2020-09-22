@@ -20,32 +20,32 @@ import (
 var cmaValidations = map[string][]string{
 	clustermanagementaddon.ApplicationManager: []string{
 		`"kind":"ClusterManagementAddOn"`,
-		`"name":"` + clustermanagementaddon.ApplicationManager + `"`,
+		`"name":"application-manager"`,
 		`"displayName":"` + clustermanagementaddon.ClusterManagementAddOnMap[clustermanagementaddon.ApplicationManager].DisplayName + `"`,
 	},
 	clustermanagementaddon.CertPolicyController: []string{
 		`"kind":"ClusterManagementAddOn"`,
-		`"name":"` + clustermanagementaddon.CertPolicyController + `"`,
+		`"name":"cert-policy-controller"`,
 		`"displayName":"` + clustermanagementaddon.ClusterManagementAddOnMap[clustermanagementaddon.CertPolicyController].DisplayName + `"`,
 	},
 	clustermanagementaddon.IamPolicyController: []string{
 		`"kind":"ClusterManagementAddOn"`,
-		`"name":"` + clustermanagementaddon.IamPolicyController + `"`,
+		`"name":"iam-policy-controller"`,
 		`"displayName":"` + clustermanagementaddon.ClusterManagementAddOnMap[clustermanagementaddon.IamPolicyController].DisplayName + `"`,
 	},
 	clustermanagementaddon.PolicyController: []string{
 		`"kind":"ClusterManagementAddOn"`,
-		`"name":"` + clustermanagementaddon.PolicyController + `"`,
+		`"name":"policy-controller"`,
 		`"displayName":"` + clustermanagementaddon.ClusterManagementAddOnMap[clustermanagementaddon.PolicyController].DisplayName + `"`,
 	},
 	clustermanagementaddon.SearchCollector: []string{
 		`"kind":"ClusterManagementAddOn"`,
-		`"name":"` + clustermanagementaddon.SearchCollector + `"`,
+		`"name":"search-collector"`,
 		`"displayName":"` + clustermanagementaddon.ClusterManagementAddOnMap[clustermanagementaddon.SearchCollector].DisplayName + `"`,
 	},
 	clustermanagementaddon.WorkManager: []string{
 		`"kind":"ClusterManagementAddOn"`,
-		`"name":"` + clustermanagementaddon.WorkManager + `"`,
+		`"name":"work-manager"`,
 		`"displayName":"` + clustermanagementaddon.ClusterManagementAddOnMap[clustermanagementaddon.WorkManager].DisplayName + `"`,
 	},
 }

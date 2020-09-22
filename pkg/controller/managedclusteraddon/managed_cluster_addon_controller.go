@@ -100,7 +100,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// Watch for changes to primary resource ManagedClusterAddOn
 	err = c.Watch(&source.Kind{Type: &addonv1alpha1.ManagedClusterAddOn{}}, &handler.EnqueueRequestForObject{},
-		newManagedClusterAddonNamePredicate())
+		addons.NewAddonNamePredicate())
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 				}
 			},
 		)},
-		newManagedClusterAddonNamePredicate(),
+		addons.NewAddonNamePredicate(),
 	)
 	if err != nil {
 		return err
