@@ -75,7 +75,7 @@ var ClusterManagementAddOnMap = map[string]clusterManagementAddOnSpec{
 	},
 	WorkManager: clusterManagementAddOnSpec{
 		DisplayName: "Work Manager",
-		Description: "Component that handles endpoint work requests and managed cluster status.",
+		Description: "Handles endpoint work requests and managed cluster status.",
 		CRDName:     "klusterletaddonconfigs.agent.open-cluster-management.io",
 	},
 }
