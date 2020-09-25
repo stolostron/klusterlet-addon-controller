@@ -58,20 +58,20 @@ const (
 	degradedReasonInstallError = "AddonInstallationError"
 
 	// messages of condition
-	processingMSGMissing            = "Creating manifests for addon installation"  // message will show when we are waiting to create the manifests of addons
-	processingMSGCreated            = "Installing manifests"                       // message when we are still in installation
-	processingMSGApplied            = "All manifests installed"                    // message when the manifestwork is applied (manifest is installed)
-	processingMsgDeleting           = "Addon is terminating"                       // message when addon is in deletion
-	availableMsgMissing             = "Addon is not available"                     // message when addon is not in ready status yet
-	availableMSGReady               = "Addon is available"                         // message when addon is in ready status
-	availableMSGTimeout             = "Get addon status timeout"                   // message when addon has not sent message to hub for a while (default 5 minutes)
-	degradedMSGTimeoutTemplate      = "Failed to check addon available status: %s" // message when we have problem to know if addon is alive or not, %s can be errorTimeout or errorLease
-	degradedMSGInstallErrorTemplate = "Failed to complete addon installation: %s"  // message when we detect error in addon's manifests installation, %s is errorFailedApplyTemplate
+	processingMSGMissing            = "Creating manifests for addon installation."  // message will show when we are waiting to create the manifests of addons
+	processingMSGCreated            = "Installing manifests."                       // message when we are still in installation
+	processingMSGApplied            = "All manifests are installed."                    // message when the manifestwork is applied (manifest is installed)
+	processingMsgDeleting           = "Addon is being deleted."                       // message when addon is in deletion
+	availableMsgMissing             = "Addon is not available."                     // message when addon is not in ready status yet
+	availableMSGReady               = "Addon is available."                         // message when addon is in ready status
+	availableMSGTimeout             = "Get addon status timeout."                   // message when addon has not sent message to hub for a while (default 5 minutes)
+	degradedMSGTimeoutTemplate      = "Failed to check addon available status: %s." // message when we have problem to know if addon is alive or not, %s can be errorTimeout or errorLease
+	degradedMSGInstallErrorTemplate = "Failed to complete addon installation: %s."  // message when we detect error in addon's manifests installation, %s is errorFailedApplyTemplate
 
 	// possible error messages
 	errorFailedApplyTemplate = "%d of %d manifests failed to apply"
 	errorTimeout             = "request timeout"
-	errorLease               = "lease malformat"
+	errorLease               = "lease formatted incorrectly"
 )
 
 /**
