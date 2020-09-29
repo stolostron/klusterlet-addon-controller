@@ -2,12 +2,9 @@ FROM openshift/origin-release:golang-1.13 as builder
 
 ARG REMOTE_SOURCE
 ARG REMOTE_SOURCE_DIR
-ARG GITHUB_TOKEN
 
 COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR/app/
 WORKDIR $REMOTE_SOURCE_DIR/app
-
-RUN git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 
 RUN GOFLAGS="" go build ./cmd/manager
 
