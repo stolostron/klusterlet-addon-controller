@@ -1008,3 +1008,106 @@ func Test_updateDegradedStatus(t *testing.T) {
 		})
 	}
 }
+
+func Test_checkInstallTimeout(t *testing.T) {
+	oldTime := metav1.NewTime(time.Now().Add(-310 * time.Second))
+	newTime := metav1.NewTime(time.Now())
+	conditionProgressingFalse := metav1.Condition{
+		Type:               "Progressing",
+		Status:             metav1.ConditionFalse,
+		LastTransitionTime: oldTime,
+		Reason:             "Progressing",
+		Message:            "Progressing",
+	}
+	conditionProgressingFalseNew := metav1.Condition{
+		Type:               "Progressing",
+		Status:             metav1.ConditionFalse,
+		LastTransitionTime: newTime,
+		Reason:             "Progressing",
+		Message:            "Progressing",
+	}
+	conditionAvailableFalse := metav1.Condition{
+		Type:               "Available",
+		Status:             metav1.ConditionFalse,
+		LastTransitionTime: oldTime,
+		Reason:             "NotAvailable",
+		Message:            "Available False",
+	}
+	conditionProgressingTrue := metav1.Condition{
+		Type:               "Progressing",
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: oldTime,
+		Reason:             "Progressing",
+		Message:            "Progressing",
+	}
+	conditionAvailableTrue := metav1.Condition{
+		Type:               "Available",
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: oldTime,
+		Reason:             "NotAvailable",
+		Message:            "Available True",
+	}
+	type testcase struct {
+		name    string
+		arg     *addonv1alpha1.ManagedClusterAddOn
+		wantErr bool
+	}
+	tests := []testcase{
+		testcase{
+			name: "is available",
+			arg: &addonv1alpha1.ManagedClusterAddOn{
+				Status: addonv1alpha1.ManagedClusterAddOnStatus{
+					Conditions: []metav1.Condition{
+						conditionProgressingFalse,
+						conditionAvailableTrue,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		testcase{
+			name: "is progressing",
+			arg: &addonv1alpha1.ManagedClusterAddOn{
+				Status: addonv1alpha1.ManagedClusterAddOnStatus{
+					Conditions: []metav1.Condition{
+						conditionProgressingTrue,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		testcase{
+			name: "is still on time",
+			arg: &addonv1alpha1.ManagedClusterAddOn{
+				Status: addonv1alpha1.ManagedClusterAddOnStatus{
+					Conditions: []metav1.Condition{
+						conditionProgressingFalseNew,
+						conditionAvailableFalse,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		testcase{
+			name: "is timeout",
+			arg: &addonv1alpha1.ManagedClusterAddOn{
+				Status: addonv1alpha1.ManagedClusterAddOnStatus{
+					Conditions: []metav1.Condition{
+						conditionProgressingFalse,
+						conditionAvailableFalse,
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotErr := checkInstallTimeout(tt.arg)
+			if (gotErr != nil) != tt.wantErr {
+				t.Errorf("checkInstallTimeout() returns error %v, which is not expected", gotErr)
+			}
+		})
+	}
+
+}

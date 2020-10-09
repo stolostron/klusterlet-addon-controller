@@ -40,6 +40,7 @@ const (
 	leaseDurationSecondsLowerBound = 30
 	leaseDurationSecondsUpperBound = 90
 	requeueAfterSecondsLowerBound  = 30
+	installationTimeoutSeconds     = 300
 
 	// types of condition
 	addonAvailable   = "Available"
@@ -60,8 +61,8 @@ const (
 	// messages of condition
 	processingMSGMissing            = "Creating manifests for addon installation."  // message will show when we are waiting to create the manifests of addons
 	processingMSGCreated            = "Installing manifests."                       // message when we are still in installation
-	processingMSGApplied            = "All manifests are installed."                    // message when the manifestwork is applied (manifest is installed)
-	processingMsgDeleting           = "Addon is being deleted."                       // message when addon is in deletion
+	processingMSGApplied            = "All manifests are installed."                // message when the manifestwork is applied (manifest is installed)
+	processingMsgDeleting           = "Addon is being deleted."                     // message when addon is in deletion
 	availableMsgMissing             = "Addon is not available."                     // message when addon is not in ready status yet
 	availableMSGReady               = "Addon is available."                         // message when addon is in ready status
 	availableMSGTimeout             = "Get addon status timeout."                   // message when addon has not sent message to hub for a while (default 5 minutes)
@@ -70,6 +71,7 @@ const (
 
 	// possible error messages
 	errorFailedApplyTemplate = "%d of %d manifests failed to apply"
+	errorInstallTooSlow      = "installation is taking longer than usual"
 	errorTimeout             = "request timeout"
 	errorLease               = "lease formatted incorrectly"
 )
@@ -264,6 +266,11 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 
 	// update available status base on lease
 	statusAvailable, errAvailable := updateAvailableStatus(managedClusterAddOn, leaseIsNotFound, lease)
+
+	// check install timeout
+	if errProcessing == nil && errAvailable == nil {
+		errProcessing = checkInstallTimeout(managedClusterAddOn)
+	}
 
 	// check & set degraded information
 	_ = updateDegradedStatus(managedClusterAddOn, errProcessing, errAvailable)
@@ -553,6 +560,28 @@ func deleteAll(
 		if err := c.Delete(context.TODO(), mca); err != nil && !errors.IsNotFound(err) {
 			return err
 		}
+	}
+	return nil
+}
+
+func getCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
+	for _, c := range conditions {
+		if c.Type == conditionType {
+			return &c
+		}
+	}
+	return nil
+}
+
+// checkInstallTimeout checks if the manifestwork is installed but lease is not created in time
+func checkInstallTimeout(mca *addonv1alpha1.ManagedClusterAddOn) error {
+	cProgressing := getCondition(mca.Status.Conditions, addonProgressing)
+	cAvailable := getCondition(mca.Status.Conditions, addonAvailable)
+	if cProgressing != nil && cProgressing.Status == metav1.ConditionFalse &&
+		cAvailable != nil && cAvailable.Status == metav1.ConditionFalse &&
+		cProgressing.LastTransitionTime.Add(installationTimeoutSeconds*time.Second).Before(time.Now()) {
+		//return error when progressing finished but still not available for installationTimeoutSeconds
+		return fmt.Errorf(errorInstallTooSlow)
 	}
 	return nil
 }
