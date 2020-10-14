@@ -205,20 +205,23 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, nil
 	}
 
-	utils.AddFinalizer(managedCluster, KlusterletAddonFinalizer)
-	if err := r.client.Update(context.TODO(), managedCluster); err != nil && errors.IsConflict(err) {
-		return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
-	} else if err != nil {
-		reqLogger.Error(err, "Fail to UPDATE managedCluster")
-		return reconcile.Result{}, err
+	if !utils.HasFinalizer(managedCluster, KlusterletAddonFinalizer) {
+		utils.AddFinalizer(managedCluster, KlusterletAddonFinalizer)
+		if err := r.client.Update(context.TODO(), managedCluster); err != nil && errors.IsConflict(err) {
+			return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
+		} else if err != nil {
+			reqLogger.Error(err, "Fail to UPDATE managedCluster")
+			return reconcile.Result{}, err
+		}
 	}
-
-	utils.AddFinalizer(klusterletAddonConfig, KlusterletAddonFinalizer)
-	if err := r.client.Update(context.TODO(), klusterletAddonConfig); err != nil && errors.IsConflict(err) {
-		return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
-	} else if err != nil {
-		reqLogger.Error(err, "Fail to UPDATE KlusterletAddonConfig")
-		return reconcile.Result{}, err
+	if !utils.HasFinalizer(klusterletAddonConfig, KlusterletAddonFinalizer) {
+		utils.AddFinalizer(klusterletAddonConfig, KlusterletAddonFinalizer)
+		if err := r.client.Update(context.TODO(), klusterletAddonConfig); err != nil && errors.IsConflict(err) {
+			return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
+		} else if err != nil {
+			reqLogger.Error(err, "Fail to UPDATE KlusterletAddonConfig")
+			return reconcile.Result{}, err
+		}
 	}
 
 	// Delete klusterletAddonConfig if ManagedCluster is in deletion

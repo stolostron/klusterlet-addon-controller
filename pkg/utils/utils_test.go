@@ -11,8 +11,12 @@ package utils
 
 import (
 	"testing"
+	"time"
 
+	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
+	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubectl/pkg/scheme"
@@ -20,9 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
-	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 )
 
 func TestUniqueStringSlice(t *testing.T) {
@@ -354,4 +355,274 @@ func TestCreateOrUpdateManifestWork(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_compareManifests(t *testing.T) {
+	testSecret1 := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-managedcluster",
+			Namespace: "test-managedcluster",
+		},
+		Data: map[string][]byte{
+			"token": []byte("fake-token1"),
+		},
+	}
+	testSecret2 := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-managedcluster",
+			Namespace: "test-managedcluster",
+		},
+		Data: map[string][]byte{
+			"token": []byte("fake-token2"),
+		},
+	}
+	type args struct {
+		r1 *runtime.RawExtension
+		r2 *runtime.RawExtension
+	}
+	obj1 := runtime.RawExtension{Object: testSecret1}
+	obj1copy := runtime.RawExtension{Object: testSecret1.DeepCopy()}
+	data1, err := obj1.MarshalJSON()
+	if err != nil {
+		t.Errorf("failed to marshal object %v", err)
+	}
+	data1copy, err := obj1copy.MarshalJSON()
+	if err != nil {
+		t.Errorf("failed to marshal object %v", err)
+	}
+	raw1 := runtime.RawExtension{Raw: data1, Object: nil}
+	raw1copy := runtime.RawExtension{Raw: data1copy, Object: nil}
+	obj2 := runtime.RawExtension{Object: testSecret2}
+	data2, err := obj2.MarshalJSON()
+	if err != nil {
+		t.Errorf("failed to marshal object %v", err)
+	}
+	raw2 := runtime.RawExtension{Raw: data2, Object: nil}
+
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "both empty",
+			args: args{&runtime.RawExtension{}, &runtime.RawExtension{}},
+			want: true,
+		},
+		{
+			name: "one empty",
+			args: args{&runtime.RawExtension{}, &obj1},
+			want: false,
+		},
+		{
+			name: "same object",
+			args: args{&obj1, &obj1copy},
+			want: true,
+		},
+		{
+			name: "same raw",
+			args: args{&raw1, &raw1copy},
+			want: true,
+		},
+		{
+			name: "same raw & obj",
+			args: args{&obj1, &raw1},
+			want: true,
+		},
+		{
+			name: "different objects",
+			args: args{&obj1, &obj2},
+			want: false,
+		},
+		{
+			name: "different raw & object",
+			args: args{&obj1, &raw2},
+			want: false,
+		},
+		{
+			name: "different raws",
+			args: args{&raw1, &raw2},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := compareManifests(tt.args.r1, tt.args.r2)
+			if got != tt.want {
+				t.Errorf("compareManifests() error = %v, wantErr %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_compareManifestWorks(t *testing.T) {
+	secret1 := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-managedcluster",
+			Namespace: "test-managedcluster",
+		},
+		Data: map[string][]byte{
+			"token": []byte("fake-token1"),
+		},
+	}
+	secret2 := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-managedcluster",
+			Namespace: "test-managedcluster",
+		},
+		Data: map[string][]byte{
+			"token": []byte("fake-token2"),
+		},
+	}
+	secret1old := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "test-managedcluster",
+			Namespace:         "test-managedcluster",
+			CreationTimestamp: metav1.NewTime(time.Now().Add(-200 * time.Second)),
+		},
+		Data: map[string][]byte{
+			"token": []byte("fake-token1"),
+		},
+	}
+
+	type args struct {
+		mw1 *manifestworkv1.ManifestWork
+		mw2 *manifestworkv1.ManifestWork
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "exact same",
+			args: args{
+				&manifestworkv1.ManifestWork{
+					Spec: manifestworkv1.ManifestWorkSpec{
+						Workload: manifestworkv1.ManifestsTemplate{
+							Manifests: []manifestworkv1.Manifest{
+								manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret1}},
+								manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret2}},
+							},
+						},
+					},
+				},
+				&manifestworkv1.ManifestWork{
+					Spec: manifestworkv1.ManifestWorkSpec{
+						Workload: manifestworkv1.ManifestsTemplate{
+							Manifests: []manifestworkv1.Manifest{
+								manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret1}},
+								manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret2}},
+							},
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "value same, timestamp diff",
+			args: args{
+				&manifestworkv1.ManifestWork{
+					Spec: manifestworkv1.ManifestWorkSpec{
+						Workload: manifestworkv1.ManifestsTemplate{
+							Manifests: []manifestworkv1.Manifest{
+								manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret1}},
+							},
+						},
+					},
+				},
+				&manifestworkv1.ManifestWork{
+					Spec: manifestworkv1.ManifestWorkSpec{
+						Workload: manifestworkv1.ManifestsTemplate{
+							Manifests: []manifestworkv1.Manifest{
+								manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret1old}},
+							},
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "value diff",
+			args: args{
+				&manifestworkv1.ManifestWork{
+					Spec: manifestworkv1.ManifestWorkSpec{
+						Workload: manifestworkv1.ManifestsTemplate{
+							Manifests: []manifestworkv1.Manifest{
+								manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret1}},
+							},
+						},
+					},
+				},
+				&manifestworkv1.ManifestWork{
+					Spec: manifestworkv1.ManifestWorkSpec{
+						Workload: manifestworkv1.ManifestsTemplate{
+							Manifests: []manifestworkv1.Manifest{
+								manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret2}},
+							},
+						},
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "out of order",
+			args: args{
+				&manifestworkv1.ManifestWork{
+					Spec: manifestworkv1.ManifestWorkSpec{
+						Workload: manifestworkv1.ManifestsTemplate{
+							Manifests: []manifestworkv1.Manifest{
+								manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret1}},
+								manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret2}},
+							},
+						},
+					},
+				},
+				&manifestworkv1.ManifestWork{
+					Spec: manifestworkv1.ManifestWorkSpec{
+						Workload: manifestworkv1.ManifestsTemplate{
+							Manifests: []manifestworkv1.Manifest{
+								manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret2}},
+								manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: secret1}},
+							},
+						},
+					},
+				},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := compareManifestWorks(tt.args.mw1, tt.args.mw2)
+			if got != tt.want {
+				t.Errorf("compareManifestWorks() error = %v, wantErr %v", got, tt.want)
+			}
+		})
+	}
+
 }

@@ -16,6 +16,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -79,6 +81,107 @@ func HasFinalizer(o metav1.Object, finalizer string) bool {
 	return false
 }
 
+// compareManifestWorks returns true if 2 manifestworks' specs are the same
+func compareManifestWorks(mw1 *manifestworkv1.ManifestWork, mw2 *manifestworkv1.ManifestWork) bool {
+	if mw1 == nil && mw2 == nil {
+		return true
+	}
+	if (mw1 == nil && mw2 != nil) || (mw2 == nil && mw1 != nil) {
+		return false
+	}
+	if len(mw1.Spec.Workload.Manifests) != len(mw2.Spec.Workload.Manifests) {
+		return false
+	}
+	used := make(map[int]bool)
+	for _, m1 := range mw1.Spec.Workload.Manifests {
+		hasMatch := false
+		for j, m2 := range mw2.Spec.Workload.Manifests {
+			if used[j] {
+				continue
+			}
+			if compareManifests(&m1.RawExtension, &m2.RawExtension) {
+				hasMatch = true
+				used[j] = true
+				break
+			}
+		}
+		if !hasMatch {
+			return false
+		}
+	}
+	return true
+}
+
+// convertRawExtensiontoUnstructured converts a rawExtension to a unstructured object
+func convertRawExtensiontoUnstructured(r *runtime.RawExtension) (*unstructured.Unstructured, error) {
+	if r == nil {
+		return nil, fmt.Errorf("fail to convert rawExtension")
+	}
+	var obj runtime.Object
+	var scope conversion.Scope
+	err := runtime.Convert_runtime_RawExtension_To_runtime_Object(r, &obj, scope)
+	if err != nil {
+		log.Error(err, "failed to convert rawExtension to runtime.Object", "rawExtension", r)
+		return nil, err
+	}
+	if obj == nil {
+		return nil, nil
+	}
+	innerObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		log.Error(err, "failed to convert runtime.Objectt to Unstructured", "runtime.Object", &obj)
+		return nil, err
+	}
+	u := unstructured.Unstructured{Object: innerObj}
+	return &u, nil
+}
+
+var rootAttributes = []string{
+	"spec",
+	"rules",
+	"roleRef",
+	"subjects",
+	"secrets",
+	"imagePullSecrets",
+	"automountServiceAccountToken",
+	"data",
+}
+
+// compareManifests compares if 2 manifests are the same, it only checks value we care
+// (name/namespace/kind/group/spec/data)
+func compareManifests(r1, r2 *runtime.RawExtension) bool {
+	u1, err := convertRawExtensiontoUnstructured(r1)
+	if err != nil {
+		return false
+	}
+	u2, err := convertRawExtensiontoUnstructured(r2)
+	if err != nil {
+		return false
+	}
+	if u1 == nil || u2 == nil {
+		return u2 == nil && u1 == nil
+	}
+	if u1.GetName() != u2.GetName() ||
+		u1.GetNamespace() != u2.GetNamespace() ||
+		u1.GetKind() != u2.GetKind() ||
+		u1.GetAPIVersion() != u2.GetAPIVersion() {
+		return false
+	}
+	hasDiff := false
+	for _, r := range rootAttributes {
+		if newValue, ok := u2.Object[r]; ok {
+			if !reflect.DeepEqual(newValue, u1.Object[r]) {
+				hasDiff = true
+			}
+		} else {
+			if _, ok := u1.Object[r]; ok {
+				hasDiff = true
+			}
+		}
+	}
+	return !hasDiff
+}
+
 // CreateOrUpdateManifestWork creates a new ManifestWork or update an existing ManifestWork
 func CreateOrUpdateManifestWork(
 	manifestwork *manifestworkv1.ManifestWork,
@@ -95,7 +198,7 @@ func CreateOrUpdateManifestWork(
 	)
 	if err == nil {
 		// Check if update is require
-		if !reflect.DeepEqual(oldManifestwork.Spec.Workload.Manifests, manifestwork.Spec.Workload.Manifests) {
+		if !compareManifestWorks(&oldManifestwork, manifestwork) {
 			oldManifestwork.Spec.Workload.Manifests = manifestwork.Spec.Workload.Manifests
 			if err := client.Update(context.TODO(), &oldManifestwork); err != nil {
 				log.Error(err, "Fail to update manifestwork")
