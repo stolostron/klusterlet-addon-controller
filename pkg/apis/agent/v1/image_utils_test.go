@@ -39,7 +39,7 @@ func TestGetImageWithManifest(t *testing.T) {
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-configmap-2.1.0",
+			Name:      "test-configmap-2.2.0",
 			Namespace: "test-namespace",
 			Labels: map[string]string{
 				"ocm-configmap-type":  "image-manifest",
@@ -127,7 +127,7 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-configmap-2.1.0",
+			Name:      "test-configmap-2.2.0",
 			Namespace: "test-namespace",
 			Labels: map[string]string{
 				"ocm-configmap-type":  "image-manifest",
@@ -146,11 +146,11 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-configmap-2.1.1",
+			Name:      "test-configmap-2.2.1",
 			Namespace: "test-namespace",
 			Labels: map[string]string{
 				"ocm-configmap-type":  "image-manifest",
-				"ocm-release-version": "2.1.1",
+				"ocm-release-version": "2.2.1",
 			},
 		},
 		Data: map[string]string{
@@ -165,11 +165,11 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-configmap-2.1.1.12",
+			Name:      "test-configmap-2.2.1.12",
 			Namespace: "test-namespace",
 			Labels: map[string]string{
 				"ocm-configmap-type":  "image-manifest",
-				"ocm-release-version": "2.1.1.12",
+				"ocm-release-version": "2.2.1.12",
 			},
 		},
 		Data: map[string]string{
