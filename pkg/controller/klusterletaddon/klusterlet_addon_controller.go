@@ -16,6 +16,7 @@ import (
 	"time"
 
 	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -49,7 +50,29 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileKlusterletAddon{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	client := newCustomClient(mgr.GetClient(), mgr.GetAPIReader())
+	return &ReconcileKlusterletAddon{client: client, scheme: mgr.GetScheme()}
+}
+
+// customClient will do get secret without cache, other operations are like normal cache client
+type customClient struct {
+	client.Client
+	APIReader client.Reader
+}
+
+// newCustomClient creates custom client to do get secret without cache
+func newCustomClient(client client.Client, apiReader client.Reader) client.Client {
+	return customClient{
+		Client:    client,
+		APIReader: apiReader,
+	}
+}
+
+func (cc customClient) Get(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+	if _, ok := obj.(*corev1.Secret); ok {
+		return cc.APIReader.Get(ctx, key, obj)
+	}
+	return cc.Client.Get(ctx, key, obj)
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
