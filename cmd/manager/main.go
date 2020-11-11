@@ -84,11 +84,10 @@ func main() {
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
-		Namespace:               os.Getenv("WATCH_NAMESPACE"),
-		MetricsBindAddress:      fmt.Sprintf("%s:%d", metricsHost, metricsPort),
-		LeaderElection:          true,
-		LeaderElectionID:        "klusterlet-addon-controller-lock",
-		LeaderElectionNamespace: "open-cluster-management",
+		Namespace:          os.Getenv("WATCH_NAMESPACE"),
+		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		LeaderElection:     true,
+		LeaderElectionID:   "klusterlet-addon-controller-lock",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
