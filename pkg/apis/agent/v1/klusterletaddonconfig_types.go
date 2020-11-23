@@ -59,6 +59,9 @@ type KlusterletAddonConfigSpec struct {
 // KlusterletAddonConfigApplicationManagerSpec defines configuration for the ApplicationManager component
 type KlusterletAddonConfigApplicationManagerSpec struct {
 	Enabled bool `json:"enabled"`
+
+	// +optional
+	ArgoCDCluster bool `json:"argocdCluster"`
 }
 
 // KlusterletAddonConfigSearchCollectorSpec defines configuration for the SearchCollector component
