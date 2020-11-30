@@ -24,6 +24,10 @@ rules:
   - get
   - list
   - watch
+  - create
+  - patch
+  - update
+  - delete
 - apiGroups:
   - apps.open-cluster-management.io
   resources:
