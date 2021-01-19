@@ -11,6 +11,8 @@ package klusterletaddon
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -481,24 +483,83 @@ func getKubeAPIServerCertificate(client client.Client, secretName string) ([]byt
 	return res, nil
 }
 
+// checkIsIBMCloud detects if the current cloud vendor is ibm or not
+// we know we are on OCP already, so if it's also ibm cloud, it's roks
+func checkIsIBMCloud(client client.Client) (bool, error) {
+	nodes := &corev1.NodeList{}
+	err := client.List(context.TODO(), nodes)
+	if err != nil {
+		log.Error(err, "failed to get nodes list")
+		return false, err
+	}
+	if len(nodes.Items) == 0 {
+		log.Error(err, "failed to list any nodes")
+		return false, nil
+	}
+
+	providerID := nodes.Items[0].Spec.ProviderID
+	if strings.Contains(providerID, "ibm") {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// getValidCertificatesFromURL dial to serverURL and get certificates
+// only will return certificates signed by trusted ca and verified (with verifyOptions)
+// if certificates are all signed by unauthorized party, will return nil
+// rootCAs is for tls handshake verification
+func getValidCertificatesFromURL(serverURL string, rootCAs *x509.CertPool) ([]*x509.Certificate, error) {
+	u, err := url.Parse(serverURL)
+	if err != nil {
+		log.Error(err, "failed to parse url: "+serverURL)
+		return nil, err
+	}
+	log.Info("getting certificate of " + u.Hostname() + ":" + u.Port())
+	conf := &tls.Config{
+		// server should support tls1.2
+		MinVersion: tls.VersionTLS12,
+		ServerName: u.Hostname(),
+	}
+	if rootCAs != nil {
+		conf.RootCAs = rootCAs
+	}
+
+	conn, err := tls.Dial("tcp", u.Hostname()+":"+u.Port(), conf)
+
+	if err != nil {
+		log.Error(err, "failed to dial "+serverURL)
+		// ignore certificate signed by unknown authority error
+		if _, ok := err.(x509.UnknownAuthorityError); ok {
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer conn.Close()
+	certs := conn.ConnectionState().PeerCertificates
+	retCerts := []*x509.Certificate{}
+	opt := x509.VerifyOptions{Roots: rootCAs}
+	// check certificates
+	for _, cert := range certs {
+		if _, err := cert.Verify(opt); err == nil {
+			log.V(2).Info("Adding a valid certificate")
+			retCerts = append(retCerts, cert)
+		} else {
+			log.V(2).Info("Skipping an invalid certificate")
+		}
+	}
+	return retCerts, nil
+}
+
 // newHubKubeconfigSecret -  creates a new hub-kubeconfig-secret
 func newHubKubeconfigSecret(klusterletaddonconfig *agentv1.KlusterletAddonConfig,
 	client client.Client,
 	componentName string,
 	namespace string) (*corev1.Secret, error) {
-	insecureSkipTLSVerify := false
 	var certData []byte
 	kubeAPIServer, err := getKubeAPIServerAddress(client)
 	if err != nil {
 		return nil, err
-	}
-
-	saToken, caCert, err := getServiceAccountToken(client, klusterletaddonconfig, componentName)
-	if err != nil {
-		return nil, err
-	}
-	if len(caCert) > 0 {
-		certData = caCert
 	}
 
 	if u, err := url.Parse(kubeAPIServer); err == nil {
@@ -515,16 +576,42 @@ func newHubKubeconfigSecret(klusterletaddonconfig *agentv1.KlusterletAddonConfig
 			}
 		}
 	}
-
+	saToken, caCert, err := getServiceAccountToken(client, klusterletaddonconfig, componentName)
+	if err != nil {
+		return nil, err
+	}
 	if len(certData) == 0 {
-		insecureSkipTLSVerify = true
+		// fallback to service account token ca.crt
+		if len(caCert) > 0 {
+			certData = caCert
+		}
+
+		// check if it's roks
+		// if it's ocp && it's on ibm cloud, we treat it as roks
+		isROKS, err := checkIsIBMCloud(client)
+		if err != nil {
+			return nil, err
+		}
+		if isROKS {
+			// ROKS should have a certificate that is signed by trusted CA
+			if certs, err := getValidCertificatesFromURL(kubeAPIServer, nil); err != nil {
+				// should retry if failed to connect to apiserver
+				log.Error(err, fmt.Sprintf("failed to connect to %s", kubeAPIServer))
+				return nil, err
+			} else if len(certs) > 0 {
+				// simply don't give any certs as the apiserver is using certs signed by known CAs
+				certData = nil
+			} else {
+				log.Info("No additional valid certificate found for APIserver. Skipping.")
+			}
+		}
 	}
 
 	kubeConfig := clientcmdapi.Config{
 		// Define a cluster stanza based on the bootstrap kubeconfig.
 		Clusters: map[string]*clientcmdapi.Cluster{"default-cluster": {
 			Server:                   kubeAPIServer,
-			InsecureSkipTLSVerify:    insecureSkipTLSVerify,
+			InsecureSkipTLSVerify:    false,
 			CertificateAuthorityData: certData,
 		}},
 		// Define auth based on the obtained client cert.
