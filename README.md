@@ -1,5 +1,17 @@
 # klusterlet addon controller
 
+Klusterlet addon controller supports some installation and termination of add-ons on ManagedCluster for ACM.
+
+## Community, discussion, contribution, and support
+
+Check the [CONTRIBUTING Doc](CONTRIBUTING.md) for how to contribute to the repo.
+
+------
+
+## Getting Started
+
+This is a guide on how to build and deploy klusterlet addon controller from code.
+
 [![Build Status](https://travis-ci.com/open-cluster-management/endpoint-operator.svg?token=fGeoi8xiXpYyWSE7xgqp&branch=master)](https://travis-ci.com/open-cluster-management/endpoint-operator)[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=open-cluster-management_endpoint-operator&metric=coverage&token=fcb5fc506f425e17f0fb9986bf3dd9b98ffaae15)](https://sonarcloud.io/dashboard?id=open-cluster-management_endpoint-operator)[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=open-cluster-management_endpoint-operator&metric=vulnerabilities&token=fcb5fc506f425e17f0fb9986bf3dd9b98ffaae15)](https://sonarcloud.io/dashboard?id=open-cluster-management_endpoint-operator)
 
 Kubernetes controller for the [KlusterletAddonConfig](https://github.com/open-cluster-management/endpoint-operator/blob/master/pkg/apis/agent/v1/klusterletaddonconfig_types.go) custom resource that manages the Create/Update/Delete of [klusterlet addon operator and klusterlet addons](https://github.com/open-cluster-management/endpoint-component-operator) on the managed cluster via [ManifestWork](https://github.com/open-cluster-management/api/blob/master/work/v1/types.go).
