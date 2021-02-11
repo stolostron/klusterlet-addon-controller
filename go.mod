@@ -1,4 +1,4 @@
-module github.com/open-cluster-management/endpoint-operator
+module github.com/open-cluster-management/klusterlet-addon-controller
 
 go 1.13
 
@@ -11,6 +11,7 @@ require (
 	github.com/open-cluster-management/library-e2e-go v0.0.0-20200620112055-c80fc3c14997
 	github.com/open-cluster-management/library-go v0.0.0-20200828173847-299c21e6c3fc
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
+	github.com/openshift/build-machinery-go v0.0.0-20200819073603-48aa266c95f7
 	github.com/sclevine/agouti v3.0.0+incompatible
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.14.1 // indirect

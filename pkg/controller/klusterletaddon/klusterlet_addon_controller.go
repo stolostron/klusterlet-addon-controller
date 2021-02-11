@@ -32,8 +32,8 @@ import (
 
 	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
-	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
-	"github.com/open-cluster-management/endpoint-operator/pkg/utils"
+	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/utils"
 )
 
 var log = logf.Log.WithName("controller_klusterletaddon")

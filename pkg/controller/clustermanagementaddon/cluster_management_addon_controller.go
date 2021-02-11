@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	addons "github.com/open-cluster-management/endpoint-operator/pkg/components"
+	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
 
 	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
