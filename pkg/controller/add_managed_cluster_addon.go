@@ -9,7 +9,7 @@
 package controller
 
 import (
-	"github.com/open-cluster-management/endpoint-operator/pkg/controller/managedclusteraddon"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/managedclusteraddon"
 )
 
 func init() {
