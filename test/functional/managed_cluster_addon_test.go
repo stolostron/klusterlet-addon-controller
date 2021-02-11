@@ -1,6 +1,5 @@
 // +build functional
 
-// Copyright (c) 2020 Red Hat, Inc.
 package klusterlet_addon_controller_test
 
 import (

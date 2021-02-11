@@ -1,5 +1,3 @@
-// Copyright (c) 2020 Red Hat, Inc.
-
 // Package controller contain the controller and the main reconcile function for the operator
 package controller
 
