@@ -1,11 +1,3 @@
-// (c) Copyright IBM Corporation 2019, 2020. All Rights Reserved.
-// Note to U.S. Government Users Restricted Rights:
-// U.S. Government Users Restricted Rights - Use, duplication or disclosure restricted by GSA ADP Schedule
-// Contract with IBM Corp.
-// Licensed Materials - Property of IBM
-//
-// Copyright (c) 2020 Red Hat, Inc.
-
 // Package klusterletaddon contains the main reconcile function & related functions for klusterletAddonConfigs
 package klusterletaddon
 
@@ -18,9 +10,9 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
-	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
-	"github.com/open-cluster-management/endpoint-operator/pkg/bindata"
-	"github.com/open-cluster-management/endpoint-operator/pkg/utils"
+	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/bindata"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/utils"
 )
 
 // constants for delete work and finalizer

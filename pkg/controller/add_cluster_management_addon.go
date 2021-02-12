@@ -1,10 +1,8 @@
-// Copyright (c) 2020 Red Hat, Inc.
-
 // Package controller contain the controller and the main reconcile function for the operator
 package controller
 
 import (
-	"github.com/open-cluster-management/endpoint-operator/pkg/controller/clustermanagementaddon"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
 )
 
 func init() {

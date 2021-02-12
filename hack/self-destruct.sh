@@ -1,7 +1,4 @@
 #!/bin/bash
-###############################################################################
-# Copyright (c) 2020 Red Hat, Inc.
-###############################################################################
 
 if [ -z "${OPERATOR_NAMESPACE}" ]; then
 	OPERATOR_NAMESPACE="open-cluster-management-agent-addon"
