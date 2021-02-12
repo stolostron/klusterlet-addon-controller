@@ -1,11 +1,3 @@
-// (c) Copyright IBM Corporation 2019, 2020. All Rights Reserved.
-// Note to U.S. Government Users Restricted Rights:
-// U.S. Government Users Restricted Rights - Use, duplication or disclosure restricted by GSA ADP Schedule
-// Contract with IBM Corp.
-// Licensed Materials - Property of IBM
-//
-// Copyright (c) 2020 Red Hat, Inc.
-
 package klusterletaddon
 
 import (
@@ -15,11 +7,11 @@ import (
 
 	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
-	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
-	addons "github.com/open-cluster-management/endpoint-operator/pkg/components"
-	appmgr "github.com/open-cluster-management/endpoint-operator/pkg/components/appmgr/v1"
-	certpolicyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/certpolicycontroller/v1"
-	iampolicyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/iampolicycontroller/v1"
+	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
+	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
+	appmgr "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/appmgr/v1"
+	certpolicyctrl "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/certpolicycontroller/v1"
+	iampolicyctrl "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/iampolicycontroller/v1"
 	ocinfrav1 "github.com/openshift/api/config/v1"
 	"gotest.tools/assert"
 	corev1 "k8s.io/api/core/v1"

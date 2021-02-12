@@ -1,4 +1,3 @@
-// Copyright (c) 2020 Red Hat, Inc.
 package managedclusteraddon
 
 import (
@@ -9,7 +8,7 @@ import (
 
 	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
-	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
+	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"gotest.tools/assert"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"

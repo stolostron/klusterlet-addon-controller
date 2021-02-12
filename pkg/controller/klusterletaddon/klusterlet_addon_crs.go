@@ -1,11 +1,3 @@
-// (c) Copyright IBM Corporation 2019, 2020. All Rights Reserved.
-// Note to U.S. Government Users Restricted Rights:
-// U.S. Government Users Restricted Rights - Use, duplication or disclosure restricted by GSA ADP Schedule
-// Contract with IBM Corp.
-// Licensed Materials - Property of IBM
-//
-// Copyright (c) 2020 Red Hat, Inc.
-
 // Package klusterletaddon contains the main reconcile function & related functions for klusterletAddonConfigs
 package klusterletaddon
 
@@ -21,18 +13,18 @@ import (
 
 	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
-	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
-	"github.com/open-cluster-management/endpoint-operator/pkg/bindata"
-	addons "github.com/open-cluster-management/endpoint-operator/pkg/components"
-	addonoperator "github.com/open-cluster-management/endpoint-operator/pkg/components/addon-operator/v1"
-	appmgr "github.com/open-cluster-management/endpoint-operator/pkg/components/appmgr/v1"
-	certpolicyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/certpolicycontroller/v1"
-	iampolicyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/iampolicycontroller/v1"
-	policyctrl "github.com/open-cluster-management/endpoint-operator/pkg/components/policyctrl/v1"
-	search "github.com/open-cluster-management/endpoint-operator/pkg/components/searchcollector/v1"
-	workmgr "github.com/open-cluster-management/endpoint-operator/pkg/components/workmgr/v1"
-	"github.com/open-cluster-management/endpoint-operator/pkg/controller/clustermanagementaddon"
-	"github.com/open-cluster-management/endpoint-operator/pkg/utils"
+	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/bindata"
+	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
+	addonoperator "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/addon-operator/v1"
+	appmgr "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/appmgr/v1"
+	certpolicyctrl "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/certpolicycontroller/v1"
+	iampolicyctrl "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/iampolicycontroller/v1"
+	policyctrl "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/policyctrl/v1"
+	search "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/searchcollector/v1"
+	workmgr "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/workmgr/v1"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/utils"
 	"github.com/open-cluster-management/library-go/pkg/applier"
 	"github.com/open-cluster-management/library-go/pkg/templateprocessor"
 	ocinfrav1 "github.com/openshift/api/config/v1"

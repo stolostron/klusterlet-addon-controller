@@ -1,10 +1,3 @@
-// (c) Copyright IBM Corporation 2019, 2020. All Rights Reserved.
-// Note to U.S. Government Users Restricted Rights:
-// U.S. Government Users Restricted Rights - Use, duplication or disclosure restricted by GSA ADP Schedule
-// Contract with IBM Corp.
-// Licensed Materials - Property of IBM
-//
-// Copyright (c) 2020 Red Hat, Inc.
 package main
 
 import (
@@ -16,11 +9,11 @@ import (
 	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
 	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
-	"github.com/open-cluster-management/endpoint-operator/pkg/apis"
-	agentv1 "github.com/open-cluster-management/endpoint-operator/pkg/apis/agent/v1"
-	"github.com/open-cluster-management/endpoint-operator/pkg/controller"
-	"github.com/open-cluster-management/endpoint-operator/pkg/controller/clustermanagementaddon"
-	"github.com/open-cluster-management/endpoint-operator/version"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis"
+	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
+	"github.com/open-cluster-management/klusterlet-addon-controller/version"
 	ocinfrav1 "github.com/openshift/api/config/v1"
 
 	//"github.com/operator-framework/operator-sdk/pkg/k8sutil"
