@@ -125,7 +125,7 @@ lint-all:
 .PHONY: lint
 ## Runs linter against go files
 lint:
-    @if ! which golangci-lint > /dev/null; then \
+	if ! which golangci-lint > /dev/null; then \
 		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.23.6; \
 	fi
 	@echo "Running linting tool ..."
