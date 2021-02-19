@@ -67,7 +67,7 @@ check: go-bindata-check go-mod-check
 
 .PHONY: test
 ## Runs go unit tests
-test: 
+tesst: 
 	@build/run-unit-tests.sh
 
 .PHONY: build
