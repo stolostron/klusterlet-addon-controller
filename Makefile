@@ -1,9 +1,6 @@
 
 SHELL := /bin/bash
 
-
-export GITHUB_USER    := $(shell echo $(GITHUB_USER) | sed 's/@/%40/g')
-
 export ARCH       ?= $(shell uname -m)
 export ARCH_TYPE   = $(if $(patsubst x86_64,,$(ARCH)),$(ARCH),amd64)
 export BUILD_DATE  = $(shell date +%m/%d@%H:%M:%S)
@@ -16,7 +13,6 @@ export GOPACKAGES   = $(shell go list ./... | grep -v /vendor | grep -v /build |
 
 export PROJECT_DIR            = $(shell 'pwd')
 export BUILD_DIR              = $(PROJECT_DIR)/build
-export DOCKER_BUILD_PATH      = $(PROJECT_DIR)/.build-docker
 export COMPONENT_SCRIPTS_PATH = $(BUILD_DIR)
 
 ## WARNING: OPERATOR-SDK - IMAGE_DESCRIPTION & DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES
@@ -46,13 +42,13 @@ export DOCKER_BUILD_OPTS  = --build-arg REMOTE_SOURCE=. \
 
 BEFORE_SCRIPT := $(shell build/before-make.sh)
 
-USE_VENDORIZED_BUILD_HARNESS ?=
+# USE_VENDORIZED_BUILD_HARNESS ?=
 
-ifndef USE_VENDORIZED_BUILD_HARNESS
--include $(shell curl -s -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
-else
--include vbh/.build-harness-vendorized
-endif
+# ifndef USE_VENDORIZED_BUILD_HARNESS
+# -include $(shell curl -s -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
+# else
+# -include vbh/.build-harness-vendorized
+# endif
 
 # Only use git commands if it exists
 ifdef GIT
@@ -63,7 +59,7 @@ endif
 
 .PHONY: deps
 ## Download all project dependencies
-deps: init component/init
+deps: build/install-dependencies.sh
 
 .PHONY: check
 ## Runs a set of required checks
@@ -71,11 +67,12 @@ check: lint go-bindata-check go-mod-check
 
 .PHONY: test
 ## Runs go unit tests
-test: component/test/unit
+test: build/run-unit-tests.sh
 
 .PHONY: build
 ## Builds operator binary inside of an image
-build: component/build
+build: 
+	go build -o build/_output/manager -mod=mod ./cmd/manager
 
 .PHONY: build-e2e
 build-e2e:
@@ -101,7 +98,7 @@ go-bindata-check:
 
 .PHONY: go-mod-check
 go-mod-check:
-	./build/go-mod-check.sh $(TRAVIS_BRANCH)
+	./build/go-mod-check.sh
 
 .PHONY: clean
 ## Clean build-harness and remove Go generated build and test files
@@ -128,14 +125,11 @@ lint-all:
 .PHONY: lint
 ## Runs linter against go files
 lint:
+    @if ! which golangci-lint > /dev/null; then \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.23.6; \
+	fi
 	@echo "Running linting tool ..."
 	@golangci-lint run --timeout 5m 
-
-.PHONY: helpz
-helpz:
-ifndef build-harness
-	$(eval MAKEFILE_LIST := Makefile build-harness/modules/go/Makefile)
-endif
 
 ### HELPER UTILS #######################
 

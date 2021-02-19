@@ -1,6 +1,10 @@
 #!/bin/bash -e
 
 _script_dir=$(dirname "$0")
+
+if ! which gocovmerge > /dev/null; then  echo "Installing gocovmerge..."; go get -u github.com/wadey/gocovmerge; fi
+if ! which patter > /dev/null; then      echo "Installing patter ..."; go get -u github.com/apg/patter; fi
+
 mkdir -p test/coverage
 echo 'mode: atomic' > test/coverage/cover.out
 echo '' > test/coverage/cover.tmp
