@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
+	github.com/go-bindata/go-bindata v3.1.2+incompatible
 	github.com/onsi/ginkgo v1.12.1
 	github.com/onsi/gomega v1.10.1
 	github.com/open-cluster-management/api v0.0.0-20200903203421-64b667f5455c
