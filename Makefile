@@ -63,11 +63,12 @@ deps: build/install-dependencies.sh
 
 .PHONY: check
 ## Runs a set of required checks
-check: lint go-bindata-check go-mod-check
+check: go-bindata-check go-mod-check
 
 .PHONY: test
 ## Runs go unit tests
-test: build/run-unit-tests.sh
+test: 
+	@build/run-unit-tests.sh
 
 .PHONY: build
 ## Builds operator binary inside of an image
