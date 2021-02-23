@@ -130,7 +130,6 @@ lint:
 	@echo "Running linting tool ..."
 	@bin/golangci-lint run --timeout 5m 
 	@echo "##### lint-check #### Success"
-
 ### HELPER UTILS #######################
 
 .PHONY: utils-crds-install
