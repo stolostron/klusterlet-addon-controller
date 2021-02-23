@@ -61,7 +61,7 @@ kind: ConfigMap
 metadata:
   labels:
     ocm-configmap-type: image-manifest
-    ocm-release-version: 2.2.0
-  name: mch-image-manifest-2.2.0
+    ocm-release-version: 2.3.0
+  name: mch-image-manifest-2.3.0
   namespace: open-cluster-management
 

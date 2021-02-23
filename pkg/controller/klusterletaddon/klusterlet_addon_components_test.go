@@ -31,11 +31,11 @@ func setup() error {
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-configmap-2.2.0",
+			Name:      "test-configmap-2.3.0",
 			Namespace: "test-namespace",
 			Labels: map[string]string{
 				"ocm-configmap-type":  "image-manifest",
-				"ocm-release-version": "2.2.0",
+				"ocm-release-version": "2.3.0",
 			},
 		},
 		Data: map[string]string{
