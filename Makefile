@@ -63,7 +63,7 @@ deps: build/install-dependencies.sh
 
 .PHONY: check
 ## Runs a set of required checks
-check: go-bindata-check go-mod-check
+check: lint go-bindata-check go-mod-check
 
 .PHONY: test
 ## Runs go unit tests
@@ -126,12 +126,8 @@ lint-all:
 .PHONY: lint
 ## Runs linter against go files
 lint:
-	if ! which golangci-lint > /dev/null; then \
-		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.23.6; \
-	fi
-	@echo "Running linting tool ..."
-	@golangci-lint run --timeout 5m 
-
+	build/run-lint-check.sh	
+   
 ### HELPER UTILS #######################
 
 .PHONY: utils-crds-install

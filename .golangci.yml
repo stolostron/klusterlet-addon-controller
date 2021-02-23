@@ -1,3 +1,0 @@
-# for more details see: https://github.com/golangci/golangci-lint#config-file
-run:
-    timeout: 2m
