@@ -126,12 +126,11 @@ lint-all:
 .PHONY: lint
 ## Runs linter against go files
 lint:
-	if ! which golangci-lint > /dev/null; then \
-		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.23.6; \
-	fi
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.37.1
 	@echo "Running linting tool ..."
-	@golangci-lint run --timeout 5m 
-
+	@bin/golangci-lint run --timeout 5m 
+	@echo "##### lint-check #### Success"
+	
 ### HELPER UTILS #######################
 
 .PHONY: utils-crds-install
