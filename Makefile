@@ -130,6 +130,7 @@ lint-all:
 lint:
 	build/install-lint.sh
 	@echo "Running linting tool ..."
+	@export GOFLAGS=""
 	GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} golangci-lint run -c build/golangci.yml --skip-dirs vendor
 	@echo "##### lint-check #### Success"
    
