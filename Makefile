@@ -29,8 +29,6 @@ export DOCKER_TAG        ?= $(shell whoami)
 
 export BINDATA_TEMP_DIR := $(shell mktemp -d)
 
-GOLANGCI_LINT_CACHE ?= /tmp/golangci-cache
-
 export DOCKER_BUILD_OPTS  = --build-arg REMOTE_SOURCE=. \
 	--build-arg REMOTE_SOURCE_DIR=/remote-source \
 	--build-arg VCS_REF=$(VCS_REF) \
@@ -128,11 +126,7 @@ lint-all:
 .PHONY: lint
 ## Runs linter against go files
 lint:
-	build/install-lint.sh
-	@echo "Running linting tool ..."
-	@export GOFLAGS=""
-	GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} golangci-lint run -c build/golangci.yml --skip-dirs vendor
-	@echo "##### lint-check #### Success"
+	build/run-lint-check.sh	
    
 ### HELPER UTILS #######################
 
