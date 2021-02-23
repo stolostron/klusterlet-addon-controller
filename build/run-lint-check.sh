@@ -22,5 +22,5 @@ fi
 
 echo 'Running linting tool ...'
 #GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} golangci-lint run -c build/golangci.yml
-$(golangci-lint run -c build/golangci.yml)
+$(GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} golangci-lint run -c build/golangci.yml)
 echo '##### lint-check #### Success'
