@@ -2,7 +2,7 @@
 set -x
 set -eo pipefail
 
-GOLANGCI_LINT_VERSION="1.30.0"
+GOLANGCI_LINT_VERSION="v1.37.1"
 GOOS=$(go env GOOS)
 GOPATH=$(go env GOPATH)
 if which golangci-lint ; then
