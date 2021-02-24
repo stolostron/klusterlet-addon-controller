@@ -1,5 +1,10 @@
 #!/bin/bash
 
+###############################################################################
+# Copyright (c) Red Hat, Inc.
+# Copyright Contributors to the Open Cluster Management project
+###############################################################################
+
 if [ -z $1 ]; then
   echo "please set the cluster name"
   exit 1

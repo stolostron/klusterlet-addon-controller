@@ -1,3 +1,6 @@
+// Copyright (c) Red Hat, Inc.
+// Copyright Contributors to the Open Cluster Management project
+
 // +build e2e
 
 package e2e
