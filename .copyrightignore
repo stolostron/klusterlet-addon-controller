@@ -2,8 +2,12 @@
 .copyrightignore
 .yml
 .yaml
+.properties
+_generated.go
 # directories to ingore
+operator-sdk/*
 build-harness/*
 build-harness-extensions/*
+vendor
 # generated bindata
 pkg/bindata/bindata_generated.go
