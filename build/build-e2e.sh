@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+###############################################################################
+# Copyright (c) Red Hat, Inc.
+# Copyright Contributors to the Open Cluster Management project
+###############################################################################
+
 # PARAMETERS
 # $1 - Final image name and tag to be produced
 export DOCKER_IMAGE_AND_TAG=${1}

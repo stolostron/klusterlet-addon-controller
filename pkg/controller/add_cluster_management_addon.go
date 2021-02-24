@@ -1,3 +1,6 @@
+// Copyright (c) Red Hat, Inc.
+// Copyright Contributors to the Open Cluster Management project
+
 // Package controller contain the controller and the main reconcile function for the operator
 package controller
 

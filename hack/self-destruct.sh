@@ -1,5 +1,10 @@
 #!/bin/bash
 
+###############################################################################
+# Copyright (c) Red Hat, Inc.
+# Copyright Contributors to the Open Cluster Management project
+###############################################################################
+
 if [ -z "${OPERATOR_NAMESPACE}" ]; then
 	OPERATOR_NAMESPACE="open-cluster-management-agent-addon"
 fi

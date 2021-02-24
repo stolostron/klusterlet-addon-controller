@@ -1,5 +1,8 @@
 // +build functional
 
+// Copyright (c) Red Hat, Inc.
+// Copyright Contributors to the Open Cluster Management project
+
 package klusterlet_addon_controller_test
 
 import (
