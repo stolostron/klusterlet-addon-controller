@@ -1,3 +1,5 @@
+[comment]: # ( Copyright Contributors to the Open Cluster Management project )
+
 # klusterlet addon controller
 
 Klusterlet addon controller supports some installation and termination of add-ons on ManagedCluster for ACM.

@@ -1,3 +1,5 @@
+# Copyright Contributors to the Open Cluster Management project
+
 FROM docker.io/openshift/origin-release:golang-1.15 AS builder
 
 ARG REMOTE_SOURCE
