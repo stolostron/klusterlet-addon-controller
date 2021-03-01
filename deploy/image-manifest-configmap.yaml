@@ -1,3 +1,5 @@
+# Copyright Contributors to the Open Cluster Management project
+
 apiVersion: v1
 data:
   application_ui: quay.io/open-cluster-management/application-ui@sha256:54825d95d96e821670c1eb67f35017412eb4584df78290cddf7ac491ae726f2c
