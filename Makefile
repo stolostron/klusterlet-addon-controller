@@ -44,14 +44,6 @@ export DOCKER_BUILD_OPTS  = --build-arg REMOTE_SOURCE=. \
 
 BEFORE_SCRIPT := $(shell build/before-make.sh)
 
-# USE_VENDORIZED_BUILD_HARNESS ?=
-
-# ifndef USE_VENDORIZED_BUILD_HARNESS
-# -include $(shell curl -s -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
-# else
-# -include vbh/.build-harness-vendorized
-# endif
-
 # Only use git commands if it exists
 ifdef GIT
 GIT_COMMIT      = $(shell git rev-parse --short HEAD)
@@ -104,12 +96,9 @@ go-mod-check:
 	./build/go-mod-check.sh
 
 .PHONY: clean
-## Clean build-harness and remove Go generated build and test files
+## Cleanremove Go generated build and test files
 clean::
 	@rm -rf $(BUILD_DIR)/_output
-	@[ "$(BUILD_HARNESS_PATH)" == '/' ] || \
-	 [ "$(BUILD_HARNESS_PATH)" == '.' ] || \
-	   rm -rf $(BUILD_HARNESS_PATH)
 
 .PHONY: run
 ## Run the operator against the kubeconfig targeted cluster
