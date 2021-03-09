@@ -16,7 +16,7 @@ This is a guide on how to build and deploy klusterlet addon controller from code
 
 [![Build Status](https://travis-ci.com/open-cluster-management/endpoint-operator.svg?token=fGeoi8xiXpYyWSE7xgqp&branch=master)](https://travis-ci.com/open-cluster-management/endpoint-operator)[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=open-cluster-management_endpoint-operator&metric=coverage&token=fcb5fc506f425e17f0fb9986bf3dd9b98ffaae15)](https://sonarcloud.io/dashboard?id=open-cluster-management_endpoint-operator)[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=open-cluster-management_endpoint-operator&metric=vulnerabilities&token=fcb5fc506f425e17f0fb9986bf3dd9b98ffaae15)](https://sonarcloud.io/dashboard?id=open-cluster-management_endpoint-operator)
 
-Kubernetes controller for the [KlusterletAddonConfig](https://github.com/open-cluster-management/endpoint-operator/blob/master/pkg/apis/agent/v1/klusterletaddonconfig_types.go) custom resource that manages the Create/Update/Delete of [klusterlet addon operator and klusterlet addons](https://github.com/open-cluster-management/endpoint-component-operator) on the managed cluster via [ManifestWork](https://github.com/open-cluster-management/api/blob/master/work/v1/types.go).
+Kubernetes controller for the [KlusterletAddonConfig](https://github.com/open-cluster-management/klusterlet-addon-controller/blob/main/pkg/apis/agent/v1/types.go) custom resource that manages the Create/Update/Delete of [klusterlet addon operator and klusterlet addons](https://github.com/open-cluster-management/klusterlet-addon-operator) on the managed cluster via [ManifestWork](https://github.com/open-cluster-management/api/blob/master/work/v1/types.go).
 
 ## Prerequisites
 
@@ -61,7 +61,7 @@ NOTE: this will use the amd64 version of the operator
 
 To create a klusterlet addon operator deployment with the klusterlet addon controller you need to create the KlusterletAddonConfig CR
 
-Example of KlusterletAddonConfig CR <https://github.com/open-cluster-management/endpoint-operator/blob/master/deploy/crds/agent.open-cluster-management.io_v1_klusterletaddonconfig_cr.yaml>
+Example of KlusterletAddonConfig CR <https://github.com/open-cluster-management/klusterlet-addon-controller/blob/main/deploy/crds/agent.open-cluster-management.io_v1_klusterletaddonconfig_cr.yaml>
 
 ## Rebuilding zz_generated.deepcopy.go file
 Any modifications to files pkg/apis/agent/v1/*types.go will require you to run the
