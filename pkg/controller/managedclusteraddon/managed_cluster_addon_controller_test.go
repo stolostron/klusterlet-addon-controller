@@ -901,7 +901,7 @@ func Test_Reconcile(t *testing.T) {
 	}
 }
 
-func Test_updateDegradedStatus(t *testing.T) {
+func Test_updateAvailableUnknownStatus(t *testing.T) {
 	type args struct {
 		mca           *addonv1alpha1.ManagedClusterAddOn
 		errProcessing error
@@ -991,7 +991,7 @@ func Test_updateDegradedStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			updateDegradedStatus(tt.args.mca, tt.args.errProcessing, tt.args.errAvailable)
+			updateAvailableUnknownStatus(tt.args.mca, tt.args.errProcessing, tt.args.errAvailable)
 			hasStatus := false
 			for _, c := range tt.args.mca.Status.Conditions {
 				if c.Type == "Degraded" && !tt.wantType {

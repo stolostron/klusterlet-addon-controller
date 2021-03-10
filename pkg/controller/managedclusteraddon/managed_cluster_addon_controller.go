@@ -273,7 +273,7 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 	}
 
 	// check & set degraded information
-	_ = updateDegradedStatus(managedClusterAddOn, errProcessing, errAvailable)
+	_ = updateAvailableUnknownStatus(managedClusterAddOn, errProcessing, errAvailable)
 
 	// write managedClusterAddOn status if needed
 	if !reflect.DeepEqual(*oldstatus, managedClusterAddOn.Status) {
@@ -318,19 +318,19 @@ func filterConditions(conditions *[]metav1.Condition, excludeType string) {
 	*conditions = append(*conditions, newConditions...)
 }
 
-// updateDegradedStatus updates ManagedClusterAddOn.status's degraded type condition based on former errors
+// updateAvailableUnknownStatus updates ManagedClusterAddOn.status's degraded type condition based on former errors
 // will remove degraded condition if nothing is wrong
-func updateDegradedStatus(mca *addonv1alpha1.ManagedClusterAddOn,
+func updateAvailableUnknownStatus(mca *addonv1alpha1.ManagedClusterAddOn,
 	errProgressing error, errAvailable error) metav1.ConditionStatus {
-	if errProgressing == nil && errAvailable == nil {
-		// filter out degraded
-		filterConditions(&mca.Status.Conditions, addonDegraded)
-		return metav1.ConditionFalse
-	}
+	// if errProgressing == nil && errAvailable == nil {
+	// 	// filter out degraded
+	// 	filterConditions(&mca.Status.Conditions, addonDegraded)
+	// 	return metav1.ConditionFalse
+	// }
 	var conditionReason string
 	var conditionMsg string
-	conditionType := addonDegraded
-	conditionStatus := metav1.ConditionTrue
+	conditionType := addonAvailable
+	conditionStatus := metav1.ConditionUnknown
 	// show progressing issues as higher priority
 	if errProgressing != nil {
 		conditionReason = degradedReasonInstallError
