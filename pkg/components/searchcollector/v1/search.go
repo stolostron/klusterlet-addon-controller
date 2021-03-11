@@ -9,6 +9,9 @@
 package v1
 
 import (
+	"fmt"
+	"os"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -22,6 +25,7 @@ const (
 	Search                  = "search"
 	RequiresHubKubeConfig   = true
 	managedClusterAddOnName = "search-collector"
+	addonClusterRoleEnv     = "SEARCH_CLUSTERROLE_NAME"
 )
 
 var log = logf.Log.WithName("search")
@@ -46,6 +50,15 @@ func (addon AddonSearch) NewAddonCR(instance *agentv1.KlusterletAddonConfig, nam
 
 func (addon AddonSearch) GetManagedClusterAddOnName() string {
 	return managedClusterAddOnName
+}
+
+func (addon AddonSearch) GetClusterRoleName() string {
+	if n := os.Getenv(addonClusterRoleEnv); len(n) != 0 {
+		return n
+	}
+	log.Error(fmt.Errorf("env var %s not found", addonClusterRoleEnv),
+		"failed to get clusterrole name")
+	return addon.GetManagedClusterAddOnName()
 }
 
 // newSearchCollectorCR - create CR for component search collector

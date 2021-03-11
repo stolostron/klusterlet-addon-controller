@@ -9,6 +9,9 @@
 package v1
 
 import (
+	"fmt"
+	"os"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -22,6 +25,7 @@ const (
 	AppMgr                  = "appmgr"
 	RequiresHubKubeConfig   = true
 	managedClusterAddOnName = "application-manager"
+	addonClusterRoleEnv     = "APPMGR_CLUSTERROLE_NAME"
 )
 
 var log = logf.Log.WithName("appmgr")
@@ -47,6 +51,15 @@ func (addon AddonAppMgr) NewAddonCR(instance *agentv1.KlusterletAddonConfig, nam
 
 func (addon AddonAppMgr) GetManagedClusterAddOnName() string {
 	return managedClusterAddOnName
+}
+
+func (addon AddonAppMgr) GetClusterRoleName() string {
+	if n := os.Getenv(addonClusterRoleEnv); len(n) == 0 {
+		return n
+	}
+	log.Error(fmt.Errorf("env var %s not found", addonClusterRoleEnv),
+		"failed to get clusterrole name")
+	return addon.GetManagedClusterAddOnName()
 }
 
 // newApplicationManagerCR - create CR for component application manager

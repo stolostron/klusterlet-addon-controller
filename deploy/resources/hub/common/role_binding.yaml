@@ -10,6 +10,6 @@ subjects:
   name: "{{ .ServiceAccountName }}"
   namespace: "{{ .ManagedClusterNamespace }}"
 roleRef:
-  kind: Role
-  name: "{{ .ManagedClusterName }}"
+  kind: ClusterRole
+  name: "{{ .ClusterRoleName }}"
   apiGroup: rbac.authorization.k8s.io

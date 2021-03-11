@@ -103,11 +103,13 @@ func createOrUpdateHubKubeConfigResources(
 		ManagedClusterNamespace string
 		ServiceAccountName      string
 		ManagedClusterAddonName string
+		ClusterRoleName         string
 	}{
 		ManagedClusterName:      klusterletaddonconfig.Name + "-" + componentName,
 		ManagedClusterNamespace: klusterletaddonconfig.Name,
 		ServiceAccountName:      klusterletaddonconfig.Name + "-" + componentName,
 		ManagedClusterAddonName: addon.GetManagedClusterAddOnName(),
+		ClusterRoleName:         addon.GetClusterRoleName(),
 	}
 
 	newApplier, err := applier.NewApplier(
@@ -124,16 +126,6 @@ func createOrUpdateHubKubeConfigResources(
 				Factor:   1.0,
 			},
 		},
-	)
-	if err != nil {
-		return err
-	}
-
-	err = newApplier.CreateOrUpdateInPath(
-		"resources/hub/roles/"+componentName,
-		nil,
-		false,
-		config,
 	)
 	if err != nil {
 		return err

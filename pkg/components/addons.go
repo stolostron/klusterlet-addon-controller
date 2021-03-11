@@ -37,6 +37,8 @@ type KlusterletAddon interface {
 	NewAddonCR(instance *agentv1.KlusterletAddonConfig, namespace string) (runtime.Object, error)
 	// GetManagedClusterAddOnName returns the ManagedClusterAddOn name that matches this addon
 	GetManagedClusterAddOnName() string
+	// GetClusterRoleName returns the ClusterRole name the addon will use on hub
+	GetClusterRoleName() string
 }
 
 var AppMgr = appmgr.AddonAppMgr{}
