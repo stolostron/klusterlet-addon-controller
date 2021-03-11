@@ -9,7 +9,6 @@
 package v1
 
 import (
-	"fmt"
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +24,7 @@ const (
 	CertPolicyCtrl          = "certpolicyctrl"
 	RequiresHubKubeConfig   = true
 	managedClusterAddOnName = "cert-policy-controller"
-	addonClusterRoleEnv     = "CERTPOLICYCTRL_CLUSTERROLE_NAME"
+	addonNameEnv            = "CERTPOLICYCTRL_NAME"
 )
 
 var log = logf.Log.WithName("certpolicyctrl")
@@ -52,16 +51,11 @@ func (addon AddonCertPolicyCtrl) NewAddonCR(
 }
 
 func (addon AddonCertPolicyCtrl) GetManagedClusterAddOnName() string {
-	return managedClusterAddOnName
-}
-
-func (addon AddonCertPolicyCtrl) GetClusterRoleName() string {
-	if n := os.Getenv(addonClusterRoleEnv); len(n) == 0 {
+	if n := os.Getenv(addonNameEnv); len(n) != 0 {
 		return n
 	}
-	log.Error(fmt.Errorf("env var %s not found", addonClusterRoleEnv),
-		"failed to get clusterrole name")
-	return addon.GetManagedClusterAddOnName()
+	log.Info("failed to get addon name from env var " + addonNameEnv)
+	return managedClusterAddOnName
 }
 
 // newCertPolicyControllerCR - create CR for component cert policy controller

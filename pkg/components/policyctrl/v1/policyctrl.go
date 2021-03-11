@@ -9,7 +9,6 @@
 package v1
 
 import (
-	"fmt"
 	"os"
 
 	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
@@ -25,7 +24,7 @@ const (
 	PolicyCtrl              = "policyctrl"
 	RequiresHubKubeConfig   = true
 	managedClusterAddOnName = "policy-controller"
-	addonClusterRoleEnv     = "POLICYCTRL_CLUSTERROLE_NAME"
+	addonNameEnv            = "POLICYCTRL_NAME"
 )
 
 var log = logf.Log.WithName("policyctrl")
@@ -52,16 +51,11 @@ func (addon AddonPolicyCtrl) NewAddonCR(
 }
 
 func (addon AddonPolicyCtrl) GetManagedClusterAddOnName() string {
-	return managedClusterAddOnName
-}
-
-func (addon AddonPolicyCtrl) GetClusterRoleName() string {
-	if n := os.Getenv(addonClusterRoleEnv); len(n) != 0 {
+	if n := os.Getenv(addonNameEnv); len(n) != 0 {
 		return n
 	}
-	log.Error(fmt.Errorf("env var %s not found", addonClusterRoleEnv),
-		"failed to get clusterrole name")
-	return addon.GetManagedClusterAddOnName()
+	log.Info("failed to get addon name from env var " + addonNameEnv)
+	return managedClusterAddOnName
 }
 
 // newPolicyControllerCR - create CR for component poliicy controller

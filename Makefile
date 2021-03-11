@@ -18,29 +18,17 @@ export BUILD_DIR              = $(PROJECT_DIR)/build
 export COMPONENT_SCRIPTS_PATH = $(BUILD_DIR)
 
 ## WARNING: OPERATOR-SDK - IMAGE_DESCRIPTION & DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES
-export COMPONENT_NAME ?= $(shell cat ./COMPONENT_NAME 2> /dev/null)
-export COMPONENT_VERSION ?= $(shell cat ./COMPONENT_VERSION 2> /dev/null)
 
 export IMAGE_DESCRIPTION ?= Klusterlet_Operator
 export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile
 export DOCKER_REGISTRY   ?= quay.io
 export DOCKER_NAMESPACE  ?= open-cluster-management
-export DOCKER_IMAGE      ?= $(COMPONENT_NAME)
+export DOCKER_IMAGE      ?= klusterlet-addon-controller
 export DOCKER_BUILD_TAG  ?= latest
 export DOCKER_TAG        ?= $(shell whoami)
+export DOCKER_BUILDER    ?= docker
 
 export BINDATA_TEMP_DIR := $(shell mktemp -d)
-
-export DOCKER_BUILD_OPTS  = --build-arg REMOTE_SOURCE=. \
-	--build-arg REMOTE_SOURCE_DIR=/remote-source \
-	--build-arg VCS_REF=$(VCS_REF) \
-	--build-arg VCS_URL=$(GIT_REMOTE_URL) \
-	--build-arg IMAGE_NAME=$(DOCKER_IMAGE) \
-	--build-arg IMAGE_DESCRIPTION=$(IMAGE_DESCRIPTION) \
-	--build-arg IMAGE_VERSION=$(SEMVERSION) \
-	--build-arg COMPONENT_NAME=$(COMPONENT_NAME) \
-	--build-arg COMPONENT_VERSION=$(COMPONENT_VERSION) \
-	--build-arg ARCH_TYPE=$(ARCH_TYPE)
 
 BEFORE_SCRIPT := $(shell build/before-make.sh)
 
@@ -68,6 +56,11 @@ test:
 ## Builds operator binary inside of an image
 build: 
 	go build -o build/_output/manager -mod=mod ./cmd/manager
+
+.PHONY: build-image
+## Builds controller binary inside of an image
+build-image: 
+	$(DOCKER_BUILDER) build -f $(DOCKER_FILE) . -t $(DOCKER_IMAGE)
 
 .PHONY: build-e2e
 build-e2e:
@@ -143,7 +136,8 @@ functional-test:
 	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional -- --v=1 --image-registry=${COMPONENT_DOCKER_REPO}
 
 .PHONY: functional-test-full
-functional-test-full: build-coverage component/test/functional
+functional-test-full: build-image
+	build/run-functional-tests.sh $(DOCKER_IMAGE)
 
 .PHONY: build-coverage
 ## Builds operator binary inside of an image

@@ -12,7 +12,7 @@
 set -e
 #set -x
 
-DOCKER_IMAGE=$1-coverage
+DOCKER_IMAGE=$1
 if [ -z $FUNCT_TEST_TMPDIR ]; then
  export FUNCT_TEST_TMPDIR=/tmp/`uuidgen`
 fi
@@ -94,6 +94,9 @@ sleep 5
 #Apply all dependent crs
 echo "installing crs"
 for file in `ls deploy/dev-crs/*.cr.yaml`; do kubectl apply -f $file; done
+
+echo "installing other dependencies"
+for file in `ls deploy/dev/*.yaml`; do kubectl apply -f $file; done
 
 echo "installing klusterletaddon-controller"
 

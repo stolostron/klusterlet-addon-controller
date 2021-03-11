@@ -1,0 +1,66 @@
+# Copyright Contributors to the Open Cluster Management project
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: application-manager
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - patch
+  - update
+  - delete
+- apiGroups:
+  - apps.open-cluster-management.io
+  resources:
+  - deployables
+  - channels
+  - channels/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps.open-cluster-management.io
+  resources:
+  - deployables/status
+  verbs:
+  - patch
+  - update
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  resourceNames:
+  - application-manager
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch

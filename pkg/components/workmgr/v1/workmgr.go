@@ -9,7 +9,6 @@
 package v1
 
 import (
-	"fmt"
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +24,7 @@ const (
 	WorkMgr                 = "workmgr"
 	RequiresHubKubeConfig   = true
 	managedClusterAddOnName = "work-manager"
-	addonClusterRoleEnv     = "WORKMGR_CLUSTERROLE_NAME"
+	addonNameEnv            = "WORKMGR_NAME"
 )
 
 var log = logf.Log.WithName("workmgr")
@@ -45,16 +44,11 @@ func (addon AddonWorkMgr) GetAddonName() string {
 }
 
 func (addon AddonWorkMgr) GetManagedClusterAddOnName() string {
-	return managedClusterAddOnName
-}
-
-func (addon AddonWorkMgr) GetClusterRoleName() string {
-	if n := os.Getenv(addonClusterRoleEnv); len(n) != 0 {
+	if n := os.Getenv(addonNameEnv); len(n) != 0 {
 		return n
 	}
-	log.Error(fmt.Errorf("env var %s not found", addonClusterRoleEnv),
-		"failed to get clusterrole name")
-	return addon.GetManagedClusterAddOnName()
+	log.Info("failed to get addon name from env var " + addonNameEnv)
+	return managedClusterAddOnName
 }
 
 func (addon AddonWorkMgr) NewAddonCR(
