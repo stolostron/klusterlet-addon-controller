@@ -13,6 +13,8 @@ GOLANGCI_LINT_CACHE=/tmp/golangci-cache
 GOOS=$(go env GOOS)
 GOPATH=$(go env GOPATH)
 export GOFLAGS=""
+# export PROJECT_DIR=$(shell 'pwd')
+# export BUILD_DIR=$(PROJECT_DIR)/build
 
 if ! which golangci-lint > /dev/null; then
     mkdir -p "${GOPATH}/bin"
@@ -27,6 +29,5 @@ if ! which golangci-lint > /dev/null; then
 fi
 
 echo 'Running linting tool ...'
-#GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} golangci-lint run -c build/golangci.yml
-$(GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} golangci-lint run -c build/golangci.yml)
+$(GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} CGO_ENABLED=0 golangci-lint run -c build/golangci.yml)
 echo '##### lint-check #### Success'
