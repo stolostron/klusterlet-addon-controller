@@ -15,7 +15,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net/url"
-	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -110,7 +109,7 @@ func createOrUpdateHubKubeConfigResources(
 		ManagedClusterNamespace: klusterletaddonconfig.Name,
 		ServiceAccountName:      klusterletaddonconfig.Name + "-" + componentName,
 		ManagedClusterAddonName: addon.GetManagedClusterAddOnName(),
-		ClusterRoleName:         os.Getenv("ADDON_CLUSTERROLE_PREFIX") + addon.GetManagedClusterAddOnName(),
+		ClusterRoleName:         addons.GetAddonClusterRolePrefix() + addon.GetManagedClusterAddOnName(),
 	}
 
 	newApplier, err := applier.NewApplier(

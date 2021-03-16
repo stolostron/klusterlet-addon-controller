@@ -5,6 +5,7 @@ package components
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
@@ -149,4 +150,9 @@ func NewAddonNamePredicate() predicate.Predicate {
 			return true
 		},
 	})
+}
+
+// GetAddonClusterRolePrefix gets prefix of addon clusterrole name
+func GetAddonClusterRolePrefix() string {
+	return os.Getenv("ADDON_CLUSTERROLE_PREFIX")
 }

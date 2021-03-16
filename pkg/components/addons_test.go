@@ -3,7 +3,10 @@
 
 package components
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 func TestGetAddonFromManagedClusterAddonName(t *testing.T) {
 	//func GetAddonFromManagedClusterAddonName(name string) (KlusterletAddon, error)
@@ -159,6 +162,85 @@ func TestGetAddonFromManifestWorkName(t *testing.T) {
 				}
 				t.Errorf("GetAddonFromManifestWorkName() addonName = %v, want %v", name, tt.wantAddonName)
 				return
+			}
+		})
+	}
+}
+
+func TestGetManagedClusterAddOnName(t *testing.T) {
+	tests := []struct {
+		name    string
+		addon   KlusterletAddon
+		envName string
+		envVal  string
+		want    string
+	}{
+		{
+			name:    "appmgr with env",
+			addon:   AppMgr,
+			envName: "APPMGR_NAME",
+			envVal:  "diff-Appmgr",
+			want:    "diff-Appmgr",
+		},
+		{
+			name:    "appmgr without env",
+			addon:   AppMgr,
+			envName: "",
+			envVal:  "",
+			want:    "application-manager",
+		},
+		{
+			name:    "certpolicymgr without env",
+			addon:   CertCtrl,
+			envName: "",
+			envVal:  "",
+			want:    "cert-policy-controller",
+		},
+		{
+			name:    "certpolicymgr with env",
+			addon:   CertCtrl,
+			envName: "CERTPOLICYCTRL_NAME",
+			envVal:  "diff-cert",
+			want:    "diff-cert",
+		},
+		{
+			name:    "iampolicyctrl with env",
+			addon:   IAMCtrl,
+			envName: "IAMPOLICYCTRL_NAME",
+			envVal:  "diff-iam",
+			want:    "diff-iam",
+		},
+		{
+			name:    "policyctrl with env",
+			addon:   PolicyCtrl,
+			envName: "POLICYCTRL_NAME",
+			envVal:  "diff-policy",
+			want:    "diff-policy",
+		},
+		{
+			name:    "search with env",
+			addon:   Search,
+			envName: "SEARCH_NAME",
+			envVal:  "diff-search",
+			want:    "diff-search",
+		},
+		{
+			name:    "workmgr with env",
+			addon:   WorkMgr,
+			envName: "WORKMGR_NAME",
+			envVal:  "diff-work",
+			want:    "diff-work",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.envName != "" && tt.envVal != "" {
+				os.Setenv(tt.envName, tt.envVal)
+				defer os.Unsetenv(tt.envName)
+			}
+			got := tt.addon.GetManagedClusterAddOnName()
+			if got != tt.want {
+				t.Errorf("GetManagedClusterAddOnName() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
