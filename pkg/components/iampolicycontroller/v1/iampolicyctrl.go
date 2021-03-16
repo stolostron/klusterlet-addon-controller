@@ -9,6 +9,8 @@
 package v1
 
 import (
+	"os"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -22,6 +24,7 @@ const (
 	IAMPolicyCtrl           = "iampolicyctrl"
 	RequiresHubKubeConfig   = true
 	managedClusterAddOnName = "iam-policy-controller"
+	addonNameEnv            = "IAMPOLICYCTRL_NAME"
 )
 
 var log = logf.Log.WithName("iampolicyctrl")
@@ -47,6 +50,10 @@ func (addon AddonIAMPolicyCtrl) NewAddonCR(
 }
 
 func (addon AddonIAMPolicyCtrl) GetManagedClusterAddOnName() string {
+	if n := os.Getenv(addonNameEnv); len(n) != 0 {
+		return n
+	}
+	log.Info("failed to get addon name from env var " + addonNameEnv)
 	return managedClusterAddOnName
 }
 

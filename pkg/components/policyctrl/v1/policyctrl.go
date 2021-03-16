@@ -9,6 +9,8 @@
 package v1
 
 import (
+	"os"
+
 	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	addonoperator "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/addon-operator/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +24,7 @@ const (
 	PolicyCtrl              = "policyctrl"
 	RequiresHubKubeConfig   = true
 	managedClusterAddOnName = "policy-controller"
+	addonNameEnv            = "POLICYCTRL_NAME"
 )
 
 var log = logf.Log.WithName("policyctrl")
@@ -48,6 +51,10 @@ func (addon AddonPolicyCtrl) NewAddonCR(
 }
 
 func (addon AddonPolicyCtrl) GetManagedClusterAddOnName() string {
+	if n := os.Getenv(addonNameEnv); len(n) != 0 {
+		return n
+	}
+	log.Info("failed to get addon name from env var " + addonNameEnv)
 	return managedClusterAddOnName
 }
 
