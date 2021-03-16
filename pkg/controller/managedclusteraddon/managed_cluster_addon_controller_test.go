@@ -446,7 +446,7 @@ func Test_updateAvailableStatus(t *testing.T) {
 	}
 }
 
-func Test_updateProcessingStatus(t *testing.T) {
+func Test_updateProgressingStatus(t *testing.T) {
 	manifestConditionSucceed1 := manifestworkv1.ManifestCondition{
 		ResourceMeta: manifestworkv1.ManifestResourceMeta{
 			Ordinal: 0,
@@ -524,7 +524,7 @@ func Test_updateProcessingStatus(t *testing.T) {
 				mw:        &manifestworkv1.ManifestWork{},
 			},
 			wantStatus: metav1.ConditionTrue,
-			wantReason: processingReasonMissing,
+			wantReason: progressingReasonMissing,
 			wantErr:    false,
 		},
 		{
@@ -536,7 +536,7 @@ func Test_updateProcessingStatus(t *testing.T) {
 				mw:        &manifestworkv1.ManifestWork{},
 			},
 			wantStatus: metav1.ConditionTrue,
-			wantReason: processingReasonDeleting,
+			wantReason: progressingReasonDeleting,
 			wantErr:    false,
 		},
 		{
@@ -557,7 +557,7 @@ func Test_updateProcessingStatus(t *testing.T) {
 				},
 			},
 			wantStatus: metav1.ConditionTrue,
-			wantReason: processingReasonDeleting,
+			wantReason: progressingReasonDeleting,
 			wantErr:    false,
 		},
 		{
@@ -585,7 +585,7 @@ func Test_updateProcessingStatus(t *testing.T) {
 				},
 			},
 			wantStatus: metav1.ConditionTrue,
-			wantReason: processingReasonCreated,
+			wantReason: progressingReasonCreated,
 			wantErr:    false,
 		},
 		{
@@ -614,7 +614,7 @@ func Test_updateProcessingStatus(t *testing.T) {
 				},
 			},
 			wantStatus: metav1.ConditionFalse,
-			wantReason: processingReasonApplied,
+			wantReason: progressingReasonApplied,
 			wantErr:    false,
 		},
 		{
@@ -643,18 +643,18 @@ func Test_updateProcessingStatus(t *testing.T) {
 				},
 			},
 			wantStatus: metav1.ConditionFalse,
-			wantReason: processingReasonApplied,
+			wantReason: progressingReasonApplied,
 			wantErr:    true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := updateProcessingStatus(tt.args.mca, tt.args.isEnabled, tt.args.notFound, tt.args.mw)
+			s, err := updateProgressingStatus(tt.args.mca, tt.args.isEnabled, tt.args.notFound, tt.args.mw)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("updateProcessingStatus() error expected %t returned %v", tt.wantErr, err)
+				t.Errorf("updateProgressingStatus() error expected %t returned %v", tt.wantErr, err)
 			}
 			if s != tt.wantStatus {
-				t.Errorf("updateProcessingStatus() error expected %v returned %v", tt.wantStatus, s)
+				t.Errorf("updateProgressingStatus() error expected %v returned %v", tt.wantStatus, s)
 			}
 			hasStatus := false
 			for _, c := range tt.args.mca.Status.Conditions {
@@ -663,7 +663,7 @@ func Test_updateProcessingStatus(t *testing.T) {
 				}
 			}
 			if !hasStatus {
-				t.Errorf("updateProcessingStatus() error expect %v to include Progressing=%v:%s",
+				t.Errorf("updateProgressingStatus() error expect %v to include Progressing=%v:%s",
 					tt.args.mca.Status.Conditions, tt.wantStatus, tt.wantReason)
 			}
 		})
@@ -901,11 +901,10 @@ func Test_Reconcile(t *testing.T) {
 	}
 }
 
-func Test_updateAvailableUnknownStatus(t *testing.T) {
+func Test_updateDegradedStatus(t *testing.T) {
 	type args struct {
-		mca           *addonv1alpha1.ManagedClusterAddOn
-		errProcessing error
-		errAvailable  error
+		mca            *addonv1alpha1.ManagedClusterAddOn
+		errProgressing error
 	}
 	type testcase struct {
 		name       string
@@ -933,9 +932,8 @@ func Test_updateAvailableUnknownStatus(t *testing.T) {
 		{
 			name: "no error",
 			args: args{
-				mca:           &addonv1alpha1.ManagedClusterAddOn{},
-				errProcessing: nil,
-				errAvailable:  nil,
+				mca:            &addonv1alpha1.ManagedClusterAddOn{},
+				errProgressing: nil,
 			},
 			wantType:   false,
 			wantStatus: metav1.ConditionTrue,
@@ -952,8 +950,7 @@ func Test_updateAvailableUnknownStatus(t *testing.T) {
 						},
 					},
 				},
-				errProcessing: nil,
-				errAvailable:  nil,
+				errProgressing: nil,
 			},
 			wantStatus: metav1.ConditionTrue,
 			wantReason: "",
@@ -962,40 +959,27 @@ func Test_updateAvailableUnknownStatus(t *testing.T) {
 		{
 			name: "has processing error",
 			args: args{
-				mca:           &addonv1alpha1.ManagedClusterAddOn{},
-				errProcessing: fmt.Errorf("failed install"),
-				errAvailable:  fmt.Errorf("timeout"),
+				mca: &addonv1alpha1.ManagedClusterAddOn{
+					Status: addonv1alpha1.ManagedClusterAddOnStatus{
+						Conditions: []metav1.Condition{
+							conditionAvailableFalse,
+						},
+					},
+				},
+				errProgressing: fmt.Errorf("failed install"),
 			},
 			wantStatus: metav1.ConditionTrue,
 			wantReason: degradedReasonInstallError,
 			wantType:   true,
 		},
-		{
-			name: "has available error",
-			args: args{
-				mca: &addonv1alpha1.ManagedClusterAddOn{
-					Status: addonv1alpha1.ManagedClusterAddOnStatus{
-						Conditions: []metav1.Condition{
-							conditionDegradedTrue,
-							conditionAvailableFalse,
-						},
-					},
-				},
-				errProcessing: nil,
-				errAvailable:  fmt.Errorf("timeout"),
-			},
-			wantStatus: metav1.ConditionTrue,
-			wantReason: degradedReasonTimeout,
-			wantType:   true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			updateAvailableUnknownStatus(tt.args.mca, tt.args.errProcessing, tt.args.errAvailable)
+			updateDegradedStatus(tt.args.mca, tt.args.errProgressing)
 			hasStatus := false
 			for _, c := range tt.args.mca.Status.Conditions {
 				if c.Type == "Degraded" && !tt.wantType {
-					t.Errorf("updateProcessingStatus() error expect %v to not include Degraded", tt.args.mca.Status.Conditions)
+					t.Errorf("updateProgressingStatus() error expect %v to not include Degraded", tt.args.mca.Status.Conditions)
 					return
 				}
 				if c.Type == "Degraded" && c.Status == tt.wantStatus && c.Reason == tt.wantReason {
@@ -1004,7 +988,55 @@ func Test_updateAvailableUnknownStatus(t *testing.T) {
 			}
 
 			if tt.wantType && !hasStatus {
-				t.Errorf("updateProcessingStatus() error expect %v to include Degraded=%v:%s",
+				t.Errorf("updateProgressingStatus() error expect %v to include Degraded=%v:%s",
+					tt.args.mca.Status.Conditions, tt.wantStatus, tt.wantReason)
+			}
+		})
+	}
+}
+
+func Test_updateAvailableUnknownStatus(t *testing.T) {
+	type args struct {
+		mca            *addonv1alpha1.ManagedClusterAddOn
+		errProgressing error
+		errAvailable   error
+	}
+	type testcase struct {
+		name       string
+		args       args
+		wantStatus metav1.ConditionStatus
+		wantReason string
+		wantType   bool
+	}
+	tests := []testcase{
+		{
+			name: "has available error",
+			args: args{
+				mca:            &addonv1alpha1.ManagedClusterAddOn{},
+				errProgressing: nil,
+				errAvailable:   fmt.Errorf("timeout"),
+			},
+			wantStatus: metav1.ConditionUnknown,
+			wantReason: availableUnknownReasonTimeout,
+			wantType:   true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			updateAvailableUnknownStatus(tt.args.mca, tt.args.errAvailable)
+			hasStatus := false
+			for _, c := range tt.args.mca.Status.Conditions {
+				if c.Type == "Available" && !tt.wantType {
+					t.Errorf("updateAvailableUnknownStatus() error expect %v to not include Available", tt.args.mca.Status.Conditions)
+					return
+				}
+				if c.Type == "Available" && c.Status == tt.wantStatus && c.Reason == tt.wantReason {
+					hasStatus = true
+				}
+			}
+
+			if tt.wantType && !hasStatus {
+				t.Errorf("updateAvailableUnknownStatus() error expect %v to include Available=%v:%s",
 					tt.args.mca.Status.Conditions, tt.wantStatus, tt.wantReason)
 			}
 		})

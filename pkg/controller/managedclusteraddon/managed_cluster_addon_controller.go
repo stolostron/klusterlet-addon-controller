@@ -48,26 +48,26 @@ const (
 	addonProgressing = "Progressing"
 
 	// reasons of condition
-	processingReasonMissing    = "ManifestWorkCreating"
-	processingReasonCreated    = "ManifestWorkCreated"
-	processingReasonApplied    = "ManifestWorkApplied"
-	processingReasonDeleting   = "AddonTerminating"
-	availableReasonMissing     = "AddonNotReady"
-	availableReasonReady       = "AddonAvailable"
-	availableReasonTimeout     = "AddonTimeout"
-	degradedReasonTimeout      = "AddonTimeout"
-	degradedReasonInstallError = "AddonInstallationError"
+	progressingReasonMissing      = "ManifestWorkCreating"
+	progressingReasonCreated      = "ManifestWorkCreated"
+	progressingReasonApplied      = "ManifestWorkApplied"
+	progressingReasonDeleting     = "AddonTerminating"
+	availableReasonMissing        = "AddonNotReady"
+	availableReasonReady          = "AddonAvailable"
+	availableReasonTimeout        = "AddonTimeout"
+	availableUnknownReasonTimeout = "AddonRequestTimeout"
+	degradedReasonInstallError    = "AddonInstallationError"
 
 	// messages of condition
-	processingMSGMissing            = "Creating manifests for add-on installation."  // message will show when we are waiting to create the manifests of addons
-	processingMSGCreated            = "Installing manifests."                        // message when we are still in installation
-	processingMSGApplied            = "All manifests are installed."                 // message when the manifestwork is applied (manifest is installed)
-	processingMsgDeleting           = "Add-on is being deleted."                     // message when addon is in deletion
-	availableMsgMissing             = "Add-on is not available."                     // message when addon is not in ready status yet
-	availableMSGReady               = "Add-on is available."                         // message when addon is in ready status
-	availableMSGTimeout             = "Get add-on status timeout."                   // message when addon has not sent message to hub for a while (default 5 minutes)
-	degradedMSGTimeoutTemplate      = "Failed to check add-on available status: %s." // message when we have problem to know if addon is alive or not, %s can be errorTimeout or errorLease
-	degradedMSGInstallErrorTemplate = "Failed to complete add-on installation: %s."  // message when we detect error in addon's manifests installation, %s is errorFailedApplyTemplate
+	progressingMSGMissing             = "Creating manifests for add-on installation."  // message will show when we are waiting to create the manifests of addons
+	progressingMSGCreated             = "Installing manifests."                        // message when we are still in installation
+	progressingMSGApplied             = "All manifests are installed."                 // message when the manifestwork is applied (manifest is installed)
+	progressingMsgDeleting            = "Add-on is being deleted."                     // message when addon is in deletion
+	availableMsgMissing               = "Add-on is not available."                     // message when addon is not in ready status yet
+	availableMSGReady                 = "Add-on is available."                         // message when addon is in ready status
+	availableMSGTimeout               = "Get add-on status timeout."                   // message when addon has not sent message to hub for a while (default 5 minutes)
+	availableUknownMSGTimeoutTemplate = "Failed to check add-on available status: %s." // message when we have problem to know if addon is alive or not, %s can be errorTimeout or errorLease
+	degradedMSGInstallErrorTemplate   = "Failed to complete add-on installation: %s."  // message when we detect error in addon's manifests installation, %s is errorFailedApplyTemplate
 
 	// possible error messages
 	errorFailedApplyTemplate = "%d of %d manifests failed to apply"
@@ -256,8 +256,8 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 		return reconcile.Result{}, nil
 	}
 
-	// update processing status base on manifestwork
-	_, errProcessing := updateProcessingStatus(
+	// update progressing status base on manifestwork
+	_, errProgressing := updateProgressingStatus(
 		managedClusterAddOn,
 		addon.IsEnabled(klusterletaddonconfig) && klusterletaddonconfig.DeletionTimestamp == nil,
 		manifestWorkIsNotFound,
@@ -268,12 +268,16 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 	statusAvailable, errAvailable := updateAvailableStatus(managedClusterAddOn, leaseIsNotFound, lease)
 
 	// check install timeout
-	if errProcessing == nil && errAvailable == nil {
-		errProcessing = checkInstallTimeout(managedClusterAddOn)
+	if errProgressing == nil && errAvailable == nil {
+		errProgressing = checkInstallTimeout(managedClusterAddOn)
 	}
 
 	// check & set degraded information
-	_ = updateAvailableUnknownStatus(managedClusterAddOn, errProcessing, errAvailable)
+	_ = updateDegradedStatus(managedClusterAddOn, errProgressing)
+
+	if errAvailable != nil {
+		_ = updateAvailableUnknownStatus(managedClusterAddOn, errAvailable)
+	}
 
 	// write managedClusterAddOn status if needed
 	if !reflect.DeepEqual(*oldstatus, managedClusterAddOn.Status) {
@@ -318,37 +322,52 @@ func filterConditions(conditions *[]metav1.Condition, excludeType string) {
 	*conditions = append(*conditions, newConditions...)
 }
 
-// updateAvailableUnknownStatus updates ManagedClusterAddOn.status's degraded type condition based on former errors
+// updateDegradedStatus updates ManagedClusterAddOn.status's degraded type condition based on former errors
 // will remove degraded condition if nothing is wrong
-func updateAvailableUnknownStatus(mca *addonv1alpha1.ManagedClusterAddOn,
-	errProgressing error, errAvailable error) metav1.ConditionStatus {
-	// if errProgressing == nil && errAvailable == nil {
-	// 	// filter out degraded
-	// 	filterConditions(&mca.Status.Conditions, addonDegraded)
-	// 	return metav1.ConditionFalse
-	// }
+func updateDegradedStatus(mca *addonv1alpha1.ManagedClusterAddOn,
+	errProgressing error) metav1.ConditionStatus {
+	if errProgressing == nil {
+		// filter out degraded
+		filterConditions(&mca.Status.Conditions, addonDegraded)
+		return metav1.ConditionFalse
+	}
 	var conditionReason string
 	var conditionMsg string
-	conditionType := addonAvailable
-	conditionStatus := metav1.ConditionUnknown
+	conditionType := addonDegraded
+	conditionStatus := metav1.ConditionTrue
 	// show progressing issues as higher priority
 	if errProgressing != nil {
 		conditionReason = degradedReasonInstallError
 		conditionMsg = fmt.Sprintf(degradedMSGInstallErrorTemplate, errProgressing.Error())
-	} else {
-		conditionReason = degradedReasonTimeout
-		conditionMsg = fmt.Sprintf(degradedMSGTimeoutTemplate, errAvailable.Error())
 	}
 	condition := createCondition(conditionType, conditionStatus, conditionReason, conditionMsg)
 	setStatusCondition(&mca.Status.Conditions, condition)
 	return conditionStatus
 }
 
-// updateProcessingStatus updates ManagedClusterAddOn.status's processing type condition based on given manifestwork
+// updateAvailableUnknownStatus updates ManagedClusterAddOn.status's available type condition based on former errors
+func updateAvailableUnknownStatus(mca *addonv1alpha1.ManagedClusterAddOn,
+	errAvailable error) metav1.ConditionStatus {
+
+	var conditionReason string
+	var conditionMsg string
+	conditionType := addonAvailable
+	conditionStatus := metav1.ConditionUnknown
+	if errAvailable != nil {
+		conditionReason = availableUnknownReasonTimeout
+		conditionMsg = fmt.Sprintf(availableUknownMSGTimeoutTemplate, errAvailable.Error())
+	}
+
+	condition := createCondition(conditionType, conditionStatus, conditionReason, conditionMsg)
+	setStatusCondition(&mca.Status.Conditions, condition)
+	return conditionStatus
+}
+
+// updateProgressingStatus updates ManagedClusterAddOn.status's processing type condition based on given manifestwork
 // if manifestwork is not created/still waiting for complete, will show processing=true
 // if manifestwork is finished apply (with or without errors), will show processing=false
 // if there are any manifests applied failed, will return an error to indicate failed to apply the manifestwork
-func updateProcessingStatus(
+func updateProgressingStatus(
 	mca *addonv1alpha1.ManagedClusterAddOn,
 	isEnabled bool,
 	manifestWorkIsNotFound bool,
@@ -362,22 +381,22 @@ func updateProcessingStatus(
 
 	if !isEnabled {
 		// when disabled, until completely deleted, should always show terminating
-		conditionReason = processingReasonDeleting
-		conditionMsg = processingMsgDeleting
+		conditionReason = progressingReasonDeleting
+		conditionMsg = progressingMsgDeleting
 	} else if manifestWorkIsNotFound {
 		// when waiting for manifestwork to create
-		conditionReason = processingReasonMissing
-		conditionMsg = processingMSGMissing
+		conditionReason = progressingReasonMissing
+		conditionMsg = progressingMSGMissing
 	} else {
 		numFailed, numSucceeded, numTotal := checkManifestWorkStatus(mw)
 		// check if it's done, if applied > total, then it's done, otherwise it's not
 		if numFailed+numSucceeded >= numTotal {
 			conditionStatus = metav1.ConditionFalse
-			conditionReason = processingReasonApplied
-			conditionMsg = processingMSGApplied
+			conditionReason = progressingReasonApplied
+			conditionMsg = progressingMSGApplied
 		} else {
-			conditionReason = processingReasonCreated
-			conditionMsg = processingMSGCreated
+			conditionReason = progressingReasonCreated
+			conditionMsg = progressingMSGCreated
 		}
 		if numFailed > 0 {
 			err = fmt.Errorf(errorFailedApplyTemplate, numFailed, numTotal)
@@ -440,6 +459,7 @@ func updateAvailableStatus(
 
 	condition := createCondition(conditionType, conditionStatus, conditionReason, conditionMsg)
 	setStatusCondition(&mca.Status.Conditions, condition)
+
 	return conditionStatus, err
 }
 
