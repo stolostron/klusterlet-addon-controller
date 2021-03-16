@@ -10,32 +10,11 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - pods
-  - nodes
-  - services
-  - services/finalizers
-  - klusterlets
-  - persistentvolumeclaims
   - events
-  - configmaps
   - secrets
+  - configmaps
   - serviceaccounts
-  - namespaces
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  - daemonsets
-  - replicasets
-  - statefulsets
+  - services
   verbs:
   - create
   - delete
@@ -75,7 +54,8 @@ rules:
 - apiGroups:
   - agent.open-cluster-management.io
   resources:
-  - '*'
+  - klusterletaddonconfigs
+  - klusterletaddonconfigs/finalizers
   verbs:
   - create
   - delete
@@ -91,7 +71,6 @@ rules:
   - managedclusters/finalizers
   verbs:
   - create
-  - delete
   - get
   - list
   - patch
@@ -128,12 +107,8 @@ rules:
   resources:
   - infrastructures
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 # appmgr
 - apiGroups:
@@ -232,19 +207,6 @@ rules:
 - apiGroups: ["policy.open-cluster-management.io"]
   resources: ["*"]
   verbs: ["*"]
-- apiGroups: 
-  - addon.open-cluster-management.io
-  resources: 
-  - managedclusteraddons
-  - managedclusteraddons/status
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
 - apiGroups:
   - coordination.k8s.io
   resources:
@@ -260,6 +222,8 @@ rules:
 - apiGroups: 
   - addon.open-cluster-management.io
   resources: 
+  - managedclusteraddons
+  - managedclusteraddons/status
   - clustermanagementaddons
   verbs:
   - create
@@ -268,11 +232,19 @@ rules:
   - list
   - patch
   - update
-  - watch 
+  - watch
 - apiGroups:
   - config.openshift.io
   resources:
   - apiservers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes
   verbs:
   - get
   - list
