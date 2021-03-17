@@ -1171,40 +1171,40 @@ func Test_deleteOutDatedRoleRoleBinding(t *testing.T) {
 	}
 	roleOwned := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "application-manager",
+			Name:      "test-managedcluster-appmgr",
 			Namespace: "test-managedcluster",
 		},
 	}
 
 	rolebindingOwned := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "application-manager",
+			Name:      "test-managedcluster-appmgr",
 			Namespace: "test-managedcluster",
 		},
 	}
 
 	rolebindingOwnedOther := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "application-manager",
+			Name:      "test-managedcluster-appmgr",
 			Namespace: "test-managedcluster",
 		},
 	}
 
 	roleNotOwned := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "application-manager",
+			Name:      "test-managedcluster-appmgr",
 			Namespace: "test-managedcluster",
 		},
 	}
 	rolebindingNotOwned := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "application-manager",
+			Name:      "test-managedcluster-appmgr",
 			Namespace: "test-managedcluster",
 		},
 	}
 	roleOwnedOther := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "application-manager",
+			Name:      "test-managedcluster-appmgr",
 			Namespace: "test-managedcluster",
 		},
 	}
@@ -1343,27 +1343,29 @@ func Test_deleteOutDatedRoleRoleBinding(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := deleteOutDatedRoleRoleBinding(tt.args.addon, tt.args.klusterletaddonconfig, tt.args.client)
-		if (err != nil) != tt.wantErr {
-			t.Errorf("deleteOutDatedRoleRoleBinding() get error %v, wantErr %t", err, tt.wantErr)
-		}
-		// check num of roles
-		roleList := &rbacv1.RoleList{}
-		if err := tt.args.client.List(context.TODO(), roleList); err != nil {
-			t.Errorf("unexpected error when list roles: %v", err)
-		} else if len(roleList.Items) != tt.numRoleLeft {
-			t.Errorf("deleteOutDatedRoleRoleBinding() get wrong # of roles left %d, want %d",
-				len(roleList.Items), tt.numRoleLeft)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			err := deleteOutDatedRoleRoleBinding(tt.args.addon, tt.args.klusterletaddonconfig, tt.args.client)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("deleteOutDatedRoleRoleBinding() get error %v, wantErr %t", err, tt.wantErr)
+			}
+			// check num of roles
+			roleList := &rbacv1.RoleList{}
+			if err := tt.args.client.List(context.TODO(), roleList); err != nil {
+				t.Errorf("unexpected error when list roles: %v", err)
+			} else if len(roleList.Items) != tt.numRoleLeft {
+				t.Errorf("deleteOutDatedRoleRoleBinding() get wrong # of roles left %d, want %d",
+					len(roleList.Items), tt.numRoleLeft)
+			}
 
-		// check num of rolebindings
-		rolebindingList := &rbacv1.RoleBindingList{}
-		if err := tt.args.client.List(context.TODO(), rolebindingList); err != nil {
-			t.Errorf("unexpected error when list roles: %v", err)
-		} else if len(rolebindingList.Items) != tt.numRolebindingLeft {
-			t.Errorf("deleteOutDatedRoleRoleBinding() get wrong # of roles left %d, want %d",
-				len(rolebindingList.Items), tt.numRolebindingLeft)
-		}
+			// check num of rolebindings
+			rolebindingList := &rbacv1.RoleBindingList{}
+			if err := tt.args.client.List(context.TODO(), rolebindingList); err != nil {
+				t.Errorf("unexpected error when list roles: %v", err)
+			} else if len(rolebindingList.Items) != tt.numRolebindingLeft {
+				t.Errorf("deleteOutDatedRoleRoleBinding() get wrong # of roles left %d, want %d",
+					len(rolebindingList.Items), tt.numRolebindingLeft)
+			}
+		})
 	}
 
 }

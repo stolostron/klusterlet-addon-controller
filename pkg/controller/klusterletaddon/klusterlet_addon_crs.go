@@ -104,7 +104,9 @@ func deleteOutDatedRoleRoleBinding(
 	if klusterletaddonconfig == nil {
 		return nil
 	}
-	//check if the role/rolebinding exist
+	// name used in previous addon role & rolebinding
+	name := klusterletaddonconfig.Name + "-" + addon.GetAddonName()
+	// check if the role/rolebinding exist
 	role := &rbacv1.Role{}
 	rolebinding := &rbacv1.RoleBinding{}
 	objs := make([]runtime.Object, 0)
@@ -116,7 +118,7 @@ func deleteOutDatedRoleRoleBinding(
 		if err := client.Get(
 			context.TODO(),
 			types.NamespacedName{
-				Name:      addon.GetManagedClusterAddOnName(),
+				Name:      name,
 				Namespace: klusterletaddonconfig.Namespace,
 			}, o); err != nil && errors.IsNotFound(err) {
 			continue
@@ -163,9 +165,6 @@ func createOrUpdateHubKubeConfigResources(
 	addon addons.KlusterletAddon) error {
 	componentName := addon.GetAddonName()
 
-	if err := deleteOutDatedRoleRoleBinding(addon, klusterletaddonconfig, r.client); err != nil {
-		log.Info("Failed to delete outdated role/rolebinding. Skipping.", "error message:", err)
-	}
 	//Create the values for the yamls
 	config := struct {
 		ManagedClusterName      string
@@ -208,6 +207,10 @@ func createOrUpdateHubKubeConfigResources(
 	)
 	if err != nil {
 		return err
+	}
+	// delete old role & rolebindings created in previous releases
+	if err := deleteOutDatedRoleRoleBinding(addon, klusterletaddonconfig, r.client); err != nil {
+		log.Info("Failed to delete outdated role/rolebinding. Skipping.", "error message:", err)
 	}
 
 	return nil
