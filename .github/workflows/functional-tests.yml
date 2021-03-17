@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         go: [ '1.14' ]
-    name: KinD tests
+    name: Functional tests
     steps:
     - name: Checkout Klusterlet Addon Controller
       uses: actions/checkout@v2
