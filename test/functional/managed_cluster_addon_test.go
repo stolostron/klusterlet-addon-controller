@@ -307,16 +307,6 @@ var _ = Describe("ManagedClusterAddOns", func() {
 				checkStatusConditionNotFound(clientClusterDynamic, mcaName, testNamespace, "Degraded", "True")
 			}
 		})
-		By("Checking Degraded=true when lease expires", func() {
-			for _, crName := range addonCRs {
-				mcaName := mcaMaps[crName]
-				renewTime := time.Now().Add(-time.Second * 6 * 60).Format("2006-01-02T15:04:05.000000Z07:00")
-				lease := newLease(mcaName, testNamespace, renewTime)
-				createNewUnstructured(clientClusterDynamic, gvrLease,
-					lease, mcaName, testNamespace)
-				checkStatusCondition(clientClusterDynamic, mcaName, testNamespace, "Degraded", "True")
-			}
-		})
 	})
 })
 

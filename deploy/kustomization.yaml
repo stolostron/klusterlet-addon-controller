@@ -32,3 +32,4 @@ resources:
 - ./role_binding.yaml
 - ./deployment.yaml
 - ./image-manifest-configmap.yaml
+- ./fake-secret.yaml

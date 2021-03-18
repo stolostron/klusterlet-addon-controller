@@ -1,4 +1,4 @@
-name: Functional tests
+name: Tests
 
 on:
   push:
@@ -35,20 +35,22 @@ jobs:
 
     - name: Verify modules
       run: go mod verify
-
-    - name: Verify format
+    
+    - name: Build Image to KinD node
+      env:
+        DOCKER_TAG: ${{ github.sha }}
       run: |
-        make fmt
-        git diff --exit-code
+        make build-image
+
+    - name: Run functional tests
+      run: |
+        make functional-test-full
+
     # - name: Create K8s KinD Cluster
     #   run: |
     #     make kind-bootstrap-cluster-dev
-    # - name: Build and Push Test Container Image to KinD node
-    #   env:
-    #     TAG: ${{ github.sha }}
-    #   run: |
-    #     make build-images
-    #     make kind-deploy-controller-dev
+   
+    # make kind-deploy-controller-dev
     # - name: Unit and Integration Tests
     #   run: |
     #     curl -L https://go.kubebuilder.io/dl/2.3.0/"$(go env GOOS)"/"$(go env GOARCH)" | tar -xz -C /tmp/

@@ -3,29 +3,22 @@
 
 SHELL := /bin/bash
 
-export ARCH       ?= $(shell uname -m)
-export ARCH_TYPE   = $(if $(patsubst x86_64,,$(ARCH)),$(ARCH),amd64)
 export BUILD_DATE  = $(shell date +%m/%d@%H:%M:%S)
 
 export CGO_ENABLED  = 0
 export GO111MODULE := on
 export GOOS         = $(shell go env GOOS)
-export GOARCH       = $(ARCH_TYPE)
 export GOPACKAGES   = $(shell go list ./... | grep -v /vendor | grep -v /build | grep -v /test)
 
 export PROJECT_DIR            = $(shell 'pwd')
 export BUILD_DIR              = $(PROJECT_DIR)/build
 export COMPONENT_SCRIPTS_PATH = $(BUILD_DIR)
 
-## WARNING: OPERATOR-SDK - IMAGE_DESCRIPTION & DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES
 
-export IMAGE_DESCRIPTION ?= Klusterlet_Operator
-export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile
-export DOCKER_REGISTRY   ?= quay.io
-export DOCKER_NAMESPACE  ?= open-cluster-management
+export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile.prow
+export DOCKER_REGISTRY   ?= quay.io/open-cluster-management
 export DOCKER_IMAGE      ?= klusterlet-addon-controller
-export DOCKER_BUILD_TAG  ?= latest
-export DOCKER_TAG        ?= $(shell whoami)
+export DOCKER_TAG        ?= latest
 export DOCKER_BUILDER    ?= docker
 
 export BINDATA_TEMP_DIR := $(shell mktemp -d)
@@ -60,7 +53,8 @@ build:
 .PHONY: build-image
 ## Builds controller binary inside of an image
 build-image: 
-	$(DOCKER_BUILDER) build -f $(DOCKER_FILE) . -t $(DOCKER_IMAGE)
+	@docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE} -f $(DOCKER_FILE) . 
+	@docker tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE} ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
 
 .PHONY: build-e2e
 build-e2e:
@@ -136,8 +130,8 @@ functional-test:
 	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional -- --v=1 --image-registry=${COMPONENT_DOCKER_REPO}
 
 .PHONY: functional-test-full
-functional-test-full: build-image
-	build/run-functional-tests.sh $(DOCKER_IMAGE)
+functional-test-full: 
+	build/run-functional-tests.sh ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
 
 .PHONY: build-coverage
 ## Builds operator binary inside of an image

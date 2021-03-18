@@ -35,7 +35,6 @@ fi
 
 
 export KUBECONFIG=${KIND_KUBECONFIG}
-export PULL_SECRET=multicloud-image-pull-secret
 
 wait_file() {
   local file="$1"; shift
@@ -73,14 +72,14 @@ fi
 
 echo "creating cluster"
 
-sed "s#REPLACE_DIR#${FUNCT_TEST_TMPDIR}/test/functional/coverage/endpoint-operator#" ${PROJECT_DIR}/build/kind-config/kind-config.yaml > ${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml
+sed "s#REPLACE_DIR#${FUNCT_TEST_TMPDIR}/test/functional/coverage/klusterlet-addon-controller#" ${PROJECT_DIR}/build/kind-config/kind-config.yaml > ${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml
 
 cat ${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml
 
 #Create local directory to hold coverage results
-mkdir -p ${FUNCT_TEST_TMPDIR}/test/functional/coverage/endpoint-operator
+mkdir -p ${FUNCT_TEST_TMPDIR}/test/functional/coverage/klusterlet-addon-controller
 
-kind create cluster --name klusterlet-addon-controller-test  --config=${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml  || exit 1
+kind create cluster --name klusterlet-addon-controller-test  --config=${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml --image kindest/node:v1.20.2 || exit 1
 
 # setup kubeconfig
 kind export kubeconfig --name=klusterlet-addon-controller-test --kubeconfig ${KIND_KUBECONFIG} 
@@ -107,12 +106,6 @@ kubectl apply -f ${PROJECT_DIR}/deploy/namespace.yaml
 
 COMPONENT_DOCKER_REPO=`echo "$DOCKER_IMAGE" | cut -f1 -d:`
 
-kubectl create secret docker-registry ${PULL_SECRET} \
-      --docker-server=${COMPONENT_DOCKER_REPO} \
-      --docker-username=$DOCKER_USER \
-      --docker-password=$DOCKER_PASS \
-      -n open-cluster-management
-
 #Loop on scenario
 for dir in overlays/test/* ; do
   echo "=========================================="
@@ -133,7 +126,7 @@ kind delete cluster --name klusterlet-addon-controller-test
 rm -rf ${PROJECT_DIR}/test/functional/coverage
 mkdir -p ${PROJECT_DIR}/test/functional/coverage
 
-mv ${FUNCT_TEST_TMPDIR}/test/functional/coverage/endpoint-operator/* ${PROJECT_DIR}/test/functional/coverage/
+mv ${FUNCT_TEST_TMPDIR}/test/functional/coverage/klusterlet-addon-controller/* ${PROJECT_DIR}/test/functional/coverage/
 
 gocovmerge ${PROJECT_DIR}/test/functional/coverage/* >> ${PROJECT_DIR}/test/functional/coverage/cover-functional.out
 COVERAGE=$(go tool cover -func=${PROJECT_DIR}/test/functional/coverage/cover-functional.out | grep "total:" | awk '{ print $3 }' | sed 's/[][()><%]/ /g')
