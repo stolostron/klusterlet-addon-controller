@@ -16,6 +16,7 @@ export COMPONENT_SCRIPTS_PATH = $(BUILD_DIR)
 
 
 export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile.prow
+export DOCKERFILE_COVERAGE = $(BUILD_DIR)/Dockerfile-coverage
 export DOCKER_REGISTRY   ?= quay.io/open-cluster-management
 export DOCKER_IMAGE      ?= klusterlet-addon-controller
 export DOCKER_TAG        ?= latest
@@ -53,8 +54,8 @@ build:
 .PHONY: build-image
 ## Builds controller binary inside of an image
 build-image: 
-	@docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE} -f $(DOCKER_FILE) . 
-	@docker tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE} ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
+	@$(DOCKER_BUILDER) build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE} -f $(DOCKER_FILE) . 
+	@$(DOCKER_BUILDER) tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE} ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
 
 .PHONY: build-e2e
 build-e2e:
@@ -130,9 +131,17 @@ functional-test:
 	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional -- --v=1 --image-registry=${COMPONENT_DOCKER_REPO}
 
 .PHONY: functional-test-full
-functional-test-full: 
+functional-test-full: build-image
 	build/run-functional-tests.sh ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
 
+# download script for coverage entrypoint. 
+.PHONY: sync-coverage-entrypoint
+sync-coverage-entrypoint:
+	@echo downloading coverage entrypoint file
+	@tmp_dir=$$(mktemp -d); \
+	curl  --fail -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/modules/component/bin/component/coverage-entrypoint-func.sh > "$$tmp_dir/coverage-entrypoint-func.sh" \
+	&& mv "$$tmp_dir/coverage-entrypoint-func.sh" build/bin/ && chmod +x build/bin/coverage-entrypoint-func.sh ;
+	
 .PHONY: build-coverage
 ## Builds operator binary inside of an image
 build-coverage: 

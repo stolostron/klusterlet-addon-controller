@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [ main, release-2.3 ]
+    branches: [ main, release-* ]
   pull_request:
-    branches: [ main, release-2.3 ]
+    branches: [ main, release-* ]
 
 defaults:
   run:
@@ -18,7 +18,7 @@ jobs:
       REGISTRY: localhost:5000
     strategy:
       matrix:
-        go: [ '1.14' ]
+        go: [ '1.15' ]
     name: Functional tests
     steps:
     - name: Checkout Klusterlet Addon Controller
@@ -32,45 +32,14 @@ jobs:
       id: go
       with:
         go-version: ${{ matrix.go }}
-
-    - name: Verify modules
-      run: go mod verify
     
-    - name: Build Image to KinD node
-      env:
-        DOCKER_TAG: ${{ github.sha }}
-      run: |
-        make build-image
-
     - name: Run functional tests
       run: |
         make functional-test-full
+    
+    - name: Logs after Tests Failed
+      if:  ${{ failure() }}
+      run: KUBECONFIG=kind_kubeconfig.yaml kubectl logs  -n open-cluster-management `KUBECONFIG=kind_kubeconfig.yaml kubectl get po -n open-cluster-management -oname | grep klusterlet-addon-controller`
 
-    # - name: Create K8s KinD Cluster
-    #   run: |
-    #     make kind-bootstrap-cluster-dev
-   
-    # make kind-deploy-controller-dev
-    # - name: Unit and Integration Tests
-    #   run: |
-    #     curl -L https://go.kubebuilder.io/dl/2.3.0/"$(go env GOOS)"/"$(go env GOARCH)" | tar -xz -C /tmp/
-    #     sudo mv /tmp/kubebuilder_2.3.0_"$(go env GOOS)"_"$(go env GOARCH)" /usr/local/kubebuilder
-    #     export PATH=$PATH:/usr/local/kubebuilder/bin
-    #     make test
-    # - name: E2E Tests
-    #   run: |
-    #     export GOPATH=$(go env GOPATH)
-    #     go get github.com/onsi/ginkgo/ginkgo
-    #     go get github.com/onsi/gomega/...
-    #     make e2e-test
-    # - name: Debug
-    #   if: ${{ failure() }}
-    #   run: |
-    #     kubectl get all -n multicluster-endpoint
-    #     kubectl get all -n managed
-    #     kubectl get configurationpolicies.policy.open-cluster-management.io --all-namespaces
-    #     kubectl describe pods -n multicluster-endpoint
-    #     kubectl logs $(kubectl get pods -n multicluster-endpoint -o name | grep config-policy) -n multicluster-endpoint
-    # - name: Clean up cluster
-    #   if: ${{ always() }}
-    #   run: make kind-delete-cluster
+
+    
