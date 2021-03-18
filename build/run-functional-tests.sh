@@ -24,16 +24,6 @@ echo "FUNCT_TEST_TMPDIR="$FUNCT_TEST_TMPDIR
 KIND_KUBECONFIG="${PROJECT_DIR}/kind_kubeconfig.yaml"
 echo "KIND_KUBECONFIG="$KIND_KUBECONFIG
 
-if [ -z $DOCKER_USER ]; then
-   echo "DOCKER_USER is not defined!"
-   exit 1
-fi
-if [ -z $DOCKER_PASS ]; then
-   echo "DOCKER_PASS is not defined!"
-   exit 1
-fi
-
-
 export KUBECONFIG=${KIND_KUBECONFIG}
 
 wait_file() {
