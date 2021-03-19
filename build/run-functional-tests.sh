@@ -132,7 +132,7 @@ for file in `ls deploy/dev-crs/*.cr.yaml`; do kubectl apply -f $file; done
 echo "installing other dependencies"
 for file in `ls deploy/dev/*.yaml`; do kubectl apply -f $file; done
 
-echo "installing klusterletaddon-controller"
+echo "installing klusterlet-addon-controller"
 
 kind load docker-image $DOCKER_IMAGE --name=klusterlet-addon-controller-test 
 
