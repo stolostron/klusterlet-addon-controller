@@ -130,9 +130,15 @@ deploy:
 functional-test: 
 	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional -- --v=1 --image-registry=${COMPONENT_DOCKER_REPO}
 
+.PHONY: build-coverage-image
+## Builds controller binary inside of an image
+build-coverage-image: 
+	@$(DOCKER_BUILDER) build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage -f $(DOCKERFILE_COVERAGE) . 
+	@$(DOCKER_BUILDER) tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage:$(DOCKER_TAG)
+
 .PHONY: functional-test-full
-functional-test-full: build-image
-	build/run-functional-tests.sh ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
+functional-test-full: build-coverage-image
+	build/run-functional-tests.sh ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage:$(DOCKER_TAG)
 
 # download script for coverage entrypoint. 
 .PHONY: sync-coverage-entrypoint
