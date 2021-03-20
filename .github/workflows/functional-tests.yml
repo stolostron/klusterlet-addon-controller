@@ -6,36 +6,33 @@ on:
   pull_request:
     branches: [ main, release-* ]
 
-defaults:
-  run:
-    shell: bash
-    working-directory: klusterlet-addon-controller
+# defaults:
+#   run:
+#     shell: bash
+#     working-directory: klusterlet-addon-controller
 
 jobs:
   main:
-    runs-on: ubuntu-18.04
-    env:
-      REGISTRY: localhost:5000
-    strategy:
-      matrix:
-        go: [ '1.15' ]
+    runs-on: ubuntu-latest
+    # strategy:
+    #   matrix:
+    #     go: [ '1.15' ]
     name: Functional tests
     steps:
     - name: Checkout Klusterlet Addon Controller
       uses: actions/checkout@v2
-      with:
-        path: klusterlet-addon-controller
-        fetch-depth: 0 # Fetch all history for all tags and branches
+      # with:
+      #   path: klusterlet-addon-controller
+      #   fetch-depth: 0 # Fetch all history for all tags and branches
 
-    - name: Set up Go ${{ matrix.go }}
+    - name: Set up Go 
       uses: actions/setup-go@v2
-      id: go
+      #id: go
       with:
-        go-version: ${{ matrix.go }}
+        go-version: 1.15
     
     - name: Run functional tests
-      run: |
-        make functional-test-full
+      run: make functional-test-full
     
     - name: Logs after Tests Failed
       if:  ${{ failure() }}
