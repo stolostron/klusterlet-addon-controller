@@ -12,7 +12,7 @@
 set -e
 #set -x
 
-DOCKER_IMAGE=$1
+
 # if [ -z $FUNCT_TEST_TMPDIR ]; then
 #  export FUNCT_TEST_TMPDIR=/tmp/`uuidgen`
 # fi
@@ -24,10 +24,12 @@ DOCKER_IMAGE=$1
 #KIND_KUBECONFIG="${PROJECT_DIR}/kind_kubeconfig.yaml"
 #echo "KIND_KUBECONFIG="$KIND_KUBECONFIG
 
-export KUBECONFIG=${KIND_KUBECONFIG}
 CURR_FOLDER_PATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-
 KIND_KUBECONFIG="${CURR_FOLDER_PATH}/../kind_kubeconfig.yaml"
+
+export KUBECONFIG=${KIND_KUBECONFIG}
+export DOCKER_IMAGE=${1}
+
 export FUNCT_TEST_TMPDIR="${CURR_FOLDER_PATH}/../test/functional/tmp"
 export FUNCT_TEST_COVERAGE="${CURR_FOLDER_PATH}/../test/functional/coverage"
 
@@ -67,9 +69,7 @@ fi
 echo "setting up test tmp folder"
 [ -d "$FUNCT_TEST_TMPDIR" ] && rm -r "$FUNCT_TEST_TMPDIR"
 mkdir -p "$FUNCT_TEST_TMPDIR"
-# mkdir -p "$FUNCT_TEST_TMPDIR/output"
 mkdir -p "$FUNCT_TEST_TMPDIR/kind-config"
-#mkdir -p "$FUNCT_TEST_TMPDIR/CR"
 
 echo "setting up test coverage folder"
 [ -d "$FUNCT_TEST_COVERAGE" ] && rm -r "$FUNCT_TEST_COVERAGE"
@@ -156,6 +156,7 @@ for dir in overlays/test/* ; do
   sleep 10
 done
 
+sleep 10
 echo "delete kind cluster"
 kind delete cluster --name klusterlet-addon-controller-test 
 
@@ -178,6 +179,7 @@ kind delete cluster --name klusterlet-addon-controller-test
 
 # go tool cover -html ${PROJECT_DIR}/test/functional/coverage/cover-functional.out -o ${PROJECT_DIR}/test/functional/coverage/cover-functional.html
 # go tool cover -html ${PROJECT_DIR}/test/functional/coverage/cover-functional-filtered.out -o ${PROJECT_DIR}/test/functional/coverage/cover-functional-filtered.html
+
 
 if [ `find $FUNCT_TEST_COVERAGE -prune -empty 2>/dev/null` ]; then
   echo "no coverage files found. skipping"
