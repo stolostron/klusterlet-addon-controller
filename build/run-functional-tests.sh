@@ -156,7 +156,7 @@ for dir in overlays/test/* ; do
   sleep 10
 done
 
-sleep 10
+sleep 40
 echo "delete kind cluster"
 kind delete cluster --name klusterlet-addon-controller-test 
 
