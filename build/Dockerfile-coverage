@@ -19,6 +19,7 @@ ENV OPERATOR=/usr/local/bin/klusterlet-addon-controller \
 
 COPY --from=builder $REMOTE_SOURCE_DIR/app/deploy/crds deploy/crds
 COPY --from=builder $REMOTE_SOURCE_DIR/app/manager ${OPERATOR}
+COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin /usr/local/bin
 COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin/entrypoint-coverage /usr/local/bin
 COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin/user_setup /usr/local/bin
 
