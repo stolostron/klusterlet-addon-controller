@@ -47,7 +47,7 @@ func setup() error {
 			},
 		},
 		Data: map[string]string{
-			"endpoint_component_operator":         "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+			"klusterlet_addon_operator":           "sample-registry/uniquePath/klusterlet-addon-operator@sha256:fake-sha256-2-1-0",
 			"cert_policy_controller":              "sample-registry/uniquePath/cert-policy-controller@sha256:fake-sha256-2-1-0",
 			"iam_policy_controller":               "sample-registry/uniquePath/iam-policy-controller@sha256:fake-sha256-2-1-0",
 			"config_policy_controller":            "sample-registry/uniquePath/config-policy-controller@sha256:fake-sha256-2-1-0",

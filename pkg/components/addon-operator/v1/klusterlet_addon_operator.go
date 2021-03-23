@@ -135,7 +135,7 @@ func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*
 	if instance.Spec.ComponentOperatorImage != "" {
 		deploymentImage = instance.Spec.ComponentOperatorImage
 	} else {
-		imageRepository, err := instance.GetImage("endpoint_component_operator")
+		imageRepository, err := instance.GetImage("klusterlet_addon_operator")
 		if err != nil {
 			return nil, err
 		}
