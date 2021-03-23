@@ -10,32 +10,16 @@
 ###############################################################################
 
 set -e
-#set -x
+#set -xs
 
-DOCKER_IMAGE=$1
-if [ -z $FUNCT_TEST_TMPDIR ]; then
- export FUNCT_TEST_TMPDIR=/tmp/`uuidgen`
-fi
-
-mkdir -p ${FUNCT_TEST_TMPDIR}
-
-echo "FUNCT_TEST_TMPDIR="$FUNCT_TEST_TMPDIR
-
-KIND_KUBECONFIG="${PROJECT_DIR}/kind_kubeconfig.yaml"
-echo "KIND_KUBECONFIG="$KIND_KUBECONFIG
-
-if [ -z $DOCKER_USER ]; then
-   echo "DOCKER_USER is not defined!"
-   exit 1
-fi
-if [ -z $DOCKER_PASS ]; then
-   echo "DOCKER_PASS is not defined!"
-   exit 1
-fi
-
+CURR_FOLDER_PATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+KIND_KUBECONFIG="${CURR_FOLDER_PATH}/../kind_kubeconfig.yaml"
 
 export KUBECONFIG=${KIND_KUBECONFIG}
-export PULL_SECRET=multicloud-image-pull-secret
+export DOCKER_IMAGE=${1}
+
+export FUNCT_TEST_TMPDIR="${CURR_FOLDER_PATH}/../test/functional/tmp"
+export FUNCT_TEST_COVERAGE="${CURR_FOLDER_PATH}/../test/functional/coverage"
 
 wait_file() {
   local file="$1"; shift
@@ -70,17 +54,48 @@ if ! which gocovmerge > /dev/null; then
     GO111MODULE=off go get -u github.com/wadey/gocovmerge;
 fi
 
+echo "setting up test tmp folder"
+[ -d "$FUNCT_TEST_TMPDIR" ] && rm -r "$FUNCT_TEST_TMPDIR"
+mkdir -p "$FUNCT_TEST_TMPDIR"
+mkdir -p "$FUNCT_TEST_TMPDIR/kind-config"
+
+echo "setting up test coverage folder"
+[ -d "$FUNCT_TEST_COVERAGE" ] && rm -r "$FUNCT_TEST_COVERAGE"
+mkdir -p "${FUNCT_TEST_COVERAGE}"
+
+echo "generating kind configfile"
+cat << EOF > "${FUNCT_TEST_TMPDIR}/kind-config/kind-config.yaml"
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    listenAddress: "0.0.0.0"
+  - containerPort: 443
+    hostPort: 443
+    listenAddress: "0.0.0.0"
+  - containerPort: 6443
+    hostPort: 32800
+    listenAddress: "0.0.0.0"
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration #for worker use JoinConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        system-reserved: memory=2Gi
+  extraMounts:
+  - hostPath: "${FUNCT_TEST_COVERAGE}"
+    containerPath: /tmp/coverage
+networking:
+  apiServerPort: 6443
+EOF
+
 
 echo "creating cluster"
 
-sed "s#REPLACE_DIR#${FUNCT_TEST_TMPDIR}/test/functional/coverage/endpoint-operator#" ${PROJECT_DIR}/build/kind-config/kind-config.yaml > ${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml
-
-cat ${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml
-
-#Create local directory to hold coverage results
-mkdir -p ${FUNCT_TEST_TMPDIR}/test/functional/coverage/endpoint-operator
-
-kind create cluster --name klusterlet-addon-controller-test  --config=${FUNCT_TEST_TMPDIR}/kind-config-generated.yaml  || exit 1
+kind create cluster --name klusterlet-addon-controller-test  --config=${FUNCT_TEST_TMPDIR}/kind-config/kind-config.yaml --image kindest/node:v1.20.2 || exit 1
 
 # setup kubeconfig
 kind export kubeconfig --name=klusterlet-addon-controller-test --kubeconfig ${KIND_KUBECONFIG} 
@@ -98,7 +113,7 @@ for file in `ls deploy/dev-crs/*.cr.yaml`; do kubectl apply -f $file; done
 echo "installing other dependencies"
 for file in `ls deploy/dev/*.yaml`; do kubectl apply -f $file; done
 
-echo "installing klusterletaddon-controller"
+echo "installing klusterlet-addon-controller"
 
 kind load docker-image $DOCKER_IMAGE --name=klusterlet-addon-controller-test 
 
@@ -107,45 +122,50 @@ kubectl apply -f ${PROJECT_DIR}/deploy/namespace.yaml
 
 COMPONENT_DOCKER_REPO=`echo "$DOCKER_IMAGE" | cut -f1 -d:`
 
-kubectl create secret docker-registry ${PULL_SECRET} \
-      --docker-server=${COMPONENT_DOCKER_REPO} \
-      --docker-username=$DOCKER_USER \
-      --docker-password=$DOCKER_PASS \
-      -n open-cluster-management
-
 #Loop on scenario
 for dir in overlays/test/* ; do
   echo "=========================================="
   echo "Executing test "$dir
   echo "=========================================="
   echo $DOCKER_IMAGE
-  kubectl apply -k $dir
-  kubectl patch deployment klusterlet-addon-controller -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"klusterlet-addon-controller\",\"image\":\"${DOCKER_IMAGE}\"}]}}}}"
+
+  kubectl apply -k "$dir" --dry-run=true -o yaml | sed "s|REPLACE_NAME|${DOCKER_IMAGE}|g" | kubectl apply -f -
+
+  # kubectl apply -k $dir
+  # kubectl patch deployment klusterlet-addon-controller -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"klusterlet-addon-controller\",\"image\":\"${DOCKER_IMAGE}\"}]}}}}"
   kubectl rollout status -n open-cluster-management deployment klusterlet-addon-controller --timeout=120s
   sleep 10
   ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional/... -- --v=1 --image-registry=$COMPONENT_DOCKER_REPO
+  
+  POD=$(kubectl get pod -n open-cluster-management  -o jsonpath="{.items[0].metadata.name}")
+  kubectl exec -it $POD -n open-cluster-management -- ls /tmp/coverage
+
   kubectl delete deployment klusterlet-addon-controller -n open-cluster-management
   sleep 10
 done
 
+sleep 20
+echo "delete kind cluster"
 kind delete cluster --name klusterlet-addon-controller-test 
 
-rm -rf ${PROJECT_DIR}/test/functional/coverage
-mkdir -p ${PROJECT_DIR}/test/functional/coverage
+if [ `find $FUNCT_TEST_COVERAGE -prune -empty 2>/dev/null` ]; then
+  echo "no coverage files found. skipping"
+else
+  echo "merging coverage files"
 
-mv ${FUNCT_TEST_TMPDIR}/test/functional/coverage/endpoint-operator/* ${PROJECT_DIR}/test/functional/coverage/
+  gocovmerge "${FUNCT_TEST_COVERAGE}/"* >> "${FUNCT_TEST_COVERAGE}/cover-functional.out"
+  COVERAGE=$(go tool cover -func="${FUNCT_TEST_COVERAGE}/cover-functional.out" | grep "total:" | awk '{ print $3 }' | sed 's/[][()><%]/ /g')
+  echo "-------------------------------------------------------------------------"
+  echo "TOTAL COVERAGE IS ${COVERAGE}%"
+  echo "-------------------------------------------------------------------------"
 
-gocovmerge ${PROJECT_DIR}/test/functional/coverage/* >> ${PROJECT_DIR}/test/functional/coverage/cover-functional.out
-COVERAGE=$(go tool cover -func=${PROJECT_DIR}/test/functional/coverage/cover-functional.out | grep "total:" | awk '{ print $3 }' | sed 's/[][()><%]/ /g')
-echo "-------------------------------------------------------------------------"
-echo "TOTAL COVERAGE IS ${COVERAGE}%"
-echo "-------------------------------------------------------------------------"
+  go tool cover -html "${FUNCT_TEST_COVERAGE}/cover-functional.out" -o ${PROJECT_DIR}/test/functional/coverage/cover-functional.html
 
-cat ${PROJECT_DIR}/test/functional/coverage/cover-functional.out | grep -v "zz_generated.deepcopy.go" > ${PROJECT_DIR}/test/functional/coverage/cover-functional-filtered.out
-COVERAGE_FILTERED=$(go tool cover -func=${PROJECT_DIR}/test/functional/coverage/cover-functional-filtered.out | grep "total:" | awk '{ print $3 }' | sed 's/[][()><%]/ /g')
-echo "-------------------------------------------------------------------------"
-echo "TOTAL FILTERED (ie: exclude zz_generated.deepcopy.go) COVERAGE IS ${COVERAGE_FILTERED}%"
-echo "-------------------------------------------------------------------------"
+  cat ${FUNCT_TEST_COVERAGE}/cover-functional.out | grep -v "zz_generated.deepcopy.go" > ${FUNCT_TEST_COVERAGE}/cover-functional-filtered.out
+  COVERAGE_FILTERED=$(go tool cover -func="${FUNCT_TEST_COVERAGE}/cover-functional-filtered.out" | grep "total:" | awk '{ print $3 }' | sed 's/[][()><%]/ /g')
+  echo "-------------------------------------------------------------------------"
+  echo "TOTAL FILTERED (ie: exclude zz_generated.deepcopy.go) COVERAGE IS ${COVERAGE_FILTERED}%"
+  echo "-------------------------------------------------------------------------"
 
-go tool cover -html ${PROJECT_DIR}/test/functional/coverage/cover-functional.out -o ${PROJECT_DIR}/test/functional/coverage/cover-functional.html
-go tool cover -html ${PROJECT_DIR}/test/functional/coverage/cover-functional-filtered.out -o ${PROJECT_DIR}/test/functional/coverage/cover-functional-filtered.html
+  go tool cover -html "${FUNCT_TEST_COVERAGE}/cover-functional-filtered.out" -o ${PROJECT_DIR}/test/functional/coverage/cover-functional-filtered.out
+fi

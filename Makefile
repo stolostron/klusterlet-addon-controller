@@ -3,29 +3,27 @@
 
 SHELL := /bin/bash
 
-export ARCH       ?= $(shell uname -m)
-export ARCH_TYPE   = $(if $(patsubst x86_64,,$(ARCH)),$(ARCH),amd64)
 export BUILD_DATE  = $(shell date +%m/%d@%H:%M:%S)
 
 export CGO_ENABLED  = 0
 export GO111MODULE := on
 export GOOS         = $(shell go env GOOS)
-export GOARCH       = $(ARCH_TYPE)
 export GOPACKAGES   = $(shell go list ./... | grep -v /vendor | grep -v /build | grep -v /test)
 
 export PROJECT_DIR            = $(shell 'pwd')
 export BUILD_DIR              = $(PROJECT_DIR)/build
 export COMPONENT_SCRIPTS_PATH = $(BUILD_DIR)
 
-## WARNING: OPERATOR-SDK - IMAGE_DESCRIPTION & DOCKER_BUILD_OPTS MUST NOT CONTAIN ANY SPACES
+export COMPONENT_NAME ?= $(shell cat ./COMPONENT_NAME 2> /dev/null)
+export COMPONENT_VERSION ?= $(shell cat ./COMPONENT_VERSION 2> /dev/null)
 
-export IMAGE_DESCRIPTION ?= Klusterlet_Operator
-export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile
-export DOCKER_REGISTRY   ?= quay.io
-export DOCKER_NAMESPACE  ?= open-cluster-management
-export DOCKER_IMAGE      ?= klusterlet-addon-controller
-export DOCKER_BUILD_TAG  ?= latest
-export DOCKER_TAG        ?= $(shell whoami)
+export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile.prow
+export DOCKERFILE_COVERAGE = $(BUILD_DIR)/Dockerfile-coverage
+export DOCKER_REGISTRY   ?= quay.io/open-cluster-management
+export DOCKER_IMAGE      ?= $(COMPONENT_NAME)
+export DOCKER_IMAGE_COVERAGE_POSTFIX ?= -coverage
+export DOCKER_IMAGE_COVERAGE      ?= $(DOCKER_IMAGE)$(DOCKER_IMAGE_COVERAGE_POSTFIX)
+export DOCKER_TAG        ?= latest
 export DOCKER_BUILDER    ?= docker
 
 export BINDATA_TEMP_DIR := $(shell mktemp -d)
@@ -60,7 +58,8 @@ build:
 .PHONY: build-image
 ## Builds controller binary inside of an image
 build-image: 
-	$(DOCKER_BUILDER) build -f $(DOCKER_FILE) . -t $(DOCKER_IMAGE)
+	@$(DOCKER_BUILDER) build -t $(DOCKER_IMAGE) -f $(DOCKER_FILE) . 
+	#@$(DOCKER_BUILDER) tag $(DOCKER_IMAGE) ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
 
 .PHONY: build-e2e
 build-e2e:
@@ -135,10 +134,26 @@ deploy:
 functional-test: 
 	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional -- --v=1 --image-registry=${COMPONENT_DOCKER_REPO}
 
-.PHONY: functional-test-full
-functional-test-full: build-image
-	build/run-functional-tests.sh $(DOCKER_IMAGE)
+.PHONY: build-image-coverage
+## Builds controller binary inside of an image
+build-image-coverage: build-image
+	$(DOCKER_BUILDER) build -f $(DOCKERFILE_COVERAGE) . -t $(DOCKER_IMAGE_COVERAGE) --build-arg DOCKER_BASE_IMAGE=$(DOCKER_IMAGE)
 
+	# @$(DOCKER_BUILDER) build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage -f $(DOCKERFILE_COVERAGE) . 
+	# @$(DOCKER_BUILDER) tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage:$(DOCKER_TAG)
+
+.PHONY: functional-test-full
+functional-test-full: build-image-coverage
+	build/run-functional-tests.sh $(DOCKER_IMAGE_COVERAGE)
+
+# download script for coverage entrypoint. 
+.PHONY: sync-coverage-entrypoint
+sync-coverage-entrypoint:
+	@echo downloading coverage entrypoint file
+	@tmp_dir=$$(mktemp -d); \
+	curl  --fail -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/modules/component/bin/component/coverage-entrypoint-func.sh > "$$tmp_dir/coverage-entrypoint-func.sh" \
+	&& mv "$$tmp_dir/coverage-entrypoint-func.sh" build/bin/ && chmod +x build/bin/coverage-entrypoint-func.sh ;
+	
 .PHONY: build-coverage
 ## Builds operator binary inside of an image
 build-coverage: 

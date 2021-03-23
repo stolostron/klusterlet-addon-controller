@@ -14,6 +14,7 @@ spec:
       - name: multicloud-image-pull-secret
       containers:
       - name: klusterlet-addon-controller
+        #command: ["/usr/local/bin/entrypoint-coverage"]
         volumeMounts:
         - mountPath: /tmp/coverage
           name: coverage-dir       
