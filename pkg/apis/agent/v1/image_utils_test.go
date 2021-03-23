@@ -34,7 +34,7 @@ func TestGetImageWithManifest(t *testing.T) {
 			},
 		},
 		Data: map[string]string{
-			"klusterlet_addon_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+			"klusterlet_addon_operator": "sample-registry/uniquePath/klusterlet-addon-operator@sha256:fake-sha256-2-1-0",
 			"cert_policy_controller":    "sample-registry/uniquePath/cert-policy-controller@sha256:fake-sha256-2-1-0",
 		},
 	}
@@ -122,7 +122,7 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 			},
 		},
 		Data: map[string]string{
-			"klusterlet_addon_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+			"klusterlet_addon_operator": "sample-registry/uniquePath/klusterlet-addon-operator@sha256:fake-sha256-2-1-0",
 			"cert_policy_controller":    "sample-registry/uniquePath/cert-policy-controller@sha256:fake-sha256-2-1-0",
 		},
 	}
@@ -141,7 +141,7 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 			},
 		},
 		Data: map[string]string{
-			"klusterlet_addon_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+			"klusterlet_addon_operator": "sample-registry/uniquePath/klusterlet-addon-operator@sha256:fake-sha256-2-1-0",
 			"cert_policy_controller":    "sample-registry/uniquePath/cert-policy-controller@sha256:fake-sha256-2-1-0",
 		},
 	}
@@ -160,7 +160,7 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 			},
 		},
 		Data: map[string]string{
-			"klusterlet_addon_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+			"klusterlet_addon_operator": "sample-registry/uniquePath/klusterlet-addon-operator@sha256:fake-sha256-2-1-0",
 			"cert_policy_controller":    "sample-registry/uniquePath/cert-policy-controller@sha256:fake-sha256-2-1-0",
 		},
 	}
@@ -195,7 +195,7 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 			},
 			want: GlobalValues{
 				ImageOverrides: map[string]string{
-					"klusterlet_addon_operator": "sample-registry/uniquePath/endpoint-component-operator@sha256:fake-sha256-2-1-0",
+					"klusterlet_addon_operator": "sample-registry/uniquePath/klusterlet-addon-operator@sha256:fake-sha256-2-1-0",
 				},
 			},
 			wantErr: false,
