@@ -14,11 +14,15 @@ export PROJECT_DIR            = $(shell 'pwd')
 export BUILD_DIR              = $(PROJECT_DIR)/build
 export COMPONENT_SCRIPTS_PATH = $(BUILD_DIR)
 
+export COMPONENT_NAME ?= $(shell cat ./COMPONENT_NAME 2> /dev/null)
+export COMPONENT_VERSION ?= $(shell cat ./COMPONENT_VERSION 2> /dev/null)
 
 export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile.prow
 export DOCKERFILE_COVERAGE = $(BUILD_DIR)/Dockerfile-coverage
 export DOCKER_REGISTRY   ?= quay.io/open-cluster-management
-export DOCKER_IMAGE      ?= klusterlet-addon-controller
+export DOCKER_IMAGE      ?= $(COMPONENT_NAME)
+export DOCKER_IMAGE_COVERAGE_POSTFIX ?= -coverage
+export DOCKER_IMAGE_COVERAGE      ?= $(DOCKER_IMAGE)$(DOCKER_IMAGE_COVERAGE_POSTFIX)
 export DOCKER_TAG        ?= latest
 export DOCKER_BUILDER    ?= docker
 
@@ -54,8 +58,8 @@ build:
 .PHONY: build-image
 ## Builds controller binary inside of an image
 build-image: 
-	@$(DOCKER_BUILDER) build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE} -f $(DOCKER_FILE) . 
-	@$(DOCKER_BUILDER) tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE} ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
+	@$(DOCKER_BUILDER) build -t $(DOCKER_IMAGE) -f $(DOCKER_FILE) . 
+	#@$(DOCKER_BUILDER) tag $(DOCKER_IMAGE) ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
 
 .PHONY: build-e2e
 build-e2e:
@@ -130,15 +134,17 @@ deploy:
 functional-test: 
 	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional -- --v=1 --image-registry=${COMPONENT_DOCKER_REPO}
 
-.PHONY: build-coverage-image
+.PHONY: build-image-coverage
 ## Builds controller binary inside of an image
-build-coverage-image: 
-	@$(DOCKER_BUILDER) build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage -f $(DOCKERFILE_COVERAGE) . 
-	@$(DOCKER_BUILDER) tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage:$(DOCKER_TAG)
+build-image-coverage: build-image
+	$(DOCKER_BUILDER) build -f $(DOCKERFILE_COVERAGE) . -t $(DOCKER_IMAGE_COVERAGE) --build-arg DOCKER_BASE_IMAGE=$(DOCKER_IMAGE)
+
+	# @$(DOCKER_BUILDER) build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage -f $(DOCKERFILE_COVERAGE) . 
+	# @$(DOCKER_BUILDER) tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage:$(DOCKER_TAG)
 
 .PHONY: functional-test-full
-functional-test-full: build-image
-	build/run-functional-tests.sh ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
+functional-test-full: build-image-coverage
+	build/run-functional-tests.sh $(DOCKER_IMAGE_COVERAGE)
 
 # download script for coverage entrypoint. 
 .PHONY: sync-coverage-entrypoint

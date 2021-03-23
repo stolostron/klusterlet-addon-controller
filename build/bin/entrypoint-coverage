@@ -11,14 +11,14 @@ if ! whoami &>/dev/null; then
   fi
 fi
 
-exec ${OPERATOR}-coverage -test.run "^TestRunMain$" -test.coverprofile=/tmp/coverage/$HOSTNAME-`date +%s%N`.out $@
+#exec ${OPERATOR}-coverage -test.run "^TestRunMain$" -test.coverprofile=/tmp/coverage/$HOSTNAME-`date +%s%N`.out $@
 
-# FILENAME=$HOSTNAME-`date +%s%N`.out
-# FILEPATH=/tmp/coverage/$FILENAME
-# mkdir -p /tmp/coverage
+FILENAME=$HOSTNAME-`date +%s%N`.out
+FILEPATH=/tmp/coverage/$FILENAME
+mkdir -p /tmp/coverage
 
-# ${OPERATOR}-coverage -test.run "^TestRunMain$" -test.coverprofile=$FILEPATH $@ & PID=$!
+${OPERATOR}-coverage -test.run "^TestRunMain$" -test.coverprofile=$FILEPATH $@ & PID=$!
 
-# trap_with_arg func_trap 15 $PID $FILENAME $FILEPATH
+trap_with_arg func_trap 15 $PID $FILENAME $FILEPATH
 
-# wait $PID
+wait $PID

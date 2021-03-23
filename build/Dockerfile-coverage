@@ -1,30 +1,23 @@
-FROM openshift/origin-release:golang-1.15 as builder
+ARG DOCKER_BASE_IMAGE
+
+FROM $DOCKER_BASE_IMAGE
 
 ARG REMOTE_SOURCE
 ARG REMOTE_SOURCE_DIR
-
-COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR/app/
-WORKDIR $REMOTE_SOURCE_DIR/app
-
-
-RUN GOFLAGS="" go test -covermode=atomic -coverpkg=github.com/open-cluster-management/klusterlet-addon-controller/pkg/... -c -tags testrunmain ./cmd/manager -o manager
-
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
-RUN microdnf update
-
+ARG GITHUB_TOKEN
 
 ENV OPERATOR=/usr/local/bin/klusterlet-addon-controller \
-    USER_UID=10001 \
+    USER_UID=1001 \
     USER_NAME=klusterlet-addon-controller
 
-COPY --from=builder $REMOTE_SOURCE_DIR/app/deploy/crds deploy/crds
-COPY --from=builder $REMOTE_SOURCE_DIR/app/manager ${OPERATOR}
-COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin /usr/local/bin
-COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin/entrypoint-coverage /usr/local/bin
-COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin/user_setup /usr/local/bin
+USER root
+# Install unzip
+RUN microdnf update
+RUN microdnf install -y --nodocs jq
+RUN microdnf install -y --nodocs openssl
 
-
-RUN  /usr/local/bin/user_setup
+# install operator binary
+RUN cp ${OPERATOR}-coverage ${OPERATOR}
 
 USER ${USER_UID}
 

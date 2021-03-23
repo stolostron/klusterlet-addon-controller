@@ -128,14 +128,18 @@ for dir in overlays/test/* ; do
   echo "Executing test "$dir
   echo "=========================================="
   echo $DOCKER_IMAGE
-  kubectl apply -k $dir
-  kubectl patch deployment klusterlet-addon-controller -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"klusterlet-addon-controller\",\"image\":\"${DOCKER_IMAGE}\"}]}}}}"
+
+  kubectl apply -k "$dir" --dry-run=true -o yaml | sed "s|REPLACE_NAME|${DOCKER_IMAGE}|g" | kubectl apply -f -
+
+  # kubectl apply -k $dir
+  # kubectl patch deployment klusterlet-addon-controller -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"klusterlet-addon-controller\",\"image\":\"${DOCKER_IMAGE}\"}]}}}}"
   kubectl rollout status -n open-cluster-management deployment klusterlet-addon-controller --timeout=120s
   sleep 10
   ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional/... -- --v=1 --image-registry=$COMPONENT_DOCKER_REPO
   
   POD=$(kubectl get pod -n open-cluster-management  -o jsonpath="{.items[0].metadata.name}")
   kubectl exec -it $POD -n open-cluster-management -- ls /tmp/coverage
+
   kubectl delete deployment klusterlet-addon-controller -n open-cluster-management
   sleep 10
 done
