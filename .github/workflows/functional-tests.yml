@@ -6,28 +6,16 @@ on:
   pull_request:
     branches: [ main, release-* ]
 
-# defaults:
-#   run:
-#     shell: bash
-#     working-directory: klusterlet-addon-controller
-
 jobs:
   main:
     runs-on: ubuntu-latest
-    # strategy:
-    #   matrix:
-    #     go: [ '1.15' ]
     name: Functional tests
     steps:
     - name: Checkout Klusterlet Addon Controller
       uses: actions/checkout@v2
-      # with:
-      #   path: klusterlet-addon-controller
-      #   fetch-depth: 0 # Fetch all history for all tags and branches
 
     - name: Set up Go 
       uses: actions/setup-go@v2
-      #id: go
       with:
         go-version: 1.15
     
@@ -37,6 +25,3 @@ jobs:
     - name: Logs after Tests Failed
       if:  ${{ failure() }}
       run: KUBECONFIG=kind_kubeconfig.yaml kubectl logs  -n open-cluster-management `KUBECONFIG=kind_kubeconfig.yaml kubectl get po -n open-cluster-management -oname | grep klusterlet-addon-controller`
-
-
-    
