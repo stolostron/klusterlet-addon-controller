@@ -17,7 +17,7 @@ export COMPONENT_SCRIPTS_PATH = $(BUILD_DIR)
 export COMPONENT_NAME ?= $(shell cat ./COMPONENT_NAME 2> /dev/null)
 export COMPONENT_VERSION ?= $(shell cat ./COMPONENT_VERSION 2> /dev/null)
 
-export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile.prow
+export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile
 export DOCKERFILE_COVERAGE = $(BUILD_DIR)/Dockerfile-coverage
 export DOCKER_REGISTRY   ?= quay.io/open-cluster-management
 export DOCKER_IMAGE      ?= $(COMPONENT_NAME)

@@ -1,19 +1,22 @@
 # Copyright Contributors to the Open Cluster Management project
 
-FROM openshift/origin-release:golang-1.13 as builder
+FROM registry.ci.openshift.org/open-cluster-management/builder:go1.15-linux-amd64 AS builder
 
 ARG REMOTE_SOURCE
-ENV REMOTE_SOURCE_DIR=/remote-source 
+ARG REMOTE_SOURCE_DIR
 
-COPY . $REMOTE_SOURCE_DIR/app/
+COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR/app/
 WORKDIR $REMOTE_SOURCE_DIR/app
 
 RUN GOFLAGS="" go build ./cmd/manager
+RUN GOFLAGS="" go test -covermode=atomic -coverpkg=github.com/open-cluster-management/klusterlet-addon-controller/pkg/... -c -tags testrunmain ./cmd/manager -o manager-coverage
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
-RUN microdnf update
 
-ENV REMOTE_SOURCE_DIR=/remote-source 
+RUN microdnf update && \
+    microdnf clean all
+
+ARG REMOTE_SOURCE_DIR
 
 ENV IMAGE_MANIFEST_PATH=/
 
@@ -23,22 +26,9 @@ ENV OPERATOR=/usr/local/bin/klusterlet-addon-controller \
 
 COPY --from=builder $REMOTE_SOURCE_DIR/app/deploy/crds deploy/crds
 COPY --from=builder $REMOTE_SOURCE_DIR/app/manager ${OPERATOR}
-COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin/entrypoint /usr/local/bin
-COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin/user_setup /usr/local/bin
-
-LABEL org.label-schema.vendor="Red Hat" \
-    org.label-schema.name="$IMAGE_NAME" \
-    org.label-schema.description="$IMAGE_DESCRIPTION" \
-    org.label-schema.vcs-ref="$VCS_REF" \
-    org.label-schema.vcs-url="$VCS_URL" \
-    org.label-schema.license="Red Hat Advanced Cluster Management for Kubernetes EULA" \
-    org.label-schema.schema-version="1.0" \
-    vendor="Red Hat" \
-    name="$IMAGE_NAME" \
-    summary="$IMAGE_DESCRIPTION" \
-    description="$IMAGE_DESCRIPTION" \
-    version="$IMAGE_VERSION" \
-    release="$VCS_REF"
+COPY --from=builder $REMOTE_SOURCE_DIR/app/manager-coverage ${OPERATOR}-coverage
+COPY --from=builder $REMOTE_SOURCE_DIR/app/build/bin /usr/local/bin
+COPY --from=builder $REMOTE_SOURCE_DIR/app/build/coverage-entrypoint-func.sh /usr/local/bin/coverage-entrypoint-func.sh
 
 RUN  /usr/local/bin/user_setup
 
