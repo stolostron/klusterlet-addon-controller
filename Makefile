@@ -43,7 +43,12 @@ deps: build/install-dependencies.sh
 
 .PHONY: check
 ## Runs a set of required checks
-check: lint go-bindata-check go-mod-check
+check: lint go-bindata-check go-mod-check copyright-check
+
+.PHONY: copyright-check
+copyright-check:
+	@build/copyright-check.sh
+
 
 .PHONY: test
 ## Runs go unit tests
