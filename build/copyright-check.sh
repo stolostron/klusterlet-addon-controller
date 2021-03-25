@@ -1,173 +1,84 @@
 #!/bin/bash
-###############################################################################
-# Copyright (c) Red Hat, Inc.
 # Copyright Contributors to the Open Cluster Management project
-###############################################################################
 
+# TESTED ON MAC!
 
-#Project start year
-origin_year=2016
-#Back up year if system time is null or incorrect
-back_up_year=2021
-#Current year
-current_year=$(date +"%Y")
+# NOTE: When running against a node repo, delete the node_modules directories first!  Then npm ci once all the
+#       copyright changes are incorporated.
 
-TRAVIS_BRANCH=$1
+# set -x
+TMP_FILE="tmp_file"
 
-if [[ "x${TRAVIS_BRANCH}" != "x" ]]; then
-  FILES_TO_SCAN=$(git diff --name-only --diff-filter=AM ${TRAVIS_BRANCH}...HEAD | grep -v -f <(sed 's/\([.|]\)/\\\1/g; s/\?/./g ; s/\*/.*/g' .copyrightignore))
-else
-  FILES_TO_SCAN=$(find . -type f | grep -Ev '(\.git)' | grep -v -f <(sed 's/\([.|]\)/\\\1/g; s/\?/./g ; s/\*/.*/g' .copyrightignore))
+ALL_FILES=$(git ls-files | grep -v _generated )
+
+COMMUNITY_COPY_HEADER_FILE="$PWD/build/copyright-header.txt"
+
+if [ ! -f $COMMUNITY_COPY_HEADER_FILE ]; then
+  echo "File $COMMUNITY_COPY_HEADER_FILE not found!"
+  exit 1
 fi
 
-if [ -z "$current_year" ] || [ $current_year -lt $origin_year ]; then
-  echo "Can't get correct system time\n  >>Use back_up_year=$back_up_year as current_year to check copyright in the file $f\n"
-  current_year=$back_up_year
-fi
+COMMUNITY_COPY_HEADER_STRING=$(cat $COMMUNITY_COPY_HEADER_FILE)
 
+echo "Desired copyright header is: $COMMUNITY_COPY_HEADER_STRING"
 
-ADDED_SINCE_1_MAR_2020=$(git log --name-status --pretty=oneline --since "1 Mar 2020" | egrep "^A\t" | awk '{print $2}' | sort | uniq |  grep -v -f <(sed 's/\([.|]\)/\\\1/g; s/\?/./g ; s/\*/.*/g' .copyrightignore))
-MODIFIED_SINCE_1_MAR_2020=$(diff --new-line-format="" --unchanged-line-format="" <(git log --name-status --pretty=oneline --since "1 Mar 2020" | egrep "^A\t|^M\t" | awk '{print $2}' | sort | uniq | grep -v -f <(sed 's/\([.|]\)/\\\1/g; s/\?/./g ; s/\*/.*/g' .copyrightignore)) <(git log --name-status --pretty=oneline --since "1 Mar 2020" | egrep "^A\t" | awk '{print $2}' | sort | uniq | grep -v -f <(sed 's/\([.|]\)/\\\1/g; s/\?/./g ; s/\*/.*/g' .copyrightignore)))
-ADDED_SINCE_1_JAN_2021=$(git log --name-status --pretty=oneline --since "1 JAN 2021" | egrep "^A\t" | awk '{print $2}' | sort | uniq |  grep -v -f <(sed 's/\([.|]\)/\\\1/g; s/\?/./g ; s/\*/.*/g' .copyrightignore))
-ADDED_UNTIL_1_MAR_2020=$(git log --name-status --pretty=oneline --until "1 MAR 2020" | egrep "^A\t" | awk '{print $2}' | sort | uniq |  grep -v -f <(sed 's/\([.|]\)/\\\1/g; s/\?/./g ; s/\*/.*/g' .copyrightignore))
+# NOTE: Only use one newline or javascript and typescript linter/prettier will complain about the extra blank lines
+NEWLINE="\n"
 
-lic_ibm_identifier=" (c) Copyright IBM Corporation"
-lic_redhat_identifier=" Copyright (c) Red Hat, Inc."
-lic_contributor_identifier="Copyright Contributors to the Open Cluster Management project"
+ERROR=false
 
-lic_year=()
-#All possible combination within [origin_year, current_year] range is valid format
-#seq isn't recommanded after bash version 3.0
-for ((start_year=origin_year;start_year<=current_year;start_year++)); 
+for FILE in $ALL_FILES
 do
-  lic_year+=(" (c) Copyright IBM Corporation ${start_year}. All Rights Reserved.")
-  for ((end_year=start_year+1;end_year<=current_year;end_year++)); 
-  do
-    lic_year+=(" (c) Copyright IBM Corporation ${start_year}, ${end_year}. All Rights Reserved.")
-  done
-done
-lic_year_size=${#lic_year[@]}
-
-#lic_rest to scan for rest copyright format's correctness
-lic_rest=()
-lic_rest+=(" Note to U.S. Government Users Restricted Rights:")
-lic_rest+=(" Use, duplication or disclosure restricted by GSA ADP Schedule")
-lic_rest+=(" Contract with IBM Corp.")
-lic_rest_size=${#lic_rest[@]}
-
-#Used to signal an exit
-ERROR=0
-RETURNCODE=0
-
-echo "##### Copyright check #####"
-#Loop through all files. Ignore .FILENAME types
-#for f in `find .. -type f ! -path "../.eslintrc.js" ! -path "../build-harness/*" ! -path "../auth-setup/*" ! -path "../sslcert/*" ! -path "../node_modules/*" ! -path "../coverage/*" ! -path "../test-output/*" ! -path "../build/*" ! -path "../nls/*" ! -path "../public/*"`; do
-for f in $FILES_TO_SCAN; do
-  if [ ! -f "$f" ]; then
-   continue
-  fi
-
-  # Flags that indicate the licenses to check for
-  must_have_redhat_license=false
-  must_have_ibm_license=false
-  flag_redhat_license=false
-  flag_ibm_license=false
-  must_have_contributor_license=true
-
-  FILETYPE=$(basename ${f##*.})
-  case "${FILETYPE}" in
-  	js | go | scss | properties | java | rb | sh )
-  		COMMENT_PREFIX=""
-  		;;
-  	*)
-      #printf " Extension $FILETYPE not considered !!!\n"
-      continue
-  esac
-
-  #Read the first 15 lines, most Copyright headers use the first 10 lines.
-  header=`head -15 $f`
-
-  # Strip directory prefix, if any
-  if [[ $f == "./"* ]]; then
-    f=${f:2}
-  fi
-
-  printf " ========>>>>>>   Scanning $f . . .\n"
-  must_have_redhat_license=true
-  must_have_contributor_license=true
-
-  # Checking needed licenses
-  if [[ "${ADDED_SINCE_1_JAN_2021}" == *"$f"* ]]; then
-    printf " ---> Added since 01/01/2021\n"
-    flag_ibm_license=true
-  elif [[ "${ADDED_SINCE_1_MAR_2020}" == *"$f"* ]]; then
-    printf " ---> Added since 01/03/2020\n"
-    must_have_redhat_license=true
-    flag_ibm_license=false
-  elif [[ "${ADDED_UNTIL_1_MAR_2020}" == *"$f"* ]]; then
-    printf " ---> Add until 01/03/2020\n"
-    must_have_redhat_license=true
-    must_have_ibm_license=true
-  else
-    # Default case, could be new file not yet in git(?) - only expect Red Hat license
-    must_have_redhat_license=true
-  fi
-
-# Checking redhat licenses
-
-  if [[ "${must_have_redhat_license}" == "true" ]] && [[ "$header" != *"${lic_redhat_identifier}"* ]]; then
-    printf " Missing copyright\n >> Could not find [${lic_redhat_identifier}] in the file.\n"
-    ERROR=1
-  fi
-
-  if [[ "${must_have_contributor_license}" == "true" ]] && [[ "$header" != *"${lic_contributor_identifier}"* ]]; then
-    printf " Missing copyright\n >> Could not find [${lic_contributor_identifier}] in the file.\n"
-    ERROR=1
-  fi
-
-  if [[ "${flag_ibm_license}" == "true" ]] && [[ "$header" == *"${lic_ibm_identifier}"* ]]; then 
-    printf " Warning: newer file, may not contain IBM license.\n"
-  fi
-
-  if [[ "${must_have_ibm_license}" == "true" ]]; then 
-    # Verify IBM copyright is present
-    #Check for year copyright single line
-    year_line_count=0
-    for ((i=0;i<${lic_year_size};i++));
-    do
-      #Validate year format within [origin_year, current_year] range
-      if [[ "$header" == *"${lic_year[$i]}"* ]]; then
-        year_line_count=$((year_line_count + 1))
-      fi
-    done
-
-    #Must find and only find one line valid year, otherwise invalid copyright formart
-    if [[ $year_line_count != 1 ]]; then
-      printf "Missing copyright\n  >>Could not find correct copyright year in the file $f\n"
-      ERROR=1
-      #break 
+    if [[ -d $FILE ]] ; then
+        continue
     fi
 
-    #Check for rest copyright lines
-    for ((i=0;i<${lic_rest_size};i++));
-    do
-      #Validate the copyright line being checked is present
-      if [[ "$header" != *"${lic_rest[$i]}"* ]]; then
-        printf "Missing copyright\n  >>Could not find [${lic_rest[$i]}] in the file $f\n"
-        ERROR=1
-        #break 2
-      fi
-    done
-  fi # end must_have_ibm_license
+    COMMENT_START="# "
+    COMMENT_END=""
 
-  #Add a status message of OK, if all copyright lines are found
-  if [[ "$ERROR" == 0 ]]; then
-    printf "OK\n"
-  else
-    RETURNCODE=$ERROR
-    ERROR=0 # Reset error
-  fi
+    if [[ $FILE  == *".go" ]]; then
+        COMMENT_START="// "
+    fi
+
+    if [[ $FILE  == *".ts" || $FILE  == *".tsx" || $FILE  == *".js" ]]; then
+        COMMENT_START="/* "
+        COMMENT_END=" */"
+    fi
+
+    if [[ $FILE  == *".md" ]]; then
+        COMMENT_START="\[comment\]: # ( "
+        COMMENT_END=" )"
+    fi
+
+    if [[ $FILE  == *".html" ]]; then
+        COMMENT_START="<!-- "
+        COMMENT_END=" -->"
+    fi
+
+    if [[ $FILE  == *".go"       \
+            || $FILE == *".yaml" \
+            || $FILE == *".yml"  \
+            || $FILE == *".sh"   \
+            || $FILE == *".js"   \
+            || $FILE == *".ts"   \
+            || $FILE == *".tsx"   \
+            || $FILE == *"Dockerfile" \
+            || $FILE == *"Makefile"  \
+            || $FILE == *".gitignore"  \
+            || $FILE == *".md"  ]]; then
+
+        COMMUNITY_HEADER_AS_COMMENT="$COMMENT_START$COMMUNITY_COPY_HEADER_STRING$COMMENT_END"
+
+        if ! grep -q "$COMMUNITY_HEADER_AS_COMMENT" "$FILE"; then
+            echo "FILE: $FILE:"
+            echo -e "\t- Need add Community copyright header to file"
+            ERROR=true
+        fi
+    fi
 done
 
-echo "##### Copyright check ##### ReturnCode: ${RETURNCODE}"
-exit $RETURNCODE
+if $ERROR == true 
+then
+  exit 1
+fi
+rm -f $TMP_FILE
