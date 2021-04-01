@@ -311,7 +311,7 @@ var _ = Describe("ManagedClusterAddOns", func() {
 })
 
 func generateManifestStatus(ordinal int, applied string) string {
-	return fmt.Sprintf(`{"conditions":[{"type":"Applied","status":"%s"}],"resourceMeta":{"ordinal":%d}}`, applied, ordinal)
+	return fmt.Sprintf(`{"conditions":[{"lastTransitionTime":"2021-03-31T14:46:27Z","type":"Applied","status":"%s"}],"resourceMeta":{"ordinal":%d}}`, applied, ordinal)
 }
 func setManifestWorkAppliedStatus(clientHubDynamic dynamic.Interface, name, namespace string, succeed int, failed int) {
 	ordinal := 0

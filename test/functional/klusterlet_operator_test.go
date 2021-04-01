@@ -826,7 +826,7 @@ func isOwner(owner *unstructured.Unstructured, obj interface{}) bool {
 }
 
 func setManifestWorkStatusAvailable(clientHubDynamic dynamic.Interface, name, namespace string) {
-	patchString := `{"status":{"conditions":[{"type":"Available","status":"True","message":"All resources are available","reason":"ResourcesAvailable"`
+	patchString := `{"status":{"conditions":[{"lastTransitionTime":"2021-03-31T14:46:27Z","type":"Available","status":"True","message":"All resources are available","reason":"ResourcesAvailable"`
 	//	patchString = patchString + `"lastTransitionTime":` + metav1.Time{Time: time.Now()}
 	patchString = patchString + `}]}}`
 
