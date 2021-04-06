@@ -310,8 +310,8 @@ var _ = Describe("ManagedClusterAddOns", func() {
 	})
 })
 
-func generateManifestStatus(ordinal int, applied string) string {
-	return fmt.Sprintf(`{"conditions":[{"type":"Applied","status":"%s"}],"resourceMeta":{"ordinal":%d}}`, applied, ordinal)
+func generateManifestStatus(ordinal int, applied string, message string, reason string) string {
+	return fmt.Sprintf(`{"conditions":[{"lastTransitionTime":"2021-03-31T14:46:27Z","type":"Applied","status":"%s", "message":"%s", "reason":"%s"}],"resourceMeta":{"ordinal":%d}}`, applied, message, reason, ordinal)
 }
 func setManifestWorkAppliedStatus(clientHubDynamic dynamic.Interface, name, namespace string, succeed int, failed int) {
 	ordinal := 0
@@ -319,7 +319,7 @@ func setManifestWorkAppliedStatus(clientHubDynamic dynamic.Interface, name, name
 
 	for i := 0; i < failed; i++ {
 		ordinal = i
-		s := generateManifestStatus(ordinal, "False")
+		s := generateManifestStatus(ordinal, "False", "Failed to apply manifestwork", "ManifestDegraded")
 		if i < failed-1 || succeed > 0 {
 			s = s + ","
 		}
@@ -327,7 +327,7 @@ func setManifestWorkAppliedStatus(clientHubDynamic dynamic.Interface, name, name
 	}
 	for i := 0; i < succeed; i++ {
 		ordinal = i + failed
-		s := generateManifestStatus(ordinal, "True")
+		s := generateManifestStatus(ordinal, "True", "Manifestwork Applied", "ManifestApplied")
 		if i < succeed-1 {
 			s = s + ","
 		}
