@@ -36,44 +36,27 @@ import (
 var log = logf.Log.WithName("controller_managedclusteraddon")
 
 const (
-	leaseDurationTimes             = 5
-	leaseDurationSecondsLowerBound = 30
-	leaseDurationSecondsUpperBound = 90
-	requeueAfterSecondsLowerBound  = 30
-	installationTimeoutSeconds     = 300
 
 	// types of condition
-	addonAvailable   = "Available"
 	addonDegraded    = "Degraded"
 	addonProgressing = "Progressing"
 
 	// reasons of condition
-	progressingReasonMissing      = "ManifestWorkCreating"
-	progressingReasonCreated      = "ManifestWorkCreated"
-	progressingReasonApplied      = "ManifestWorkApplied"
-	progressingReasonDeleting     = "AddonTerminating"
-	availableReasonMissing        = "AddonNotReady"
-	availableReasonReady          = "AddonAvailable"
-	availableReasonTimeout        = "AddonTimeout"
-	availableUnknownReasonTimeout = "AddonRequestTimeout"
-	degradedReasonInstallError    = "AddonInstallationError"
+	progressingReasonMissing   = "ManifestWorkCreating"
+	progressingReasonCreated   = "ManifestWorkCreated"
+	progressingReasonApplied   = "ManifestWorkApplied"
+	progressingReasonDeleting  = "AddonTerminating"
+	degradedReasonInstallError = "AddonInstallationError"
 
 	// messages of condition
-	progressingMSGMissing             = "Creating manifests for add-on installation."  // message will show when we are waiting to create the manifests of addons
-	progressingMSGCreated             = "Installing manifests."                        // message when we are still in installation
-	progressingMSGApplied             = "All manifests are installed."                 // message when the manifestwork is applied (manifest is installed)
-	progressingMsgDeleting            = "Add-on is being deleted."                     // message when addon is in deletion
-	availableMsgMissing               = "Add-on is not available."                     // message when addon is not in ready status yet
-	availableMSGReady                 = "Add-on is available."                         // message when addon is in ready status
-	availableMSGTimeout               = "Get add-on status timeout."                   // message when addon has not sent message to hub for a while (default 5 minutes)
-	availableUknownMSGTimeoutTemplate = "Failed to check add-on available status: %s." // message when we have problem to know if addon is alive or not, %s can be errorTimeout or errorLease
-	degradedMSGInstallErrorTemplate   = "Failed to complete add-on installation: %s."  // message when we detect error in addon's manifests installation, %s is errorFailedApplyTemplate
+	progressingMSGMissing           = "Creating manifests for add-on installation." // message will show when we are waiting to create the manifests of addons
+	progressingMSGCreated           = "Installing manifests."                       // message when we are still in installation
+	progressingMSGApplied           = "All manifests are installed."                // message when the manifestwork is applied (manifest is installed)
+	progressingMsgDeleting          = "Add-on is being deleted."                    // message when addon is in deletion
+	degradedMSGInstallErrorTemplate = "Failed to complete add-on installation: %s." // message when we detect error in addon's manifests installation, %s is errorFailedApplyTemplate
 
 	// possible error messages
 	errorFailedApplyTemplate = "%d of %d manifests failed to apply"
-	errorInstallTooSlow      = "installation is taking longer than usual"
-	errorTimeout             = "request timeout"
-	errorLease               = "lease formatted incorrectly"
 )
 
 /**
@@ -459,15 +442,6 @@ func deleteAll(
 	if mca != nil {
 		if err := c.Delete(context.TODO(), mca); err != nil && !errors.IsNotFound(err) {
 			return err
-		}
-	}
-	return nil
-}
-
-func getCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
-	for _, c := range conditions {
-		if c.Type == conditionType {
-			return &c
 		}
 	}
 	return nil
