@@ -98,7 +98,7 @@ func newCertPolicyControllerCR(
 		},
 		Spec: agentv1.CertPolicyControllerSpec{
 			FullNameOverride:    CertPolicyController,
-			HubKubeconfigSecret: CertPolicyCtrl + "-hub-kubeconfig",
+			HubKubeconfigSecret: managedClusterAddOnName + "-hub-kubeconfig",
 			ClusterName:         instance.Spec.ClusterName,
 			ClusterNamespace:    instance.Spec.ClusterNamespace,
 			GlobalValues:        gv,

@@ -124,7 +124,7 @@ func newPolicyControllerCR(
 			FullNameOverride:            PolicyController,
 			ClusterName:                 instance.Spec.ClusterName,
 			ClusterNamespace:            instance.Spec.ClusterNamespace,
-			HubKubeconfigSecret:         PolicyCtrl + "-hub-kubeconfig",
+			HubKubeconfigSecret:         managedClusterAddOnName + "-hub-kubeconfig",
 			GlobalValues:                gv,
 			DeployedOnHub:               false,
 			PostDeleteJobServiceAccount: addonoperator.KlusterletAddonOperator,

@@ -96,7 +96,7 @@ func newApplicationManagerCR(
 		},
 		Spec: agentv1.ApplicationManagerSpec{
 			FullNameOverride:    ApplicationManager,
-			HubKubeconfigSecret: AppMgr + "-hub-kubeconfig",
+			HubKubeconfigSecret: managedClusterAddOnName + "-hub-kubeconfig",
 			ClusterName:         instance.Spec.ClusterName,
 			ClusterNamespace:    instance.Spec.ClusterNamespace,
 			GlobalValues:        gv,

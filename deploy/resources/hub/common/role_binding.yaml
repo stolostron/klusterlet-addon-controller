@@ -3,12 +3,12 @@
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: "{{ .ManagedClusterName }}-v2"
+  name: "{{ .ManagedClusterName }}-{{ .ComponentName }}-v2"
   namespace: "{{ .ManagedClusterNamespace }}"
 subjects:
-- kind: ServiceAccount
-  name: "{{ .ServiceAccountName }}"
-  namespace: "{{ .ManagedClusterNamespace }}"
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: "system:open-cluster-management:cluster:{{ .ManagedClusterName }}:addon:{{ .ComponentName }}"
 roleRef:
   kind: ClusterRole
   name: "{{ .ClusterRoleName }}"
