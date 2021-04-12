@@ -102,7 +102,6 @@ kind export kubeconfig --name=klusterlet-addon-controller-test --kubeconfig ${KI
 
 #Apply all dependent crds
 echo "installing crds"
-kubectl apply -f deploy/dev-crds/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
 for file in `ls deploy/dev-crds/*.crd.yaml`; do kubectl apply -f $file; done
 sleep 5
 
@@ -110,11 +109,7 @@ sleep 5
 echo "installing crs"
 for file in `ls deploy/dev-crs/*.cr.yaml`; do kubectl apply -f $file; done
 
-echo "installing other dependencies"
-for file in `ls deploy/dev/*.yaml`; do kubectl apply -f $file; done
-
 echo "installing klusterlet-addon-controller"
-
 kind load docker-image $DOCKER_IMAGE --name=klusterlet-addon-controller-test 
 
 #Create the namespace

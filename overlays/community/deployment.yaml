@@ -1,0 +1,17 @@
+# Copyright Contributors to the Open Cluster Management project
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: klusterlet-addon-controller
+  namespace: open-cluster-management
+spec:
+  template:
+    spec:
+      containers:
+      - name: klusterlet-addon-controller
+        image: quay.io/open-cluster-management/klusterlet-addon-controller:latest
+
+
+           
+    
