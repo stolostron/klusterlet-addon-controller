@@ -251,47 +251,6 @@ var _ = Describe("ManagedClusterAddOns", func() {
 			deleteFinalizerOfManifestWork(clientClusterDynamic, crName, testNamespace)
 		}
 	})
-	It("Should show correct Available condition status & handle lease deletion properly", func() {
-		By("Checking Available=False when lease not exist", func() {
-			for _, crName := range addonCRs {
-				mcaName := mcaMaps[crName]
-				checkStatusCondition(clientClusterDynamic, mcaName, testNamespace, "Available", "False")
-			}
-		})
-		By("Checking Available=True when lease exist", func() {
-			for _, crName := range addonCRs {
-				mcaName := mcaMaps[crName]
-				renewTime := time.Now().Add(-time.Second * 280).Format("2006-01-02T15:04:05.000000Z07:00")
-				lease := newLease(mcaName, testNamespace, renewTime)
-				createNewUnstructured(clientClusterDynamic, gvrLease,
-					lease, mcaName, testNamespace)
-				checkStatusCondition(clientClusterDynamic, mcaName, testNamespace, "Available", "True")
-			}
-		})
-		By("Checking eventually Available=Unknown within 40 seconds (as we expect to be expire in 20 seconds)", func() {
-			Eventually(func() error {
-				for _, crName := range addonCRs {
-					mcaName := mcaMaps[crName]
-					err := hasStatusHelper(clientClusterDynamic, mcaName, testNamespace, "Available", "Unknown")
-					if err != nil {
-						return err
-					}
-				}
-				return nil
-			}, 40, 5).Should(BeNil())
-		})
-		By("Deleting klusterletaddonconfig. Checking lease are Deleted", func() {
-			Expect(func() error {
-				return clientClusterDynamic.Resource(gvrKlusterletAddonConfig).Namespace(testNamespace).Delete(context.TODO(), testKlusterletAddonConfigName, metav1.DeleteOptions{})
-			}()).Should(BeNil())
-			for _, crName := range addonCRs {
-				mcaName := mcaMaps[crName]
-				eventuallyNotFound(clientClusterDynamic, gvrLease, mcaName, testNamespace)
-			}
-		})
-
-	})
-
 	It("Should show correct Degraded condition status", func() {
 		By("Checking Degraded=true when manifestwork failed to install", func() {
 			for _, crName := range addonCRs {
