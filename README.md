@@ -47,13 +47,15 @@ make run
 
 ## Running Klusterlet addon controller in-cluster for deployment
 
-1. Apply the `deploy/deploy.yaml` to create the ServiceAccount, ClusterRole, ClusterRoleBinding and Deployment for the operator
+1. Apply the `overlays/community` to create the ServiceAccount, ClusterRole, ClusterRoleBinding and Deployment for the operator
 
 ```shell
-kubectl apply -f deploy/deploy.yaml
+kubectl apply -k overlays/community
 ```
 
-NOTE: this will use the amd64 version of the operator
+NOTE: 
+- OKD/Openshift is required.
+- [Cluster-Manager](https://operatorhub.io/operator/cluster-manager) is required on the cluster. 
 
 ## Installing klusterlet addons using Klusterlet addon controller
 
