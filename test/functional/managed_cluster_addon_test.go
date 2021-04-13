@@ -14,6 +14,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	addonoperator "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/addon-operator/v1"
 	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -186,6 +187,21 @@ var _ = Describe("ManagedClusterAddOns", func() {
 						return err
 					}, 5, 1).Should(BeNil())
 				})
+
+				By("Checking the Managedclusteraddon "+mcaName+" has install namespace and registration config set", func() {
+					Eventually(func() bool {
+						managedClusterAddOn, err := clientClusterDynamic.Resource(gvrManagedClusterAddOn).Namespace(testNamespace).Get(context.TODO(), mcaName, metav1.GetOptions{})
+						if err != nil {
+							return false
+						}
+						installNamespace, _, _ := unstructured.NestedString(managedClusterAddOn.Object, "spec", "installNamespace")
+						if installNamespace != addonoperator.KlusterletAddonNamespace {
+							return false
+						}
+						registrationConfigs, _, err := unstructured.NestedSlice(managedClusterAddOn.Object, "status", "registrations")
+						return len(registrationConfigs) == 1
+					}, 5, 1).Should(BeTrue())
+				})
 			}
 		})
 		By("Deleting klusterletaddonconfig, and all managedclusteraddons should be deleted", func() {
@@ -217,16 +233,6 @@ var _ = Describe("ManagedClusterAddOns", func() {
 				mcaName := mcaMaps[crName]
 				setManifestWorkAppliedStatus(clientClusterDynamic, crName, testNamespace, 4, 1)
 				checkStatusCondition(clientClusterDynamic, mcaName, testNamespace, "Progressing", "False")
-			}
-		})
-		By("Updating manifestwork with 1 applied. Checking Progressing=True when manifestwork not finished applying", func() {
-			for _, crName := range addonCRs {
-				if crName == certPolicyController || crName == iamPolicyController {
-					continue
-				}
-				mcaName := mcaMaps[crName]
-				setManifestWorkAppliedStatus(clientClusterDynamic, crName, testNamespace, 1, 0)
-				checkStatusCondition(clientClusterDynamic, mcaName, testNamespace, "Progressing", "True")
 			}
 		})
 		By("Updating manifestwork with all applied. Checking Progressing=False when manifestwork finished applying", func() {

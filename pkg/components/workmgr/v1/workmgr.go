@@ -105,7 +105,7 @@ func newWorkManagerCR(
 			ClusterNamespace: instance.Spec.ClusterNamespace,
 			ClusterLabels:    clusterLabels,
 
-			HubKubeconfigSecret: WorkMgr + "-hub-kubeconfig",
+			HubKubeconfigSecret: managedClusterAddOnName + "-hub-kubeconfig",
 
 			GlobalValues: gv,
 		},

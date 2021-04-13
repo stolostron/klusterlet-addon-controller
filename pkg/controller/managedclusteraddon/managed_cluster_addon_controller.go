@@ -18,6 +18,8 @@ import (
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
+	addonoperator "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/addon-operator/v1"
+	certificatesv1 "k8s.io/api/certificates/v1"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -186,6 +188,7 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 			managedClusterAddOn.Name, managedClusterAddOn.Status.RelatedObjects))
 		return reconcile.Result{}, nil
 	}
+
 	// store oldstatus for compare in future to see if we need to update
 	oldstatus := managedClusterAddOn.Status.DeepCopy()
 
@@ -195,10 +198,10 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 		Name:      klusterletAddonConfigName,
 		Namespace: request.Namespace,
 	}, klusterletaddonconfig); err != nil {
-		// if klusterletaddonconfig we should delete ManagedClusterAddOn and Lease
+		// if klusterletaddonconfig is not found we should delete ManagedClusterAddOn and hub kubeconfig resources
 		if errors.IsNotFound(err) {
 			log.Error(err, "klusterletaddonconfig not found, deleting ManagedClusterAddOn "+managedClusterAddOn.Name)
-			delErr := deleteAll(r.client, managedClusterAddOn)
+			delErr := deleteAll(r.client, addon, managedClusterAddOn)
 			return reconcile.Result{}, delErr
 		}
 		log.Error(err, "failed to get klusterletaddonconfig")
@@ -223,11 +226,31 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 	if manifestWorkIsNotFound &&
 		(!addon.IsEnabled(klusterletaddonconfig) || klusterletaddonconfig.DeletionTimestamp != nil) {
 		// delete all
-		if err := deleteAll(r.client, managedClusterAddOn); err != nil {
-			log.Error(err, "failed to delete ManagedClusterAddOn %s"+managedClusterAddOn.Name)
+		if err := deleteAll(r.client, addon, managedClusterAddOn); err != nil {
+			log.Error(err, "failed to delete ManagedClusterAddOn %s and its hub kubeconfig resourcers"+managedClusterAddOn.Name)
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{}, nil
+	}
+
+	// check & set addon install namespace
+	if managedClusterAddOn.Spec.InstallNamespace != addonoperator.KlusterletAddonNamespace {
+		managedClusterAddOn.Spec.InstallNamespace = addonoperator.KlusterletAddonNamespace
+		if err := r.client.Update(context.TODO(), managedClusterAddOn); err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
+	if addon.CheckHubKubeconfigRequired() {
+		// creates necessary rolebinding for addon
+		if err := createOrUpdateHubKubeConfigResources(klusterletaddonconfig, r, addon); err != nil {
+			return reconcile.Result{}, fmt.Errorf("Failed to create rolebinding for componnet %s: %w", addon.GetAddonName(), err)
+		}
+
+		// set registration configuration
+		managedClusterAddOn.Status.Registrations = []addonv1alpha1.RegistrationConfig{
+			{SignerName: certificatesv1.KubeAPIServerClientSignerName},
+		}
 	}
 
 	// update progressing status base on manifestwork
@@ -434,9 +457,11 @@ func checkAddOnResourceGVR(refs []addonv1alpha1.ObjectReference, gvr *schema.Gro
 	return "", false
 }
 
-// deleteAll deletes given ManagedClusterAddOn , returns nil if deleted or not found
+// deleteAll deletes given ManagedClusterAddOn and hub kubeconfig resources, returns nil if
+// deleted or not found
 func deleteAll(
 	c client.Client,
+	addon addons.KlusterletAddon,
 	mca *addonv1alpha1.ManagedClusterAddOn,
 ) error {
 	if mca != nil {
@@ -444,5 +469,7 @@ func deleteAll(
 			return err
 		}
 	}
-	return nil
+
+	// delete the hub kubeconfig resources, like clusterrolebinding
+	return deleteHubKubeConfigResources(addon, mca.Namespace, c)
 }

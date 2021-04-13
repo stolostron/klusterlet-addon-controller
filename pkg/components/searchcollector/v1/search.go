@@ -94,7 +94,7 @@ func newSearchCollectorCR(instance *agentv1.KlusterletAddonConfig, namespace str
 			FullNameOverride:    SearchCollector,
 			ClusterName:         instance.Spec.ClusterName,
 			ClusterNamespace:    instance.Spec.ClusterNamespace,
-			HubKubeconfigSecret: Search + "-hub-kubeconfig",
+			HubKubeconfigSecret: managedClusterAddOnName + "-hub-kubeconfig",
 			GlobalValues:        gv,
 		},
 	}, err

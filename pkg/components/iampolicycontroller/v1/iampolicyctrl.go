@@ -97,7 +97,7 @@ func newIAMPolicyControllerCR(
 		},
 		Spec: agentv1.IAMPolicyControllerSpec{
 			FullNameOverride:    IAMPolicyController,
-			HubKubeconfigSecret: IAMPolicyCtrl + "-hub-kubeconfig",
+			HubKubeconfigSecret: managedClusterAddOnName + "-hub-kubeconfig",
 			ClusterName:         instance.Spec.ClusterName,
 			ClusterNamespace:    instance.Spec.ClusterNamespace,
 			GlobalValues:        gv,
