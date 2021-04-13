@@ -36,44 +36,27 @@ import (
 var log = logf.Log.WithName("controller_managedclusteraddon")
 
 const (
-	leaseDurationTimes             = 5
-	leaseDurationSecondsLowerBound = 30
-	leaseDurationSecondsUpperBound = 90
-	requeueAfterSecondsLowerBound  = 30
-	installationTimeoutSeconds     = 300
 
 	// types of condition
-	addonAvailable   = "Available"
 	addonDegraded    = "Degraded"
 	addonProgressing = "Progressing"
 
 	// reasons of condition
-	progressingReasonMissing      = "ManifestWorkCreating"
-	progressingReasonCreated      = "ManifestWorkCreated"
-	progressingReasonApplied      = "ManifestWorkApplied"
-	progressingReasonDeleting     = "AddonTerminating"
-	availableReasonMissing        = "AddonNotReady"
-	availableReasonReady          = "AddonAvailable"
-	availableReasonTimeout        = "AddonTimeout"
-	availableUnknownReasonTimeout = "AddonRequestTimeout"
-	degradedReasonInstallError    = "AddonInstallationError"
+	progressingReasonMissing   = "ManifestWorkCreating"
+	progressingReasonCreated   = "ManifestWorkCreated"
+	progressingReasonApplied   = "ManifestWorkApplied"
+	progressingReasonDeleting  = "AddonTerminating"
+	degradedReasonInstallError = "AddonInstallationError"
 
 	// messages of condition
-	progressingMSGMissing             = "Creating manifests for add-on installation."  // message will show when we are waiting to create the manifests of addons
-	progressingMSGCreated             = "Installing manifests."                        // message when we are still in installation
-	progressingMSGApplied             = "All manifests are installed."                 // message when the manifestwork is applied (manifest is installed)
-	progressingMsgDeleting            = "Add-on is being deleted."                     // message when addon is in deletion
-	availableMsgMissing               = "Add-on is not available."                     // message when addon is not in ready status yet
-	availableMSGReady                 = "Add-on is available."                         // message when addon is in ready status
-	availableMSGTimeout               = "Get add-on status timeout."                   // message when addon has not sent message to hub for a while (default 5 minutes)
-	availableUknownMSGTimeoutTemplate = "Failed to check add-on available status: %s." // message when we have problem to know if addon is alive or not, %s can be errorTimeout or errorLease
-	degradedMSGInstallErrorTemplate   = "Failed to complete add-on installation: %s."  // message when we detect error in addon's manifests installation, %s is errorFailedApplyTemplate
+	progressingMSGMissing           = "Creating manifests for add-on installation." // message will show when we are waiting to create the manifests of addons
+	progressingMSGCreated           = "Installing manifests."                       // message when we are still in installation
+	progressingMSGApplied           = "All manifests are installed."                // message when the manifestwork is applied (manifest is installed)
+	progressingMsgDeleting          = "Add-on is being deleted."                    // message when addon is in deletion
+	degradedMSGInstallErrorTemplate = "Failed to complete add-on installation: %s." // message when we detect error in addon's manifests installation, %s is errorFailedApplyTemplate
 
 	// possible error messages
 	errorFailedApplyTemplate = "%d of %d manifests failed to apply"
-	errorInstallTooSlow      = "installation is taking longer than usual"
-	errorTimeout             = "request timeout"
-	errorLease               = "lease formatted incorrectly"
 )
 
 /**
@@ -206,15 +189,6 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 	// store oldstatus for compare in future to see if we need to update
 	oldstatus := managedClusterAddOn.Status.DeepCopy()
 
-	// fetch the lease instance
-	lease := &coordinationv1.Lease{}
-	leaseIsNotFound := false
-	if err := r.client.Get(context.TODO(), request.NamespacedName, lease); err != nil && !errors.IsNotFound(err) {
-		// Error reading the object - requeue the request.
-		return reconcile.Result{}, err
-	} else if errors.IsNotFound(err) {
-		leaseIsNotFound = true
-	}
 	// Fetch the klusterletaddonconfig instance for enable/disable settings
 	klusterletaddonconfig := &agentv1.KlusterletAddonConfig{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{
@@ -224,7 +198,7 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 		// if klusterletaddonconfig we should delete ManagedClusterAddOn and Lease
 		if errors.IsNotFound(err) {
 			log.Error(err, "klusterletaddonconfig not found, deleting ManagedClusterAddOn "+managedClusterAddOn.Name)
-			delErr := deleteAll(r.client, managedClusterAddOn, leaseIsNotFound, lease)
+			delErr := deleteAll(r.client, managedClusterAddOn)
 			return reconcile.Result{}, delErr
 		}
 		log.Error(err, "failed to get klusterletaddonconfig")
@@ -249,8 +223,8 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 	if manifestWorkIsNotFound &&
 		(!addon.IsEnabled(klusterletaddonconfig) || klusterletaddonconfig.DeletionTimestamp != nil) {
 		// delete all
-		if err := deleteAll(r.client, managedClusterAddOn, leaseIsNotFound, lease); err != nil {
-			log.Error(err, "failed to delete ManagedClusterAddOn %s and corresponding lease"+managedClusterAddOn.Name)
+		if err := deleteAll(r.client, managedClusterAddOn); err != nil {
+			log.Error(err, "failed to delete ManagedClusterAddOn %s"+managedClusterAddOn.Name)
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{}, nil
@@ -264,20 +238,8 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 		manifestWork,
 	)
 
-	// update available status base on lease
-	statusAvailable, errAvailable := updateAvailableStatus(managedClusterAddOn, leaseIsNotFound, lease)
-
-	// check install timeout
-	if errProgressing == nil && errAvailable == nil {
-		errProgressing = checkInstallTimeout(managedClusterAddOn)
-	}
-
 	// check & set degraded information
 	_ = updateDegradedStatus(managedClusterAddOn, errProgressing)
-
-	if errAvailable != nil {
-		_ = updateAvailableUnknownStatus(managedClusterAddOn, errAvailable)
-	}
 
 	// write managedClusterAddOn status if needed
 	if !reflect.DeepEqual(*oldstatus, managedClusterAddOn.Status) {
@@ -288,23 +250,7 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 		}
 	}
 
-	// set the requeue time to find timeout of lease
-	requeAfterSeconds := time.Duration(leaseDurationTimes * leaseDurationSecondsUpperBound)
-	// use lease to get more accurate requeue time if current is available=true
-	if !leaseIsNotFound && statusAvailable == metav1.ConditionTrue {
-		if expireTime, err := getExpireTime(lease); err == nil {
-			seconds := int64(time.Until(expireTime)/time.Second) + 1
-			if int64(seconds) > 0 && seconds < int64(requeAfterSeconds) {
-				requeAfterSeconds = time.Duration(seconds)
-			}
-			if int64(requeAfterSeconds) < requeueAfterSecondsLowerBound {
-				requeAfterSeconds = time.Duration(requeueAfterSecondsLowerBound)
-			}
-		}
-	}
-	log.V(2).Info(fmt.Sprintf("Will reque after %d seconds", int64(requeAfterSeconds)))
-
-	return reconcile.Result{Requeue: true, RequeueAfter: requeAfterSeconds * time.Second}, nil
+	return reconcile.Result{}, nil
 }
 
 // filterConditions removes conditions if they match the type
@@ -340,24 +286,6 @@ func updateDegradedStatus(mca *addonv1alpha1.ManagedClusterAddOn,
 		conditionReason = degradedReasonInstallError
 		conditionMsg = fmt.Sprintf(degradedMSGInstallErrorTemplate, errProgressing.Error())
 	}
-	condition := createCondition(conditionType, conditionStatus, conditionReason, conditionMsg)
-	setStatusCondition(&mca.Status.Conditions, condition)
-	return conditionStatus
-}
-
-// updateAvailableUnknownStatus updates ManagedClusterAddOn.status's available type condition based on former errors
-func updateAvailableUnknownStatus(mca *addonv1alpha1.ManagedClusterAddOn,
-	errAvailable error) metav1.ConditionStatus {
-
-	var conditionReason string
-	var conditionMsg string
-	conditionType := addonAvailable
-	conditionStatus := metav1.ConditionUnknown
-	if errAvailable != nil {
-		conditionReason = availableUnknownReasonTimeout
-		conditionMsg = fmt.Sprintf(availableUknownMSGTimeoutTemplate, errAvailable.Error())
-	}
-
 	condition := createCondition(conditionType, conditionStatus, conditionReason, conditionMsg)
 	setStatusCondition(&mca.Status.Conditions, condition)
 	return conditionStatus
@@ -405,61 +333,6 @@ func updateProgressingStatus(
 	// update condition
 	condition := createCondition(conditionType, conditionStatus, conditionReason, conditionMsg)
 	setStatusCondition(&mca.Status.Conditions, condition)
-	return conditionStatus, err
-}
-
-func getExpireTime(lease *coordinationv1.Lease) (time.Time, error) {
-	if lease == nil || lease.Spec.RenewTime == nil {
-		return time.Now(), fmt.Errorf("failed to get renewTime from lease")
-	}
-	leaseDurationSeconds := int32(leaseDurationSecondsLowerBound)
-	if lease.Spec.LeaseDurationSeconds != nil {
-		leaseDurationSeconds = *lease.Spec.LeaseDurationSeconds
-	}
-	if leaseDurationSeconds < leaseDurationSecondsLowerBound {
-		leaseDurationSeconds = leaseDurationSecondsLowerBound
-	} else if leaseDurationSeconds > leaseDurationSecondsUpperBound {
-		leaseDurationSeconds = leaseDurationSecondsUpperBound
-	}
-
-	// check lease's renew timestamp
-	gracePeriod := time.Duration(leaseDurationTimes*leaseDurationSeconds) * time.Second
-	return lease.Spec.RenewTime.Add(gracePeriod), nil
-}
-
-// updateAvailableStatus updates ManagedClusterAddOn.status's processing type condition based on given lease
-func updateAvailableStatus(
-	mca *addonv1alpha1.ManagedClusterAddOn,
-	leaseIsNotFound bool,
-	lease *coordinationv1.Lease,
-) (status metav1.ConditionStatus, err error) {
-	// base condition
-	conditionType := addonAvailable
-	conditionStatus := metav1.ConditionFalse
-	conditionReason := availableReasonMissing
-	conditionMsg := availableMsgMissing
-	err = nil
-	// if found, will use lease to get expiration time & decide available or not
-	if !leaseIsNotFound {
-		if expireTime, getErr := getExpireTime(lease); getErr == nil {
-			if time.Now().Before(expireTime) {
-				conditionStatus = metav1.ConditionTrue
-				conditionReason = availableReasonReady
-				conditionMsg = availableMSGReady
-			} else {
-				conditionStatus = metav1.ConditionUnknown
-				conditionReason = availableReasonTimeout
-				conditionMsg = availableMSGTimeout
-				err = fmt.Errorf(errorTimeout)
-			}
-		} else {
-			err = fmt.Errorf(errorLease)
-		}
-	}
-
-	condition := createCondition(conditionType, conditionStatus, conditionReason, conditionMsg)
-	setStatusCondition(&mca.Status.Conditions, condition)
-
 	return conditionStatus, err
 }
 
@@ -561,47 +434,15 @@ func checkAddOnResourceGVR(refs []addonv1alpha1.ObjectReference, gvr *schema.Gro
 	return "", false
 }
 
-// deleteAll deletes given ManagedClusterAddOn & Lease, returns nil if deleted or not found
+// deleteAll deletes given ManagedClusterAddOn , returns nil if deleted or not found
 func deleteAll(
 	c client.Client,
 	mca *addonv1alpha1.ManagedClusterAddOn,
-	isLeaseNotFound bool,
-	l *coordinationv1.Lease,
 ) error {
-
-	// delete lease first
-	if !isLeaseNotFound && l != nil {
-		if err := c.Delete(context.TODO(), l); err != nil && !errors.IsNotFound(err) {
-			return err
-		}
-	}
-	// if failed in deleting lease should not deletet mca, but retry next time
 	if mca != nil {
 		if err := c.Delete(context.TODO(), mca); err != nil && !errors.IsNotFound(err) {
 			return err
 		}
-	}
-	return nil
-}
-
-func getCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
-	for _, c := range conditions {
-		if c.Type == conditionType {
-			return &c
-		}
-	}
-	return nil
-}
-
-// checkInstallTimeout checks if the manifestwork is installed but lease is not created in time
-func checkInstallTimeout(mca *addonv1alpha1.ManagedClusterAddOn) error {
-	cProgressing := getCondition(mca.Status.Conditions, addonProgressing)
-	cAvailable := getCondition(mca.Status.Conditions, addonAvailable)
-	if cProgressing != nil && cProgressing.Status == metav1.ConditionFalse &&
-		cAvailable != nil && cAvailable.Status == metav1.ConditionFalse &&
-		cProgressing.LastTransitionTime.Add(installationTimeoutSeconds*time.Second).Before(time.Now()) {
-		//return error when progressing finished but still not available for installationTimeoutSeconds
-		return fmt.Errorf(errorInstallTooSlow)
 	}
 	return nil
 }
