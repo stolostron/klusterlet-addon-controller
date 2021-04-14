@@ -64,11 +64,13 @@ func createOrUpdateHubKubeConfigResources(
 		ManagedClusterName      string
 		ManagedClusterNamespace string
 		ComponentName           string
+		ManagedClusterAddOnName string
 		ClusterRoleName         string
 	}{
 		ManagedClusterName:      klusterletaddonconfig.Name,
 		ManagedClusterNamespace: klusterletaddonconfig.Name,
 		ComponentName:           componentName,
+		ManagedClusterAddOnName: addon.GetManagedClusterAddOnName(),
 		ClusterRoleName:         addons.GetAddonClusterRolePrefix() + addon.GetManagedClusterAddOnName(),
 	}
 
