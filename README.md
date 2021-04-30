@@ -142,3 +142,4 @@ oc edit manifestwork -n ${CLUSTER_NAME}  ${CLUSTER_NAME}-klusterlet-addon-operat
 ```
 
 Please remember to restore the replicas when you finishing the devs. Otherwise you will not able to cleanup the managed cluster properly when detach.
+
