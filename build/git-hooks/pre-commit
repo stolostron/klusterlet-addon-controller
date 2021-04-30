@@ -1,14 +1,3 @@
-#!/bin/bash
+#!/bin/bash -e
 
-set -e
-
-# Should be `make check`
-# But:
-# [ ] Pre-commit script sets things into loop (Stop that)
-# ```
-# 2019/07/22 17:05:05 generating opensource from build/Dockerfile
-# 2019/07/22 17:06:41 generating opensource from Gopkg.lock
-# ```
-# So for now:
-#make go:check go:copyright:check
-#make check
+make check
