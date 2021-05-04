@@ -43,7 +43,7 @@ deps: build/install-dependencies.sh
 
 .PHONY: check
 ## Runs a set of required checks
-check: lint go-bindata-check go-mod-check copyright-check
+check: lint go-bindata-check copyright-check
 
 .PHONY: copyright-check
 copyright-check:
