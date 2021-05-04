@@ -12,6 +12,8 @@ spec:
       name: klusterlet-addon-controller
   template:
     metadata:
+      annotations:
+        target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
       labels:
         name: klusterlet-addon-controller
     spec:

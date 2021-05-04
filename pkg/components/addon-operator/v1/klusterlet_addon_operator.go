@@ -121,6 +121,9 @@ func NewNamespace() *corev1.Namespace {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: KlusterletAddonNamespace,
+			Annotations: map[string]string{
+				"workload.openshift.io/allowed": "management",
+			},
 		},
 	}
 }
@@ -160,6 +163,9 @@ func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"target.workload.openshift.io/management": `{"effect": "PreferredDuringScheduling"}`,
+					},
 					Labels: map[string]string{
 						"name": KlusterletAddonOperator,
 					},

@@ -1,5 +1,4 @@
 # Copyright Contributors to the Open Cluster Management project
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,11 +6,10 @@ metadata:
   namespace: open-cluster-management
 spec:
   template:
+    metadata:
+      annotations:
+        target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
     spec:
       containers:
       - name: klusterlet-addon-controller
         image: quay.io/open-cluster-management/klusterlet-addon-controller:latest
-
-
-           
-    
