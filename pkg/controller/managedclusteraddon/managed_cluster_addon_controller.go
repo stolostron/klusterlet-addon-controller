@@ -20,8 +20,8 @@ import (
 	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
 	addonoperator "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/addon-operator/v1"
 	certificatesv1 "k8s.io/api/certificates/v1"
-	coordinationv1 "k8s.io/api/coordination/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -111,26 +111,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			},
 		)},
 		newManifestWorkPredicate(),
-	)
-	if err != nil {
-		return err
-	}
-	// Watch for changes to lease
-	err = c.Watch(
-		&source.Kind{Type: &coordinationv1.Lease{}},
-		&handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
-			func(obj handler.MapObject) []reconcile.Request {
-				return []reconcile.Request{
-					{
-						NamespacedName: types.NamespacedName{
-							Name:      obj.Meta.GetName(),
-							Namespace: obj.Meta.GetNamespace(),
-						},
-					},
-				}
-			},
-		)},
-		addons.NewAddonNamePredicate(),
 	)
 	if err != nil {
 		return err
@@ -276,28 +256,15 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 	return reconcile.Result{}, nil
 }
 
-// filterConditions removes conditions if they match the type
-func filterConditions(conditions *[]metav1.Condition, excludeType string) {
-	newConditions := []metav1.Condition{}
-	for _, c := range *conditions {
-		if c.Type != excludeType {
-			newConditions = append(newConditions, c)
-		}
-	}
-	if len(newConditions) == len(*conditions) {
-		return
-	}
-	(*conditions) = (*conditions)[:0]
-	*conditions = append(*conditions, newConditions...)
-}
-
 // updateDegradedStatus updates ManagedClusterAddOn.status's degraded type condition based on former errors
 // will remove degraded condition if nothing is wrong
 func updateDegradedStatus(mca *addonv1alpha1.ManagedClusterAddOn,
 	errProgressing error) metav1.ConditionStatus {
 	if errProgressing == nil {
 		// filter out degraded
-		filterConditions(&mca.Status.Conditions, addonDegraded)
+		if len(mca.Status.Conditions) != 0 {
+			meta.RemoveStatusCondition(&mca.Status.Conditions, addonDegraded)
+		}
 		return metav1.ConditionFalse
 	}
 	var conditionReason string
@@ -310,7 +277,7 @@ func updateDegradedStatus(mca *addonv1alpha1.ManagedClusterAddOn,
 		conditionMsg = fmt.Sprintf(degradedMSGInstallErrorTemplate, errProgressing.Error())
 	}
 	condition := createCondition(conditionType, conditionStatus, conditionReason, conditionMsg)
-	setStatusCondition(&mca.Status.Conditions, condition)
+	meta.SetStatusCondition(&mca.Status.Conditions, *condition)
 	return conditionStatus
 }
 
@@ -355,7 +322,7 @@ func updateProgressingStatus(
 	}
 	// update condition
 	condition := createCondition(conditionType, conditionStatus, conditionReason, conditionMsg)
-	setStatusCondition(&mca.Status.Conditions, condition)
+	meta.SetStatusCondition(&mca.Status.Conditions, *condition)
 	return conditionStatus, err
 }
 
@@ -373,21 +340,6 @@ func createCondition(
 		Reason:             reason,
 		Message:            msg,
 	}
-}
-
-// setStatusCondition appends new if there is no existed condition with same type
-// will override a condition if it is with the same type, will do no changes if type & status & reason are the same
-// this method assumes the given array of conditions don't have any two conditions with the same type
-func setStatusCondition(conditions *[]metav1.Condition, condition *metav1.Condition) {
-	for i, c := range *conditions {
-		if c.Type == condition.Type {
-			if c.Status != condition.Status || c.Reason != condition.Reason {
-				(*conditions)[i] = *condition
-			}
-			return
-		}
-	}
-	*conditions = append(*conditions, *condition)
 }
 
 // checkManifestWorkStatus checks the manifsetwork.status to report manifestwork apply status
