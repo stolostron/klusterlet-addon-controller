@@ -8,6 +8,7 @@ data:
   governance_policy_spec_sync: quay.io/open-cluster-management/governance-policy-spec-sync:latest
   governance_policy_status_sync: quay.io/open-cluster-management/governance-policy-status-sync:latest
   governance_policy_template_sync: quay.io/open-cluster-management/governance-policy-template-sync:latest
+  iam_policy_controller: quay.io/open-cluster-management/iam-policy-controller:latest
   klusterlet_addon_controller: quay.io/open-cluster-management/klusterlet-addon-controller:latest
   klusterlet_addon_lease_controller: quay.io/open-cluster-management/klusterlet-addon-lease-controller@sha256:bed6caaa74d8f088320969073fd8e1b42ec2022ceb6b6e1c89b471c57bcc82ca
   klusterlet_addon_operator: quay.io/open-cluster-management/klusterlet-addon-operator:latest
