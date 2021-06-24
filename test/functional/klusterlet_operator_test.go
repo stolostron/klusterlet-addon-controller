@@ -110,37 +110,31 @@ var validations = map[string][]string{
 		`"kind":"ApplicationManager"`,
 		`"name":"klusterlet-addon-appmgr"`,
 		`"hubKubeconfigSecret":"application-manager-hub-kubeconfig"`,
-		"klusterlet-addon-lease-controller@sha256",
 	},
 	certPolicyController: []string{
 		`"kind":"CertPolicyController"`,
 		`"name":"klusterlet-addon-certpolicyctrl"`,
 		`"hubKubeconfigSecret":"cert-policy-controller-hub-kubeconfig"`,
-		"klusterlet-addon-lease-controller@sha256",
 	},
 	iamPolicyController: []string{
 		`"kind":"IAMPolicyController"`,
 		`"name":"klusterlet-addon-iampolicyctrl"`,
 		`"hubKubeconfigSecret":"iam-policy-controller-hub-kubeconfig"`,
-		"klusterlet-addon-lease-controller@sha256",
 	},
 	policyController: []string{
 		`"kind":"PolicyController"`,
 		`"name":"klusterlet-addon-policyctrl"`,
 		`"hubKubeconfigSecret":"policy-controller-hub-kubeconfig"`,
-		"klusterlet-addon-lease-controller@sha256",
 	},
 	searchCollector: []string{
 		`"kind":"SearchCollector"`,
 		`"name":"klusterlet-addon-search"`,
 		`"hubKubeconfigSecret":"search-collector-hub-kubeconfig"`,
-		"klusterlet-addon-lease-controller@sha256",
 	},
 	workManager: []string{
 		`"kind":"WorkManager"`,
 		`"name":"klusterlet-addon-workmgr"`,
 		`"hubKubeconfigSecret":"work-manager-hub-kubeconfig"`,
-		"klusterlet-addon-lease-controller@sha256",
 	},
 	klusterletAddonOperator: []string{
 		`"kind":"Deployment"`,
