@@ -78,12 +78,6 @@ func newApplicationManagerCR(
 	}
 	gv.ImageOverrides["multicluster_operators_subscription"] = imageRepository
 
-	if imageRepositoryLease, err := instance.GetImage("klusterlet_addon_lease_controller"); err != nil {
-		log.Error(err, "Fail to get Image", "Image.Key", "klusterlet_addon_lease_controller")
-	} else {
-		gv.ImageOverrides["klusterlet_addon_lease_controller"] = imageRepositoryLease
-	}
-
 	return &agentv1.ApplicationManager{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: agentv1.SchemeGroupVersion.String(),
