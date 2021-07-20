@@ -40,6 +40,8 @@ const (
 	testNamespace             = "test-klusterlet-addon-controller"
 
 	klusterletAddonNamespace = "open-cluster-management"
+	eventuallyTimeout        = 120
+	eventuallyInterval       = 2
 )
 
 var (

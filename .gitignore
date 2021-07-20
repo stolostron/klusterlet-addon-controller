@@ -14,6 +14,7 @@ cover-functional-filtered.html
 .DS_Store
 kind_kubeconfig.yaml
 kind-config-generated.yaml
+.idea
 
 # Folders
 .build-docker

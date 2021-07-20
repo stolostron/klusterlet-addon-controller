@@ -89,7 +89,7 @@ var _ = Describe("Creating ClusterManagementAddOn", func() {
 				Eventually(func() error {
 					clusterManagementAddOn, err = clientClusterDynamic.Resource(gvrClusterManagementAddOn).Get(context.TODO(), addonName, metav1.GetOptions{})
 					return err
-				}, 5, 1).Should(BeNil())
+				}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 				By("Validating " + addonName)
 				validateUnstructured(clusterManagementAddOn, cmaValidations[addonName])
 			}
@@ -123,7 +123,7 @@ var _ = Describe("Creating ClusterManagementAddOn", func() {
 					Eventually(func() error {
 						clusterManagementAddOn, err = clientClusterDynamic.Resource(gvrClusterManagementAddOn).Get(context.TODO(), addonName, metav1.GetOptions{})
 						return err
-					}, 5, 1).Should(BeNil())
+					}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 					By("Validating " + addonName)
 					validateUnstructured(clusterManagementAddOn, cmaValidations[addonName])
 				})

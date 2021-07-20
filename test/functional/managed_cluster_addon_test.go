@@ -145,7 +145,7 @@ var _ = Describe("ManagedClusterAddOns", func() {
 				Eventually(func() error {
 					_, err := clientClusterDynamic.Resource(gvrManagedClusterAddOn).Namespace(testNamespace).Get(context.TODO(), mcaName, metav1.GetOptions{})
 					return err
-				}, 5, 1).Should(BeNil())
+				}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 			}
 		})
 		By("Disabling one by one, and managedclusteraddons should be deleted", func() {
@@ -160,7 +160,7 @@ var _ = Describe("ManagedClusterAddOns", func() {
 					Eventually(func() error {
 						_, err = clientClusterDynamic.Resource(gvrManagedClusterAddOn).Namespace(testNamespace).Get(context.TODO(), mcaName, metav1.GetOptions{})
 						return err
-					}, 5, 1).Should(BeNil())
+					}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 				})
 				By("Disabling " + addon)
 				_, err = clientClusterDynamic.Resource(gvrKlusterletAddonConfig).Namespace(testNamespace).Patch(context.TODO(), testKlusterletAddonConfigName, types.JSONPatchType, []byte(deletePatchStrings[addon]), metav1.PatchOptions{})
@@ -185,7 +185,7 @@ var _ = Describe("ManagedClusterAddOns", func() {
 					Eventually(func() error {
 						_, err = clientClusterDynamic.Resource(gvrManagedClusterAddOn).Namespace(testNamespace).Get(context.TODO(), mcaName, metav1.GetOptions{})
 						return err
-					}, 5, 1).Should(BeNil())
+					}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 				})
 
 				By("Checking the Managedclusteraddon "+mcaName+" has install namespace and registration config set", func() {
@@ -200,7 +200,7 @@ var _ = Describe("ManagedClusterAddOns", func() {
 						}
 						registrationConfigs, _, err := unstructured.NestedSlice(managedClusterAddOn.Object, "status", "registrations")
 						return len(registrationConfigs) == 1
-					}, 5, 1).Should(BeTrue())
+					}, eventuallyTimeout, eventuallyInterval).Should(BeTrue())
 				})
 			}
 		})
@@ -352,7 +352,7 @@ func hasStatusHelper(lientHubDynamic dynamic.Interface, name, namespace, condTyp
 }
 
 func checkStatusCondition(clientHubDynamic dynamic.Interface, name, namespace, condType, condStatus string) {
-	Eventually(func() error { return hasStatusHelper(clientHubDynamic, name, namespace, condType, condStatus) }, 5, 1).Should(BeNil())
+	Eventually(func() error { return hasStatusHelper(clientHubDynamic, name, namespace, condType, condStatus) }, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 }
 
 func checkStatusConditionNotFound(clientHubDynamic dynamic.Interface, name, namespace, condType, condStatus string) {
@@ -361,5 +361,5 @@ func checkStatusConditionNotFound(clientHubDynamic dynamic.Interface, name, name
 			return fmt.Errorf("Expected to not found any condition %s=%s", condType, condStatus)
 		}
 		return nil
-	}, 5, 1).Should(BeNil())
+	}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 }

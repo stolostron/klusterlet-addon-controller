@@ -37,7 +37,7 @@ fi
 
 if ! which kind > /dev/null; then
     echo "installing kind"
-    curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-$(uname)-amd64
+    curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-$(uname)-amd64
     chmod +x ./kind
     sudo mv ./kind /usr/local/bin/kind
 fi
@@ -100,6 +100,26 @@ kind create cluster --name klusterlet-addon-controller-test  --config=${FUNCT_TE
 # setup kubeconfig
 kind export kubeconfig --name=klusterlet-addon-controller-test --kubeconfig ${KIND_KUBECONFIG} 
 
+for i in {1..7}; do
+  echo "############$i  Checking kind pods status"
+
+  RUNNING_POD=$(kubectl get pods --all-namespaces 2>&1 | grep '1/1' | grep -c 'Running')
+  if [ "${RUNNING_POD}" -eq 9 ]; then
+    break
+  fi
+
+  if [ $i -eq 6 ]; then
+    echo "!!!!!!!!!!  the kind is not ready within 3 minutes"
+   kubectl get pods --all-namespaces
+    exit 1
+  fi
+  sleep 30
+done
+
+echo "##kind cluster is ready##"
+
+kubectl get pods --all-namespaces
+
 #Apply all dependent crds
 echo "installing crds"
 for file in `ls deploy/dev-crds/*.crd.yaml`; do kubectl apply -f $file; done
@@ -129,9 +149,11 @@ for dir in overlays/test/* ; do
   # kubectl apply -k $dir
   # kubectl patch deployment klusterlet-addon-controller -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"klusterlet-addon-controller\",\"image\":\"${DOCKER_IMAGE}\"}]}}}}"
   kubectl rollout status -n open-cluster-management deployment klusterlet-addon-controller --timeout=120s
+
   sleep 10
+
   ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional/... -- --v=1 --image-registry=$COMPONENT_DOCKER_REPO
-  
+
   POD=$(kubectl get pod -n open-cluster-management  -o jsonpath="{.items[0].metadata.name}")
   kubectl exec -it $POD -n open-cluster-management -- ls /tmp/coverage
 

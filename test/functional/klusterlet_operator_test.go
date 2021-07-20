@@ -196,7 +196,7 @@ var _ = Describe("Creating KlusterletAddonConfig", func() {
 				Eventually(func() error {
 					crds, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), allCRDs, metav1.GetOptions{})
 					return err
-				}, 5, 1).Should(BeNil())
+				}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 				validateUnstructured(crds, validations[allCRDs])
 				Expect(isOwner(ownerKlusterletAddonConfig, crds)).Should(BeTrue(), "OwnerRef of "+allCRDs+" should be set correctly")
 			})
@@ -209,7 +209,7 @@ var _ = Describe("Creating KlusterletAddonConfig", func() {
 				Eventually(func() error {
 					addon, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), klusterletAddonOperator, metav1.GetOptions{})
 					return err
-				}, 5, 1).Should(BeNil())
+				}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 				validateUnstructured(addon, validations[klusterletAddonOperator])
 				Expect(isOwner(ownerKlusterletAddonConfig, addon)).Should(BeTrue(), "OwnerRef of "+klusterletAddonOperator+" should be set correctly")
 			})
@@ -221,7 +221,7 @@ var _ = Describe("Creating KlusterletAddonConfig", func() {
 					Eventually(func() error {
 						cr, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), crName, metav1.GetOptions{})
 						return err
-					}, 5, 1).Should(BeNil())
+					}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 					By("Validating " + crName)
 					validateUnstructured(cr, validations[crName])
 					Expect(isOwner(ownerKlusterletAddonConfig, cr)).Should(BeTrue(), "OwnerRef of "+crName+" should be set correctly")
@@ -242,7 +242,7 @@ var _ = Describe("Creating KlusterletAddonConfig", func() {
 				Eventually(func() error {
 					crds, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), allCRDs, metav1.GetOptions{})
 					return err
-				}, 5, 1).Should(BeNil())
+				}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 				validateUnstructured(crds, validations[allCRDs])
 				Expect(isOwner(ownerKlusterletAddonConfig, crds)).Should(BeTrue(), "OwnerRef of "+allCRDs+" should be set correctly")
 			})
@@ -252,7 +252,7 @@ var _ = Describe("Creating KlusterletAddonConfig", func() {
 				Eventually(func() error {
 					addon, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), klusterletAddonOperator, metav1.GetOptions{})
 					return err
-				}, 5, 1).Should(BeNil())
+				}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 				validateUnstructured(addon, validations[klusterletAddonOperator])
 				Expect(isOwner(ownerKlusterletAddonConfig, addon)).Should(BeTrue(), "OwnerRef of "+klusterletAddonOperator+" should be set correctly")
 			})
@@ -290,7 +290,7 @@ var _ = Describe("Disabling & Enabling Addons", func() {
 			Eventually(func() error {
 				crds, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), allCRDs, metav1.GetOptions{})
 				return err
-			}, 5, 1).Should(BeNil())
+			}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 			validateUnstructured(crds, validations[allCRDs])
 			Expect(isOwner(ownerKlusterletAddonConfig, crds)).Should(BeTrue(), "OwnerRef of "+allCRDs+" should be set correctly")
 		})
@@ -308,7 +308,7 @@ var _ = Describe("Disabling & Enabling Addons", func() {
 					Eventually(func() error {
 						_, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), addon, metav1.GetOptions{})
 						return err
-					}, 5, 1).Should(BeNil())
+					}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 				})
 				By("Disabling " + addon)
 				_, err = clientClusterDynamic.Resource(gvrKlusterletAddonConfig).Namespace(testNamespace).Patch(context.TODO(), testKlusterletAddonConfigName, types.JSONPatchType, []byte(deletePatchStrings[addon]), metav1.PatchOptions{})
@@ -344,7 +344,7 @@ var _ = Describe("Disabling & Enabling Addons", func() {
 					Eventually(func() error {
 						_, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), addon, metav1.GetOptions{})
 						return err
-					}, 5, 1).Should(BeNil())
+					}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 				})
 			}
 		})
@@ -373,7 +373,7 @@ var _ = Describe("Deleting Managedcluster Which Has Never Been Online", func() {
 			Eventually(func() error {
 				crds, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), allCRDs, metav1.GetOptions{})
 				return err
-			}, 5, 1).Should(BeNil())
+			}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 			validateUnstructured(crds, validations[allCRDs])
 			Expect(isOwner(ownerKlusterletAddonConfig, crds)).Should(BeTrue(), "OwnerRef of "+allCRDs+" should be set correctly")
 		})
@@ -424,7 +424,7 @@ var _ = Describe("Deleting A Joined ManagedCluster", func() {
 			Eventually(func() error {
 				crds, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), allCRDs, metav1.GetOptions{})
 				return err
-			}, 5, 1).Should(BeNil())
+			}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 			validateUnstructured(crds, validations[allCRDs])
 			Expect(isOwner(ownerKlusterletAddonConfig, crds)).Should(BeTrue(), "OwnerRef of "+allCRDs+" should be set correctly")
 		})
@@ -467,19 +467,19 @@ var _ = Describe("Deleting A Joined ManagedCluster", func() {
 						}
 					}
 					return nil
-				}, 5, 1).Should(BeNil())
+				}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 			})
 
 			By("Checking deletion timestamp empty for klusterlet addon operator", func() {
 				Consistently(func() error {
 					return checkDeletionTimestampIsNotSet(clientClusterDynamic, gvrManifestwork, klusterletAddonOperator, testNamespace)
-				}, 5, 1).Should(BeNil())
+				}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 			})
 
 			By("Checking deletion timestamp empty for CRDs", func() {
 				Consistently(func() error {
 					return checkDeletionTimestampIsNotSet(clientClusterDynamic, gvrManifestwork, allCRDs, testNamespace)
-				}, 5, 1).Should(BeNil())
+				}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 			})
 		})
 		It("Should remove all Manifestworks", func() {
@@ -550,7 +550,7 @@ var _ = Describe("Deleting KlusterletAddonConfig Only", func() {
 			Eventually(func() error {
 				crds, err = clientClusterDynamic.Resource(gvrManifestwork).Namespace(testNamespace).Get(context.TODO(), allCRDs, metav1.GetOptions{})
 				return err
-			}, 5, 1).Should(BeNil())
+			}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 			validateUnstructured(crds, validations[allCRDs])
 			Expect(isOwner(ownerKlusterletAddonConfig, crds)).Should(BeTrue(), "OwnerRef of "+allCRDs+" should be set correctly")
 		})
@@ -699,7 +699,7 @@ func addFinalizerToManifestWork(clientHubDynamic dynamic.Interface, name string,
 	Eventually(func() error {
 		_, err := clientHubDynamic.Resource(gvrManifestwork).Namespace(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		return err
-	}, 5, 1).Should(BeNil())
+	}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 
 	// patch and add finalizer
 	patchString := fmt.Sprintf(
@@ -718,7 +718,7 @@ func deleteFinalizerOfManifestWork(clientHubDynamic dynamic.Interface, name stri
 	Eventually(func() error {
 		_, err := clientHubDynamic.Resource(gvrManifestwork).Namespace(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		return err
-	}, 5, 1).Should(BeNil())
+	}, eventuallyTimeout, eventuallyInterval).Should(BeNil())
 
 	// patch and add finalizer
 	patchString := fmt.Sprintf(
