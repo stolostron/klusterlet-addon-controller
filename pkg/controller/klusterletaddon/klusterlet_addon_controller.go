@@ -40,6 +40,7 @@ var log = logf.Log.WithName("controller_klusterletaddon")
 
 const (
 	KlusterletAddonConfigAnnotationPause = "klusterletaddonconfig-pause"
+	PolicyControllerLabel                = "policycontroller.addon.open-cluster-management.io"
 )
 
 // Add creates a new KlusterletAddon Controller and adds it to the Manager.
@@ -210,6 +211,12 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 			return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, err
 		}
 
+		//update managedcluster label for PolicyController
+		if err := setManagedClusterPolicyControllerLabel(managedCluster, klusterletAddonConfig, r.client); err != nil {
+			reqLogger.Error(err, "Fail to update label for PolicyController in managedcluster")
+			return reconcile.Result{}, err
+		}
+
 		utils.RemoveFinalizer(klusterletAddonConfig, KlusterletAddonFinalizer)
 		if err := r.client.Update(context.TODO(), klusterletAddonConfig); err != nil {
 			return reconcile.Result{}, err
@@ -286,6 +293,12 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 	// Sync ManagedClusterAddon for component crs according to klusterletAddonConfig enable/disable settings
 	if err := syncManagedClusterAddonCRs(klusterletAddonConfig, r); err != nil {
 		reqLogger.Error(err, "Fail to create ManagedClusterAddon for CRs")
+		return reconcile.Result{}, err
+	}
+
+	//update managedcluster label for PolicyController
+	if err := setManagedClusterPolicyControllerLabel(managedCluster, klusterletAddonConfig, r.client); err != nil {
+		reqLogger.Error(err, "Fail to update label for PolicyController in managedcluster")
 		return reconcile.Result{}, err
 	}
 
@@ -380,4 +393,17 @@ func IsCRDManfestWorkAvailable(manifestWork *manifestworkv1.ManifestWork) bool {
 	}
 
 	return false
+}
+
+func setManagedClusterPolicyControllerLabel(managedCluster *managedclusterv1.ManagedCluster, klusterletAddonConfig *agentv1.KlusterletAddonConfig, client client.Client) error {
+	if klusterletAddonConfig.DeletionTimestamp != nil ||
+		!klusterletAddonConfig.Spec.PolicyController.Enabled {
+		delete(managedCluster.GetLabels(), PolicyControllerLabel)
+	} else {
+		if managedCluster.GetLabels() == nil {
+			managedCluster.SetLabels(map[string]string{})
+		}
+		managedCluster.GetLabels()[PolicyControllerLabel] = "true"
+	}
+	return client.Update(context.TODO(), managedCluster)
 }

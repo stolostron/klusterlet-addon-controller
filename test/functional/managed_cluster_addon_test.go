@@ -22,6 +22,10 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
+const (
+	PolicyControllerLabel = "policycontroller.addon.open-cluster-management.io"
+)
+
 var mcaMaps = map[string]string{
 	applicationManager:   "application-manager",
 	certPolicyController: "cert-policy-controller",
@@ -130,6 +134,9 @@ var _ = Describe("ManagedClusterAddOns", func() {
 				validateUnstructured(mca, mcaValidations[mcaName])
 				Expect(isOwner(ownerKlusterletAddonConfig, mca)).Should(BeTrue(), "OwnerRef of "+mcaName+" should be set correctly")
 			}
+			managedCluster, err := clientClusterDynamic.Resource(gvrManagedCluster).Get(context.TODO(), testKlusterletAddonConfigName, metav1.GetOptions{})
+			Expect(err).Should(BeNil())
+			Expect(managedCluster.GetLabels()[PolicyControllerLabel]).To(Equal("true"))
 		})
 		By("If managedclusteraddons are deleted accidentally, should recreate", func() {
 			for _, addon := range addonCRs {
@@ -168,7 +175,18 @@ var _ = Describe("ManagedClusterAddOns", func() {
 				By("Checking the Managedclusteraddon "+mcaName+" is created", func() {
 					eventuallyNotFound(clientClusterDynamic, gvrManagedClusterAddOn, mcaName, testNamespace)
 				})
+				if addon == "policyController" {
+					managedCluster, err := clientClusterDynamic.Resource(gvrManagedCluster).Get(context.TODO(), testKlusterletAddonConfigName, metav1.GetOptions{})
+					Expect(err).Should(BeNil())
+					_, ok := managedCluster.GetLabels()[PolicyControllerLabel]
+					Expect(ok).To(BeFalse())
+				}
 			}
+			//Check when all disbable that still no label
+			managedCluster, err := clientClusterDynamic.Resource(gvrManagedCluster).Get(context.TODO(), testKlusterletAddonConfigName, metav1.GetOptions{})
+			Expect(err).Should(BeNil())
+			_, ok := managedCluster.GetLabels()[PolicyControllerLabel]
+			Expect(ok).To(BeFalse())
 		})
 		By("Enabling one by one, and managedclusteraddons should be removed", func() {
 			var err error
@@ -202,7 +220,15 @@ var _ = Describe("ManagedClusterAddOns", func() {
 						return len(registrationConfigs) == 1
 					}, 5, 1).Should(BeTrue())
 				})
+				if addon == "policyController" {
+					managedCluster, err := clientClusterDynamic.Resource(gvrManagedCluster).Get(context.TODO(), testKlusterletAddonConfigName, metav1.GetOptions{})
+					Expect(err).Should(BeNil())
+					Expect(managedCluster.GetLabels()[PolicyControllerLabel]).To(Equal("true"))
+				}
 			}
+			managedCluster, err := clientClusterDynamic.Resource(gvrManagedCluster).Get(context.TODO(), testKlusterletAddonConfigName, metav1.GetOptions{})
+			Expect(err).Should(BeNil())
+			Expect(managedCluster.GetLabels()[PolicyControllerLabel]).To(Equal("true"))
 		})
 		By("Deleting klusterletaddonconfig, and all managedclusteraddons should be deleted", func() {
 			Expect(func() error {
