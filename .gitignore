@@ -21,6 +21,7 @@ build/_output
 build-harness
 build-harness-extensions
 vendor
+.idea
 
 test/e2e/resources/clusters
 test/e2e/resources/hubs
