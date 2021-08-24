@@ -22,6 +22,7 @@ import (
 	certificatesv1 "k8s.io/api/certificates/v1"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -408,18 +409,14 @@ func checkManifestWorkStatus(m *manifestworkv1.ManifestWork) (numFailed, numSucc
 		hasError := false
 		ordinal := int(mc.ResourceMeta.Ordinal)
 		// will search for applied=true in conditions, and record error messages if not applied
-		for _, c := range mc.Conditions {
-			if manifestworkv1.ManifestConditionType(c.Type) == manifestworkv1.ManifestApplied &&
-				c.Status == metav1.ConditionTrue {
-				isApplied = true
-			}
+		if meta.IsStatusConditionTrue(mc.Conditions, string(manifestworkv1.ManifestApplied)) {
+			isApplied = true
+		} else {
 			// applied & false means error based on implementation of manifestwork:
 			// https://github.com/open-cluster-management/work/blob/1fa05673bdbca451c8c99624ad9a91c33950018f/pkg/spoke/controllers/manifestcontroller/manifestwork_controller.go#L363
-			if manifestworkv1.ManifestConditionType(c.Type) == manifestworkv1.ManifestApplied &&
-				c.Status == metav1.ConditionFalse {
-				hasError = true
-			}
+			hasError = true
 		}
+
 		if ordinal >= 0 && ordinal < len(manifestIsAppliedArray) {
 			if hasError {
 				manifestFailedArray[ordinal] = true

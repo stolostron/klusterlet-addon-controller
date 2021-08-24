@@ -10,11 +10,13 @@ package klusterletaddon
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
 
 	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
+	"github.com/open-cluster-management/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -436,4 +438,96 @@ func Test_newCustomClient(t *testing.T) {
 		}
 	})
 
+}
+
+
+func newImageRegistry(namespace, name, registry, pullSecret string) *v1alpha1.ManagedClusterImageRegistry {
+	return &v1alpha1.ManagedClusterImageRegistry{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: v1alpha1.ImageRegistrySpec{
+			Registry:   registry,
+			PullSecret: corev1.LocalObjectReference{Name: pullSecret},
+		},
+	}
+}
+
+func Test_getImageRegistryAndPullSecret(t *testing.T) {
+	s := scheme.Scheme
+	s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.ManagedClusterImageRegistry{})
+	tests := []struct {
+		name                    string
+		imageRegistryLabelValue string
+		client                  func() client.Client
+		expectedErr             error
+		expectedRegistry        string
+		expectedNamespace       string
+		expectedPullSecret      string
+	}{
+		{
+			name:                    "get registry and pullSecret successfully",
+			imageRegistryLabelValue: "myNamespace.myImageRegistry",
+			client: func() client.Client {
+				return fake.NewFakeClientWithScheme(s, newImageRegistry("myNamespace", "myImageRegistry", "myRegistry", "mySecret"))
+			},
+			expectedErr:        nil,
+			expectedRegistry:   "myRegistry",
+			expectedNamespace:  "myNamespace",
+			expectedPullSecret: "mySecret",
+		},
+		{
+			name:                    "invalid imageRegistryLabelValue",
+			imageRegistryLabelValue: "myImageRegistry",
+			client: func() client.Client {
+				return fake.NewFakeClientWithScheme(s, newImageRegistry("myNamespace", "myImageRegistry", "myRegistry", "mySecret"))
+			},
+			expectedErr:        fmt.Errorf("invalid format of image registry label value myImageRegistry"),
+			expectedRegistry:   "",
+			expectedNamespace:  "",
+			expectedPullSecret: "",
+		},
+		{
+			name:                    "imageRegistry not found",
+			imageRegistryLabelValue: "myNamespace.myImageRegistry",
+			client: func() client.Client {
+				return fake.NewFakeClientWithScheme(s, newImageRegistry("ns1", "ir1", "myRegistry", "mySecret"))
+			},
+			expectedErr:        fmt.Errorf("managedclusterimageregistries.imageregistry.open-cluster-management.io \"myImageRegistry\" not found"),
+			expectedRegistry:   "",
+			expectedNamespace:  "",
+			expectedPullSecret: "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testClient := test.client()
+			registry, namespace, pullSecret, err := getImageRegistryAndPullSecret(testClient, test.imageRegistryLabelValue)
+			if err == nil && test.expectedErr != nil {
+				t.Errorf("should get error %v, but get nil", test.expectedErr)
+			}
+
+			if err != nil && test.expectedErr == nil {
+				t.Errorf("should get no error, but get %v", err)
+			}
+
+			if err != nil && test.expectedErr != nil {
+				if !reflect.DeepEqual(err.Error(), test.expectedErr.Error()) {
+					t.Errorf("should get error %#v, but get error %#v", test.expectedErr.Error(), err.Error())
+				}
+			}
+
+			if !reflect.DeepEqual(registry, test.expectedRegistry) {
+				t.Errorf("should get registry %v, but get %v", test.expectedRegistry, registry)
+			}
+			if !reflect.DeepEqual(namespace, test.expectedNamespace) {
+				t.Errorf("should get namesapce %v, but get %v", test.expectedNamespace, namespace)
+			}
+			if !reflect.DeepEqual(pullSecret, test.expectedPullSecret) {
+				t.Errorf("should get pullsecret %v, but get %v", test.expectedPullSecret, pullSecret)
+			}
+		})
+	}
 }

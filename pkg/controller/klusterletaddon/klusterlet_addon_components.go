@@ -27,6 +27,7 @@ const (
 // createManifestWorkComponentOperator - creates manifest work for klusterlet addon operator
 func createManifestWorkComponentOperator(
 	klusterletaddoncfg *agentv1.KlusterletAddonConfig,
+	pullSecretNamespace string,
 	r *ReconcileKlusterletAddon) error {
 
 	var manifests []manifestworkv1.Manifest
@@ -44,7 +45,8 @@ func createManifestWorkComponentOperator(
 	serviceAccount := addonoperator.NewServiceAccount(klusterletaddoncfg, addonoperator.KlusterletAddonNamespace)
 
 	// create imagePullSecret
-	imagePullSecret, err := addonoperator.NewImagePullSecret(klusterletaddoncfg, r.client)
+	imagePullSecret, err := addonoperator.NewImagePullSecret(pullSecretNamespace,
+		klusterletaddoncfg.Spec.ImagePullSecret, r.client)
 	if err != nil {
 		log.Error(err, "Fail to create imagePullSecret")
 		return err

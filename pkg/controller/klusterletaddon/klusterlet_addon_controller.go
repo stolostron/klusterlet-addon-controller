@@ -11,15 +11,23 @@ package klusterletaddon
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"time"
 
 	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
+	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
+	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
+	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/utils"
+	"github.com/open-cluster-management/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -29,17 +37,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
-	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/utils"
 )
 
 var log = logf.Log.WithName("controller_klusterletaddon")
 
 const (
 	KlusterletAddonConfigAnnotationPause = "klusterletaddonconfig-pause"
+	clusterImageRegistryLabel            = "open-cluster-management.io/image-registry"
 )
 
 // Add creates a new KlusterletAddon Controller and adds it to the Manager.
@@ -261,12 +265,32 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, nil
 	}
 
-	// Fill with default imagePullSecret if empty
-	if klusterletAddonConfig.Spec.ImagePullSecret == "" {
-		klusterletAddonConfig.Spec.ImagePullSecret = os.Getenv("DEFAULT_IMAGE_PULL_SECRET")
+	var registry, pullSecretNamespace, pullSecret string
+	var err error
+	// TODO: deprecate klusterletAddonConfig.Spec.ImagePullSecret and klusterletAddonConfig.Spec.Registry.
+	// TODO: refactor this part using a new Config struct as parameter.
+	// klusterletAddonConfig.Spec.ImagePullSecret and klusterletAddonConfig.Spec.Registry are not used by now.
+	// first check the klusterletAddonConfig.Spec.ImagePullSecret
+	// then check imageRegistry
+	if klusterletAddonConfig.Spec.ImagePullSecret != "" {
+		pullSecretNamespace = managedCluster.Name
+	} else if managedCluster.Labels[clusterImageRegistryLabel] != "" {
+		registry, pullSecretNamespace, pullSecret, err = getImageRegistryAndPullSecret(r.client,
+			managedCluster.Labels[clusterImageRegistryLabel])
+		if err != nil {
+			reqLogger.Error(err, "failed to get custom registry and pull secret. %v", err)
+		} else {
+			klusterletAddonConfig.Spec.ImagePullSecret = pullSecret
+			klusterletAddonConfig.Spec.ImageRegistry = registry
+		}
 	}
 
-	// Fill with default imageRegistry if empty
+	// set default if empty
+	if klusterletAddonConfig.Spec.ImagePullSecret == "" {
+		klusterletAddonConfig.Spec.ImagePullSecret = os.Getenv("DEFAULT_IMAGE_PULL_SECRET")
+		pullSecretNamespace = os.Getenv("POD_NAMESPACE")
+	}
+
 	if klusterletAddonConfig.Spec.ImageRegistry == "" {
 		klusterletAddonConfig.Spec.ImageRegistry = os.Getenv("DEFAULT_IMAGE_REGISTRY")
 	}
@@ -278,7 +302,7 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 	}
 
 	// Create manifest work for Klusterlet Addon operator
-	if err := createManifestWorkComponentOperator(klusterletAddonConfig, r); err != nil {
+	if err := createManifestWorkComponentOperator(klusterletAddonConfig, pullSecretNamespace, r); err != nil {
 		reqLogger.Error(err, "Fail to create manifest work for klusterlet addon opearator")
 		return reconcile.Result{}, err
 	}
@@ -295,7 +319,7 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 	}
 
 	if manifestWork != nil && len(manifestWork.Status.Conditions) > 0 {
-		if IsCRDManfestWorkAvailable(manifestWork) {
+		if IsCRDManifestWorkAvailable(manifestWork) {
 			// sync manifestWork for component crs according to klusterletAddonConfig enable/disable settings
 			if err := syncManifestWorkCRs(klusterletAddonConfig, r); err != nil {
 				reqLogger.Error(err, "Fail to create manifest work for CRs")
@@ -316,15 +340,8 @@ func IsManagedClusterOnline(managedCluster *managedclusterv1.ManagedCluster) boo
 	if managedCluster == nil {
 		return false
 	}
-	for _, condition := range managedCluster.Status.Conditions {
-		if condition.Type == managedclusterv1.ManagedClusterConditionAvailable { //not sure which condition is valid
-			if condition.Status == "True" {
-				return true
-			}
-		}
-	}
 
-	return false
+	return meta.IsStatusConditionTrue(managedCluster.Status.Conditions, managedclusterv1.ManagedClusterConditionAvailable)
 }
 
 // deleteManifestWorkHelper returns true if object is not found
@@ -369,15 +386,29 @@ func newManagedClusterAddonDeletionPredicate() predicate.Predicate {
 	})
 }
 
-// IsCRDManfestWorkAvailable - if manifestwork for crd is applied and resource is available on managed cluster it will return true
-func IsCRDManfestWorkAvailable(manifestWork *manifestworkv1.ManifestWork) bool {
-	for _, condition := range manifestWork.Status.Conditions {
-		if condition.Type == manifestworkv1.WorkAvailable { //not sure which condition is valid
-			if condition.Status == "True" {
-				return true
-			}
-		}
-	}
+// IsCRDManifestWorkAvailable - if manifestwork for crd is applied and resource is available on managed cluster it will return true
+func IsCRDManifestWorkAvailable(manifestWork *manifestworkv1.ManifestWork) bool {
+	return meta.IsStatusConditionTrue(manifestWork.Status.Conditions, manifestworkv1.WorkAvailable)
+}
 
-	return false
+// getImageRegistryAndPullSecret gets registry and pullSecret from imageRegistryLabelValue.
+// imageRegistryLabelValue format is namespace.imageRegistry
+func getImageRegistryAndPullSecret(client client.Client,
+	imageRegistryLabelValue string) (registry, namespace, pullSecret string, err error) {
+	segments := strings.Split(imageRegistryLabelValue, ".")
+	if len(segments) != 2 {
+		klog.Errorf("invalid format of image registry label value %v", imageRegistryLabelValue)
+		return "", "", "", fmt.Errorf("invalid format of image registry label value %v", imageRegistryLabelValue)
+	}
+	namespace = segments[0]
+	imageRegistryName := segments[1]
+	imageRegistry := &v1alpha1.ManagedClusterImageRegistry{}
+	err = client.Get(context.TODO(), types.NamespacedName{Name: imageRegistryName, Namespace: namespace}, imageRegistry)
+	if err != nil {
+		klog.Errorf("failed to get imageregistry %v/%v", namespace, imageRegistryName)
+		return "", "", "", err
+	}
+	registry = imageRegistry.Spec.Registry
+	pullSecret = imageRegistry.Spec.PullSecret.Name
+	return registry, namespace, pullSecret, nil
 }
