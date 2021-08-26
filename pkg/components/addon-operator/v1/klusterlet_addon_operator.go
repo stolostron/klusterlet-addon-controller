@@ -214,22 +214,23 @@ func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*
 }
 
 // NewImagePullSecret returns a secret for dockerconfig
-// data is copied from instance.Namespace/instance.Spec.ImagePullSecret or POD_NAMESPACE/DEFAULT_IMAGE_PULL_SECRET
-func NewImagePullSecret(instance *agentv1.KlusterletAddonConfig, client client.Client) (*corev1.Secret, error) {
-	if instance.Spec.ImagePullSecret == "" {
+func NewImagePullSecret(pullSecretNamespace, pullSecret string, client client.Client) (*corev1.Secret, error) {
+	if pullSecret == "" {
 		return nil, nil
 	}
 
+	// pullSecret and pullSecretNamespace are from imageRegistry
+	// if failed get from default env
 	secret := &corev1.Secret{}
 	secretNsN := types.NamespacedName{
-		Name:      instance.Spec.ImagePullSecret,
-		Namespace: instance.Namespace,
+		Name:      pullSecret,
+		Namespace: pullSecretNamespace,
 	}
 	defaultSecretNsN := types.NamespacedName{
 		Name:      os.Getenv("DEFAULT_IMAGE_PULL_SECRET"),
 		Namespace: os.Getenv("POD_NAMESPACE"),
 	}
-	//fetch secret from cluster namespace
+	//fetch secret from customized namespace
 	if err := client.Get(context.TODO(), secretNsN, secret); err != nil {
 		if !errors.IsNotFound(err) && secretNsN.Name != defaultSecretNsN.Name {
 			//fail to fetch cluster namespace secret and secret name is explicitly set to a value different from default

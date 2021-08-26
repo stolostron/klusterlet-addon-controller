@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -60,11 +61,18 @@ func (instance KlusterletAddonConfig) GetImage(component string) (imageRepositor
 		return "", err
 	}
 
-	if m.Images[component] == "" {
+	image := m.Images[component]
+	if image == "" {
 		return "", fmt.Errorf("addon image not found")
 	}
 
-	return m.Images[component], nil
+	if instance.Spec.ImageRegistry != "" {
+		registry := strings.TrimSuffix(instance.Spec.ImageRegistry, "/")
+		imageSegments := strings.Split(image, "/")
+		image = registry + "/" + imageSegments[len(imageSegments)-1]
+
+	}
+	return image, nil
 }
 
 // getManifest returns the manifest that is best matching the required version

@@ -15,7 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/kubectl/pkg/scheme"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
@@ -124,8 +124,9 @@ func Test_createManifestWorkComponentOperator(t *testing.T) {
 	}
 
 	type args struct {
-		r                  *ReconcileKlusterletAddon
-		klusterletaddoncfg *agentv1.KlusterletAddonConfig
+		r                   *ReconcileKlusterletAddon
+		klusterletaddoncfg  *agentv1.KlusterletAddonConfig
+		pullSecretNamespace string
 	}
 
 	tests := []struct {
@@ -142,7 +143,8 @@ func Test_createManifestWorkComponentOperator(t *testing.T) {
 					}...),
 					scheme: testscheme,
 				},
-				klusterletaddoncfg: testKlusterletAddonConfig,
+				klusterletaddoncfg:  testKlusterletAddonConfig,
+				pullSecretNamespace: "test-managedcluster",
 			},
 			wantErr: false,
 		},
@@ -155,7 +157,8 @@ func Test_createManifestWorkComponentOperator(t *testing.T) {
 					}...),
 					scheme: testscheme,
 				},
-				klusterletaddoncfg: testKlusterletAddonConfig,
+				klusterletaddoncfg:  testKlusterletAddonConfig,
+				pullSecretNamespace: "test-managedcluster",
 			},
 			wantErr: true,
 		},
@@ -163,7 +166,7 @@ func Test_createManifestWorkComponentOperator(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := createManifestWorkComponentOperator(tt.args.klusterletaddoncfg, tt.args.r)
+			err := createManifestWorkComponentOperator(tt.args.klusterletaddoncfg, tt.args.pullSecretNamespace, tt.args.r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("createManifestWorkComponentOperator() error = %v, wantErr %v", err, tt.wantErr)
 				return

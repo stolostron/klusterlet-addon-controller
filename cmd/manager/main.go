@@ -22,6 +22,7 @@ import (
 	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller"
 	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
 	"github.com/open-cluster-management/klusterlet-addon-controller/version"
+	"github.com/open-cluster-management/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 	ocinfrav1 "github.com/openshift/api/config/v1"
 
 	//"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -119,6 +120,11 @@ func main() {
 	}
 
 	if err := addonv1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := v1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
