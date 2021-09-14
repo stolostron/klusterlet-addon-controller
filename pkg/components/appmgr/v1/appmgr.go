@@ -69,6 +69,7 @@ func newApplicationManagerCR(
 		ImagePullPolicy: instance.Spec.ImagePullPolicy,
 		ImagePullSecret: instance.Spec.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 2),
+		NodeSelector:    instance.Spec.NodeSelector,
 	}
 
 	imageRepository, err := instance.GetImage("multicluster_operators_subscription")

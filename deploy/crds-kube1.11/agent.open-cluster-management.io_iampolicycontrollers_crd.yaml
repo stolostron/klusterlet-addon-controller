@@ -55,6 +55,10 @@ spec:
                   type: string
                 imagePullSecret:
                   type: string
+                nodeSelector:
+                  additionalProperties:
+                    type: string
+                  type: object
               type: object
             hubKubeconfigSecret:
               minLength: 1

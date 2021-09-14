@@ -197,6 +197,14 @@ func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*
 							},
 						},
 					},
+					NodeSelector: instance.Spec.NodeSelector,
+					Tolerations: []corev1.Toleration{
+						{
+							Key:      "node-role.kubernetes.io/infra",
+							Operator: corev1.TolerationOpExists,
+							Effect:   corev1.TaintEffectNoSchedule,
+						},
+					},
 				},
 			},
 		},

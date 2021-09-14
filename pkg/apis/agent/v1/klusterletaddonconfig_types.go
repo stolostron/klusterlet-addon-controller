@@ -33,6 +33,8 @@ type KlusterletAddonConfigSpec struct {
 
 	ClusterLabels map[string]string `json:"clusterLabels"`
 
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
 	SearchCollectorConfig      KlusterletAddonConfigSearchCollectorSpec      `json:"searchCollector"`
 	PolicyController           KlusterletAddonConfigPolicyControllerSpec     `json:"policyController"`
 	ApplicationManagerConfig   KlusterletAddonConfigApplicationManagerSpec   `json:"applicationManager"`
