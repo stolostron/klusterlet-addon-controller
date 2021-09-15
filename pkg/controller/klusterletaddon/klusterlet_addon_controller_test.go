@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
 	"github.com/open-cluster-management/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -23,14 +22,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
-	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	ocinfrav1 "github.com/openshift/api/config/v1"
+	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
+	manifestworkv1 "open-cluster-management.io/api/work/v1"
 )
 
 func TestReconcileKlusterletAddon_Reconcile(t *testing.T) {
@@ -439,7 +439,6 @@ func Test_newCustomClient(t *testing.T) {
 	})
 
 }
-
 
 func newImageRegistry(namespace, name, registry, pullSecret string) *v1alpha1.ManagedClusterImageRegistry {
 	return &v1alpha1.ManagedClusterImageRegistry{

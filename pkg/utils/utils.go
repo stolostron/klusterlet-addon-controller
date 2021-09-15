@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
+	manifestworkv1 "open-cluster-management.io/api/work/v1"
 )
 
 var log = logf.Log.WithName("utils")
