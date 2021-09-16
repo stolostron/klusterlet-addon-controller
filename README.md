@@ -73,6 +73,13 @@ to regenerate the zz_generated.deepcopy.go file.
 
 ## Run Functional Test
 
+## Run e2e Test
+
+```
+export KUBECONFIG=<cluster kube config>
+make test-e2e
+```
+
 ### Before Testing functional test with KinD
 
 1. Make sure you have [ginkgo](https://onsi.github.io/ginkgo/) excutable ready in your env. If not, do the following:

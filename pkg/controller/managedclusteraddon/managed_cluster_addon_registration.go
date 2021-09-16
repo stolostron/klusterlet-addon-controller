@@ -186,10 +186,12 @@ func deleteHubKubeConfigResources(
 		ManagedClusterNamespace string
 		ComponentName           string
 		ClusterRoleName         string
+		ManagedClusterAddOnName string
 	}{
 		ManagedClusterName:      managedClusterName,
 		ManagedClusterNamespace: managedClusterName,
 		ComponentName:           componentName,
+		ManagedClusterAddOnName: addon.GetManagedClusterAddOnName(),
 		ClusterRoleName:         addons.GetAddonClusterRolePrefix() + addon.GetManagedClusterAddOnName(),
 	}
 

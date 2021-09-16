@@ -228,7 +228,7 @@ func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (rec
 		(!addon.IsEnabled(klusterletaddonconfig) || klusterletaddonconfig.DeletionTimestamp != nil) {
 		// delete all
 		if err := deleteAll(r.client, addon, managedClusterAddOn); err != nil {
-			log.Error(err, "failed to delete ManagedClusterAddOn %s and its hub kubeconfig resourcers"+managedClusterAddOn.Name)
+			log.Error(err, "failed to delete ManagedClusterAddOn and its hub kubeconfig resources", "ManagedClusterAddOnName", managedClusterAddOn.Name)
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{}, nil
