@@ -14,9 +14,6 @@ import (
 	"os"
 	"runtime"
 
-	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
-	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
-	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis"
 	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller"
@@ -24,6 +21,9 @@ import (
 	"github.com/open-cluster-management/klusterlet-addon-controller/version"
 	"github.com/open-cluster-management/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 	ocinfrav1 "github.com/openshift/api/config/v1"
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
+	manifestworkv1 "open-cluster-management.io/api/work/v1"
 
 	//"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	//kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"

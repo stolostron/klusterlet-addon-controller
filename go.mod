@@ -8,7 +8,6 @@ require (
 	github.com/go-bindata/go-bindata v3.1.2+incompatible
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.13.0
-	github.com/open-cluster-management/api v0.0.0-20210527013639-a6845f2ebcb1
 	github.com/open-cluster-management/library-e2e-go v0.0.0-20200620112055-c80fc3c14997
 	github.com/open-cluster-management/library-go v0.0.0-20200828173847-299c21e6c3fc
 	github.com/open-cluster-management/multicloud-operators-foundation v0.0.0-20210824054957-51557a572f11
@@ -23,6 +22,7 @@ require (
 	k8s.io/apimachinery v0.21.2
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog v1.0.0
+	open-cluster-management.io/api v0.0.0-20210914103453-4b63f3f3b199
 	sigs.k8s.io/controller-runtime v0.9.3-0.20210709165254-650ea59f19cc
 )
 

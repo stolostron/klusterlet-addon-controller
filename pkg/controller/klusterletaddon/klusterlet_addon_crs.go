@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"reflect"
 
-	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
-	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
 	addonoperator "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/addon-operator/v1"
@@ -31,6 +29,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	manifestworkv1 "open-cluster-management.io/api/work/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -181,10 +181,11 @@ func updateManagedClusterAddon(
 		return err
 	}
 	ref := []addonv1alpha1.ObjectReference{
-		addonv1alpha1.ObjectReference{
-			Group:    agentv1.SchemeGroupVersion.Group,
-			Resource: "klusterletaddonconfigs",
-			Name:     klusterletaddonconfig.Name,
+		{
+			Group:     agentv1.SchemeGroupVersion.Group,
+			Resource:  "klusterletaddonconfigs",
+			Name:      klusterletaddonconfig.Name,
+			Namespace: klusterletaddonconfig.Namespace,
 		},
 	}
 	addonMeta := addonv1alpha1.AddOnMeta{}

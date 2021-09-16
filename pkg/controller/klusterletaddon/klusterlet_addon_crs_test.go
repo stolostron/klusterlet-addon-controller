@@ -13,8 +13,6 @@ import (
 	"reflect"
 	"testing"
 
-	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
-	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
 	appmgr "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/appmgr/v1"
@@ -26,6 +24,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	manifestworkv1 "open-cluster-management.io/api/work/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -543,9 +543,10 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 	addon1 := certpolicyctrl.AddonCertPolicyCtrl{}
 	addon2 := appmgr.AddonAppMgr{}
 	addonResource := addonv1alpha1.ObjectReference{
-		Name:     "test-managedcluster-name",
-		Group:    "agent.open-cluster-management.io",
-		Resource: "klusterletaddonconfigs",
+		Name:      "test-managedcluster-name",
+		Group:     "agent.open-cluster-management.io",
+		Resource:  "klusterletaddonconfigs",
+		Namespace: "test-managedcluster-namespace",
 	}
 	mca1 := &addonv1alpha1.ManagedClusterAddOn{
 		TypeMeta: metav1.TypeMeta{

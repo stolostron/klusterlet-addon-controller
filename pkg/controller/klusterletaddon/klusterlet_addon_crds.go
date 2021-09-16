@@ -17,10 +17,10 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
-	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/bindata"
 	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/utils"
+	manifestworkv1 "open-cluster-management.io/api/work/v1"
 )
 
 // constants for delete work and finalizer

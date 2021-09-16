@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
-	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"gotest.tools/assert"
 	coordinationv1 "k8s.io/api/coordination/v1"
@@ -19,6 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	manifestworkv1 "open-cluster-management.io/api/work/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"

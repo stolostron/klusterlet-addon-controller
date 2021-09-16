@@ -14,8 +14,6 @@ import (
 	"reflect"
 	"time"
 
-	addonv1alpha1 "github.com/open-cluster-management/api/addon/v1alpha1"
-	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
 	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
 	addonoperator "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/addon-operator/v1"
@@ -27,6 +25,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	manifestworkv1 "open-cluster-management.io/api/work/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
