@@ -11,6 +11,7 @@ package klusterletaddon
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -44,6 +45,9 @@ var log = logf.Log.WithName("controller_klusterletaddon")
 const (
 	KlusterletAddonConfigAnnotationPause = "klusterletaddonconfig-pause"
 	clusterImageRegistryLabel            = "open-cluster-management.io/image-registry"
+
+	// AnnotationNodeSelector key name of nodeSelector annotation synced from mch
+	AnnotationNodeSelector = "open-cluster-management/nodeSelector"
 )
 
 // Add creates a new KlusterletAddon Controller and adds it to the Manager.
@@ -293,6 +297,18 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 
 	if klusterletAddonConfig.Spec.ImageRegistry == "" {
 		klusterletAddonConfig.Spec.ImageRegistry = os.Getenv("DEFAULT_IMAGE_REGISTRY")
+	}
+
+	// This part is to support running pods related local-cluster on specified nodes,like infra nodes.
+	if managedCluster.GetName() == "local-cluster" && len(klusterletAddonConfig.Spec.NodeSelector) == 0 {
+		annotations := managedCluster.GetAnnotations()
+		nodeSelector := map[string]string{}
+		if nodeSelectorString, ok := annotations[AnnotationNodeSelector]; ok {
+			if err := json.Unmarshal([]byte(nodeSelectorString), &nodeSelector); err != nil {
+				reqLogger.Error(err, "failed to unmarshal nodeSelector annotation of cluster %v", managedCluster.GetName())
+			}
+			klusterletAddonConfig.Spec.NodeSelector = nodeSelector
+		}
 	}
 
 	// Create manifest work for crds

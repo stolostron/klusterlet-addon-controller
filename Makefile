@@ -43,7 +43,7 @@ deps: build/install-dependencies.sh
 
 .PHONY: check
 ## Runs a set of required checks
-check: lint go-bindata-check copyright-check
+check: lint go-bindata-check
 
 .PHONY: copyright-check
 copyright-check:
@@ -160,3 +160,42 @@ sync-coverage-entrypoint:
 build-coverage: 
 	build/build-coverage.sh ${COMPONENT_DOCKER_REPO}/${COMPONENT_NAME}:${COMPONENT_VERSION}${COMPONENT_TAG_EXTENSION}-coverage
 	
+# Ensure controller-gen
+ensure-controller-gen:
+ifeq (, $(shell which controller-gen))
+	@{ \
+	set -e ;\
+	CONTROLLER_GEN_TMP_DIR=$$(mktemp -d) ;\
+	cd $$CONTROLLER_GEN_TMP_DIR ;\
+	go mod init tmp ;\
+	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0 ;\
+	rm -rf $$CONTROLLER_GEN_TMP_DIR ;\
+	}
+CONTROLLER_GEN=$(GOBIN)/controller-gen
+else
+CONTROLLER_GEN=$(shell which controller-gen)
+endif
+
+# Generate crds
+manifests: ensure-controller-gen
+	$(CONTROLLER_GEN) "crd:crdVersions=v1" paths="./pkg/apis/agent/v1" output:crd:artifacts:config=deploy/crds-v1
+	mv deploy/crds-v1/agent.open-cluster-management.io_applicationmanagers.yaml deploy/crds-v1/agent.open-cluster-management.io_applicationmanagers_crd.yaml
+	mv deploy/crds-v1/agent.open-cluster-management.io_certpolicycontrollers.yaml deploy/crds-v1/agent.open-cluster-management.io_certpolicycontrollers_crd.yaml
+	mv deploy/crds-v1/agent.open-cluster-management.io_iampolicycontrollers.yaml deploy/crds-v1/agent.open-cluster-management.io_iampolicycontrollers_crd.yaml
+	mv deploy/crds-v1/agent.open-cluster-management.io_policycontrollers.yaml deploy/crds-v1/agent.open-cluster-management.io_policycontrollers_crd.yaml
+	mv deploy/crds-v1/agent.open-cluster-management.io_searchcollectors.yaml deploy/crds-v1/agent.open-cluster-management.io_searchcollectors_crd.yaml
+	mv deploy/crds-v1/agent.open-cluster-management.io_workmanagers.yaml deploy/crds-v1/agent.open-cluster-management.io_workmanagers_crd.yaml
+	mv deploy/crds-v1/agent.open-cluster-management.io_klusterletaddonconfigs.yaml deploy/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
+
+	$(CONTROLLER_GEN) "crd:crdVersions=v1beta1" paths="./pkg/apis/agent/v1" output:crd:artifacts:config=deploy/crds
+	mv deploy/crds/agent.open-cluster-management.io_applicationmanagers.yaml deploy/crds/agent.open-cluster-management.io_applicationmanagers_crd.yaml
+	mv deploy/crds/agent.open-cluster-management.io_certpolicycontrollers.yaml deploy/crds/agent.open-cluster-management.io_certpolicycontrollers_crd.yaml
+	mv deploy/crds/agent.open-cluster-management.io_iampolicycontrollers.yaml deploy/crds/agent.open-cluster-management.io_iampolicycontrollers_crd.yaml
+	mv deploy/crds/agent.open-cluster-management.io_policycontrollers.yaml deploy/crds/agent.open-cluster-management.io_policycontrollers_crd.yaml
+	mv deploy/crds/agent.open-cluster-management.io_searchcollectors.yaml deploy/crds/agent.open-cluster-management.io_searchcollectors_crd.yaml
+	mv deploy/crds/agent.open-cluster-management.io_workmanagers.yaml deploy/crds/agent.open-cluster-management.io_workmanagers_crd.yaml
+	rm -f deploy/crds/agent.open-cluster-management.io_klusterletaddonconfigs.yaml
+
+# Generate deepcopy
+generate: ensure-controller-gen
+	$(CONTROLLER_GEN) "object" paths="./pkg/apis/agent/v1" output:dir="./pkg/apis/agent/v1"

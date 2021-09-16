@@ -71,6 +71,7 @@ func newPolicyControllerCR(
 		ImagePullPolicy: instance.Spec.ImagePullPolicy,
 		ImagePullSecret: instance.Spec.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 1),
+		NodeSelector:    instance.Spec.NodeSelector,
 	}
 
 	imageRepository, err := instance.GetImage("config_policy_controller")

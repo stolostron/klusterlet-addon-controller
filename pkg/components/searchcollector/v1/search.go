@@ -65,6 +65,7 @@ func newSearchCollectorCR(instance *agentv1.KlusterletAddonConfig, namespace str
 		ImagePullPolicy: instance.Spec.ImagePullPolicy,
 		ImagePullSecret: instance.Spec.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 1),
+		NodeSelector:    instance.Spec.NodeSelector,
 	}
 
 	imageRepository, err := instance.GetImage("search_collector")
