@@ -16,84 +16,93 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// TODO：1. move ClusterName, ClusterNamespace, NodeSelector, ImageRegistry, ImagePullSecret and ImagePullPolicy to
+//  internal variables since they do not need to be customized configured.
+// TODO：2. refactor addon config spec using an unified definition.
+
 // KlusterletAddonConfigSpec defines the desired state of KlusterletAddonConfig
 type KlusterletAddonConfigSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-
+	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
 	// +optional
-	Version string `json:"version"`
+	Version string `json:"version,omitempty"`
 
+	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
 	// +kubebuilder:validation:MinLength=1
-	ClusterName string `json:"clusterName"`
+	// +optional
+	ClusterName string `json:"clusterName,omitempty"`
 
+	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
 	// +kubebuilder:validation:MinLength=1
-	ClusterNamespace string `json:"clusterNamespace"`
+	// +optional
+	ClusterNamespace string `json:"clusterNamespace,omitempty"`
 
-	ClusterLabels map[string]string `json:"clusterLabels"`
+	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
+	// +optional
+	ClusterLabels map[string]string `json:"clusterLabels,omitempty"`
 
+	// NodeSelector defines which Nodes the Pods are scheduled on. The default is an empty list.
+	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
+	// +optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
-	SearchCollectorConfig      KlusterletAddonConfigSearchCollectorSpec      `json:"searchCollector"`
-	PolicyController           KlusterletAddonConfigPolicyControllerSpec     `json:"policyController"`
-	ApplicationManagerConfig   KlusterletAddonConfigApplicationManagerSpec   `json:"applicationManager"`
-	CertPolicyControllerConfig KlusterletAddonConfigCertPolicyControllerSpec `json:"certPolicyController"`
-	IAMPolicyControllerConfig  KlusterletAddonConfigIAMPolicyControllerSpec  `json:"iamPolicyController"`
+	// GlobalProxy defines the cluster-wide proxy configuration of managed cluster.
+	// +optional
+	GlobalProxy ProxyConfig `json:"globalProxy,omitempty"`
 
-	ImageRegistry    string `json:"imageRegistry,omitempty"`
-	ImageNamePostfix string `json:"imageNamePostfix,omitempty"`
+	SearchCollectorConfig      KlusterletAddonAgentConfigSpec `json:"searchCollector"`
+	PolicyController           KlusterletAddonAgentConfigSpec `json:"policyController"`
+	ApplicationManagerConfig   KlusterletAddonAgentConfigSpec `json:"applicationManager"`
+	CertPolicyControllerConfig KlusterletAddonAgentConfigSpec `json:"certPolicyController"`
+	IAMPolicyControllerConfig  KlusterletAddonAgentConfigSpec `json:"iamPolicyController"`
+
+	// ImageRegistry defined the custom registry address of the images.
+	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
+	// +optional
+	ImageRegistry string `json:"imageRegistry,omitempty"`
+
+	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
 	// +kubebuilder:validation:MinLength=1
 	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 
+	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
 	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
 	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
-
-	// // ComponentTagMap contains the tag of each component
-	// ComponentTagMap map[string]string `json:"componentTagMap"`
-	// // ComponentImageMap contains the image name of each component
-	// ComponentImageMap map[string]string `json:"componentImageMap"`
-
-	// used for dev work only
-	ComponentOperatorImage string `json:"componentOperatorImage,omitempty"`
 }
 
-// KlusterletAddonConfigApplicationManagerSpec defines configuration for the ApplicationManager component
-type KlusterletAddonConfigApplicationManagerSpec struct {
-	Enabled bool `json:"enabled"`
-
+// ProxyConfig defines the global proxy env for OCP cluster
+type ProxyConfig struct {
+	// HTTPProxy is the URL of the proxy for HTTP requests.  Empty means unset and will not result in an env var.
 	// +optional
-	ArgoCDCluster bool `json:"argocdCluster"`
+	HTTPProxy string `json:"httpProxy,omitempty"`
+
+	// HTTPSProxy is the URL of the proxy for HTTPS requests.  Empty means unset and will not result in an env var.
+	// +optional
+	HTTPSProxy string `json:"httpsProxy,omitempty"`
+
+	// NoProxy is a comma-separated list of hostnames and/or CIDRs for which the proxy should not be used.
+	// Empty means unset and will not result in an env var.
+	// +optional
+	NoProxy string `json:"noProxy,omitempty"`
 }
 
-// KlusterletAddonConfigSearchCollectorSpec defines configuration for the SearchCollector component
-type KlusterletAddonConfigSearchCollectorSpec struct {
+type GlobalProxyStatus string
+
+const (
+	GlobalProxyStatusTrue  GlobalProxyStatus = "true"
+	GlobalProxyStatusFalse GlobalProxyStatus = "false"
+)
+
+// KlusterletAddonAgentConfigSpec defines configuration for each addon agent.
+type KlusterletAddonAgentConfigSpec struct {
+	// Enabled is the flag to enable/disable the addon. default is false.
+	// +optional
 	Enabled bool `json:"enabled"`
-}
 
-// KlusterletAddonConfigCertPolicyControllerSpec defines configuration for the CertPolicyController component
-type KlusterletAddonConfigCertPolicyControllerSpec struct {
-	Enabled bool `json:"enabled"`
-}
-
-// KlusterletAddonConfigIAMPolicyControllerSpec defines configuration for the IAMPolicyController component
-type KlusterletAddonConfigIAMPolicyControllerSpec struct {
-	Enabled bool `json:"enabled"`
-}
-
-// KlusterletAddonConfigWorkManagerSpec defines configuration for the WorkManager component
-type KlusterletAddonConfigWorkManagerSpec struct {
-	ClusterLabels map[string]string `json:"clusterLabels"`
-}
-
-// KlusterletAddonConfigPolicyControllerSpec defines configuration for the PolicyController component
-type KlusterletAddonConfigPolicyControllerSpec struct {
-	Enabled bool `json:"enabled"`
-}
-
-// KlusterletPrometheusIntegrationSpec defines configuration for the Promtheus Integration
-type KlusterletPrometheusIntegrationSpec struct {
-	Enabled bool `json:"enabled"`
+	// EnableGlobalProxy is the flag to enable/disable the GlobalProxy configuration for the pods of addon.
+	// default is false.
+	// +kubebuilder:validation:Enum=true;false
+	// +optional
+	EnableGlobalProxy GlobalProxyStatus `json:"enableGlobalProxy,omitempty"`
 }
 
 // KlusterletAddonConfigStatus defines the observed state of KlusterletAddonConfig

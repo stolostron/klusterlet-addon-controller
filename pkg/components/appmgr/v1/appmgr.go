@@ -71,6 +71,13 @@ func newApplicationManagerCR(
 		ImageOverrides:  make(map[string]string, 2),
 		NodeSelector:    instance.Spec.NodeSelector,
 	}
+	if instance.Spec.ApplicationManagerConfig.EnableGlobalProxy == agentv1.GlobalProxyStatusTrue {
+		gv.ProxyConfig = map[string]string{
+			agentv1.HTTPProxy:  instance.Spec.GlobalProxy.HTTPProxy,
+			agentv1.HTTPSProxy: instance.Spec.GlobalProxy.HTTPSProxy,
+			agentv1.NoProxy:    instance.Spec.GlobalProxy.NoProxy,
+		}
+	}
 
 	imageRepository, err := instance.GetImage("multicluster_operators_subscription")
 	if err != nil {

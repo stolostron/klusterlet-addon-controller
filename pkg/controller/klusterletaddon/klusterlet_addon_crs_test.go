@@ -120,7 +120,7 @@ func Test_syncManifestWorkCRs(t *testing.T) {
 			Namespace: "test-managedcluster",
 		},
 		Spec: agentv1.KlusterletAddonConfigSpec{
-			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
 			Version: "2.0.0",
@@ -180,10 +180,10 @@ func Test_syncManagedClusterAddonCRs(t *testing.T) {
 			Namespace: "test-managedcluster",
 		},
 		Spec: agentv1.KlusterletAddonConfigSpec{
-			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
-			SearchCollectorConfig: agentv1.KlusterletAddonConfigSearchCollectorSpec{
+			SearchCollectorConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
 			Version: "2.4.0",
@@ -242,7 +242,7 @@ func Test_newCRManifestWork(t *testing.T) {
 			Namespace: "test-managedcluster",
 		},
 		Spec: agentv1.KlusterletAddonConfigSpec{
-			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
 			Version: "2.0.0",
@@ -408,13 +408,13 @@ func Test_deleteManifestWorkCRs(t *testing.T) {
 			Namespace: "test-managedcluster",
 		},
 		Spec: agentv1.KlusterletAddonConfigSpec{
-			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
-			PolicyController: agentv1.KlusterletAddonConfigPolicyControllerSpec{
+			PolicyController: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
-			IAMPolicyControllerConfig: agentv1.KlusterletAddonConfigIAMPolicyControllerSpec{
+			IAMPolicyControllerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
 			Version: "2.0.0",
@@ -533,7 +533,7 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 			Namespace: "test-managedcluster-namespace",
 		},
 		Spec: agentv1.KlusterletAddonConfigSpec{
-			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
 			Version: "2.0.0",

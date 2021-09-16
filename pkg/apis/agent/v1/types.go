@@ -19,4 +19,11 @@ type GlobalValues struct {
 	ImagePullSecret string            `json:"imagePullSecret,omitempty"`
 	ImageOverrides  map[string]string `json:"imageOverrides,omitempty"`
 	NodeSelector    map[string]string `json:"nodeSelector,omitempty"`
+	ProxyConfig     map[string]string `json:"proxyConfig,omitempty"`
 }
+
+const (
+	HTTPProxy  = "HTTP_PROXY"
+	HTTPSProxy = "HTTPS_PROXY"
+	NoProxy    = "NO_PROXY"
+)

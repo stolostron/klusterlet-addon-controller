@@ -134,15 +134,9 @@ func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*
 		"app": instance.Name,
 	}
 
-	var deploymentImage string
-	if instance.Spec.ComponentOperatorImage != "" {
-		deploymentImage = instance.Spec.ComponentOperatorImage
-	} else {
-		imageRepository, err := instance.GetImage("klusterlet_addon_operator")
-		if err != nil {
-			return nil, err
-		}
-		deploymentImage = imageRepository
+	deploymentImage, err := instance.GetImage("klusterlet_addon_operator")
+	if err != nil {
+		return nil, err
 	}
 
 	deployment := &appsv1.Deployment{

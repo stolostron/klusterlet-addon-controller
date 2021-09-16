@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 
 ---
 apiVersion: apiextensions.k8s.io/v1
@@ -33,86 +34,121 @@ spec:
             description: KlusterletAddonConfigSpec defines the desired state of KlusterletAddonConfig
             properties:
               applicationManager:
-                description: KlusterletAddonConfigApplicationManagerSpec defines configuration for the ApplicationManager component
+                description: KlusterletAddonAgentConfigSpec defines configuration for each addon agent.
                 properties:
-                  argocdCluster:
-                    type: boolean
+                  enableGlobalProxy:
+                    description: EnableGlobalProxy is the flag to enable/disable the GlobalProxy configuration for the pods of addon. default is false.
+                    enum:
+                    - true
+                    - false
+                    type: string
                   enabled:
+                    description: Enabled is the flag to enable/disable the addon. default is false.
                     type: boolean
-                required:
-                - enabled
                 type: object
               certPolicyController:
-                description: KlusterletAddonConfigCertPolicyControllerSpec defines configuration for the CertPolicyController component
+                description: KlusterletAddonAgentConfigSpec defines configuration for each addon agent.
                 properties:
+                  enableGlobalProxy:
+                    description: EnableGlobalProxy is the flag to enable/disable the GlobalProxy configuration for the pods of addon. default is false.
+                    enum:
+                    - true
+                    - false
+                    type: string
                   enabled:
+                    description: Enabled is the flag to enable/disable the addon. default is false.
                     type: boolean
-                required:
-                - enabled
                 type: object
               clusterLabels:
                 additionalProperties:
                   type: string
+                description: DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
                 type: object
               clusterName:
+                description: DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
                 minLength: 1
                 type: string
               clusterNamespace:
+                description: DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
                 minLength: 1
                 type: string
-              componentOperatorImage:
-                description: used for dev work only
-                type: string
-              iamPolicyController:
-                description: KlusterletAddonConfigIAMPolicyControllerSpec defines configuration for the IAMPolicyController component
+              globalProxy:
+                description: GlobalProxy defines the cluster-wide proxy configuration of managed cluster.
                 properties:
-                  enabled:
-                    type: boolean
-                required:
-                - enabled
+                  httpProxy:
+                    description: HTTPProxy is the URL of the proxy for HTTP requests.  Empty means unset and will not result in an env var.
+                    type: string
+                  httpsProxy:
+                    description: HTTPSProxy is the URL of the proxy for HTTPS requests.  Empty means unset and will not result in an env var.
+                    type: string
+                  noProxy:
+                    description: NoProxy is a comma-separated list of hostnames and/or CIDRs for which the proxy should not be used. Empty means unset and will not result in an env var.
+                    type: string
                 type: object
-              imageNamePostfix:
-                type: string
+              iamPolicyController:
+                description: KlusterletAddonAgentConfigSpec defines configuration for each addon agent.
+                properties:
+                  enableGlobalProxy:
+                    description: EnableGlobalProxy is the flag to enable/disable the GlobalProxy configuration for the pods of addon. default is false.
+                    enum:
+                    - true
+                    - false
+                    type: string
+                  enabled:
+                    description: Enabled is the flag to enable/disable the addon. default is false.
+                    type: boolean
+                type: object
               imagePullPolicy:
-                description: PullPolicy describes a policy for if/when to pull a container image
+                description: DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
                 enum:
                 - Always
                 - Never
                 - IfNotPresent
                 type: string
               imagePullSecret:
+                description: DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
                 minLength: 1
                 type: string
               imageRegistry:
+                description: ImageRegistry defined the custom registry address of the images. DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
                 type: string
               nodeSelector:
                 additionalProperties:
                   type: string
+                description: NodeSelector defines which Nodes the Pods are scheduled on. The default is an empty list. DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
                 type: object
               policyController:
-                description: KlusterletAddonConfigPolicyControllerSpec defines configuration for the PolicyController component
+                description: KlusterletAddonAgentConfigSpec defines configuration for each addon agent.
                 properties:
+                  enableGlobalProxy:
+                    description: EnableGlobalProxy is the flag to enable/disable the GlobalProxy configuration for the pods of addon. default is false.
+                    enum:
+                    - true
+                    - false
+                    type: string
                   enabled:
+                    description: Enabled is the flag to enable/disable the addon. default is false.
                     type: boolean
-                required:
-                - enabled
                 type: object
               searchCollector:
-                description: KlusterletAddonConfigSearchCollectorSpec defines configuration for the SearchCollector component
+                description: KlusterletAddonAgentConfigSpec defines configuration for each addon agent.
                 properties:
+                  enableGlobalProxy:
+                    description: EnableGlobalProxy is the flag to enable/disable the GlobalProxy configuration for the pods of addon. default is false.
+                    enum:
+                    - true
+                    - false
+                    type: string
                   enabled:
+                    description: Enabled is the flag to enable/disable the addon. default is false.
                     type: boolean
-                required:
-                - enabled
                 type: object
               version:
+                description: DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
                 type: string
             required:
             - applicationManager
             - certPolicyController
-            - clusterLabels
-            - clusterName
-            - clusterNamespace
             - iamPolicyController
             - policyController
             - searchCollector

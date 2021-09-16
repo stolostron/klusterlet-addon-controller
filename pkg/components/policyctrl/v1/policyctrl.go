@@ -73,6 +73,13 @@ func newPolicyControllerCR(
 		ImageOverrides:  make(map[string]string, 1),
 		NodeSelector:    instance.Spec.NodeSelector,
 	}
+	if instance.Spec.PolicyController.EnableGlobalProxy == agentv1.GlobalProxyStatusTrue {
+		gv.ProxyConfig = map[string]string{
+			agentv1.HTTPProxy:  instance.Spec.GlobalProxy.HTTPProxy,
+			agentv1.HTTPSProxy: instance.Spec.GlobalProxy.HTTPSProxy,
+			agentv1.NoProxy:    instance.Spec.GlobalProxy.NoProxy,
+		}
+	}
 
 	imageRepository, err := instance.GetImage("config_policy_controller")
 	if err != nil {
