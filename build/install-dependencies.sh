@@ -17,7 +17,7 @@ if ! which patter > /dev/null; then      echo "Installing patter ..."; go get -u
 if ! which gocovmerge > /dev/null; then  echo "Installing gocovmerge..."; go get -u github.com/wadey/gocovmerge; fi
 # if ! which swagger > /dev/null; then     echo "Installing swagger..."; go get -u github.com/rws-github/go-swagger/cmd/swagger; fi
 if ! which golangci-lint > /dev/null; then
-    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.23.6
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.37.1
 fi
 
 if ! which go-bindata > /dev/null; then
