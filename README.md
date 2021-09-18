@@ -71,14 +71,16 @@ operator-sdk generate k8s
 ```
 to regenerate the zz_generated.deepcopy.go file.
 
-## Run Functional Test
-
 ## Run e2e Test
 
+1. Prepare a Kubernetes cluster, for example `Kind`
+2. Execute following commands
 ```
 export KUBECONFIG=<cluster kube config>
 make test-e2e
 ```
+
+## Run Functional Test
 
 ### Before Testing functional test with KinD
 
