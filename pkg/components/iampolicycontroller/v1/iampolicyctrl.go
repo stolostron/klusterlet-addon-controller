@@ -43,10 +43,10 @@ func (addon AddonIAMPolicyCtrl) GetAddonName() string {
 }
 
 func (addon AddonIAMPolicyCtrl) NewAddonCR(
-	instance *agentv1.KlusterletAddonConfig,
+	addonAgentConfig *agentv1.AddonAgentConfig,
 	namespace string,
 ) (runtime.Object, error) {
-	return newIAMPolicyControllerCR(instance, namespace)
+	return newIAMPolicyControllerCR(addonAgentConfig, namespace)
 }
 
 func (addon AddonIAMPolicyCtrl) GetManagedClusterAddOnName() string {
@@ -59,28 +59,35 @@ func (addon AddonIAMPolicyCtrl) GetManagedClusterAddOnName() string {
 
 // newIAMPolicyControllerCR - create CR for component iam poliicy controller
 func newIAMPolicyControllerCR(
-	instance *agentv1.KlusterletAddonConfig,
+	addonAgentConfig *agentv1.AddonAgentConfig,
 	namespace string,
 ) (*agentv1.IAMPolicyController, error) {
 	labels := map[string]string{
-		"app": instance.Name,
+		"app": addonAgentConfig.ClusterName,
 	}
 
 	gv := agentv1.GlobalValues{
-		ImagePullPolicy: instance.Spec.ImagePullPolicy,
-		ImagePullSecret: instance.Spec.ImagePullSecret,
+		ImagePullPolicy: addonAgentConfig.ImagePullPolicy,
+		ImagePullSecret: addonAgentConfig.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 1),
-		NodeSelector:    instance.Spec.NodeSelector,
+		NodeSelector:    addonAgentConfig.NodeSelector,
 	}
-	if instance.Spec.IAMPolicyControllerConfig.EnableGlobalProxy == agentv1.GlobalProxyStatusTrue {
+	switch addonAgentConfig.KlusterletAddonConfig.Spec.IAMPolicyControllerConfig.ProxyPolicy {
+	case agentv1.ProxyPolicyOCPGlobalProxy:
 		gv.ProxyConfig = map[string]string{
-			agentv1.HTTPProxy:  instance.Spec.GlobalProxy.HTTPProxy,
-			agentv1.HTTPSProxy: instance.Spec.GlobalProxy.HTTPSProxy,
-			agentv1.NoProxy:    instance.Spec.GlobalProxy.NoProxy,
+			agentv1.HTTPProxy:  addonAgentConfig.KlusterletAddonConfig.Status.OCPGlobalProxy.HTTPProxy,
+			agentv1.HTTPSProxy: addonAgentConfig.KlusterletAddonConfig.Status.OCPGlobalProxy.HTTPSProxy,
+			agentv1.NoProxy:    addonAgentConfig.KlusterletAddonConfig.Status.OCPGlobalProxy.NoProxy,
+		}
+	case agentv1.ProxyPolicyCustomProxy:
+		gv.ProxyConfig = map[string]string{
+			agentv1.HTTPProxy:  addonAgentConfig.KlusterletAddonConfig.Spec.ProxyConfig.HTTPProxy,
+			agentv1.HTTPSProxy: addonAgentConfig.KlusterletAddonConfig.Spec.ProxyConfig.HTTPSProxy,
+			agentv1.NoProxy:    addonAgentConfig.KlusterletAddonConfig.Spec.ProxyConfig.NoProxy,
 		}
 	}
 
-	imageRepository, err := instance.GetImage("iam_policy_controller")
+	imageRepository, err := addonAgentConfig.GetImage("iam_policy_controller")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "iam-policy")
 		return nil, err
@@ -100,8 +107,8 @@ func newIAMPolicyControllerCR(
 		Spec: agentv1.IAMPolicyControllerSpec{
 			FullNameOverride:    IAMPolicyController,
 			HubKubeconfigSecret: managedClusterAddOnName + "-hub-kubeconfig",
-			ClusterName:         instance.Spec.ClusterName,
-			ClusterNamespace:    instance.Spec.ClusterNamespace,
+			ClusterName:         addonAgentConfig.ClusterName,
+			ClusterNamespace:    addonAgentConfig.ClusterName,
 			GlobalValues:        gv,
 		},
 	}, err

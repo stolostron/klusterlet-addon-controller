@@ -9,11 +9,23 @@
 package controller
 
 import (
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/csr"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/klusterletaddon"
+	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/managedclusteraddon"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // AddToManagerFuncs is a list of functions to add all Controllers to the Manager
 var AddToManagerFuncs []func(manager.Manager) error
+
+func init() {
+	AddToManagerFuncs = append(AddToManagerFuncs,
+		clustermanagementaddon.Add,
+		managedclusteraddon.Add,
+		klusterletaddon.Add,
+		csr.Add)
+}
 
 // AddToManager adds all Controllers to the Manager
 func AddToManager(m manager.Manager) error {

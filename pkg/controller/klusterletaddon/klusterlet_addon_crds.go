@@ -30,7 +30,7 @@ const (
 )
 
 // createManifestWorkCRD - create manifest work for CRD
-func createManifestWorkCRD(klusterletaddonconfig *agentv1.KlusterletAddonConfig,
+func createManifestWorkCRD(addonAgentConfig *agentv1.AddonAgentConfig,
 	kubeVersion string,
 	r *ReconcileKlusterletAddon) error {
 
@@ -111,8 +111,8 @@ func createManifestWorkCRD(klusterletaddonconfig *agentv1.KlusterletAddonConfig,
 
 	manifestWork := &manifestworkv1.ManifestWork{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      klusterletaddonconfig.Name + KlusterletAddonCRDsPostfix,
-			Namespace: klusterletaddonconfig.Namespace,
+			Name:      addonAgentConfig.ClusterName + KlusterletAddonCRDsPostfix,
+			Namespace: addonAgentConfig.ClusterName,
 			//Labels:    labels,
 		},
 		Spec: manifestworkv1.ManifestWorkSpec{
@@ -122,7 +122,7 @@ func createManifestWorkCRD(klusterletaddonconfig *agentv1.KlusterletAddonConfig,
 		},
 	}
 
-	if err := utils.CreateOrUpdateManifestWork(manifestWork, r.client, klusterletaddonconfig, r.scheme); err != nil {
+	if err := utils.CreateOrUpdateManifestWork(manifestWork, r.client, addonAgentConfig.KlusterletAddonConfig, r.scheme); err != nil {
 		log.Error(err, "Failed to create manifest work for CRD")
 		return err
 	}

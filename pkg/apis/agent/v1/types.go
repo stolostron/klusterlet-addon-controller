@@ -27,3 +27,14 @@ const (
 	HTTPSProxy = "HTTPS_PROXY"
 	NoProxy    = "NO_PROXY"
 )
+
+// AddonAgentConfig is the configurations for addon agents.
+type AddonAgentConfig struct {
+	KlusterletAddonConfig    *KlusterletAddonConfig
+	ClusterName              string
+	NodeSelector             map[string]string
+	Registry                 string
+	ImagePullSecret          string
+	ImagePullSecretNamespace string
+	ImagePullPolicy          corev1.PullPolicy
+}

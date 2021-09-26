@@ -47,8 +47,8 @@ func TestGetImageWithManifest(t *testing.T) {
 		return
 	}
 	type args struct {
-		klusterletaddonconfig *KlusterletAddonConfig
-		component             string
+		addonAgentConfig *AddonAgentConfig
+		component        string
 	}
 
 	tests := []struct {
@@ -60,10 +60,8 @@ func TestGetImageWithManifest(t *testing.T) {
 		{
 			name: "Use Component Sha in " + version.Version,
 			args: args{
-				klusterletaddonconfig: &KlusterletAddonConfig{
-					Spec: KlusterletAddonConfigSpec{
-						ImageRegistry: "sample-registry/uniquePath",
-					},
+				addonAgentConfig: &AddonAgentConfig{
+					Registry: "sample-registry/uniquePath",
 				},
 				component: "klusterlet_addon_operator",
 			},
@@ -77,8 +75,8 @@ func TestGetImageWithManifest(t *testing.T) {
 		{
 			name: "Not Exists Component",
 			args: args{
-				klusterletaddonconfig: &KlusterletAddonConfig{},
-				component:             "notExistsComponent",
+				addonAgentConfig: &AddonAgentConfig{},
+				component:        "notExistsComponent",
 			},
 			want:    GlobalValues{},
 			wantErr: true,
@@ -86,8 +84,8 @@ func TestGetImageWithManifest(t *testing.T) {
 		{
 			name: "Image not in manifest.json",
 			args: args{
-				klusterletaddonconfig: &KlusterletAddonConfig{},
-				component:             "fakeKey",
+				addonAgentConfig: &AddonAgentConfig{},
+				component:        "fakeKey",
 			},
 			want:    GlobalValues{},
 			wantErr: true,
@@ -97,7 +95,7 @@ func TestGetImageWithManifest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Logf("Running tests %s", tt.name)
-			imgRepository, err := tt.args.klusterletaddonconfig.GetImage(tt.args.component)
+			imgRepository, err := tt.args.addonAgentConfig.GetImage(tt.args.component)
 			if tt.wantErr != (err != nil) {
 				t.Errorf("Should return error correctly. Error:%s", err)
 			} else if !tt.wantErr {
@@ -173,8 +171,8 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 		return
 	}
 	type args struct {
-		klusterletaddonconfig *KlusterletAddonConfig
-		component             string
+		addonAgentConfig *AddonAgentConfig
+		component        string
 	}
 
 	tests := []struct {
@@ -186,10 +184,8 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 		{
 			name: "Use Component Sha in " + version.Version,
 			args: args{
-				klusterletaddonconfig: &KlusterletAddonConfig{
-					Spec: KlusterletAddonConfigSpec{
-						ImageRegistry: "sample-registry/uniquePath",
-					},
+				addonAgentConfig: &AddonAgentConfig{
+					Registry: "sample-registry/uniquePath",
 				},
 				component: "klusterlet_addon_operator",
 			},
@@ -203,8 +199,8 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 		{
 			name: "Not Exists Component",
 			args: args{
-				klusterletaddonconfig: &KlusterletAddonConfig{},
-				component:             "notExistsComponent",
+				addonAgentConfig: &AddonAgentConfig{},
+				component:        "notExistsComponent",
 			},
 			want:    GlobalValues{},
 			wantErr: true,
@@ -212,8 +208,8 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 		{
 			name: "Image not in manifest.json",
 			args: args{
-				klusterletaddonconfig: &KlusterletAddonConfig{},
-				component:             "fakeKey",
+				addonAgentConfig: &AddonAgentConfig{},
+				component:        "fakeKey",
 			},
 			want:    GlobalValues{},
 			wantErr: true,
@@ -223,7 +219,7 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Logf("Running tests %s", tt.name)
-			imgRepository, err := tt.args.klusterletaddonconfig.GetImage(tt.args.component)
+			imgRepository, err := tt.args.addonAgentConfig.GetImage(tt.args.component)
 			if tt.wantErr != (err != nil) {
 				t.Errorf("Should return error correctly. Error:%s", err)
 			} else if !tt.wantErr {

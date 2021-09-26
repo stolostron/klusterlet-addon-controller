@@ -32,10 +32,10 @@ type KlusterletAddon interface {
 	GetAddonName() string
 	// RequiresHubKubeconfig returns true if this addon need to genrate a kubeconfig on hubside
 	CheckHubKubeconfigRequired() bool
-	// IsEnabled checks whether the addon is enabled in the klusterletaddonconfig
+	// IsEnabled checks whether the addon is enabled in the KlusterletAddonConfig
 	IsEnabled(instance *agentv1.KlusterletAddonConfig) bool
-	// NewAddonCR returns a CR of the addon by using the given klusterletaddonconfig & managedcluster's namespace
-	NewAddonCR(instance *agentv1.KlusterletAddonConfig, namespace string) (runtime.Object, error)
+	// NewAddonCR returns a CR of the addon by using the given AddonAgentConfig & managedcluster's namespace
+	NewAddonCR(addonAgentConfig *agentv1.AddonAgentConfig, namespace string) (runtime.Object, error)
 	// GetManagedClusterAddOnName returns the ManagedClusterAddOn name that matches this addon
 	GetManagedClusterAddOnName() string
 }

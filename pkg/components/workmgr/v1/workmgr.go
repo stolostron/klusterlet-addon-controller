@@ -52,36 +52,34 @@ func (addon AddonWorkMgr) GetManagedClusterAddOnName() string {
 }
 
 func (addon AddonWorkMgr) NewAddonCR(
-	instance *agentv1.KlusterletAddonConfig,
+	addonAgentConfig *agentv1.AddonAgentConfig,
 	namespace string,
 ) (runtime.Object, error) {
-	return newWorkManagerCR(instance, namespace)
+	return newWorkManagerCR(addonAgentConfig, namespace)
 }
 
 // newWorkManagerCR - create CR for component work manager
 func newWorkManagerCR(
-	instance *agentv1.KlusterletAddonConfig,
+	addonAgentConfig *agentv1.AddonAgentConfig,
 	namespace string,
 ) (*agentv1.WorkManager, error) {
 	labels := map[string]string{
-		"app": instance.Name,
+		"app": addonAgentConfig.ClusterName,
 	}
 
 	gv := agentv1.GlobalValues{
-		ImagePullPolicy: instance.Spec.ImagePullPolicy,
-		ImagePullSecret: instance.Spec.ImagePullSecret,
+		ImagePullPolicy: addonAgentConfig.ImagePullPolicy,
+		ImagePullSecret: addonAgentConfig.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 1),
-		NodeSelector:    instance.Spec.NodeSelector,
+		NodeSelector:    addonAgentConfig.NodeSelector,
 	}
 
-	imageRepository, err := instance.GetImage("multicloud_manager")
+	imageRepository, err := addonAgentConfig.GetImage("multicloud_manager")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "work-manager")
 		return nil, err
 	}
 	gv.ImageOverrides["multicloud_manager"] = imageRepository
-
-	clusterLabels := instance.Spec.ClusterLabels
 
 	return &agentv1.WorkManager{
 		TypeMeta: metav1.TypeMeta{
@@ -96,9 +94,8 @@ func newWorkManagerCR(
 		Spec: agentv1.WorkManagerSpec{
 			FullNameOverride: WorkManager,
 
-			ClusterName:      instance.Spec.ClusterName,
-			ClusterNamespace: instance.Spec.ClusterNamespace,
-			ClusterLabels:    clusterLabels,
+			ClusterName:      addonAgentConfig.ClusterName,
+			ClusterNamespace: addonAgentConfig.ClusterName,
 
 			HubKubeconfigSecret: managedClusterAddOnName + "-hub-kubeconfig",
 

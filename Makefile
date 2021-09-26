@@ -215,4 +215,3 @@ build-e2e:
 .PHONY: test-e2e
 test-e2e: build-e2e prepare-e2e-cluster deploy
 	./e2e.test -test.v -ginkgo.v
-

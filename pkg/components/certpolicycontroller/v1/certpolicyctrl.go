@@ -44,10 +44,10 @@ func (addon AddonCertPolicyCtrl) GetAddonName() string {
 }
 
 func (addon AddonCertPolicyCtrl) NewAddonCR(
-	instance *agentv1.KlusterletAddonConfig,
+	addonAgentConfig *agentv1.AddonAgentConfig,
 	namespace string,
 ) (runtime.Object, error) {
-	return newCertPolicyControllerCR(instance, namespace)
+	return newCertPolicyControllerCR(addonAgentConfig, namespace)
 }
 
 func (addon AddonCertPolicyCtrl) GetManagedClusterAddOnName() string {
@@ -60,28 +60,35 @@ func (addon AddonCertPolicyCtrl) GetManagedClusterAddOnName() string {
 
 // newCertPolicyControllerCR - create CR for component cert policy controller
 func newCertPolicyControllerCR(
-	instance *agentv1.KlusterletAddonConfig,
+	addonAgentConfig *agentv1.AddonAgentConfig,
 	namespace string,
 ) (*agentv1.CertPolicyController, error) {
 	labels := map[string]string{
-		"app": instance.Name,
+		"app": addonAgentConfig.ClusterName,
 	}
 
 	gv := agentv1.GlobalValues{
-		ImagePullPolicy: instance.Spec.ImagePullPolicy,
-		ImagePullSecret: instance.Spec.ImagePullSecret,
+		ImagePullPolicy: addonAgentConfig.ImagePullPolicy,
+		ImagePullSecret: addonAgentConfig.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 1),
-		NodeSelector:    instance.Spec.NodeSelector,
+		NodeSelector:    addonAgentConfig.NodeSelector,
 	}
-	if instance.Spec.CertPolicyControllerConfig.EnableGlobalProxy == agentv1.GlobalProxyStatusTrue {
+	switch addonAgentConfig.KlusterletAddonConfig.Spec.CertPolicyControllerConfig.ProxyPolicy {
+	case agentv1.ProxyPolicyOCPGlobalProxy:
 		gv.ProxyConfig = map[string]string{
-			agentv1.HTTPProxy:  instance.Spec.GlobalProxy.HTTPProxy,
-			agentv1.HTTPSProxy: instance.Spec.GlobalProxy.HTTPSProxy,
-			agentv1.NoProxy:    instance.Spec.GlobalProxy.NoProxy,
+			agentv1.HTTPProxy:  addonAgentConfig.KlusterletAddonConfig.Status.OCPGlobalProxy.HTTPProxy,
+			agentv1.HTTPSProxy: addonAgentConfig.KlusterletAddonConfig.Status.OCPGlobalProxy.HTTPSProxy,
+			agentv1.NoProxy:    addonAgentConfig.KlusterletAddonConfig.Status.OCPGlobalProxy.NoProxy,
+		}
+	case agentv1.ProxyPolicyCustomProxy:
+		gv.ProxyConfig = map[string]string{
+			agentv1.HTTPProxy:  addonAgentConfig.KlusterletAddonConfig.Spec.ProxyConfig.HTTPProxy,
+			agentv1.HTTPSProxy: addonAgentConfig.KlusterletAddonConfig.Spec.ProxyConfig.HTTPSProxy,
+			agentv1.NoProxy:    addonAgentConfig.KlusterletAddonConfig.Spec.ProxyConfig.NoProxy,
 		}
 	}
 
-	imageRepository, err := instance.GetImage("cert_policy_controller")
+	imageRepository, err := addonAgentConfig.GetImage("cert_policy_controller")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "cert-policy")
 		return nil, err
@@ -101,8 +108,8 @@ func newCertPolicyControllerCR(
 		Spec: agentv1.CertPolicyControllerSpec{
 			FullNameOverride:    CertPolicyController,
 			HubKubeconfigSecret: managedClusterAddOnName + "-hub-kubeconfig",
-			ClusterName:         instance.Spec.ClusterName,
-			ClusterNamespace:    instance.Spec.ClusterNamespace,
+			ClusterName:         addonAgentConfig.ClusterName,
+			ClusterNamespace:    addonAgentConfig.ClusterName,
 			GlobalValues:        gv,
 		},
 	}, err

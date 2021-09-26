@@ -9,64 +9,50 @@
 package v1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// TODO：1. move ClusterName, ClusterNamespace, NodeSelector, ImageRegistry, ImagePullSecret and ImagePullPolicy to
-//  internal variables since they do not need to be customized configured.
-// TODO：2. refactor addon config spec using an unified definition.
-
 // KlusterletAddonConfigSpec defines the desired state of KlusterletAddonConfig
 type KlusterletAddonConfigSpec struct {
-	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
+	// DEPRECATED in release 2.4 and will be removed in the future since not used anymore.
 	// +optional
 	Version string `json:"version,omitempty"`
 
-	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
+	// DEPRECATED in release 2.4 and will be removed in the future since not used anymore.
 	// +kubebuilder:validation:MinLength=1
 	// +optional
 	ClusterName string `json:"clusterName,omitempty"`
 
-	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
+	// DEPRECATED in release 2.4 and will be removed in the future since not used anymore.
 	// +kubebuilder:validation:MinLength=1
 	// +optional
 	ClusterNamespace string `json:"clusterNamespace,omitempty"`
 
-	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
+	// DEPRECATED in release 2.4 and will be removed in the future since not used anymore.
 	// +optional
 	ClusterLabels map[string]string `json:"clusterLabels,omitempty"`
 
-	// NodeSelector defines which Nodes the Pods are scheduled on. The default is an empty list.
-	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
+	// ProxyConfig defines the cluster-wide proxy configuration of the OCP managed cluster.
 	// +optional
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	ProxyConfig ProxyConfig `json:"proxyConfig,omitempty"`
 
-	// GlobalProxy defines the cluster-wide proxy configuration of managed cluster.
-	// +optional
-	GlobalProxy ProxyConfig `json:"globalProxy,omitempty"`
+	// SearchCollectorConfig defines the configurations of SearchCollector addon agent.
+	SearchCollectorConfig KlusterletAddonAgentConfigSpec `json:"searchCollector"`
 
-	SearchCollectorConfig      KlusterletAddonAgentConfigSpec `json:"searchCollector"`
-	PolicyController           KlusterletAddonAgentConfigSpec `json:"policyController"`
-	ApplicationManagerConfig   KlusterletAddonAgentConfigSpec `json:"applicationManager"`
+	// PolicyController defines the configurations of PolicyController addon agent.
+	PolicyController KlusterletAddonAgentConfigSpec `json:"policyController"`
+
+	// ApplicationManagerConfig defines the configurations of ApplicationManager addon agent.
+	ApplicationManagerConfig KlusterletAddonAgentConfigSpec `json:"applicationManager"`
+
+	// CertPolicyControllerConfig defines the configurations of CertPolicyController addon agent.
 	CertPolicyControllerConfig KlusterletAddonAgentConfigSpec `json:"certPolicyController"`
-	IAMPolicyControllerConfig  KlusterletAddonAgentConfigSpec `json:"iamPolicyController"`
 
-	// ImageRegistry defined the custom registry address of the images.
-	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
-	// +optional
-	ImageRegistry string `json:"imageRegistry,omitempty"`
-
-	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
-	// +kubebuilder:validation:MinLength=1
-	ImagePullSecret string `json:"imagePullSecret,omitempty"`
-
-	// DEPRECATED in release 2.4 and will be removed in release 2.5 since not used anymore.
-	// +kubebuilder:validation:Enum=Always;Never;IfNotPresent
-	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
+	// IAMPolicyControllerConfig defines the configurations of IamPolicyController addon agent.
+	IAMPolicyControllerConfig KlusterletAddonAgentConfigSpec `json:"iamPolicyController"`
 }
 
 // ProxyConfig defines the global proxy env for OCP cluster
@@ -81,15 +67,19 @@ type ProxyConfig struct {
 
 	// NoProxy is a comma-separated list of hostnames and/or CIDRs for which the proxy should not be used.
 	// Empty means unset and will not result in an env var.
+	// The API Server of Hub cluster should be added here.
+	// And If you scale up workers that are not included in the network defined by the networking.machineNetwork[].cidr
+	// field from the installation configuration, you must add them to this list to prevent connection issues.
 	// +optional
 	NoProxy string `json:"noProxy,omitempty"`
 }
 
-type GlobalProxyStatus string
+type ProxyPolicy string
 
 const (
-	GlobalProxyStatusTrue  GlobalProxyStatus = "true"
-	GlobalProxyStatusFalse GlobalProxyStatus = "false"
+	ProxyPolicyDisable        ProxyPolicy = "Disabled"
+	ProxyPolicyOCPGlobalProxy ProxyPolicy = "OCPGlobalProxy"
+	ProxyPolicyCustomProxy    ProxyPolicy = "CustomProxy"
 )
 
 // KlusterletAddonAgentConfigSpec defines configuration for each addon agent.
@@ -98,18 +88,31 @@ type KlusterletAddonAgentConfigSpec struct {
 	// +optional
 	Enabled bool `json:"enabled"`
 
-	// EnableGlobalProxy is the flag to enable/disable the GlobalProxy configuration for the pods of addon.
-	// default is false.
-	// +kubebuilder:validation:Enum=true;false
+	// ProxyPolicy defines the policy to set proxy for each addon agent. default is Disabled.
+	// Disabled means that the addon agent pods do not configure the proxy env variables.
+	// OCPGlobalProxy means that the addon agent pods use the cluster-wide proxy config of OCP cluster provisioned by ACM.
+	// CustomProxy means that the addon agent pods use the ProxyConfig specified in KlusterletAddonConfig.
+	// +kubebuilder:validation:Enum=Disabled;OCPGlobalProxy;CustomProxy
 	// +optional
-	EnableGlobalProxy GlobalProxyStatus `json:"enableGlobalProxy,omitempty"`
+	ProxyPolicy ProxyPolicy `json:"proxyPolicy,omitempty"`
 }
+
+const (
+	OCPGlobalProxyDetected           string = "OCPGlobalProxyDetected"
+	ReasonOCPGlobalProxyDetected     string = "OCPGlobalProxyDetected"
+	ReasonOCPGlobalProxyNotDetected  string = "OCPGlobalProxyNotDetected"
+	ReasonOCPGlobalProxyDetectedFail string = "OCPGlobalProxyNotDetectedFail"
+)
 
 // KlusterletAddonConfigStatus defines the observed state of KlusterletAddonConfig
 type KlusterletAddonConfigStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	// OCPGlobalProxy is the cluster-wide proxy config of the OCP cluster provisioned by ACM
+	// +optional
+	OCPGlobalProxy ProxyConfig `json:"ocpGlobalProxy,omitempty"`
+
+	// Conditions contains condition information for the klusterletAddonConfig
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

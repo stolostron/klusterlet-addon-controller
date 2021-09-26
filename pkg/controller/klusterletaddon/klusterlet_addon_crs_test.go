@@ -128,8 +128,8 @@ func Test_syncManifestWorkCRs(t *testing.T) {
 	}
 
 	type args struct {
-		r                  *ReconcileKlusterletAddon
-		klusterletaddoncfg *agentv1.KlusterletAddonConfig
+		r                *ReconcileKlusterletAddon
+		addonAgentConfig *agentv1.AddonAgentConfig
 	}
 
 	tests := []struct {
@@ -147,7 +147,10 @@ func Test_syncManifestWorkCRs(t *testing.T) {
 					}...),
 					scheme: testscheme,
 				},
-				klusterletaddoncfg: testKlusterletAddonConfig,
+				addonAgentConfig: &agentv1.AddonAgentConfig{
+					KlusterletAddonConfig: testKlusterletAddonConfig,
+					ClusterName:           testKlusterletAddonConfig.GetName(),
+				},
 			},
 			wantErr: false,
 		},
@@ -155,7 +158,7 @@ func Test_syncManifestWorkCRs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := syncManifestWorkCRs(tt.args.klusterletaddoncfg, tt.args.r)
+			err := syncManifestWorkCRs(tt.args.addonAgentConfig, tt.args.r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("syncManifestWorkCRs() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -191,8 +194,8 @@ func Test_syncManagedClusterAddonCRs(t *testing.T) {
 	}
 
 	type args struct {
-		r                  *ReconcileKlusterletAddon
-		klusterletaddoncfg *agentv1.KlusterletAddonConfig
+		r                *ReconcileKlusterletAddon
+		addonAgentConfig *agentv1.AddonAgentConfig
 	}
 
 	tests := []struct {
@@ -209,7 +212,10 @@ func Test_syncManagedClusterAddonCRs(t *testing.T) {
 					}...),
 					scheme: testscheme,
 				},
-				klusterletaddoncfg: testKlusterletAddonConfig,
+				addonAgentConfig: &agentv1.AddonAgentConfig{
+					KlusterletAddonConfig: testKlusterletAddonConfig,
+					ClusterName:           testKlusterletAddonConfig.GetName(),
+				},
 			},
 			wantErr: false,
 		},
@@ -217,7 +223,7 @@ func Test_syncManagedClusterAddonCRs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := syncManagedClusterAddonCRs(tt.args.klusterletaddoncfg, tt.args.r)
+			err := syncManagedClusterAddonCRs(tt.args.addonAgentConfig, tt.args.r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("syncManagedClusterAddonCRs() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -318,9 +324,9 @@ func Test_newCRManifestWork(t *testing.T) {
 	}
 
 	type args struct {
-		r                  *ReconcileKlusterletAddon
-		klusterletaddoncfg *agentv1.KlusterletAddonConfig
-		addon              addons.KlusterletAddon
+		r                *ReconcileKlusterletAddon
+		addonAgentConfig *agentv1.AddonAgentConfig
+		addon            addons.KlusterletAddon
 	}
 
 	tests := []struct {
@@ -338,8 +344,11 @@ func Test_newCRManifestWork(t *testing.T) {
 					}...),
 					scheme: testscheme,
 				},
-				klusterletaddoncfg: testKlusterletAddonConfig,
-				addon:              certpolicyctrl.AddonCertPolicyCtrl{},
+				addonAgentConfig: &agentv1.AddonAgentConfig{
+					KlusterletAddonConfig: testKlusterletAddonConfig,
+					ClusterName:           testKlusterletAddonConfig.Name,
+				},
+				addon: certpolicyctrl.AddonCertPolicyCtrl{},
 			},
 			wantErr: false,
 		},
@@ -353,8 +362,11 @@ func Test_newCRManifestWork(t *testing.T) {
 					}...),
 					scheme: testscheme,
 				},
-				klusterletaddoncfg: testKlusterletAddonConfig,
-				addon:              iampolicyctrl.AddonIAMPolicyCtrl{},
+				addonAgentConfig: &agentv1.AddonAgentConfig{
+					KlusterletAddonConfig: testKlusterletAddonConfig,
+					ClusterName:           testKlusterletAddonConfig.Name,
+				},
+				addon: iampolicyctrl.AddonIAMPolicyCtrl{},
 			},
 			wantErr: false,
 		},
@@ -367,8 +379,11 @@ func Test_newCRManifestWork(t *testing.T) {
 					}...),
 					scheme: testscheme,
 				},
-				klusterletaddoncfg: testKlusterletAddonConfig,
-				addon:              appmgr.AddonAppMgr{},
+				addonAgentConfig: &agentv1.AddonAgentConfig{
+					KlusterletAddonConfig: testKlusterletAddonConfig,
+					ClusterName:           testKlusterletAddonConfig.Name,
+				},
+				addon: appmgr.AddonAppMgr{},
 			},
 			wantErr: false,
 		},
@@ -376,7 +391,7 @@ func Test_newCRManifestWork(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mw, err := newCRManifestWork(tt.args.addon, tt.args.klusterletaddoncfg, tt.args.r.client)
+			mw, err := newCRManifestWork(tt.args.addon, tt.args.addonAgentConfig, tt.args.r.client)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("newCRManifestWork() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -468,9 +483,9 @@ func Test_deleteManifestWorkCRs(t *testing.T) {
 	}
 
 	type args struct {
-		klusterletaddoncfg *agentv1.KlusterletAddonConfig
-		client             client.Client
-		removeFinalizers   bool
+		addonAgentConfig *agentv1.AddonAgentConfig
+		client           client.Client
+		removeFinalizers bool
 	}
 
 	tests := []struct {
@@ -485,8 +500,11 @@ func Test_deleteManifestWorkCRs(t *testing.T) {
 					manifestWorkAppMgr,
 					manifestWorkPolicyController,
 				}...),
-				klusterletaddoncfg: testKlusterletAddonConfig,
-				removeFinalizers:   false,
+				addonAgentConfig: &agentv1.AddonAgentConfig{
+					KlusterletAddonConfig: testKlusterletAddonConfig,
+					ClusterName:           testKlusterletAddonConfig.Name,
+				},
+				removeFinalizers: false,
 			},
 			wantErr: false,
 		},
@@ -497,8 +515,11 @@ func Test_deleteManifestWorkCRs(t *testing.T) {
 					manifestWorkIAMPolicyController,
 					manifestWorkWorkMgr,
 				}...),
-				klusterletaddoncfg: testKlusterletAddonConfig,
-				removeFinalizers:   true,
+				addonAgentConfig: &agentv1.AddonAgentConfig{
+					KlusterletAddonConfig: testKlusterletAddonConfig,
+					ClusterName:           testKlusterletAddonConfig.Name,
+				},
+				removeFinalizers: true,
 			},
 			wantErr: false,
 		},
@@ -506,7 +527,7 @@ func Test_deleteManifestWorkCRs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := deleteManifestWorkCRs(tt.args.klusterletaddoncfg, tt.args.client, tt.args.removeFinalizers)
+			_, err := deleteManifestWorkCRs(tt.args.addonAgentConfig, tt.args.client, tt.args.removeFinalizers)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("newCRManifestWork() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -530,13 +551,12 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-managedcluster-name",
-			Namespace: "test-managedcluster-namespace",
+			Namespace: "test-managedcluster-name",
 		},
 		Spec: agentv1.KlusterletAddonConfigSpec{
 			ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
-			Version: "2.0.0",
 		},
 	}
 
@@ -546,7 +566,7 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 		Name:      "test-managedcluster-name",
 		Group:     "agent.open-cluster-management.io",
 		Resource:  "klusterletaddonconfigs",
-		Namespace: "test-managedcluster-namespace",
+		Namespace: "test-managedcluster-name",
 	}
 	mca1 := &addonv1alpha1.ManagedClusterAddOn{
 		TypeMeta: metav1.TypeMeta{
@@ -555,7 +575,7 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      addon1.GetManagedClusterAddOnName(),
-			Namespace: "test-managedcluster-namespace",
+			Namespace: "test-managedcluster-name",
 		},
 	}
 	mca2 := &addonv1alpha1.ManagedClusterAddOn{
@@ -565,7 +585,7 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      addon2.GetManagedClusterAddOnName(),
-			Namespace: "test-managedcluster-namespace",
+			Namespace: "test-managedcluster-name",
 		},
 		Status: addonv1alpha1.ManagedClusterAddOnStatus{
 			RelatedObjects: []addonv1alpha1.ObjectReference{addonResource},
@@ -575,10 +595,10 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 
 	// if exist but not right ref, will add ref
 	type args struct {
-		client             client.Client
-		klusterletaddoncfg *agentv1.KlusterletAddonConfig
-		addon              addons.KlusterletAddon
-		scheme             *runtime.Scheme
+		client           client.Client
+		addonAgentConfig *agentv1.AddonAgentConfig
+		addon            addons.KlusterletAddon
+		scheme           *runtime.Scheme
 	}
 	tests := []struct {
 		name              string
@@ -589,10 +609,13 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 		{
 			name: "create when not created",
 			args: args{
-				client:             fake.NewFakeClientWithScheme(testscheme, []runtime.Object{}...),
-				klusterletaddoncfg: testKlusterletAddonConfig,
-				addon:              addon1,
-				scheme:             testscheme,
+				client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{}...),
+				addonAgentConfig: &agentv1.AddonAgentConfig{
+					KlusterletAddonConfig: testKlusterletAddonConfig,
+					ClusterName:           testKlusterletAddonConfig.Name,
+				},
+				addon:  addon1,
+				scheme: testscheme,
 			},
 			wantAddonResource: []addonv1alpha1.ObjectReference{addonResource},
 			wantErr:           false,
@@ -600,10 +623,13 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 		{
 			name: "update when not complete",
 			args: args{
-				client:             fake.NewFakeClientWithScheme(testscheme, []runtime.Object{mca1}...),
-				klusterletaddoncfg: testKlusterletAddonConfig,
-				addon:              addon1,
-				scheme:             testscheme,
+				client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{mca1}...),
+				addonAgentConfig: &agentv1.AddonAgentConfig{
+					KlusterletAddonConfig: testKlusterletAddonConfig,
+					ClusterName:           testKlusterletAddonConfig.Name,
+				},
+				addon:  addon1,
+				scheme: testscheme,
 			},
 			wantAddonResource: []addonv1alpha1.ObjectReference{addonResource},
 			wantErr:           false,
@@ -611,10 +637,13 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 		{
 			name: "do nothing when same",
 			args: args{
-				client:             fake.NewFakeClientWithScheme(testscheme, []runtime.Object{mca2}...),
-				klusterletaddoncfg: testKlusterletAddonConfig,
-				addon:              addon2,
-				scheme:             testscheme,
+				client: fake.NewFakeClientWithScheme(testscheme, []runtime.Object{mca2}...),
+				addonAgentConfig: &agentv1.AddonAgentConfig{
+					KlusterletAddonConfig: testKlusterletAddonConfig,
+					ClusterName:           testKlusterletAddonConfig.Name,
+				},
+				addon:  addon2,
+				scheme: testscheme,
 			},
 			wantAddonResource: []addonv1alpha1.ObjectReference{addonResource},
 			wantErr:           false,
@@ -622,7 +651,7 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := updateManagedClusterAddon(tt.args.addon, tt.args.klusterletaddoncfg,
+			err := updateManagedClusterAddon(tt.args.addon, tt.args.addonAgentConfig,
 				tt.args.client, tt.args.scheme)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("updateManagedClusterAddon() error = %v, wantErr %v", err, tt.wantErr)
@@ -633,7 +662,7 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 				getErr := tt.args.client.Get(context.TODO(),
 					types.NamespacedName{
 						Name:      tt.args.addon.GetManagedClusterAddOnName(),
-						Namespace: "test-managedcluster-namespace",
+						Namespace: "test-managedcluster-name",
 					},
 					getMca,
 				)

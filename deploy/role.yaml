@@ -56,6 +56,7 @@ rules:
   resources:
   - klusterletaddonconfigs
   - klusterletaddonconfigs/finalizers
+  - klusterletaddonconfigs/status
   verbs:
   - create
   - delete
