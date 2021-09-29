@@ -26,8 +26,7 @@ const (
 
 // createManifestWorkComponentOperator - creates manifest work for klusterlet addon operator
 func createManifestWorkComponentOperator(
-	klusterletaddoncfg *agentv1.KlusterletAddonConfig,
-	pullSecretNamespace string,
+	addonAgentConfig *agentv1.AddonAgentConfig,
 	r *ReconcileKlusterletAddon) error {
 
 	var manifests []manifestworkv1.Manifest
@@ -36,26 +35,26 @@ func createManifestWorkComponentOperator(
 	klusterletaddonNamespace := addonoperator.NewNamespace()
 
 	// Create Component Operator ClusteRole
-	clusterRole := addonoperator.NewClusterRole(klusterletaddoncfg)
+	clusterRole := addonoperator.NewClusterRole(addonAgentConfig)
 
 	// create cluster role binding
-	clusterRoleBinding := addonoperator.NewClusterRoleBinding(klusterletaddoncfg)
+	clusterRoleBinding := addonoperator.NewClusterRoleBinding(addonAgentConfig)
 
 	// create service account
-	serviceAccount := addonoperator.NewServiceAccount(klusterletaddoncfg, addonoperator.KlusterletAddonNamespace)
+	serviceAccount := addonoperator.NewServiceAccount(addonAgentConfig, addonoperator.KlusterletAddonNamespace)
 
 	// create imagePullSecret
-	imagePullSecret, err := addonoperator.NewImagePullSecret(pullSecretNamespace,
-		klusterletaddoncfg.Spec.ImagePullSecret, r.client)
+	imagePullSecret, err := addonoperator.NewImagePullSecret(addonAgentConfig.ImagePullSecretNamespace,
+		addonAgentConfig.ImagePullSecret, r.client)
 	if err != nil {
 		log.Error(err, "Fail to create imagePullSecret")
 		return err
 	}
 
 	// create deployment for klusterlet addon operator
-	deployment, err := addonoperator.NewDeployment(klusterletaddoncfg, addonoperator.KlusterletAddonNamespace)
+	deployment, err := addonoperator.NewDeployment(addonAgentConfig, addonoperator.KlusterletAddonNamespace)
 	if err != nil {
-		log.Error(err, "Fail to crreate desired klusterlet addon operator deployment")
+		log.Error(err, "Fail to create desired klusterlet addon operator deployment")
 		return err
 	}
 	// add namespace, clusterrole, clusterrolebinding, serviceaccount
@@ -75,8 +74,8 @@ func createManifestWorkComponentOperator(
 
 	manifestWork := &manifestworkv1.ManifestWork{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      klusterletaddoncfg.Name + KlusterletAddonOperatorPostfix,
-			Namespace: klusterletaddoncfg.Namespace,
+			Name:      addonAgentConfig.ClusterName + KlusterletAddonOperatorPostfix,
+			Namespace: addonAgentConfig.ClusterName,
 		},
 		Spec: manifestworkv1.ManifestWorkSpec{
 			Workload: manifestworkv1.ManifestsTemplate{
@@ -85,7 +84,7 @@ func createManifestWorkComponentOperator(
 		},
 	}
 
-	if err := utils.CreateOrUpdateManifestWork(manifestWork, r.client, klusterletaddoncfg, r.scheme); err != nil {
+	if err := utils.CreateOrUpdateManifestWork(manifestWork, r.client, addonAgentConfig.KlusterletAddonConfig, r.scheme); err != nil {
 		log.Error(err, "Failed to create manifest work for component")
 		return err
 	}

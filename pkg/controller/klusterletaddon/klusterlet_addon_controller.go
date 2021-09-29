@@ -53,11 +53,18 @@ const (
 // Add creates a new KlusterletAddon Controller and adds it to the Manager.
 // The Manager will set fields on the Controller and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+	if err := globalProxyReconcilerAdd(mgr, newGlobalProxyReconciler(mgr)); err != nil {
+		return err
+	}
+	if err := klusterletAddonAdd(mgr, newKlusterletAddonReconciler(mgr)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+// newKlusterletAddonReconciler returns a new reconcile.Reconciler
+func newKlusterletAddonReconciler(mgr manager.Manager) reconcile.Reconciler {
 	client := newCustomClient(mgr.GetClient(), mgr.GetAPIReader())
 	return &ReconcileKlusterletAddon{client: client, scheme: mgr.GetScheme()}
 }
@@ -83,8 +90,8 @@ func (cc customClient) Get(ctx context.Context, key client.ObjectKey, obj runtim
 	return cc.Client.Get(ctx, key, obj)
 }
 
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
+// klusterletAddonAdd adds a new Controller to mgr with r as the reconcile.Reconciler
+func klusterletAddonAdd(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
 	c, err := controller.New("klusterletaddon-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -180,12 +187,22 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
+	addonAgentConfig := &agentv1.AddonAgentConfig{
+		KlusterletAddonConfig:    klusterletAddonConfig,
+		ClusterName:              managedCluster.GetName(),
+		NodeSelector:             map[string]string{},
+		Registry:                 os.Getenv("DEFAULT_IMAGE_REGISTRY"),
+		ImagePullSecret:          os.Getenv("DEFAULT_IMAGE_PULL_SECRET"),
+		ImagePullSecretNamespace: os.Getenv("POD_NAMESPACE"),
+		ImagePullPolicy:          corev1.PullAlways,
+	}
+
 	if klusterletAddonConfig.DeletionTimestamp != nil {
 		// if ManagedCluster not online, force delete all manifestwork
 		removeFinalizers := managedClusterIsNotFound || !IsManagedClusterOnline(managedCluster)
 
 		// delete & wait all CRs
-		if isCompleted, err := deleteManifestWorkCRs(klusterletAddonConfig, r.client, removeFinalizers); err != nil {
+		if isCompleted, err := deleteManifestWorkCRs(addonAgentConfig, r.client, removeFinalizers); err != nil {
 			reqLogger.Error(err, "Fail to delete all ManifestWorks for Addon CRs")
 			return reconcile.Result{}, err
 		} else if !isCompleted {
@@ -271,60 +288,44 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 
 	var registry, pullSecretNamespace, pullSecret string
 	var err error
-	// TODO: deprecate klusterletAddonConfig.Spec.ImagePullSecret and klusterletAddonConfig.Spec.Registry.
-	// TODO: refactor this part using a new Config struct as parameter.
-	// klusterletAddonConfig.Spec.ImagePullSecret and klusterletAddonConfig.Spec.Registry are not used by now.
-	// first check the klusterletAddonConfig.Spec.ImagePullSecret
-	// then check imageRegistry
-	if klusterletAddonConfig.Spec.ImagePullSecret != "" {
-		pullSecretNamespace = managedCluster.Name
-	} else if managedCluster.Labels[clusterImageRegistryLabel] != "" {
+
+	// if the managedCluster is labelled by imageRegistry, then use it.
+	if managedCluster.Labels[clusterImageRegistryLabel] != "" {
 		registry, pullSecretNamespace, pullSecret, err = getImageRegistryAndPullSecret(r.client,
 			managedCluster.Labels[clusterImageRegistryLabel])
 		if err != nil {
 			reqLogger.Error(err, "failed to get custom registry and pull secret. %v", err)
 		} else {
-			klusterletAddonConfig.Spec.ImagePullSecret = pullSecret
-			klusterletAddonConfig.Spec.ImageRegistry = registry
+			addonAgentConfig.ImagePullSecret = pullSecret
+			addonAgentConfig.ImagePullSecretNamespace = pullSecretNamespace
+			addonAgentConfig.Registry = registry
 		}
 	}
 
-	// set default if empty
-	if klusterletAddonConfig.Spec.ImagePullSecret == "" {
-		klusterletAddonConfig.Spec.ImagePullSecret = os.Getenv("DEFAULT_IMAGE_PULL_SECRET")
-		pullSecretNamespace = os.Getenv("POD_NAMESPACE")
-	}
-
-	if klusterletAddonConfig.Spec.ImageRegistry == "" {
-		klusterletAddonConfig.Spec.ImageRegistry = os.Getenv("DEFAULT_IMAGE_REGISTRY")
-	}
-
 	// This part is to support running pods related local-cluster on specified nodes,like infra nodes.
-	if managedCluster.GetName() == "local-cluster" && len(klusterletAddonConfig.Spec.NodeSelector) == 0 {
+	if managedCluster.GetName() == "local-cluster" {
 		annotations := managedCluster.GetAnnotations()
-		nodeSelector := map[string]string{}
 		if nodeSelectorString, ok := annotations[AnnotationNodeSelector]; ok {
-			if err := json.Unmarshal([]byte(nodeSelectorString), &nodeSelector); err != nil {
+			if err := json.Unmarshal([]byte(nodeSelectorString), &addonAgentConfig.NodeSelector); err != nil {
 				reqLogger.Error(err, "failed to unmarshal nodeSelector annotation of cluster %v", managedCluster.GetName())
 			}
-			klusterletAddonConfig.Spec.NodeSelector = nodeSelector
 		}
 	}
 
 	// Create manifest work for crds
-	if err := createManifestWorkCRD(klusterletAddonConfig, managedCluster.Status.Version.Kubernetes, r); err != nil {
+	if err := createManifestWorkCRD(addonAgentConfig, managedCluster.Status.Version.Kubernetes, r); err != nil {
 		reqLogger.Error(err, "Fail to create manifest work for CRD")
 		return reconcile.Result{}, err
 	}
 
 	// Create manifest work for Klusterlet Addon operator
-	if err := createManifestWorkComponentOperator(klusterletAddonConfig, pullSecretNamespace, r); err != nil {
+	if err := createManifestWorkComponentOperator(addonAgentConfig, r); err != nil {
 		reqLogger.Error(err, "Fail to create manifest work for klusterlet addon opearator")
 		return reconcile.Result{}, err
 	}
 
 	// Sync ManagedClusterAddon for component crs according to klusterletAddonConfig enable/disable settings
-	if err := syncManagedClusterAddonCRs(klusterletAddonConfig, r); err != nil {
+	if err := syncManagedClusterAddonCRs(addonAgentConfig, r); err != nil {
 		reqLogger.Error(err, "Fail to create ManagedClusterAddon for CRs")
 		return reconcile.Result{}, err
 	}
@@ -337,7 +338,7 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 	if manifestWork != nil && len(manifestWork.Status.Conditions) > 0 {
 		if IsCRDManifestWorkAvailable(manifestWork) {
 			// sync manifestWork for component crs according to klusterletAddonConfig enable/disable settings
-			if err := syncManifestWorkCRs(klusterletAddonConfig, r); err != nil {
+			if err := syncManifestWorkCRs(addonAgentConfig, r); err != nil {
 				reqLogger.Error(err, "Fail to create manifest work for CRs")
 				return reconcile.Result{}, err
 			}

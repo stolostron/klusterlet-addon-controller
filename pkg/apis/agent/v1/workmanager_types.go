@@ -27,6 +27,8 @@ type WorkManagerSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ClusterNamespace string `json:"clusterNamespace"`
 
+	// DEPRECATED in release 2.4 and will be removed in the future since not used anymore.
+	// +optional
 	ClusterLabels map[string]string `json:"clusterLabels"`
 
 	// +kubebuilder:validation:MinLength=1

@@ -44,8 +44,8 @@ func (addon AddonAppMgr) GetAddonName() string {
 	return AppMgr
 }
 
-func (addon AddonAppMgr) NewAddonCR(instance *agentv1.KlusterletAddonConfig, namespace string) (runtime.Object, error) {
-	return newApplicationManagerCR(instance, namespace)
+func (addon AddonAppMgr) NewAddonCR(addonAgentConfig *agentv1.AddonAgentConfig, namespace string) (runtime.Object, error) {
+	return newApplicationManagerCR(addonAgentConfig, namespace)
 }
 
 func (addon AddonAppMgr) GetManagedClusterAddOnName() string {
@@ -58,21 +58,35 @@ func (addon AddonAppMgr) GetManagedClusterAddOnName() string {
 
 // newApplicationManagerCR - create CR for component application manager
 func newApplicationManagerCR(
-	instance *agentv1.KlusterletAddonConfig,
+	addonAgentConfig *agentv1.AddonAgentConfig,
 	namespace string,
 ) (*agentv1.ApplicationManager, error) {
 	labels := map[string]string{
-		"app": instance.Name,
+		"app": addonAgentConfig.ClusterName,
 	}
 
 	gv := agentv1.GlobalValues{
-		ImagePullPolicy: instance.Spec.ImagePullPolicy,
-		ImagePullSecret: instance.Spec.ImagePullSecret,
+		ImagePullPolicy: addonAgentConfig.ImagePullPolicy,
+		ImagePullSecret: addonAgentConfig.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 2),
-		NodeSelector:    instance.Spec.NodeSelector,
+		NodeSelector:    addonAgentConfig.NodeSelector,
+	}
+	switch addonAgentConfig.KlusterletAddonConfig.Spec.ApplicationManagerConfig.ProxyPolicy {
+	case agentv1.ProxyPolicyOCPGlobalProxy:
+		gv.ProxyConfig = map[string]string{
+			agentv1.HTTPProxy:  addonAgentConfig.KlusterletAddonConfig.Status.OCPGlobalProxy.HTTPProxy,
+			agentv1.HTTPSProxy: addonAgentConfig.KlusterletAddonConfig.Status.OCPGlobalProxy.HTTPSProxy,
+			agentv1.NoProxy:    addonAgentConfig.KlusterletAddonConfig.Status.OCPGlobalProxy.NoProxy,
+		}
+	case agentv1.ProxyPolicyCustomProxy:
+		gv.ProxyConfig = map[string]string{
+			agentv1.HTTPProxy:  addonAgentConfig.KlusterletAddonConfig.Spec.ProxyConfig.HTTPProxy,
+			agentv1.HTTPSProxy: addonAgentConfig.KlusterletAddonConfig.Spec.ProxyConfig.HTTPSProxy,
+			agentv1.NoProxy:    addonAgentConfig.KlusterletAddonConfig.Spec.ProxyConfig.NoProxy,
+		}
 	}
 
-	imageRepository, err := instance.GetImage("multicluster_operators_subscription")
+	imageRepository, err := addonAgentConfig.GetImage("multicluster_operators_subscription")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "subscription")
 		return nil, err
@@ -92,8 +106,8 @@ func newApplicationManagerCR(
 		Spec: agentv1.ApplicationManagerSpec{
 			FullNameOverride:    ApplicationManager,
 			HubKubeconfigSecret: managedClusterAddOnName + "-hub-kubeconfig",
-			ClusterName:         instance.Spec.ClusterName,
-			ClusterNamespace:    instance.Spec.ClusterNamespace,
+			ClusterName:         addonAgentConfig.ClusterName,
+			ClusterNamespace:    addonAgentConfig.ClusterName,
 			GlobalValues:        gv,
 		},
 	}, nil

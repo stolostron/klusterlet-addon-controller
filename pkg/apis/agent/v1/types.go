@@ -19,4 +19,22 @@ type GlobalValues struct {
 	ImagePullSecret string            `json:"imagePullSecret,omitempty"`
 	ImageOverrides  map[string]string `json:"imageOverrides,omitempty"`
 	NodeSelector    map[string]string `json:"nodeSelector,omitempty"`
+	ProxyConfig     map[string]string `json:"proxyConfig,omitempty"`
+}
+
+const (
+	HTTPProxy  = "HTTP_PROXY"
+	HTTPSProxy = "HTTPS_PROXY"
+	NoProxy    = "NO_PROXY"
+)
+
+// AddonAgentConfig is the configurations for addon agents.
+type AddonAgentConfig struct {
+	KlusterletAddonConfig    *KlusterletAddonConfig
+	ClusterName              string
+	NodeSelector             map[string]string
+	Registry                 string
+	ImagePullSecret          string
+	ImagePullSecretNamespace string
+	ImagePullPolicy          corev1.PullPolicy
 }

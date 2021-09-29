@@ -44,10 +44,10 @@ func (addon AddonPolicyCtrl) GetAddonName() string {
 }
 
 func (addon AddonPolicyCtrl) NewAddonCR(
-	instance *agentv1.KlusterletAddonConfig,
+	addonAgentConfig *agentv1.AddonAgentConfig,
 	namespace string,
 ) (runtime.Object, error) {
-	return newPolicyControllerCR(instance, namespace)
+	return newPolicyControllerCR(addonAgentConfig, namespace)
 }
 
 func (addon AddonPolicyCtrl) GetManagedClusterAddOnName() string {
@@ -60,21 +60,36 @@ func (addon AddonPolicyCtrl) GetManagedClusterAddOnName() string {
 
 // newPolicyControllerCR - create CR for component poliicy controller
 func newPolicyControllerCR(
-	instance *agentv1.KlusterletAddonConfig,
+	addonAgentConfig *agentv1.AddonAgentConfig,
 	namespace string,
 ) (*agentv1.PolicyController, error) {
 	labels := map[string]string{
-		"app": instance.Name,
+		"app": addonAgentConfig.ClusterName,
 	}
 
 	gv := agentv1.GlobalValues{
-		ImagePullPolicy: instance.Spec.ImagePullPolicy,
-		ImagePullSecret: instance.Spec.ImagePullSecret,
+		ImagePullPolicy: addonAgentConfig.ImagePullPolicy,
+		ImagePullSecret: addonAgentConfig.ImagePullSecret,
 		ImageOverrides:  make(map[string]string, 1),
-		NodeSelector:    instance.Spec.NodeSelector,
+		NodeSelector:    addonAgentConfig.NodeSelector,
 	}
 
-	imageRepository, err := instance.GetImage("config_policy_controller")
+	switch addonAgentConfig.KlusterletAddonConfig.Spec.PolicyController.ProxyPolicy {
+	case agentv1.ProxyPolicyOCPGlobalProxy:
+		gv.ProxyConfig = map[string]string{
+			agentv1.HTTPProxy:  addonAgentConfig.KlusterletAddonConfig.Status.OCPGlobalProxy.HTTPProxy,
+			agentv1.HTTPSProxy: addonAgentConfig.KlusterletAddonConfig.Status.OCPGlobalProxy.HTTPSProxy,
+			agentv1.NoProxy:    addonAgentConfig.KlusterletAddonConfig.Status.OCPGlobalProxy.NoProxy,
+		}
+	case agentv1.ProxyPolicyCustomProxy:
+		gv.ProxyConfig = map[string]string{
+			agentv1.HTTPProxy:  addonAgentConfig.KlusterletAddonConfig.Spec.ProxyConfig.HTTPProxy,
+			agentv1.HTTPSProxy: addonAgentConfig.KlusterletAddonConfig.Spec.ProxyConfig.HTTPSProxy,
+			agentv1.NoProxy:    addonAgentConfig.KlusterletAddonConfig.Spec.ProxyConfig.NoProxy,
+		}
+	}
+
+	imageRepository, err := addonAgentConfig.GetImage("config_policy_controller")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "policy-controller")
 		return nil, err
@@ -82,7 +97,7 @@ func newPolicyControllerCR(
 
 	gv.ImageOverrides["config_policy_controller"] = imageRepository
 
-	imageRepository, err = instance.GetImage("governance_policy_spec_sync")
+	imageRepository, err = addonAgentConfig.GetImage("governance_policy_spec_sync")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "governance-policy-spec-sync")
 		return nil, err
@@ -90,7 +105,7 @@ func newPolicyControllerCR(
 
 	gv.ImageOverrides["governance_policy_spec_sync"] = imageRepository
 
-	imageRepository, err = instance.GetImage("governance_policy_status_sync")
+	imageRepository, err = addonAgentConfig.GetImage("governance_policy_status_sync")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "governance-policy-status-sync")
 		return nil, err
@@ -98,7 +113,7 @@ func newPolicyControllerCR(
 
 	gv.ImageOverrides["governance_policy_status_sync"] = imageRepository
 
-	imageRepository, err = instance.GetImage("governance_policy_template_sync")
+	imageRepository, err = addonAgentConfig.GetImage("governance_policy_template_sync")
 	if err != nil {
 		log.Error(err, "Fail to get Image", "Component.Name", "governance-policy-template-sync")
 		return nil, err
@@ -117,8 +132,8 @@ func newPolicyControllerCR(
 		},
 		Spec: agentv1.PolicyControllerSpec{
 			FullNameOverride:            PolicyController,
-			ClusterName:                 instance.Spec.ClusterName,
-			ClusterNamespace:            instance.Spec.ClusterNamespace,
+			ClusterName:                 addonAgentConfig.ClusterName,
+			ClusterNamespace:            addonAgentConfig.ClusterName,
 			HubKubeconfigSecret:         managedClusterAddOnName + "-hub-kubeconfig",
 			GlobalValues:                gv,
 			DeployedOnHub:               false,

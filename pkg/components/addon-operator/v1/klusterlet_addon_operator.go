@@ -32,9 +32,9 @@ const (
 )
 
 // NewClusterRoleBinding - template for cluster role bindiing
-func NewClusterRoleBinding(instance *agentv1.KlusterletAddonConfig) *rbacv1.ClusterRoleBinding {
+func NewClusterRoleBinding(addonAgentConfig *agentv1.AddonAgentConfig) *rbacv1.ClusterRoleBinding {
 	labels := map[string]string{
-		"app": instance.Name,
+		"app": addonAgentConfig.ClusterName,
 	}
 
 	return &rbacv1.ClusterRoleBinding{
@@ -61,9 +61,9 @@ func NewClusterRoleBinding(instance *agentv1.KlusterletAddonConfig) *rbacv1.Clus
 }
 
 // NewClusterRole - template for cluster role
-func NewClusterRole(instance *agentv1.KlusterletAddonConfig) *rbacv1.ClusterRole {
+func NewClusterRole(addonAgentConfig *agentv1.AddonAgentConfig) *rbacv1.ClusterRole {
 	labels := map[string]string{
-		"app": instance.Name,
+		"app": addonAgentConfig.ClusterName,
 	}
 
 	return &rbacv1.ClusterRole{
@@ -92,9 +92,9 @@ func NewClusterRole(instance *agentv1.KlusterletAddonConfig) *rbacv1.ClusterRole
 }
 
 // NewServiceAccount - template for service account
-func NewServiceAccount(instance *agentv1.KlusterletAddonConfig, namespace string) *corev1.ServiceAccount {
+func NewServiceAccount(addonAgentConfig *agentv1.AddonAgentConfig, namespace string) *corev1.ServiceAccount {
 	labels := map[string]string{
-		"app": instance.Name,
+		"app": addonAgentConfig.ClusterName,
 	}
 
 	serviceAccount := &corev1.ServiceAccount{
@@ -129,20 +129,14 @@ func NewNamespace() *corev1.Namespace {
 }
 
 // NewDeployment -  template for klusterlet addon operator
-func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*appsv1.Deployment, error) {
+func NewDeployment(addonAgentConfig *agentv1.AddonAgentConfig, namespace string) (*appsv1.Deployment, error) {
 	labels := map[string]string{
-		"app": instance.Name,
+		"app": addonAgentConfig.ClusterName,
 	}
 
-	var deploymentImage string
-	if instance.Spec.ComponentOperatorImage != "" {
-		deploymentImage = instance.Spec.ComponentOperatorImage
-	} else {
-		imageRepository, err := instance.GetImage("klusterlet_addon_operator")
-		if err != nil {
-			return nil, err
-		}
-		deploymentImage = imageRepository
+	deploymentImage, err := addonAgentConfig.GetImage("klusterlet_addon_operator")
+	if err != nil {
+		return nil, err
 	}
 
 	deployment := &appsv1.Deployment{
@@ -176,7 +170,7 @@ func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*
 						{
 							Name:            KlusterletAddonOperator,
 							Image:           deploymentImage,
-							ImagePullPolicy: instance.Spec.ImagePullPolicy,
+							ImagePullPolicy: addonAgentConfig.ImagePullPolicy,
 							Env: []corev1.EnvVar{
 								{
 									Name:  "WATCH_NAMESPACE",
@@ -197,7 +191,7 @@ func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*
 							},
 						},
 					},
-					NodeSelector: instance.Spec.NodeSelector,
+					NodeSelector: addonAgentConfig.NodeSelector,
 					Tolerations: []corev1.Toleration{
 						{
 							Key:      "node-role.kubernetes.io/infra",
@@ -210,10 +204,10 @@ func NewDeployment(instance *agentv1.KlusterletAddonConfig, namespace string) (*
 		},
 	}
 
-	if instance.Spec.ImagePullSecret != "" {
+	if addonAgentConfig.ImagePullSecret != "" {
 		deployment.Spec.Template.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
 			{
-				Name: instance.Spec.ImagePullSecret,
+				Name: addonAgentConfig.ImagePullSecret,
 			},
 		}
 	}

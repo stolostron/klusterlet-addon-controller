@@ -52,7 +52,7 @@ func TestReconcileKlusterletAddon_Reconcile(t *testing.T) {
 			Namespace: "test-managedcluster",
 		},
 		Spec: agentv1.KlusterletAddonConfigSpec{
-			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
 			Version: "2.0.0",
@@ -70,7 +70,7 @@ func TestReconcileKlusterletAddon_Reconcile(t *testing.T) {
 			DeletionTimestamp: &metav1.Time{Time: time.Now()},
 		},
 		Spec: agentv1.KlusterletAddonConfigSpec{
-			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
 		},

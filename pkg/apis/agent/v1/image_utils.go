@@ -53,8 +53,8 @@ type manifest struct {
 
 var manifests map[string]manifest
 
-// GetImage returns the image.Image,  for the specified component return error if information not found
-func (instance KlusterletAddonConfig) GetImage(component string) (imageRepository string, err error) {
+// GetImage returns the image.  for the specified component return error if information not found
+func (config *AddonAgentConfig) GetImage(component string) (imageRepository string, err error) {
 
 	m, err := getManifest(version.Version)
 	if err != nil {
@@ -66,8 +66,8 @@ func (instance KlusterletAddonConfig) GetImage(component string) (imageRepositor
 		return "", fmt.Errorf("addon image not found")
 	}
 
-	if instance.Spec.ImageRegistry != "" {
-		registry := strings.TrimSuffix(instance.Spec.ImageRegistry, "/")
+	if config.Registry != "" {
+		registry := strings.TrimSuffix(config.Registry, "/")
 		imageSegments := strings.Split(image, "/")
 		image = registry + "/" + imageSegments[len(imageSegments)-1]
 

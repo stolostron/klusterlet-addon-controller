@@ -87,13 +87,18 @@ func Test_createManifestWorkComponentOperator(t *testing.T) {
 			Namespace: "test-managedcluster",
 		},
 		Spec: agentv1.KlusterletAddonConfigSpec{
-			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
-			ImagePullSecret: "test-managedcluster",
 		},
 	}
 
+	testAddonAgentConfig := &agentv1.AddonAgentConfig{
+		KlusterletAddonConfig:    testKlusterletAddonConfig,
+		ClusterName:              "test-managedcluster",
+		ImagePullSecret:          "test-managedcluster",
+		ImagePullSecretNamespace: "test-managedcluster",
+	}
 	testSecret := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: corev1.SchemeGroupVersion.String(),
@@ -124,9 +129,8 @@ func Test_createManifestWorkComponentOperator(t *testing.T) {
 	}
 
 	type args struct {
-		r                   *ReconcileKlusterletAddon
-		klusterletaddoncfg  *agentv1.KlusterletAddonConfig
-		pullSecretNamespace string
+		r                *ReconcileKlusterletAddon
+		addonAgentConfig *agentv1.AddonAgentConfig
 	}
 
 	tests := []struct {
@@ -143,8 +147,7 @@ func Test_createManifestWorkComponentOperator(t *testing.T) {
 					}...),
 					scheme: testscheme,
 				},
-				klusterletaddoncfg:  testKlusterletAddonConfig,
-				pullSecretNamespace: "test-managedcluster",
+				addonAgentConfig: testAddonAgentConfig,
 			},
 			wantErr: false,
 		},
@@ -157,8 +160,7 @@ func Test_createManifestWorkComponentOperator(t *testing.T) {
 					}...),
 					scheme: testscheme,
 				},
-				klusterletaddoncfg:  testKlusterletAddonConfig,
-				pullSecretNamespace: "test-managedcluster",
+				addonAgentConfig: testAddonAgentConfig,
 			},
 			wantErr: true,
 		},
@@ -166,7 +168,7 @@ func Test_createManifestWorkComponentOperator(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := createManifestWorkComponentOperator(tt.args.klusterletaddoncfg, tt.args.pullSecretNamespace, tt.args.r)
+			err := createManifestWorkComponentOperator(tt.args.addonAgentConfig, tt.args.r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("createManifestWorkComponentOperator() error = %v, wantErr %v", err, tt.wantErr)
 				return

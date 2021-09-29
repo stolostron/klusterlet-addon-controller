@@ -32,7 +32,7 @@ func Test_deleteOutDatedRoleRoleBinding(t *testing.T) {
 			Namespace: "test-managedcluster",
 		},
 		Spec: agentv1.KlusterletAddonConfigSpec{
-			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
 		},
@@ -47,7 +47,7 @@ func Test_deleteOutDatedRoleRoleBinding(t *testing.T) {
 			Namespace: "test-managedcluster",
 		},
 		Spec: agentv1.KlusterletAddonConfigSpec{
-			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
 		},

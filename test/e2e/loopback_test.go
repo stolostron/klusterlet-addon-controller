@@ -25,7 +25,6 @@ import (
 
 var _ = Describe("Loopback test", func() {
 	It("create and delete all addons", func() {
-		testNamespace := "cluster1-test"
 		testKlusterletAddonConfig := &agentv1.KlusterletAddonConfig{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: agentv1.SchemeGroupVersion.String(),
@@ -36,28 +35,21 @@ var _ = Describe("Loopback test", func() {
 				Namespace: managedclusterName,
 			},
 			Spec: agentv1.KlusterletAddonConfigSpec{
-				ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+				ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 					Enabled: true,
 				},
-				CertPolicyControllerConfig: agentv1.KlusterletAddonConfigCertPolicyControllerSpec{
+				CertPolicyControllerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 					Enabled: true,
 				},
-				IAMPolicyControllerConfig: agentv1.KlusterletAddonConfigIAMPolicyControllerSpec{
+				IAMPolicyControllerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 					Enabled: true,
 				},
-				PolicyController: agentv1.KlusterletAddonConfigPolicyControllerSpec{
+				PolicyController: agentv1.KlusterletAddonAgentConfigSpec{
 					Enabled: true,
 				},
-				SearchCollectorConfig: agentv1.KlusterletAddonConfigSearchCollectorSpec{
+				SearchCollectorConfig: agentv1.KlusterletAddonAgentConfigSpec{
 					Enabled: true,
 				},
-
-				ClusterName:      managedclusterName,
-				ClusterNamespace: testNamespace,
-				ClusterLabels: map[string]string{
-					"author": "tester",
-				},
-				Version: "2.0.0",
 			},
 		}
 
@@ -103,13 +95,12 @@ var _ = Describe("Loopback test", func() {
 			Eventually(func() bool {
 				deployment, err := spokeClient.AppsV1().Deployments(agentAddonNamespace).Get(context.TODO(), deploy, metav1.GetOptions{})
 				if err != nil {
-					logf.Log.Info("Get deployment error", "namespace", agentAddonNamespace, "name", deploy, "error", err)
 					return false
 				}
 
 				logf.Log.Info("Deployment created", "name", deployment.Name)
 				return true
-			}, 300*time.Second, 3*time.Second).Should(BeTrue())
+			}, 300*time.Second, 5*time.Second).Should(BeTrue())
 		}
 
 		By("Delete klusterletaddonconfigs")
@@ -145,29 +136,7 @@ var _ = Describe("Loopback test", func() {
 
 				logf.Log.Info("Get manifestwork error", "name", mw, "error", err)
 				return false
-			}, 300*time.Second, 3*time.Second).Should(BeTrue())
-		}
-
-		By("Check namespaces are deleted")
-		namespaces := []string{
-			testNamespace,
-			agentAddonNamespace,
-		}
-		for _, ns := range namespaces {
-			Eventually(func() bool {
-				_, err := spokeClient.CoreV1().Namespaces().Get(context.TODO(), ns, metav1.GetOptions{})
-				if err == nil {
-					return false
-				}
-
-				if errors.IsNotFound(err) {
-					logf.Log.Info("Namespace deleted", "name", ns)
-					return true
-				}
-
-				logf.Log.Info("Get namespace error", "name", ns, "error", err)
-				return false
-			}, 300*time.Second, 3*time.Second).Should(BeTrue())
+			}, 500*time.Second, 5*time.Second).Should(BeTrue())
 		}
 
 		By("Check klusterletaddonconfig is deleted")

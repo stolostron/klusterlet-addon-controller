@@ -47,7 +47,7 @@ deps:
 
 .PHONY: check
 ## Runs a set of required checks
-check: lint go-bindata-check
+check: lint go-bindata-check copyright-check
 
 .PHONY: copyright-check
 copyright-check:
@@ -215,4 +215,3 @@ build-e2e:
 .PHONY: test-e2e
 test-e2e: build-e2e prepare-e2e-cluster deploy
 	./e2e.test -test.v -ginkgo.v
-

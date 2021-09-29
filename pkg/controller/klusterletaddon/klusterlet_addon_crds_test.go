@@ -36,15 +36,19 @@ func Test_createManifestWorkCRD(t *testing.T) {
 			Namespace: "test-managedcluster",
 		},
 		Spec: agentv1.KlusterletAddonConfigSpec{
-			ApplicationManagerConfig: agentv1.KlusterletAddonConfigApplicationManagerSpec{
+			ApplicationManagerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
 		},
 	}
+	testAddonAgentConfig := &agentv1.AddonAgentConfig{
+		KlusterletAddonConfig: testKlusterletAddonConfig,
+		ClusterName:           "test-managedcluster",
+	}
 
 	type args struct {
 		r                  *ReconcileKlusterletAddon
-		klusterletaddoncfg *agentv1.KlusterletAddonConfig
+		klusterletaddoncfg *agentv1.AddonAgentConfig
 		kubeversion        string
 	}
 
@@ -62,7 +66,7 @@ func Test_createManifestWorkCRD(t *testing.T) {
 					}...),
 					scheme: testscheme,
 				},
-				klusterletaddoncfg: testKlusterletAddonConfig,
+				klusterletaddoncfg: testAddonAgentConfig,
 				kubeversion:        "1.17.0",
 			},
 			wantErr: false,
@@ -76,7 +80,7 @@ func Test_createManifestWorkCRD(t *testing.T) {
 					}...),
 					scheme: testscheme,
 				},
-				klusterletaddoncfg: testKlusterletAddonConfig,
+				klusterletaddoncfg: testAddonAgentConfig,
 				kubeversion:        "1.11.0",
 			},
 			wantErr: false,
@@ -90,7 +94,7 @@ func Test_createManifestWorkCRD(t *testing.T) {
 					}...),
 					scheme: testscheme,
 				},
-				klusterletaddoncfg: testKlusterletAddonConfig,
+				klusterletaddoncfg: testAddonAgentConfig,
 				kubeversion:        "1.15.0",
 			},
 			wantErr: false,
