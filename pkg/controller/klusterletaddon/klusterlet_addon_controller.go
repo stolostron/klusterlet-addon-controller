@@ -201,14 +201,17 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 		// if ManagedCluster not online, force delete all manifestwork
 		removeFinalizers := managedClusterIsNotFound || !IsManagedClusterOnline(managedCluster)
 
+		reqLogger.Info("delete CRs manifests...")
 		// delete & wait all CRs
 		if isCompleted, err := deleteManifestWorkCRs(addonAgentConfig, r.client, removeFinalizers); err != nil {
 			reqLogger.Error(err, "Fail to delete all ManifestWorks for Addon CRs")
 			return reconcile.Result{}, err
 		} else if !isCompleted {
+			reqLogger.Info("delete CRs manifests not completed")
 			return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, err
 		}
 
+		reqLogger.Info("delete Operator manifest...")
 		// delete & wait component Operator
 		if isCompleted, err := deleteManifestWorkHelper(
 			klusterletAddonConfig.Name+KlusterletAddonOperatorPostfix,
@@ -219,9 +222,11 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 			reqLogger.Error(err, "Fail to delete ManifestWork of Klusterlet Addon Operator")
 			return reconcile.Result{}, err
 		} else if !isCompleted {
+			reqLogger.Info("delete operator manifest not completed")
 			return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, err
 		}
 
+		reqLogger.Info("delete CRDs manifest...")
 		// delete & wait CRDs
 		if isCompleted, err := deleteManifestWorkHelper(
 			klusterletAddonConfig.Name+KlusterletAddonCRDsPostfix,
@@ -232,6 +237,7 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 			reqLogger.Error(err, "Fail to delete ManifestWork of CRDs")
 			return reconcile.Result{}, err
 		} else if !isCompleted {
+			reqLogger.Info("delete crds manifest not completed")
 			return reconcile.Result{Requeue: true, RequeueAfter: 5 * time.Second}, err
 		}
 
