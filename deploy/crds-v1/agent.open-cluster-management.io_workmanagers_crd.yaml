@@ -37,6 +37,7 @@ spec:
                 additionalProperties:
                   type: string
                 description: DEPRECATED in release 2.4 and will be removed in the future since not used anymore.
+                nullable: true
                 type: object
               clusterName:
                 minLength: 1

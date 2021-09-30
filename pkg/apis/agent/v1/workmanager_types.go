@@ -28,6 +28,7 @@ type WorkManagerSpec struct {
 	ClusterNamespace string `json:"clusterNamespace"`
 
 	// DEPRECATED in release 2.4 and will be removed in the future since not used anymore.
+	// +nullable
 	// +optional
 	ClusterLabels map[string]string `json:"clusterLabels"`
 
