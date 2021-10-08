@@ -97,6 +97,10 @@ func newWorkManagerCR(
 			ClusterName:      addonAgentConfig.ClusterName,
 			ClusterNamespace: addonAgentConfig.ClusterName,
 
+			// Deprecated in release 2.4. will remove in the future.
+			// need set an empty map here since ocp 311 does not support null in CR.
+			ClusterLabels: map[string]string{},
+
 			HubKubeconfigSecret: managedClusterAddOnName + "-hub-kubeconfig",
 
 			GlobalValues: gv,
