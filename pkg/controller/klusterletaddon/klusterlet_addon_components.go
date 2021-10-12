@@ -31,10 +31,7 @@ func createManifestWorkComponentOperator(
 
 	var manifests []manifestworkv1.Manifest
 
-	// create namespace
-	klusterletaddonNamespace := addonoperator.NewNamespace()
-
-	// Create Component Operator ClusteRole
+	// Create Component Operator ClusterRole
 	clusterRole := addonoperator.NewClusterRole(addonAgentConfig)
 
 	// create cluster role binding
@@ -57,12 +54,11 @@ func createManifestWorkComponentOperator(
 		log.Error(err, "Fail to create desired klusterlet addon operator deployment")
 		return err
 	}
-	// add namespace, clusterrole, clusterrolebinding, serviceaccount
-	nsManifest := manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: klusterletaddonNamespace}}
+	// add clusterRole, clusterRoleBinding, serviceAccount
 	crManifest := manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: clusterRole}}
 	crbManifest := manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: clusterRoleBinding}}
 	saManifest := manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: serviceAccount}}
-	manifests = append(manifests, nsManifest, crManifest, crbManifest, saManifest)
+	manifests = append(manifests, crManifest, crbManifest, saManifest)
 	// add imagePullSecret
 	if imagePullSecret != nil {
 		ipsManifest := manifestworkv1.Manifest{RawExtension: runtime.RawExtension{Object: imagePullSecret}}

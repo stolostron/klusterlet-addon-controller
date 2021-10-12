@@ -112,22 +112,6 @@ func NewServiceAccount(addonAgentConfig *agentv1.AddonAgentConfig, namespace str
 	return serviceAccount
 }
 
-// NewNamespace - template for namespace
-func NewNamespace() *corev1.Namespace {
-	return &corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: corev1.SchemeGroupVersion.String(),
-			Kind:       "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: KlusterletAddonNamespace,
-			Annotations: map[string]string{
-				"workload.openshift.io/allowed": "management",
-			},
-		},
-	}
-}
-
 // NewDeployment -  template for klusterlet addon operator
 func NewDeployment(addonAgentConfig *agentv1.AddonAgentConfig, namespace string) (*appsv1.Deployment, error) {
 	labels := map[string]string{
