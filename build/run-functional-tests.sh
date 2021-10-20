@@ -45,7 +45,11 @@ kind --version
 
 if ! which ginkgo > /dev/null; then
     echo "Installing ginkgo ..."
-    GO111MODULE=off go get github.com/onsi/ginkgo/ginkgo
+    dir="$(mktemp -d)"
+    pushd $dir
+    go get github.com/onsi/ginkgo/ginkgo@v1.12.3
+    popd
+    
     GO111MODULE=off go get github.com/onsi/gomega/...
 fi
 
