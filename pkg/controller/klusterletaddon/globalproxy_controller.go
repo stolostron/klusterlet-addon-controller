@@ -19,7 +19,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
+	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -32,14 +34,16 @@ import (
 )
 
 type GlobalProxyReconciler struct {
-	client client.Client
-	scheme *runtime.Scheme
+	runtimeClient client.Client
+	kubeClient    kubernetes.Interface
+	scheme        *runtime.Scheme
 }
 
-func newGlobalProxyReconciler(mgr manager.Manager) reconcile.Reconciler {
+func newGlobalProxyReconciler(mgr manager.Manager, kubeClient kubernetes.Interface) reconcile.Reconciler {
 	return &GlobalProxyReconciler{
-		client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
+		runtimeClient: mgr.GetClient(),
+		kubeClient:    kubeClient,
+		scheme:        mgr.GetScheme(),
 	}
 }
 
@@ -50,24 +54,17 @@ func globalProxyReconcilerAdd(mgr manager.Manager, r reconcile.Reconciler) error
 	}
 
 	err = c.Watch(
-		&source.Kind{Type: &corev1.Secret{}},
+		&source.Kind{Type: &managedclusterv1.ManagedCluster{}},
 		&handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
 			func(obj handler.MapObject) []reconcile.Request {
-				namespace := obj.Meta.GetNamespace()
-				installConfigSecretName := fmt.Sprintf("%s-install-config", namespace)
-				name := obj.Meta.GetName()
-				// only handle the install-config secret in cluster namespace
-				if name == installConfigSecretName {
-					return []reconcile.Request{
-						{
-							NamespacedName: types.NamespacedName{
-								Name:      namespace,
-								Namespace: namespace,
-							},
+				return []reconcile.Request{
+					{
+						NamespacedName: types.NamespacedName{
+							Name:      obj.Meta.GetName(),
+							Namespace: obj.Meta.GetName(),
 						},
-					}
+					},
 				}
-				return nil
 			},
 		)},
 	)
@@ -106,7 +103,7 @@ func (r *GlobalProxyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	reqLogger.Info("Reconciling GlobalProxy")
 
 	klusterletAddonConfig := &agentv1.KlusterletAddonConfig{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: req.Name, Namespace: req.Namespace},
+	if err := r.runtimeClient.Get(context.TODO(), types.NamespacedName{Name: req.Name, Namespace: req.Namespace},
 		klusterletAddonConfig); err != nil {
 		if errors.IsNotFound(err) {
 			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
@@ -116,10 +113,8 @@ func (r *GlobalProxyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 
 	newStatus := klusterletAddonConfig.Status.DeepCopy()
 
-	installConfigSecret := &corev1.Secret{}
-	if err := r.client.Get(context.TODO(),
-		types.NamespacedName{Name: fmt.Sprintf("%s-install-config", req.Name), Namespace: req.Namespace},
-		installConfigSecret); err != nil {
+	installConfigSecret, err := r.kubeClient.CoreV1().Secrets(req.Namespace).Get(context.TODO(), fmt.Sprintf("%s-install-config", req.Name), metav1.GetOptions{})
+	if err != nil {
 		if errors.IsNotFound(err) {
 			newStatus.OCPGlobalProxy = agentv1.ProxyConfig{}
 			meta.SetStatusCondition(&newStatus.Conditions, metav1.Condition{
@@ -172,7 +167,7 @@ func (r *GlobalProxyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	if klusterletAddonConfig.Spec.ApplicationManagerConfig.Enabled &&
 		klusterletAddonConfig.Spec.ApplicationManagerConfig.ProxyPolicy == "" {
 		klusterletAddonConfig.Spec.ApplicationManagerConfig.ProxyPolicy = agentv1.ProxyPolicyOCPGlobalProxy
-		return ctrl.Result{}, r.client.Update(context.TODO(), klusterletAddonConfig)
+		return ctrl.Result{}, r.runtimeClient.Update(context.TODO(), klusterletAddonConfig)
 	}
 	return ctrl.Result{}, nil
 }
@@ -180,7 +175,7 @@ func (r *GlobalProxyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 func (r *GlobalProxyReconciler) updateStatus(clusterName string, status *agentv1.KlusterletAddonConfigStatus) error {
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		klusterletAddonConfig := &agentv1.KlusterletAddonConfig{}
-		err := r.client.Get(context.TODO(), types.NamespacedName{Name: clusterName, Namespace: clusterName},
+		err := r.runtimeClient.Get(context.TODO(), types.NamespacedName{Name: clusterName, Namespace: clusterName},
 			klusterletAddonConfig)
 		if err != nil {
 			return err
@@ -193,7 +188,7 @@ func (r *GlobalProxyReconciler) updateStatus(clusterName string, status *agentv1
 		}
 		if !equality.Semantic.DeepEqual(klusterletAddonConfig.Status, newStatus) {
 			klusterletAddonConfig.Status = *newStatus
-			return r.client.Status().Update(context.TODO(), klusterletAddonConfig, &client.UpdateOptions{})
+			return r.runtimeClient.Status().Update(context.TODO(), klusterletAddonConfig, &client.UpdateOptions{})
 		}
 		return nil
 	})

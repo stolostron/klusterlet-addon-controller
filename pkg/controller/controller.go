@@ -13,11 +13,12 @@ import (
 	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/csr"
 	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/klusterletaddon"
 	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/managedclusteraddon"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // AddToManagerFuncs is a list of functions to add all Controllers to the Manager
-var AddToManagerFuncs []func(manager.Manager) error
+var AddToManagerFuncs []func(manager.Manager, kubernetes.Interface) error
 
 func init() {
 	AddToManagerFuncs = append(AddToManagerFuncs,
@@ -28,9 +29,9 @@ func init() {
 }
 
 // AddToManager adds all Controllers to the Manager
-func AddToManager(m manager.Manager) error {
+func AddToManager(m manager.Manager, kubeClient kubernetes.Interface) error {
 	for _, f := range AddToManagerFuncs {
-		if err := f(m); err != nil {
+		if err := f(m, kubeClient); err != nil {
 			return err
 		}
 	}

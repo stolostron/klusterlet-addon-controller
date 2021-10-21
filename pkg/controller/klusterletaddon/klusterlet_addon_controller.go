@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
@@ -52,8 +53,8 @@ const (
 
 // Add creates a new KlusterletAddon Controller and adds it to the Manager.
 // The Manager will set fields on the Controller and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	if err := globalProxyReconcilerAdd(mgr, newGlobalProxyReconciler(mgr)); err != nil {
+func Add(mgr manager.Manager, kubeClient kubernetes.Interface) error {
+	if err := globalProxyReconcilerAdd(mgr, newGlobalProxyReconciler(mgr, kubeClient)); err != nil {
 		return err
 	}
 	if err := klusterletAddonAdd(mgr, newKlusterletAddonReconciler(mgr)); err != nil {

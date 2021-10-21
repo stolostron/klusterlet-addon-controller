@@ -40,7 +40,7 @@ var log = logf.Log.WithName("controller_csr")
 
 // Add creates a new csr Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
+func Add(mgr manager.Manager, kubeClient kubernetes.Interface) error {
 	reconciler, err := newReconciler(mgr)
 	if err != nil {
 		return err
