@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
+	"k8s.io/client-go/kubernetes"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,7 +26,7 @@ var log = logf.Log.WithName("controller_clustermanagementaddon")
 
 // Add creates a new ClusterManagementAddOn Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
+func Add(mgr manager.Manager, kubeClient kubernetes.Interface) error {
 	return add(mgr, newReconciler(mgr))
 }
 

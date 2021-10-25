@@ -21,6 +21,7 @@ import (
 	"github.com/open-cluster-management/klusterlet-addon-controller/version"
 	"github.com/open-cluster-management/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 	ocinfrav1 "github.com/openshift/api/config/v1"
+	"k8s.io/client-go/kubernetes"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
 	manifestworkv1 "open-cluster-management.io/api/work/v1"
@@ -72,13 +73,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	kubeclient, err := newK8s(cfg)
+	runtimeClient, err := newRuntimeClient(cfg)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
 
-	err = agentv1.LoadConfigmaps(kubeclient)
+	err = agentv1.LoadConfigmaps(runtimeClient)
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -130,10 +137,10 @@ func main() {
 	}
 
 	// create all ClusterManagementAddons for monolith addons
-	clustermanagementaddon.CreateClusterManagementAddon(kubeclient)
+	clustermanagementaddon.CreateClusterManagementAddon(runtimeClient)
 
 	// Setup all Controllers
-	if err := controller.AddToManager(mgr); err != nil {
+	if err := controller.AddToManager(mgr, kubeClient); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
@@ -147,7 +154,7 @@ func main() {
 	}
 }
 
-func newK8s(conf *rest.Config) (client.Client, error) {
+func newRuntimeClient(conf *rest.Config) (client.Client, error) {
 	kubeClient, err := client.New(conf, client.Options{})
 	if err != nil {
 		log.Info("Failed to initialize a client connection to the cluster", "error", err.Error())
