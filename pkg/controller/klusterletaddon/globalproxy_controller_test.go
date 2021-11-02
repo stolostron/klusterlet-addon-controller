@@ -26,6 +26,16 @@ apiVersion: v1
 baseDomain: aws-cluster
 metadata:
   name: 'cluster'
+baseDomain: test.redhat.com
+networking:
+  networkType: OpenShiftSDN
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 192.168.124.0/24
+  serviceNetwork:
+  - 172.30.0.0/16
 proxy:
   httpsProxy: https://username:password@proxy.example.com:123/
   httpProxy: https://username:password@proxy.example.com:123/
@@ -110,7 +120,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 				agentv1.ProxyConfig{
 					HTTPProxy:  "https://username:password@proxy.example.com:123/",
 					HTTPSProxy: "https://username:password@proxy.example.com:123/",
-					NoProxy:    "123.example.com,10.88.0.0/16",
+					NoProxy:    ".cluster.local,.svc,10.128.0.0/14,123.example.com,10.88.0.0/16,127.0.0.1,169.254.169.254,172.30.0.0/16,192.168.124.0/24,api-int.cluster.test.redhat.com,localhost",
 				},
 				"", []metav1.Condition{
 					{
@@ -130,7 +140,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 					agentv1.ProxyConfig{
 						HTTPProxy:  "https://username:password@proxy.example.com:123/",
 						HTTPSProxy: "https://username:password@proxy.example.com:123/",
-						NoProxy:    "123.example.com,10.88.0.0/16",
+						NoProxy:    ".cluster.local,.svc,10.128.0.0/14,123.example.com,10.88.0.0/16,127.0.0.1,169.254.169.254,172.30.0.0/16,192.168.124.0/24,api-int.cluster.test.redhat.com,localhost",
 					},
 					"", []metav1.Condition{
 						{
@@ -151,7 +161,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 				agentv1.ProxyConfig{
 					HTTPProxy:  "https://username:password@proxy.example.com:123/",
 					HTTPSProxy: "https://username:password@proxy.example.com:123/",
-					NoProxy:    "123.example.com,10.88.0.0/16",
+					NoProxy:    ".cluster.local,.svc,10.128.0.0/14,123.example.com,10.88.0.0/16,127.0.0.1,169.254.169.254,172.30.0.0/16,192.168.124.0/24,api-int.cluster.test.redhat.com,localhost",
 				},
 				agentv1.ProxyPolicyOCPGlobalProxy, []metav1.Condition{
 					{
@@ -262,7 +272,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 				agentv1.ProxyConfig{
 					HTTPProxy:  "https://username:password@proxy.example.com:123/",
 					HTTPSProxy: "https://username:password@proxy.example.com:123/",
-					NoProxy:    "123.example.com,10.88.0.0/16",
+					NoProxy:    ".cluster.local,.svc,10.128.0.0/14,123.example.com,10.88.0.0/16,127.0.0.1,169.254.169.254,172.30.0.0/16,192.168.124.0/24,api-int.cluster.test.redhat.com,localhost",
 				},
 				agentv1.ProxyPolicyCustomProxy, []metav1.Condition{
 					{
@@ -336,7 +346,7 @@ func Test_getGlobalProxyInInstallConfig(t *testing.T) {
 			expectedProxyConfig: agentv1.ProxyConfig{
 				HTTPProxy:  "https://username:password@proxy.example.com:123/",
 				HTTPSProxy: "https://username:password@proxy.example.com:123/",
-				NoProxy:    "123.example.com,10.88.0.0/16",
+				NoProxy:    ".cluster.local,.svc,10.128.0.0/14,123.example.com,10.88.0.0/16,127.0.0.1,169.254.169.254,172.30.0.0/16,192.168.124.0/24,api-int.cluster.test.redhat.com,localhost",
 			},
 			expectedErr: nil,
 		},

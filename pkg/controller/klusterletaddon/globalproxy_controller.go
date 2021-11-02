@@ -5,6 +5,7 @@ package klusterletaddon
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"context"
@@ -18,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
@@ -207,13 +209,85 @@ func getGlobalProxyConfig(installConfigSecret *corev1.Secret) (agentv1.ProxyConf
 		return proxyConfig, fmt.Errorf("miss install-config.yaml in install config secret %v", installConfigSecret.Name)
 	}
 
-	// installConfig, err := base64.StdEncoding.DecodeString(string(installConfigData))
-	// if err != nil {
-	// 	klog.Errorf("invalid install-config.yaml: %v in install config secret %v. err %v\n", string(installConfigData),installConfigSecret.Name, err)
-	// 	return proxyConfig, fmt.Errorf("invalid install-config.yaml in install config secret %v. err: %v", installConfigSecret.Name, err)
-	// }
-
 	return getGlobalProxyInInstallConfig(installConfigData)
+}
+
+func getClusterNetworkCIDRs(proxyConfigRaw map[string]interface{}) ([]string, error) {
+	var cidrs []string
+	clusterNetwork, _, err := unstructured.NestedSlice(proxyConfigRaw, "networking", "clusterNetwork")
+	if err != nil {
+		return []string{}, err
+	}
+
+	for _, clusterNetworkEntry := range clusterNetwork {
+		cidr, _, err := unstructured.NestedString(clusterNetworkEntry.(map[string]interface{}), "cidr")
+		if err != nil {
+			return []string{}, err
+		}
+		cidrs = append(cidrs, cidr)
+	}
+
+	return cidrs, nil
+}
+
+func getMachineNetworkCIDRs(proxyConfigRaw map[string]interface{}) ([]string, error) {
+	var cidrs []string
+	machineNetwork, _, err := unstructured.NestedSlice(proxyConfigRaw, "networking", "machineNetwork")
+	if err != nil {
+		return []string{}, err
+	}
+
+	for _, machineNetworkEntry := range machineNetwork {
+		cidr, _, err := unstructured.NestedString(machineNetworkEntry.(map[string]interface{}), "cidr")
+		if err != nil {
+			return []string{}, err
+		}
+		cidrs = append(cidrs, cidr)
+	}
+
+	return cidrs, nil
+}
+
+func getServiceNetworkCIDRs(proxyConfigRaw map[string]interface{}) ([]string, error) {
+	cidrs, _, err := unstructured.NestedStringSlice(proxyConfigRaw, "networking", "serviceNetwork")
+	if err != nil {
+		return []string{}, err
+	}
+
+	return cidrs, nil
+}
+
+// For installations on Amazon Web Services (AWS), Google Cloud Platform (GCP), Microsoft Azure,
+// and Red Hat OpenStack Platform (RHOSP), the Proxy object status.noProxy field is also populated
+// with the instance metadata endpoint (169.254.169.254).
+// ref: https://docs.openshift.com/container-platform/4.9/networking/enable-cluster-wide-proxy.html
+func getMetaDataEndpoint(proxyConfigRaw map[string]interface{}) string {
+	platforms := []string{"aws", "azure", "gcp"}
+	for _, platform := range platforms {
+		_, found, _ := unstructured.NestedString(proxyConfigRaw, "platform", platform, "region")
+		if found {
+			return "169.254.169.254"
+		}
+	}
+	_, found, _ := unstructured.NestedString(proxyConfigRaw, "platform", "openstack", "externalNetwork")
+	if found {
+		return "169.254.169.254"
+	}
+	return ""
+}
+
+// refer: https://github.com/openshift/installer/blob/master/docs/design/baremetal/networking-infrastructure.md#internal-dns
+func getHostName(proxyConfigRaw map[string]interface{}) (string, error) {
+	clusterName, _, err := unstructured.NestedString(proxyConfigRaw, "metadata", "name")
+	if err != nil {
+		return "", err
+	}
+
+	baseDomain, _, err := unstructured.NestedString(proxyConfigRaw, "baseDomain")
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("api-int.%s.%s", clusterName, baseDomain), nil
 }
 
 // getGlobalProxyInInstallConfig gets proxyConfig from install-config.yaml
@@ -236,10 +310,53 @@ func getGlobalProxyInInstallConfig(installConfig []byte) (agentv1.ProxyConfig, e
 	if err != nil {
 		return proxyConfig, err
 	}
-	proxyConfig.NoProxy, _, err = unstructured.NestedString(proxyConfigRaw, "proxy", "noProxy")
+
+	noProxy, _, err := unstructured.NestedString(proxyConfigRaw, "proxy", "noProxy")
 	if err != nil {
 		return proxyConfig, err
 	}
 
+	if proxyConfig.HTTPProxy == "" && proxyConfig.HTTPSProxy == "" && noProxy == "" {
+		return proxyConfig, nil
+	}
+
+	if noProxy == "*" {
+		proxyConfig.NoProxy = noProxy
+		return proxyConfig, nil
+	}
+
+	// The noProxy field needs to be populated with the values of some default DNS address, networking.machineNetwork[].cidr,
+	// networking.clusterNetwork[].cidr, and networking.serviceNetwork[] fields from the installation configuration.
+	// should be the same with the status.noProxy in proxy.config.openshift.io/cluster.
+	noProxyList := sets.NewString(".cluster.local", ".svc", "localhost", "127.0.0.1")
+	noProxyList.Insert(noProxy)
+
+	clusterNetworkCIDRs, err := getClusterNetworkCIDRs(proxyConfigRaw)
+	if err != nil {
+		return proxyConfig, err
+	}
+	noProxyList.Insert(clusterNetworkCIDRs...)
+
+	machineNetworkCIDRs, err := getMachineNetworkCIDRs(proxyConfigRaw)
+	if err != nil {
+		return proxyConfig, err
+	}
+	noProxyList.Insert(machineNetworkCIDRs...)
+
+	serviceNetworkCIDRs, err := getServiceNetworkCIDRs(proxyConfigRaw)
+	if err != nil {
+		return proxyConfig, err
+	}
+	noProxyList.Insert(serviceNetworkCIDRs...)
+
+	hostName, err := getHostName(proxyConfigRaw)
+	if err != nil {
+		return proxyConfig, err
+	}
+	noProxyList.Insert(hostName)
+
+	noProxyList.Insert(getMetaDataEndpoint(proxyConfigRaw))
+
+	proxyConfig.NoProxy = strings.Join(noProxyList.List(), ",")
 	return proxyConfig, nil
 }
