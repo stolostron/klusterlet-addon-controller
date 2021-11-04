@@ -357,6 +357,7 @@ func getGlobalProxyInInstallConfig(installConfig []byte) (agentv1.ProxyConfig, e
 
 	noProxyList.Insert(getMetaDataEndpoint(proxyConfigRaw))
 
+	noProxyList.Delete("")
 	proxyConfig.NoProxy = strings.Join(noProxyList.List(), ",")
 	return proxyConfig, nil
 }

@@ -45,7 +45,29 @@ platform:
     projectID: yzw-yzw
     region: us-east1
 `)
-
+var installConfigBareMetalYaml = []byte(`
+apiVersion: v1
+baseDomain: aws-cluster
+metadata:
+  name: 'cluster'
+baseDomain: test.redhat.com
+networking:
+  networkType: OpenShiftSDN
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 192.168.124.0/24
+  serviceNetwork:
+  - 172.30.0.0/16
+proxy:
+  httpsProxy: https://username:password@proxy.example.com:123/
+  httpProxy: https://username:password@proxy.example.com:123/
+  noProxy: 123.example.com,10.88.0.0/16
+platform:
+  baremetal:
+    libvirtURI: qemu+ssh://root@192.168.124.1/system
+`)
 var installConfigNoProxyYaml = []byte(`
 apiVersion: v1
 baseDomain: aws-cluster
@@ -121,6 +143,33 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 					HTTPProxy:  "https://username:password@proxy.example.com:123/",
 					HTTPSProxy: "https://username:password@proxy.example.com:123/",
 					NoProxy:    ".cluster.local,.svc,10.128.0.0/14,123.example.com,10.88.0.0/16,127.0.0.1,169.254.169.254,172.30.0.0/16,192.168.124.0/24,api-int.cluster.test.redhat.com,localhost",
+				},
+				"", []metav1.Condition{
+					{
+						Type:    agentv1.OCPGlobalProxyDetected,
+						Status:  metav1.ConditionTrue,
+						Reason:  agentv1.ReasonOCPGlobalProxyDetected,
+						Message: "Detected the cluster-wide proxy config in install config.",
+					},
+				}),
+			expectedResult: reconcile.Result{},
+			expectedErr:    nil,
+		},
+		{
+			name:          "update baremetal klusterletAddonConfig status correctly",
+			runtimeClient: fake.NewFakeClientWithScheme(testscheme, newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{})),
+			kubeClient:    kubefake.NewSimpleClientset(newInstallConfigSecret("cluster1-install-config", "cluster1", installConfigBareMetalYaml)),
+			request: ctrl.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      "cluster1",
+					Namespace: "cluster1",
+				},
+			},
+			expectedKlusterletAddonConfig: newKlusterletAddonConfig("cluster1",
+				agentv1.ProxyConfig{
+					HTTPProxy:  "https://username:password@proxy.example.com:123/",
+					HTTPSProxy: "https://username:password@proxy.example.com:123/",
+					NoProxy:    ".cluster.local,.svc,10.128.0.0/14,123.example.com,10.88.0.0/16,127.0.0.1,172.30.0.0/16,192.168.124.0/24,api-int.cluster.test.redhat.com,localhost",
 				},
 				"", []metav1.Condition{
 					{
