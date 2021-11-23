@@ -131,7 +131,7 @@ utils-crds-uninstall:
 
 .PHONY: deploy
 deploy:
-	$(KUBECTL) apply -k overlays/community
+	$(KUBECTL) apply -k deploy
 
 .PHONY: functional-test
 functional-test: 

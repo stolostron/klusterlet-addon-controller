@@ -41,3 +41,8 @@ resources:
 - ./klusterlet-addon-policyctrl-role.yaml
 - ./klusterlet-addon-search-role.yaml
 - ./klusterlet-addon-workmgr-role.yaml
+
+images:
+- name: REPLACE_NAME
+  newName: quay.io/open-cluster-management/klusterlet-addon-controller
+  newTag: latest

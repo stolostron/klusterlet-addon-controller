@@ -47,10 +47,10 @@ make run
 
 ## Running Klusterlet addon controller in-cluster for deployment
 
-1. Apply the `overlays/community` to create the ServiceAccount, ClusterRole, ClusterRoleBinding and Deployment for the operator
+1. Apply the `deploy` to create the ServiceAccount, ClusterRole, ClusterRoleBinding and Deployment for the operator
 
 ```shell
-kubectl apply -k overlays/community
+make deploy
 ```
 
 NOTE: 
