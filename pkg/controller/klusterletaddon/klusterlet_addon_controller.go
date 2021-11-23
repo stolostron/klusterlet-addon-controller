@@ -195,7 +195,7 @@ func (r *ReconcileKlusterletAddon) Reconcile(request reconcile.Request) (reconci
 		Registry:                 os.Getenv("DEFAULT_IMAGE_REGISTRY"),
 		ImagePullSecret:          os.Getenv("DEFAULT_IMAGE_PULL_SECRET"),
 		ImagePullSecretNamespace: os.Getenv("POD_NAMESPACE"),
-		ImagePullPolicy:          corev1.PullAlways,
+		ImagePullPolicy:          corev1.PullIfNotPresent,
 	}
 
 	if klusterletAddonConfig.DeletionTimestamp != nil {
