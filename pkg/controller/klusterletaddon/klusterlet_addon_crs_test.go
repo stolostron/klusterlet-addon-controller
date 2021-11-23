@@ -58,11 +58,11 @@ func Test_syncManifestWorkCRs(t *testing.T) {
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-configmap-2.4.0",
+			Name:      "test-configmap-2.5.0",
 			Namespace: "test-namespace",
 			Labels: map[string]string{
 				"ocm-configmap-type":  "image-manifest",
-				"ocm-release-version": "2.4.0",
+				"ocm-release-version": "2.5.0",
 			},
 		},
 		Data: map[string]string{
@@ -189,7 +189,7 @@ func Test_syncManagedClusterAddonCRs(t *testing.T) {
 			SearchCollectorConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
-			Version: "2.4.0",
+			Version: "2.5.0",
 		},
 	}
 
