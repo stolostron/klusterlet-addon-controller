@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -60,6 +62,7 @@ var _ = Describe("Loopback test", func() {
 		By("Create klusterletaddonconfigs")
 		err = kubeClient.Create(context.TODO(), testKlusterletAddonConfig)
 		if err != nil && !errors.IsAlreadyExists(err) {
+			logf.Log.Info("Create klusterletAddonConfig error", "klusterletAddonConfig", testKlusterletAddonConfig.Name, "error", err)
 			Expect(BeFalse()).To(BeTrue())
 		}
 		klusterletAddonConfig := agentv1.KlusterletAddonConfig{}
@@ -93,10 +96,22 @@ var _ = Describe("Loopback test", func() {
 			Eventually(func() bool {
 				deployment, err := spokeClient.AppsV1().Deployments(agentAddonNamespace).Get(context.TODO(), deploy, metav1.GetOptions{})
 				if err != nil {
+					logf.Log.Info("Get deployment error", "namespace", agentAddonNamespace, "name", deploy, "error", err)
 					return false
 				}
 
 				logf.Log.Info("Deployment created", "name", deployment.Name)
+
+				// check image pull policy
+				if len(deployment.Spec.Template.Spec.Containers) == 0 {
+					return false
+				}
+				if deployment.Spec.Template.Spec.Containers[0].ImagePullPolicy != corev1.PullIfNotPresent {
+					logf.Log.Info("Image pull policy should be IfNotPresent", "namespace", agentAddonNamespace, "name", deploy,
+						"pullPolicy", deployment.Spec.Template.Spec.Containers[0].ImagePullPolicy)
+					Expect(BeFalse()).To(BeTrue())
+					return false
+				}
 				return true
 			}, 300*time.Second, 5*time.Second).Should(BeTrue())
 		}
