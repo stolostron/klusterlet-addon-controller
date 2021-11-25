@@ -64,7 +64,7 @@ build:
 ## Builds controller binary inside of an image
 build-image: 
 	@$(DOCKER_BUILDER) build -t $(DOCKER_IMAGE) -f $(DOCKER_FILE) . 
-	#@$(DOCKER_BUILDER) tag $(DOCKER_IMAGE) ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
+	@$(DOCKER_BUILDER) tag $(DOCKER_IMAGE) ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
 
 .PHONY: build-e2e
 build-e2e:
@@ -127,7 +127,7 @@ utils-crds-uninstall:
 	kubectl delete -f deploy/dev-crds/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
 
 ### FUNCTIONAL TESTS UTILS ###########
-
+.PHONY: deploy
 deploy:
 	kubectl apply -k overlays/community
 
