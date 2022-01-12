@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
+	addons "github.com/stolostron/klusterlet-addon-controller/pkg/components"
 	certificatesv1 "k8s.io/api/certificates/v1"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"

@@ -26,7 +26,7 @@ echo "kubeconfig: $KUBECONFIG"
 echo "############  Cloning registration-operator"
 rm -rf registration-operator
 
-git clone https://github.com/open-cluster-management/registration-operator.git
+git clone https://github.com/stolostron/registration-operator.git
 
 cd registration-operator || {
   printf "cd failed, registration-operator does not exist"

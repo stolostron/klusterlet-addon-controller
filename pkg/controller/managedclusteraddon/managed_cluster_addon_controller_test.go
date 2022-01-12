@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"gotest.tools/assert"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -576,7 +576,7 @@ func Test_updateProgressingStatus(t *testing.T) {
 	}
 }
 
-//func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (reconcile.Result, error)
+// func (r *ReconcileManagedClusterAddOn) Reconcile(request reconcile.Request) (reconcile.Result, error)
 func Test_Reconcile(t *testing.T) {
 	// give lease check requeue time
 	testscheme := scheme.Scheme

@@ -9,10 +9,10 @@
 package controller
 
 import (
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/csr"
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/klusterletaddon"
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/managedclusteraddon"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/csr"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/klusterletaddon"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/managedclusteraddon"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
