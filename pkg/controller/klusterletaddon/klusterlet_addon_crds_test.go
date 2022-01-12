@@ -17,7 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 )
 
 func Test_createManifestWorkCRD(t *testing.T) {

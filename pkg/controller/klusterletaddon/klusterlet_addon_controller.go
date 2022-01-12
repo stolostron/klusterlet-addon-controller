@@ -32,8 +32,8 @@ import (
 
 	managedclusterv1 "github.com/open-cluster-management/api/cluster/v1"
 	manifestworkv1 "github.com/open-cluster-management/api/work/v1"
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/utils"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/utils"
 )
 
 var log = logf.Log.WithName("controller_klusterletaddon")
@@ -321,7 +321,7 @@ func IsManagedClusterOnline(managedCluster *managedclusterv1.ManagedCluster) boo
 		return false
 	}
 	for _, condition := range managedCluster.Status.Conditions {
-		if condition.Type == managedclusterv1.ManagedClusterConditionAvailable { //not sure which condition is valid
+		if condition.Type == managedclusterv1.ManagedClusterConditionAvailable { // not sure which condition is valid
 			if condition.Status == "True" {
 				return true
 			}
@@ -376,7 +376,7 @@ func newManagedClusterAddonDeletionPredicate() predicate.Predicate {
 // IsCRDManfestWorkAvailable - if manifestwork for crd is applied and resource is available on managed cluster it will return true
 func IsCRDManfestWorkAvailable(manifestWork *manifestworkv1.ManifestWork) bool {
 	for _, condition := range manifestWork.Status.Conditions {
-		if condition.Type == manifestworkv1.WorkAvailable { //not sure which condition is valid
+		if condition.Type == manifestworkv1.WorkAvailable { // not sure which condition is valid
 			if condition.Status == "True" {
 				return true
 			}

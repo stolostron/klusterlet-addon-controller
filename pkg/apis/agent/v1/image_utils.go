@@ -16,7 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/Masterminds/semver"
-	"github.com/open-cluster-management/klusterlet-addon-controller/version"
+	"github.com/stolostron/klusterlet-addon-controller/version"
 	corev1 "k8s.io/api/core/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -39,8 +39,8 @@ import (
 // }
 const ocmVersionLabel = "ocm-release-version"
 
-//Manifest contains the manifest.
-//The Manifest is loaded using the LoadManifest method.
+// Manifest contains the manifest.
+// The Manifest is loaded using the LoadManifest method.
 
 var versionList []*semver.Version
 

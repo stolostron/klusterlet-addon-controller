@@ -14,8 +14,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	addonoperator "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/addon-operator/v1"
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
+	addonoperator "github.com/stolostron/klusterlet-addon-controller/pkg/components/addon-operator/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"

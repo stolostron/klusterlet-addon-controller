@@ -19,7 +19,7 @@ export COMPONENT_VERSION ?= $(shell cat ./COMPONENT_VERSION 2> /dev/null)
 
 export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile
 export DOCKERFILE_COVERAGE = $(BUILD_DIR)/Dockerfile-coverage
-export DOCKER_REGISTRY   ?= quay.io/open-cluster-management
+export DOCKER_REGISTRY   ?= quay.io/stolostron
 export DOCKER_IMAGE      ?= $(COMPONENT_NAME)
 export DOCKER_IMAGE_COVERAGE_POSTFIX ?= -coverage
 export DOCKER_IMAGE_COVERAGE      ?= $(DOCKER_IMAGE)$(DOCKER_IMAGE_COVERAGE_POSTFIX)

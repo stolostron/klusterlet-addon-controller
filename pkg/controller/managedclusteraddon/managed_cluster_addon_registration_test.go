@@ -7,8 +7,8 @@ import (
 	"context"
 	"testing"
 
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
-	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	addons "github.com/stolostron/klusterlet-addon-controller/pkg/components"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kubectl/pkg/scheme"

@@ -10,7 +10,7 @@
 package controller
 
 import (
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/klusterletaddon"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/klusterletaddon"
 )
 
 func init() {

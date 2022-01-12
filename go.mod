@@ -1,4 +1,4 @@
-module github.com/open-cluster-management/klusterlet-addon-controller
+module github.com/stolostron/klusterlet-addon-controller
 
 go 1.17
 
@@ -97,5 +97,8 @@ replace (
 	github.com/go-logr/zapr => github.com/go-logr/zapr v0.2.0
 	github.com/gorilla/websocket => github.com/gorilla/websocket v1.4.2
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
+	github.com/open-cluster-management/api => github.com/stolostron/api v0.0.0-20210409125704-06f2aec1a73f
+	github.com/open-cluster-management/library-e2e-go => github.com/stolostron/library-e2e-go v0.0.0-20200620112055-c80fc3c14997
+	github.com/open-cluster-management/library-go => github.com/stolostron/library-go v0.0.0-20200828173847-299c21e6c3fc
 	k8s.io/client-go => k8s.io/client-go v0.20.0
 )
