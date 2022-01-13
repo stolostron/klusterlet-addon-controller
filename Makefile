@@ -19,7 +19,7 @@ export COMPONENT_VERSION ?= $(shell cat ./COMPONENT_VERSION 2> /dev/null)
 
 export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile
 export DOCKERFILE_COVERAGE = $(BUILD_DIR)/Dockerfile-coverage
-export DOCKER_REGISTRY   ?= quay.io/open-cluster-management
+export DOCKER_REGISTRY   ?= quay.io/stolostron
 export DOCKER_IMAGE      ?= $(COMPONENT_NAME)
 export DOCKER_IMAGE_COVERAGE_POSTFIX ?= -coverage
 export DOCKER_IMAGE_COVERAGE      ?= $(DOCKER_IMAGE)$(DOCKER_IMAGE_COVERAGE_POSTFIX)
@@ -154,7 +154,7 @@ functional-test-full: build-image-coverage
 sync-coverage-entrypoint:
 	@echo downloading coverage entrypoint file
 	@tmp_dir=$$(mktemp -d); \
-	curl  --fail -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/modules/component/bin/component/coverage-entrypoint-func.sh > "$$tmp_dir/coverage-entrypoint-func.sh" \
+	curl  --fail -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/stolostron/build-harness-extensions/contents/modules/component/bin/component/coverage-entrypoint-func.sh > "$$tmp_dir/coverage-entrypoint-func.sh" \
 	&& mv "$$tmp_dir/coverage-entrypoint-func.sh" build/bin/ && chmod +x build/bin/coverage-entrypoint-func.sh ;
 	
 .PHONY: build-coverage

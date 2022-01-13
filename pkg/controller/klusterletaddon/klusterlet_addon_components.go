@@ -13,9 +13,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
-	addonoperator "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/addon-operator/v1"
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/utils"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	addonoperator "github.com/stolostron/klusterlet-addon-controller/pkg/components/addon-operator/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/utils"
 	manifestworkv1 "open-cluster-management.io/api/work/v1"
 )
 

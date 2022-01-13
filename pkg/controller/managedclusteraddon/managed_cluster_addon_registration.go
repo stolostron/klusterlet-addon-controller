@@ -5,18 +5,16 @@ package managedclusteraddon
 
 import (
 	"context"
-	"reflect"
 	"time"
 
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/bindata"
-	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
-	"github.com/open-cluster-management/library-go/pkg/applier"
-	"github.com/open-cluster-management/library-go/pkg/templateprocessor"
+	"github.com/stolostron/applier/pkg/applier"
+	"github.com/stolostron/applier/pkg/templateprocessor"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/bindata"
+	addons "github.com/stolostron/klusterlet-addon-controller/pkg/components"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -24,42 +22,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var merger applier.Merger = func(current,
-	new *unstructured.Unstructured,
-) (
-	future *unstructured.Unstructured,
-	update bool,
-) {
-	if spec, ok := new.Object["spec"]; ok &&
-		!reflect.DeepEqual(spec, current.Object["spec"]) {
-		update = true
-		current.Object["spec"] = spec
-	}
-	if rules, ok := new.Object["rules"]; ok &&
-		!reflect.DeepEqual(rules, current.Object["rules"]) {
-		update = true
-		current.Object["rules"] = rules
-	}
-	if roleRef, ok := new.Object["roleRef"]; ok &&
-		!reflect.DeepEqual(roleRef, current.Object["roleRef"]) {
-		update = true
-		current.Object["roleRef"] = roleRef
-	}
-	if subjects, ok := new.Object["subjects"]; ok &&
-		!reflect.DeepEqual(subjects, current.Object["subjects"]) {
-		update = true
-		current.Object["subjects"] = subjects
-	}
-	return current, update
-}
-
 func createOrUpdateHubKubeConfigResources(
 	klusterletaddonconfig *agentv1.KlusterletAddonConfig,
 	r *ReconcileManagedClusterAddOn,
 	addon addons.KlusterletAddon) error {
 	componentName := addon.GetAddonName()
 
-	//Create the values for the yamls
+	// Create the values for the yamls
 	config := struct {
 		ManagedClusterName      string
 		ManagedClusterNamespace string
@@ -80,7 +49,6 @@ func createOrUpdateHubKubeConfigResources(
 		r.client,
 		klusterletaddonconfig,
 		r.scheme,
-		merger,
 		&applier.Options{
 			Backoff: &wait.Backoff{
 				Steps:    1,
@@ -109,8 +77,8 @@ func createOrUpdateHubKubeConfigResources(
 	return nil
 }
 
-//deleteOutDatedRoleRoleBindings deletes old role/rolebinding with klusterletaddonconfig ownerRef (controller).
-//it returns nil if no role/rolebinding exist, and it returns error when failed to delete the role/rolebinding
+// deleteOutDatedRoleRoleBindings deletes old role/rolebinding with klusterletaddonconfig ownerRef (controller).
+// it returns nil if no role/rolebinding exist, and it returns error when failed to delete the role/rolebinding
 func deleteOutDatedRoleRoleBinding(
 	addon addons.KlusterletAddon,
 	klusterletaddonconfig *agentv1.KlusterletAddonConfig,
@@ -180,7 +148,7 @@ func deleteHubKubeConfigResources(
 	client client.Client) error {
 	componentName := addon.GetAddonName()
 
-	//Create the values for the yamls
+	// Create the values for the yamls
 	config := struct {
 		ManagedClusterName      string
 		ManagedClusterNamespace string
@@ -199,7 +167,6 @@ func deleteHubKubeConfigResources(
 		bindata.NewBindataReader(),
 		&templateprocessor.Options{},
 		client,
-		nil,
 		nil,
 		nil,
 		&applier.Options{

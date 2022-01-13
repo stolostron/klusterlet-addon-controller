@@ -44,5 +44,5 @@ resources:
 
 images:
 - name: REPLACE_NAME
-  newName: quay.io/open-cluster-management/klusterlet-addon-controller
+  newName: quay.io/stolostron/klusterlet-addon-controller
   newTag: latest

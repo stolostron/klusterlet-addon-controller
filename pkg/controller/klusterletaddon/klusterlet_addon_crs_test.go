@@ -13,12 +13,12 @@ import (
 	"reflect"
 	"testing"
 
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
-	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
-	appmgr "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/appmgr/v1"
-	certpolicyctrl "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/certpolicycontroller/v1"
-	iampolicyctrl "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/iampolicycontroller/v1"
 	ocinfrav1 "github.com/openshift/api/config/v1"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	addons "github.com/stolostron/klusterlet-addon-controller/pkg/components"
+	appmgr "github.com/stolostron/klusterlet-addon-controller/pkg/components/appmgr/v1"
+	certpolicyctrl "github.com/stolostron/klusterlet-addon-controller/pkg/components/certpolicycontroller/v1"
+	iampolicyctrl "github.com/stolostron/klusterlet-addon-controller/pkg/components/iampolicycontroller/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -657,7 +657,7 @@ func Test_updateManagedClusterAddon(t *testing.T) {
 				t.Errorf("updateManagedClusterAddon() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			} else if err == nil && !tt.wantErr {
-				//get it should succeed
+				// get it should succeed
 				getMca := &addonv1alpha1.ManagedClusterAddOn{}
 				getErr := tt.args.client.Get(context.TODO(),
 					types.NamespacedName{

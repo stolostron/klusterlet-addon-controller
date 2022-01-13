@@ -13,7 +13,7 @@ function getAWSParams() {
     SERVICEACCOUNT=/var/run/secrets/kubernetes.io/serviceaccount
     TOKEN=$(cat ${SERVICEACCOUNT}/token)
     CACERT=${SERVICEACCOUNT}/ca.crt
-    SECRET=$(curl --cacert ${CACERT} --header "Authorization: Bearer ${TOKEN}" -X GET ${APISERVER}/api/v1/namespaces/open-cluster-management/secrets/aws-s3-coverage)
+    SECRET=$(curl --cacert ${CACERT} --header "Authorization: Bearer ${TOKEN}" -X GET ${APISERVER}/api/v1/namespaces/stolostron/secrets/aws-s3-coverage)
 
     AWS_ACCESS_KEY_ID=$(echo ${SECRET} | jq -r .data.aws_access_key_id | base64 -d)
     AWS_SECRET_ACCESS_KEY=$(echo ${SECRET} | jq -r .data.aws_secret_access_key | base64 -d)

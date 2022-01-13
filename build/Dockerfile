@@ -1,6 +1,6 @@
 # Copyright Contributors to the Open Cluster Management project
 
-FROM registry.ci.openshift.org/open-cluster-management/builder:go1.17-linux AS builder
+FROM registry.ci.openshift.org/stolostron/builder:go1.17-linux AS builder
 
 ARG REMOTE_SOURCE
 ARG REMOTE_SOURCE_DIR
@@ -9,7 +9,7 @@ COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR/app/
 WORKDIR $REMOTE_SOURCE_DIR/app
 
 RUN GOFLAGS="" go build ./cmd/manager
-RUN GOFLAGS="" go test -covermode=atomic -coverpkg=github.com/open-cluster-management/klusterlet-addon-controller/pkg/... -c -tags testrunmain ./cmd/manager -o manager-coverage
+RUN GOFLAGS="" go test -covermode=atomic -coverpkg=github.com/stolostron/klusterlet-addon-controller/pkg/... -c -tags testrunmain ./cmd/manager -o manager-coverage
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 

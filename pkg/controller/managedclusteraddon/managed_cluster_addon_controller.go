@@ -14,9 +14,9 @@ import (
 	"reflect"
 	"time"
 
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
-	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
-	addonoperator "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components/addon-operator/v1"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	addons "github.com/stolostron/klusterlet-addon-controller/pkg/components"
+	addonoperator "github.com/stolostron/klusterlet-addon-controller/pkg/components/addon-operator/v1"
 	certificatesv1 "k8s.io/api/certificates/v1"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -414,7 +414,7 @@ func checkManifestWorkStatus(m *manifestworkv1.ManifestWork) (numFailed, numSucc
 			isApplied = true
 		} else {
 			// applied & false means error based on implementation of manifestwork:
-			// https://github.com/open-cluster-management/work/blob/1fa05673bdbca451c8c99624ad9a91c33950018f/pkg/spoke/controllers/manifestcontroller/manifestwork_controller.go#L363
+			// https://github.com/stolostron/work/blob/1fa05673bdbca451c8c99624ad9a91c33950018f/pkg/spoke/controllers/manifestcontroller/manifestwork_controller.go#L363
 			hasError = true
 		}
 
