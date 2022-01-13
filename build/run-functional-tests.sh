@@ -45,7 +45,7 @@ kind --version
 
 if ! which ginkgo > /dev/null; then
     echo "Installing ginkgo ..."
-    GO111MODULE=off go get github.com/onsi/ginkgo/ginkgo
+    go get github.com/onsi/ginkgo/ginkgo@v1.16.4
     GO111MODULE=off go get github.com/onsi/gomega/...
 fi
 
