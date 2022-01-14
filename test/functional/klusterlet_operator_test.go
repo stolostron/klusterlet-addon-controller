@@ -1,3 +1,4 @@
+//go:build functional
 // +build functional
 
 // (c) Copyright IBM Corporation 2019, 2020. All Rights Reserved.
@@ -101,7 +102,6 @@ var addonCRs = []string{
 	iamPolicyController,
 	policyController,
 	searchCollector,
-	workManager,
 }
 
 // list of regex we will use to validate json from the manifestwork
@@ -571,7 +571,7 @@ var _ = Describe("Deleting KlusterletAddonConfig Only", func() {
 			for _, crName := range addonCRs {
 				addFinalizerToManifestWork(clientClusterDynamic, crName, testNamespace)
 			}
-			//check finalizers are set
+			// check finalizers are set
 			checkFinalizerIsSet(clientClusterDynamic, gvrManifestwork, allCRDs, testNamespace, manifestWorkFinalizer)
 			checkFinalizerIsSet(clientClusterDynamic, gvrManifestwork, klusterletAddonOperator, testNamespace, manifestWorkFinalizer)
 			for _, crName := range addonCRs {
