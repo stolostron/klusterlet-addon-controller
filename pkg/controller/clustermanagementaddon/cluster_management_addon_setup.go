@@ -9,11 +9,11 @@ import (
 	"reflect"
 	"time"
 
-	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
+	addons "github.com/stolostron/klusterlet-addon-controller/pkg/components"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 
-	//"github.com/prometheus/common/log"
+	// "github.com/prometheus/common/log"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
