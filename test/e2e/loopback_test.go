@@ -89,7 +89,6 @@ var _ = Describe("Loopback test", func() {
 			"klusterlet-addon-policyctrl-config-policy",
 			"klusterlet-addon-policyctrl-framework",
 			"klusterlet-addon-search",
-			"klusterlet-addon-workmgr",
 		}
 
 		for _, deploy := range deployments {
@@ -127,7 +126,6 @@ var _ = Describe("Loopback test", func() {
 			"cluster1-klusterlet-addon-iampolicyctrl",
 			"cluster1-klusterlet-addon-policyctrl",
 			"cluster1-klusterlet-addon-search",
-			"cluster1-klusterlet-addon-workmgr",
 			// skip check operator and crds deletion since the addon ns in the operator manifests,
 			// addon ns will be reconciled in registration-operator.
 			// TODO: add back when remove the addon ns from the manifestwork.
