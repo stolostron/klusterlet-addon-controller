@@ -11,8 +11,8 @@ package managedclusteraddon
 import (
 	"reflect"
 
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
-	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	addons "github.com/stolostron/klusterlet-addon-controller/pkg/components"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	manifestworkv1 "open-cluster-management.io/api/work/v1"
