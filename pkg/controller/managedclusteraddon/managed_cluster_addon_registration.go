@@ -8,11 +8,11 @@ import (
 	"reflect"
 	"time"
 
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/bindata"
-	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
 	"github.com/open-cluster-management/library-go/pkg/applier"
 	"github.com/open-cluster-management/library-go/pkg/templateprocessor"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/bindata"
+	addons "github.com/stolostron/klusterlet-addon-controller/pkg/components"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,7 +59,7 @@ func createOrUpdateHubKubeConfigResources(
 	addon addons.KlusterletAddon) error {
 	componentName := addon.GetAddonName()
 
-	//Create the values for the yamls
+	// Create the values for the yamls
 	config := struct {
 		ManagedClusterName      string
 		ManagedClusterNamespace string
@@ -109,8 +109,8 @@ func createOrUpdateHubKubeConfigResources(
 	return nil
 }
 
-//deleteOutDatedRoleRoleBindings deletes old role/rolebinding with klusterletaddonconfig ownerRef (controller).
-//it returns nil if no role/rolebinding exist, and it returns error when failed to delete the role/rolebinding
+// deleteOutDatedRoleRoleBindings deletes old role/rolebinding with klusterletaddonconfig ownerRef (controller).
+// it returns nil if no role/rolebinding exist, and it returns error when failed to delete the role/rolebinding
 func deleteOutDatedRoleRoleBinding(
 	addon addons.KlusterletAddon,
 	klusterletaddonconfig *agentv1.KlusterletAddonConfig,
@@ -180,7 +180,7 @@ func deleteHubKubeConfigResources(
 	client client.Client) error {
 	componentName := addon.GetAddonName()
 
-	//Create the values for the yamls
+	// Create the values for the yamls
 	config := struct {
 		ManagedClusterName      string
 		ManagedClusterNamespace string

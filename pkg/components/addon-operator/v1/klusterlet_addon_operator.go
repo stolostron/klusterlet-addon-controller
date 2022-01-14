@@ -21,7 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 )
 
 // constant for klusterlet addon operator
@@ -232,21 +232,21 @@ func NewImagePullSecret(pullSecretNamespace, pullSecret string, client client.Cl
 		Name:      os.Getenv("DEFAULT_IMAGE_PULL_SECRET"),
 		Namespace: os.Getenv("POD_NAMESPACE"),
 	}
-	//fetch secret from customized namespace
+	// fetch secret from customized namespace
 	if err := client.Get(context.TODO(), secretNsN, secret); err != nil {
 		if !errors.IsNotFound(err) && secretNsN.Name != defaultSecretNsN.Name {
-			//fail to fetch cluster namespace secret and secret name is explicitly set to a value different from default
+			// fail to fetch cluster namespace secret and secret name is explicitly set to a value different from default
 			return nil, err
 		}
 
-		//if not found fetch default secret from pod namespace
+		// if not found fetch default secret from pod namespace
 		if err := client.Get(context.TODO(), defaultSecretNsN, secret); err != nil {
-			//fail to fetch default secret
+			// fail to fetch default secret
 			return nil, err
 		}
 	}
 
-	//invalid secret type check
+	// invalid secret type check
 	if secret.Type != corev1.SecretTypeDockerConfigJson {
 		return nil, fmt.Errorf("secret is not of type corev1.SecretTypeDockerConfigJson")
 	}

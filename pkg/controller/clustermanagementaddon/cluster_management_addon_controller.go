@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	addons "github.com/open-cluster-management/klusterlet-addon-controller/pkg/components"
+	addons "github.com/stolostron/klusterlet-addon-controller/pkg/components"
 	"k8s.io/client-go/kubernetes"
 
 	"k8s.io/apimachinery/pkg/api/errors"

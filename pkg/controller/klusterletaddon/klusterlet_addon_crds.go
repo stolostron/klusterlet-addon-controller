@@ -17,9 +17,9 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
-	agentv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/bindata"
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/utils"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/bindata"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/utils"
 	manifestworkv1 "open-cluster-management.io/api/work/v1"
 )
 
@@ -113,7 +113,7 @@ func createManifestWorkCRD(addonAgentConfig *agentv1.AddonAgentConfig,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      addonAgentConfig.ClusterName + KlusterletAddonCRDsPostfix,
 			Namespace: addonAgentConfig.ClusterName,
-			//Labels:    labels,
+			// Labels:    labels,
 		},
 		Spec: manifestworkv1.ManifestWorkSpec{
 			Workload: manifestworkv1.ManifestsTemplate{

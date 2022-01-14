@@ -11,7 +11,7 @@ package v1
 import (
 	"testing"
 
-	"github.com/open-cluster-management/klusterlet-addon-controller/version"
+	"github.com/stolostron/klusterlet-addon-controller/version"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
