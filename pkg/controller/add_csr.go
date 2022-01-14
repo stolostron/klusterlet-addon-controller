@@ -5,7 +5,7 @@
 package controller
 
 import (
-	"github.com/open-cluster-management/klusterlet-addon-controller/pkg/controller/csr"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/csr"
 )
 
 func init() {

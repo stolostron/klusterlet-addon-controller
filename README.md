@@ -14,7 +14,7 @@ Check the [CONTRIBUTING Doc](CONTRIBUTING.md) for how to contribute to the repo.
 
 This is a guide on how to build and deploy klusterlet addon controller from code.
 
-Kubernetes controller for the [KlusterletAddonConfig](https://github.com/open-cluster-management/klusterlet-addon-controller/blob/main/pkg/apis/agent/v1/types.go) custom resource that manages the Create/Update/Delete of [klusterlet addon operator and klusterlet addons](https://github.com/open-cluster-management/klusterlet-addon-operator) on the managed cluster via [ManifestWork](https://github.com/open-cluster-management/api/blob/master/work/v1/types.go).
+Kubernetes controller for the [KlusterletAddonConfig](https://github.com/stolostron/klusterlet-addon-controller/blob/main/pkg/apis/agent/v1/types.go) custom resource that manages the Create/Update/Delete of [klusterlet addon operator and klusterlet addons](https://github.com/stolostron/klusterlet-addon-operator) on the managed cluster via [ManifestWork](https://github.com/stolostron/api/blob/master/work/v1/types.go).
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ Kubernetes controller for the [KlusterletAddonConfig](https://github.com/open-cl
 
 1. Import a managed cluster. Follow this guidelines to import cluster manually.
 
-- [manual-import](https://github.com/open-cluster-management/rcm-controller/blob/master/docs/managedcluster_manual_import.md)
+- [manual-import](https://github.com/stolostron/rcm-controller/blob/master/docs/managedcluster_manual_import.md)
 
 2. Install klusterlet CRD
 
@@ -61,7 +61,7 @@ NOTE:
 
 To create a klusterlet addon operator deployment with the klusterlet addon controller you need to create the KlusterletAddonConfig CR
 
-Example of KlusterletAddonConfig CR <https://github.com/open-cluster-management/klusterlet-addon-controller/blob/main/deploy/crds/agent.open-cluster-management.io_v1_klusterletaddonconfig_cr.yaml>
+Example of KlusterletAddonConfig CR <https://github.com/stolostron/klusterlet-addon-controller/blob/main/deploy/crds/agent.open-cluster-management.io_v1_klusterletaddonconfig_cr.yaml>
 
 ## Rebuilding zz_generated.deepcopy.go file
 Any modifications to files pkg/apis/agent/v1/*types.go will require you to run the

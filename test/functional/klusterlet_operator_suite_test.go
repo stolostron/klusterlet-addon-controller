@@ -36,15 +36,15 @@ import (
 
 const (
 	klusterletAddonController = "klusterlet-addon-controller"
-	defaultImageRegistry      = "quay.io/open-cluster-management"
+	defaultImageRegistry      = "quay.io/stolostron"
 	testNamespace             = "test-klusterlet-addon-controller"
 
 	klusterletAddonNamespace = "open-cluster-management"
 )
 
 var (
-	//useSha               bool
-	//tagPostfix           string
+	// useSha               bool
+	// tagPostfix           string
 	clientCluster        kubernetes.Interface
 	clientClusterDynamic dynamic.Interface
 
