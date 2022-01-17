@@ -71,7 +71,7 @@ require (
 	go.uber.org/atomic v1.6.0 // indirect
 	go.uber.org/multierr v1.5.0 // indirect
 	go.uber.org/zap v1.14.1 // indirect
-	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0 // indirect
+	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e // indirect; CVE-2021-43565
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
@@ -101,6 +101,5 @@ replace (
 	github.com/open-cluster-management/api => github.com/stolostron/api v0.0.0-20210409125704-06f2aec1a73f
 	github.com/open-cluster-management/library-e2e-go => github.com/stolostron/library-e2e-go v0.0.0-20200620112055-c80fc3c14997
 	github.com/open-cluster-management/library-go => github.com/stolostron/library-go v0.0.0-20200828173847-299c21e6c3fc
-	golang.org/x/crypto => golang.org/x/crypto v0.0.0-20211202192323-5770296d904e // CVE-2021-43565
 	k8s.io/client-go => k8s.io/client-go v0.20.0
 )
