@@ -6,9 +6,11 @@ package e2e_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -17,8 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-
-	manifestworkv1 "open-cluster-management.io/api/work/v1"
 
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 )
@@ -80,117 +80,35 @@ var _ = Describe("Loopback test", func() {
 			return true
 		}, 3*time.Second, 500*time.Millisecond).Should(BeTrue())
 
-		By("Check agent addon deployments, will not check the pod Status as the image pull secret do not provide and Github action resource limitation")
-		deployments := []string{
-			"klusterlet-addon-operator",
-			"klusterlet-addon-appmgr",
-			"klusterlet-addon-certpolicyctrl",
-			"klusterlet-addon-iampolicyctrl",
-			"klusterlet-addon-policyctrl-config-policy",
-			"klusterlet-addon-policyctrl-framework",
-			"klusterlet-addon-search",
-		}
-
-		for _, deploy := range deployments {
-			Eventually(func() bool {
-				deployment, err := spokeClient.AppsV1().Deployments(agentAddonNamespace).Get(context.TODO(), deploy, metav1.GetOptions{})
-				if err != nil {
-					logf.Log.Info("Get deployment error", "namespace", agentAddonNamespace, "name", deploy, "error", err)
-					return false
-				}
-
-				logf.Log.Info("Deployment created", "name", deployment.Name)
-
-				// check image pull policy
-				if len(deployment.Spec.Template.Spec.Containers) == 0 {
-					return false
-				}
-				if deployment.Spec.Template.Spec.Containers[0].ImagePullPolicy != corev1.PullIfNotPresent {
-					logf.Log.Info("Image pull policy should be IfNotPresent", "namespace", agentAddonNamespace, "name", deploy,
-						"pullPolicy", deployment.Spec.Template.Spec.Containers[0].ImagePullPolicy)
-					Expect(BeFalse()).To(BeTrue())
-					return false
-				}
-				return true
-			}, 300*time.Second, 5*time.Second).Should(BeTrue())
+		By("Check addons are installed")
+		for addonName := range agentv1.KlusterletAddons {
+			if addonName == agentv1.WorkManagerAddonName {
+				continue
+			}
+			Eventually(func() error {
+				addon := &addonv1alpha1.ManagedClusterAddOn{}
+				return kubeClient.Get(context.TODO(), types.NamespacedName{Name: addonName, Namespace: testKlusterletAddonConfig.Namespace}, addon)
+			}, 300*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
 		}
 
 		By("Delete klusterletaddonconfigs")
 		err = kubeClient.Delete(context.TODO(), &klusterletAddonConfig)
 		Expect(err).ToNot(HaveOccurred())
 
-		By("Check manifestworks are deleted")
-		manifestWorks := []string{
-			"cluster1-klusterlet-addon-appmgr",
-			"cluster1-klusterlet-addon-certpolicyctrl",
-			"cluster1-klusterlet-addon-iampolicyctrl",
-			"cluster1-klusterlet-addon-policyctrl",
-			"cluster1-klusterlet-addon-search",
-			// skip check operator and crds deletion since the addon ns in the operator manifests,
-			// addon ns will be reconciled in registration-operator.
-			// TODO: add back when remove the addon ns from the manifestwork.
-			// "cluster1-klusterlet-addon-operator",
-			// "cluster1-klusterlet-addon-crds",
-		}
-		for _, mw := range manifestWorks {
-			Eventually(func() bool {
-				manifestwork := manifestworkv1.ManifestWork{}
-				err = kubeClient.Get(context.TODO(), client.ObjectKey{
-					Namespace: managedclusterName,
-					Name:      mw,
-				}, &manifestwork)
-				if err == nil {
-					return false
-				}
-
+		By("Check addons are deleted")
+		for addonName := range agentv1.KlusterletAddons {
+			if addonName == agentv1.WorkManagerAddonName {
+				continue
+			}
+			Eventually(func() error {
+				addon := &addonv1alpha1.ManagedClusterAddOn{}
+				err := kubeClient.Get(context.TODO(), types.NamespacedName{Name: addonName, Namespace: testKlusterletAddonConfig.Namespace}, addon)
 				if errors.IsNotFound(err) {
-					logf.Log.Info("Manifestwork deleted", "name", mw)
-					return true
+					return nil
 				}
-
-				logf.Log.Info("Get manifestwork error", "name", mw, "error", err)
-				return false
-			}, 500*time.Second, 5*time.Second).Should(BeTrue())
+				return fmt.Errorf("failed to get addon %v,%v", addonName, err)
+			}, 300*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
 		}
 
-		// By("Check klusterletaddonconfig is deleted")
-		// Eventually(func() bool {
-		// 	klusterletAddonConfig := agentv1.KlusterletAddonConfig{}
-		// 	err = kubeClient.Get(context.TODO(), client.ObjectKey{
-		// 		Namespace: testKlusterletAddonConfig.Namespace,
-		// 		Name:      testKlusterletAddonConfig.Name,
-		// 	}, &klusterletAddonConfig)
-		// 	if err == nil {
-		// 		return false
-		// 	}
-		//
-		// 	if errors.IsNotFound(err) {
-		// 		logf.Log.Info("KlusterletAddonConfig deleted", "name", klusterletAddonConfig.Name)
-		// 		return true
-		// 	}
-		//
-		// 	logf.Log.Info("Get klusterletAddonConfig error", "name", testKlusterletAddonConfig.Name, "error", err)
-		// 	return false
-		// }, 300*time.Second, 3*time.Second).Should(BeTrue())
-		//
-		// By("Check klusterletaddonconfig cleanup finalizer on managed cluster is removed")
-		// Eventually(func() bool {
-		// 	managedCluster := managedclusterv1.ManagedCluster{}
-		// 	err = kubeClient.Get(context.TODO(), client.ObjectKey{
-		// 		Name: managedclusterName,
-		// 	}, &managedCluster)
-		// 	if err != nil {
-		// 		logf.Log.Info("Get managedCluster error", "name", managedclusterName, "error", err)
-		// 		return false
-		// 	}
-		//
-		// 	for _, finalizer := range managedCluster.Finalizers {
-		// 		if finalizer == addoncontroller.KlusterletAddonFinalizer {
-		// 			logf.Log.Info("Klusterlet addon finalizer still exist", "name", managedclusterName, "finalizer", finalizer)
-		// 			return false
-		// 		}
-		// 	}
-		// 	return true
-		// }, 300*time.Second, 3*time.Second).Should(BeTrue())
 	})
 })

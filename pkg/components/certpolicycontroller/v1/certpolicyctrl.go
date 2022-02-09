@@ -32,7 +32,7 @@ var log = logf.Log.WithName("certpolicyctrl")
 type AddonCertPolicyCtrl struct{}
 
 func (addon AddonCertPolicyCtrl) IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
-	return instance.Spec.CertPolicyControllerConfig.Enabled
+	return instance.Spec.CertPolicyControllerConfig.Enabled && !agentv1.KlusterletAddons[agentv1.CertPolicyAddonName]
 }
 
 func (addon AddonCertPolicyCtrl) CheckHubKubeconfigRequired() bool {

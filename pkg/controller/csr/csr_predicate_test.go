@@ -4,7 +4,6 @@
 package csr
 
 import (
-	"fmt"
 	"testing"
 
 	certificatesv1 "k8s.io/api/certificates/v1"
@@ -72,22 +71,6 @@ func Test_newCSRPredicate(t *testing.T) {
 					Username:   "anonymous",
 				},
 			},
-		},
-		{
-			name: "valid addon csr",
-			csr: &certificatesv1.CertificateSigningRequest{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						clusterNameLabel:             testClusterName,
-						managedClusterAddonNameLabel: "application-manager",
-					},
-				},
-				Spec: certificatesv1.CertificateSigningRequestSpec{
-					SignerName: certificatesv1.KubeAPIServerClientSignerName,
-					Username:   fmt.Sprintf("system:open-cluster-management:%s:agent1", testClusterName),
-				},
-			},
-			expected: true,
 		},
 	}
 

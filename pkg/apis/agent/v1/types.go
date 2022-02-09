@@ -38,3 +38,39 @@ type AddonAgentConfig struct {
 	ImagePullSecretNamespace string
 	ImagePullPolicy          corev1.PullPolicy
 }
+
+const (
+	// UpgradeLabel is to label the upgraded manifestWork.
+	UpgradeLabel = "open-cluster-management.io/upgrade"
+
+	KlusterletAddonNamespace = "open-cluster-management-agent-addon"
+)
+
+const (
+	WorkManagerAddonName = "work-manager"
+	ApplicationAddonName = "application-manager"
+	CertPolicyAddonName  = "cert-policy-controller"
+	IamPolicyAddonName   = "iam-policy-controller"
+	PolicyAddonName      = "policy-controller"
+	SearchAddonName      = "search-collector"
+)
+
+// KlusterletAddons is for klusterletAddon refactor, set true if the addon is ready to install by itself.
+var KlusterletAddons = map[string]bool{
+	WorkManagerAddonName: true,
+	ApplicationAddonName: false,
+	CertPolicyAddonName:  false,
+	IamPolicyAddonName:   false,
+	PolicyAddonName:      false,
+	SearchAddonName:      false,
+}
+
+// KlusterletAddonImageNames is the image key names for each addon agents in image-manifest configmap
+var KlusterletAddonImageNames = map[string][]string{
+	WorkManagerAddonName: []string{"multicloud_manager"},
+	ApplicationAddonName: []string{"multicluster_operators_subscription"},
+	CertPolicyAddonName:  []string{"cert_policy_controller"},
+	IamPolicyAddonName:   []string{"iam_policy_controller"},
+	PolicyAddonName:      []string{"config_policy_controller", "governance_policy_spec_sync", "governance_policy_status_sync", "governance_policy_template_sync"},
+	SearchAddonName:      []string{"search_collector"},
+}

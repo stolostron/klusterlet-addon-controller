@@ -32,7 +32,7 @@ var log = logf.Log.WithName("workmgr")
 type AddonWorkMgr struct{}
 
 func (addon AddonWorkMgr) IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
-	return false
+	return !agentv1.KlusterletAddons[agentv1.WorkManagerAddonName]
 }
 
 func (addon AddonWorkMgr) CheckHubKubeconfigRequired() bool {

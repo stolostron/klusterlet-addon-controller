@@ -1,3 +1,4 @@
+//go:build testrunmain
 // +build testrunmain
 
 // (c) Copyright IBM Corporation 2019, 2020. All Rights Reserved.

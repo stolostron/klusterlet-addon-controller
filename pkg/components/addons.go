@@ -67,9 +67,12 @@ func init() {
 	managedClusterAddOnNameMap = make(map[string]KlusterletAddon)
 
 	for _, addon := range AddonsArray {
-		addonMap[addon.GetAddonName()] = addon
-		managedClusterAddOnNameMap[addon.GetManagedClusterAddOnName()] = addon
+		if !agentv1.KlusterletAddons[addon.GetManagedClusterAddOnName()] {
+			addonMap[addon.GetAddonName()] = addon
+			managedClusterAddOnNameMap[addon.GetManagedClusterAddOnName()] = addon
+		}
 	}
+
 }
 
 // ConstructManifestWorkName create a manifestwork name

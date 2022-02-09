@@ -9,6 +9,7 @@
 package controller
 
 import (
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/addon"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/csr"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/klusterletaddon"
@@ -22,6 +23,7 @@ var AddToManagerFuncs []func(manager.Manager, kubernetes.Interface) error
 
 func init() {
 	AddToManagerFuncs = append(AddToManagerFuncs,
+		addon.Add,
 		clustermanagementaddon.Add,
 		managedclusteraddon.Add,
 		klusterletaddon.Add,
