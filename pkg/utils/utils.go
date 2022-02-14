@@ -14,6 +14,8 @@ import (
 	"fmt"
 	"reflect"
 
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -43,7 +45,7 @@ func UniqueStringSlice(stringSlice []string) []string {
 	return uniqueStringSlice
 }
 
-//AddFinalizer accepts cluster and adds provided finalizer to cluster
+// AddFinalizer accepts cluster and adds provided finalizer to cluster
 func AddFinalizer(o metav1.Object, finalizer string) {
 	for _, f := range o.GetFinalizers() {
 		if f == finalizer {
@@ -54,7 +56,7 @@ func AddFinalizer(o metav1.Object, finalizer string) {
 	o.SetFinalizers(append(o.GetFinalizers(), finalizer))
 }
 
-//RemoveFinalizer accepts cluster and removes provided finalizer if present
+// RemoveFinalizer accepts cluster and removes provided finalizer if present
 func RemoveFinalizer(o metav1.Object, finalizer string) {
 	var finalizers []string
 
@@ -71,7 +73,7 @@ func RemoveFinalizer(o metav1.Object, finalizer string) {
 	o.SetFinalizers(finalizers)
 }
 
-//HasFinalizer checks if a finalizer present
+// HasFinalizer checks if a finalizer present
 func HasFinalizer(o metav1.Object, finalizer string) bool {
 	for _, f := range o.GetFinalizers() {
 		if f == finalizer {
@@ -87,6 +89,9 @@ func compareManifestWorks(mw1 *manifestworkv1.ManifestWork, mw2 *manifestworkv1.
 		return true
 	}
 	if (mw1 == nil && mw2 != nil) || (mw2 == nil && mw1 != nil) {
+		return false
+	}
+	if !equality.Semantic.DeepEqual(mw1.Spec.DeleteOption, mw2.Spec.DeleteOption) {
 		return false
 	}
 	if len(mw1.Spec.Workload.Manifests) != len(mw2.Spec.Workload.Manifests) {
@@ -199,7 +204,12 @@ func CreateOrUpdateManifestWork(
 	if err == nil {
 		// Check if update is require
 		if !compareManifestWorks(&oldManifestwork, manifestwork) {
-			oldManifestwork.Spec.Workload.Manifests = manifestwork.Spec.Workload.Manifests
+			oldManifestwork.Spec = manifestwork.Spec
+			if oldManifestwork.Labels == nil {
+				oldManifestwork.Labels = map[string]string{agentv1.UpgradeLabel: ""}
+			} else {
+				oldManifestwork.Labels[agentv1.UpgradeLabel] = ""
+			}
 			if err := client.Update(context.TODO(), &oldManifestwork); err != nil {
 				log.Error(err, "Fail to update manifestwork")
 				return err

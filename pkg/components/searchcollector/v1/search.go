@@ -32,7 +32,7 @@ var log = logf.Log.WithName("search")
 type AddonSearch struct{}
 
 func (addon AddonSearch) IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
-	return instance.Spec.SearchCollectorConfig.Enabled
+	return instance.Spec.SearchCollectorConfig.Enabled && !agentv1.KlusterletAddons[agentv1.SearchAddonName]
 }
 
 func (addon AddonSearch) CheckHubKubeconfigRequired() bool {

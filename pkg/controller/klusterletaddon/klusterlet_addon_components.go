@@ -78,6 +78,17 @@ func createManifestWorkComponentOperator(
 			Namespace: addonAgentConfig.ClusterName,
 		},
 		Spec: manifestworkv1.ManifestWorkSpec{
+			DeleteOption: &manifestworkv1.DeleteOption{
+				PropagationPolicy: manifestworkv1.DeletePropagationPolicyTypeSelectivelyOrphan,
+				SelectivelyOrphan: &manifestworkv1.SelectivelyOrphan{
+					OrphaningRules: []manifestworkv1.OrphaningRule{
+						{
+							Resource: "namespaces",
+							Name:     agentv1.KlusterletAddonNamespace,
+						},
+					},
+				},
+			},
 			Workload: manifestworkv1.ManifestsTemplate{
 				Manifests: manifests,
 			},

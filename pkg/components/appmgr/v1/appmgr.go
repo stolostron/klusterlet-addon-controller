@@ -33,7 +33,7 @@ type AddonAppMgr struct{}
 
 // IsEnabled - check whether appmgr is enabled
 func (addon AddonAppMgr) IsEnabled(instance *agentv1.KlusterletAddonConfig) bool {
-	return instance.Spec.ApplicationManagerConfig.Enabled
+	return instance.Spec.ApplicationManagerConfig.Enabled && !agentv1.KlusterletAddons[agentv1.ApplicationAddonName]
 }
 
 func (addon AddonAppMgr) CheckHubKubeconfigRequired() bool {

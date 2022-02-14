@@ -75,6 +75,28 @@ func (config *AddonAgentConfig) GetImage(component string) (imageRepository stri
 	return image, nil
 }
 
+// GetImage returns the image.  for the specified component return error if information not found
+func GetImage(imageRegistry, component string) (string, error) {
+
+	m, err := getManifest(version.Version)
+	if err != nil {
+		return "", err
+	}
+
+	image := m.Images[component]
+	if image == "" {
+		return "", fmt.Errorf("addon image not found")
+	}
+
+	if imageRegistry != "" {
+		registry := strings.TrimSuffix(imageRegistry, "/")
+		imageSegments := strings.Split(image, "/")
+		image = registry + "/" + imageSegments[len(imageSegments)-1]
+
+	}
+	return image, nil
+}
+
 // getManifest returns the manifest that is best matching the required version
 // if no version can match (major version), will return error
 func getManifest(version string) (*manifest, error) {

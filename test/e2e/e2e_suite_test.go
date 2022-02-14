@@ -13,6 +13,7 @@ import (
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -76,6 +77,11 @@ func newRuntimeClient(config *rest.Config) (client.Client, error) {
 	}
 	if err := managedclusterv1.AddToScheme(kscheme.Scheme); err != nil {
 		logf.Log.Info("add to scheme error", "error", err, "name", "managedcluster")
+		return nil, err
+	}
+
+	if err := addonv1alpha1.AddToScheme(kscheme.Scheme); err != nil {
+		logf.Log.Info("add to scheme error", "error", err, "name", "managedClusterAddon")
 		return nil, err
 	}
 

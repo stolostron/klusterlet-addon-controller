@@ -47,7 +47,7 @@ deps:
 
 .PHONY: check
 ## Runs a set of required checks
-check: lint go-bindata-check copyright-check
+check: lint go-bindata-check
 
 .PHONY: copyright-check
 copyright-check:

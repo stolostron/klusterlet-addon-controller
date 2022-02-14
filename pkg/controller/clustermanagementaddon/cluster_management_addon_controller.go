@@ -7,17 +7,19 @@ import (
 	"context"
 	"fmt"
 
-	addons "github.com/stolostron/klusterlet-addon-controller/pkg/components"
-	"k8s.io/client-go/kubernetes"
-
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog/v2"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
@@ -45,12 +47,39 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// Watch for changes to primary resource ClusterManagementAddon
 	err = c.Watch(&source.Kind{Type: &addonv1alpha1.ClusterManagementAddOn{}}, &handler.EnqueueRequestForObject{},
-		addons.NewAddonNamePredicate())
+		klusterletAddonPredicate())
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+func klusterletAddonPredicate() predicate.Predicate {
+	return predicate.Predicate(predicate.Funcs{
+		GenericFunc: func(e event.GenericEvent) bool { return false },
+		CreateFunc: func(e event.CreateEvent) bool {
+			if e.Object == nil {
+				klog.Error(nil, "Create event has no runtime object to create", "event", e)
+				return false
+			}
+			return agentv1.KlusterletAddons[e.Meta.GetName()]
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			if e.Object == nil {
+				klog.Error(nil, "Delete event has no runtime object to delete", "event", e)
+				return false
+			}
+			return agentv1.KlusterletAddons[e.Meta.GetName()]
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			if e.MetaOld == nil || e.MetaNew == nil ||
+				e.ObjectOld == nil || e.ObjectNew == nil {
+				klog.Error(nil, "Update event is invalid", "event", e)
+				return false
+			}
+			return agentv1.KlusterletAddons[e.MetaNew.GetName()]
+		},
+	})
 }
 
 // blank assignment to verify that ReconcileClusterManagementAddOn implements reconcile.Reconciler
@@ -67,9 +96,6 @@ type ReconcileClusterManagementAddOn struct {
 // Reconcile reads that state of the cluster for a ManagedClusterAddOn object and makes changes based on the state read
 // and status in the ManagedClusterAddOn
 func (r *ReconcileClusterManagementAddOn) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := log.WithValues("Request.Name", request.Name)
-	reqLogger.Info("Reconciling ClusterManagementAddOn")
-
 	// Fetch the ManagedClusterAddOn instance
 	clusterManagementAddOn := &addonv1alpha1.ClusterManagementAddOn{}
 	if err := r.client.Get(context.TODO(), request.NamespacedName, clusterManagementAddOn); err != nil {
