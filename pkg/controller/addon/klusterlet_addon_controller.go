@@ -525,11 +525,15 @@ func addonIsEnabled(addonName string, config *agentv1.KlusterletAddonConfig) boo
 	switch addonName {
 	case agentv1.ApplicationAddonName:
 		return config.Spec.ApplicationManagerConfig.Enabled
+	case agentv1.ConfigPolicyAddonName:
+		return config.Spec.PolicyController.Enabled
 	case agentv1.CertPolicyAddonName:
 		return config.Spec.CertPolicyControllerConfig.Enabled
 	case agentv1.IamPolicyAddonName:
 		return config.Spec.IAMPolicyControllerConfig.Enabled
 	case agentv1.PolicyAddonName:
+		return false // delete old ManagedClusterAddon
+	case agentv1.PolicyFrameworkAddonName:
 		return config.Spec.PolicyController.Enabled
 	case agentv1.SearchAddonName:
 		return config.Spec.SearchCollectorConfig.Enabled
