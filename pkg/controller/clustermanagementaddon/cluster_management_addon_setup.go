@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"time"
 
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	addons "github.com/stolostron/klusterlet-addon-controller/pkg/components"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
@@ -29,16 +30,6 @@ var (
 	SearchCollector      = addons.Search.GetManagedClusterAddOnName()
 	WorkManager          = addons.WorkMgr.GetManagedClusterAddOnName()
 )
-
-// ClusterManagementAddOnNames - list of clustermanagementaddon name for addon
-var ClusterManagementAddOnNames = []string{
-	ApplicationManager,
-	CertPolicyController,
-	IamPolicyController,
-	PolicyController,
-	SearchCollector,
-	WorkManager,
-}
 
 // clusterManagementAddOnSpec holds DisplayName, Description and CRDName
 type clusterManagementAddOnSpec struct {
@@ -84,7 +75,11 @@ var ClusterManagementAddOnMap = map[string]clusterManagementAddOnSpec{
 // CreateClusterManagementAddon - creates ClusterManagementAddOns for all add-ons in klusterletaddonconfig
 func CreateClusterManagementAddon(c client.Client) {
 	for !getAllClusterManagementAddons(c) {
-		for _, name := range ClusterManagementAddOnNames {
+		for name, enable := range agentv1.KlusterletAddons {
+			if enable {
+				// the addon finished migration,ignore.
+				continue
+			}
 			clusterManagementAddon := &addonv1alpha1.ClusterManagementAddOn{}
 			clusterManagementAddonSpec := ClusterManagementAddOnMap[name]
 			if err := c.Get(context.TODO(), types.NamespacedName{Name: name}, clusterManagementAddon); err != nil {
@@ -148,7 +143,11 @@ func updateClusterManagementAddOn(client client.Client, addOnName string, oldClu
 }
 
 func getAllClusterManagementAddons(client client.Client) bool {
-	for _, name := range ClusterManagementAddOnNames {
+	for name, enable := range agentv1.KlusterletAddons {
+		if enable {
+			// the addon finished migration,ignore.
+			continue
+		}
 		clusterManagementAddon := &addonv1alpha1.ClusterManagementAddOn{}
 		if err := client.Get(context.TODO(), types.NamespacedName{Name: name}, clusterManagementAddon); err != nil {
 			return false
