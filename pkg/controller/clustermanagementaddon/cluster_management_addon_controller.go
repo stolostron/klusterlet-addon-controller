@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -68,6 +69,10 @@ type ReconcileClusterManagementAddOn struct {
 func (r *ReconcileClusterManagementAddOn) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the ManagedClusterAddOn instance
 	clusterManagementAddOn := &addonv1alpha1.ClusterManagementAddOn{}
+	if _, ok := agentv1.KlusterletAddons[clusterManagementAddOn.GetName()]; ok {
+		// the addon finished migration,ignore.
+		return reconcile.Result{}, nil
+	}
 	if err := r.client.Get(context.TODO(), request.NamespacedName, clusterManagementAddOn); err != nil {
 		if errors.IsNotFound(err) {
 			clusterManagementAddonMeta := ClusterManagementAddOnMap[request.Name]

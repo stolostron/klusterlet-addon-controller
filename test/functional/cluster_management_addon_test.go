@@ -1,3 +1,4 @@
+//go:build functional
 // +build functional
 
 // Copyright (c) Red Hat, Inc.
@@ -84,7 +85,10 @@ var _ = Describe("Creating ClusterManagementAddOn", func() {
 		By("Check all addons has clustermanagementaddons", func() {
 			var err error
 			Expect(err).Should(BeNil())
-			for _, addonName := range clustermanagementaddon.ClusterManagementAddOnNames {
+			for name, enable := range agentv1.KlusterletAddons {
+				if enable {
+					continue
+				}
 				var clusterManagementAddOn *unstructured.Unstructured
 				Eventually(func() error {
 					clusterManagementAddOn, err = clientClusterDynamic.Resource(gvrClusterManagementAddOn).Get(context.TODO(), addonName, metav1.GetOptions{})
@@ -97,7 +101,10 @@ var _ = Describe("Creating ClusterManagementAddOn", func() {
 
 		By("Deleting one by one ClusterManagementAddOn", func() {
 			var err error
-			for _, addonName := range clustermanagementaddon.ClusterManagementAddOnNames {
+			for name, enable := range agentv1.KlusterletAddons {
+				if enable {
+					continue
+				}
 				err = clientClusterDynamic.Resource(gvrClusterManagementAddOn).Delete(context.TODO(), addonName, metav1.DeleteOptions{})
 				Expect(err).To(BeNil())
 				By("Checking the ClusterManagementAddOn "+addonName+" is created back", func() {
@@ -114,7 +121,10 @@ var _ = Describe("Creating ClusterManagementAddOn", func() {
 
 		By("Modifying one by one ClusterManagementAddOn", func() {
 			var err error
-			for _, addonName := range clustermanagementaddon.ClusterManagementAddOnNames {
+			for name, enable := range agentv1.KlusterletAddons {
+				if enable {
+					continue
+				}
 				_, err = clientClusterDynamic.Resource(gvrClusterManagementAddOn).Patch(context.TODO(), addonName, types.JSONPatchType, []byte(addOnPatchStrings[addonName]), metav1.PatchOptions{})
 				Expect(err).To(BeNil())
 				time.Sleep(time.Second * 2)
