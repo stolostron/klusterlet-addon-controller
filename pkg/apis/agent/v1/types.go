@@ -71,12 +71,14 @@ var KlusterletAddons = map[string]bool{
 
 // KlusterletAddonImageNames is the image key names for each addon agents in image-manifest configmap
 var KlusterletAddonImageNames = map[string][]string{
-	WorkManagerAddonName:     []string{"multicloud_manager"},
-	ApplicationAddonName:     []string{"multicluster_operators_subscription"},
-	ConfigPolicyAddonName:    []string{"config_policy_controller"},
-	CertPolicyAddonName:      []string{"cert_policy_controller"},
-	IamPolicyAddonName:       []string{"iam_policy_controller"},
-	PolicyAddonName:          []string{"config_policy_controller", "governance_policy_spec_sync", "governance_policy_status_sync", "governance_policy_template_sync"},
-	PolicyFrameworkAddonName: []string{"governance_policy_spec_sync", "governance_policy_status_sync", "governance_policy_template_sync"},
-	SearchAddonName:          []string{"search_collector"},
+	WorkManagerAddonName:  []string{"multicloud_manager"},
+	ApplicationAddonName:  []string{"multicluster_operators_subscription"},
+	ConfigPolicyAddonName: []string{"config_policy_controller"},
+	CertPolicyAddonName:   []string{"cert_policy_controller"},
+	IamPolicyAddonName:    []string{"iam_policy_controller"},
+	PolicyAddonName: []string{"config_policy_controller", "governance_policy_spec_sync",
+		"governance_policy_status_sync", "governance_policy_template_sync"},
+	PolicyFrameworkAddonName: []string{"governance_policy_spec_sync", "governance_policy_status_sync",
+		"governance_policy_template_sync"},
+	SearchAddonName: []string{"search_collector"},
 }

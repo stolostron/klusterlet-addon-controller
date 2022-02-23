@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/utils"
 	"github.com/stolostron/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,10 +19,8 @@ import (
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
@@ -99,37 +98,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 				}
 			},
 		)},
-		klusterletAddonPredicate())
+		utils.KlusterletAddonPredicate())
 
 	return err
-}
-
-func klusterletAddonPredicate() predicate.Predicate {
-	return predicate.Predicate(predicate.Funcs{
-		GenericFunc: func(e event.GenericEvent) bool { return false },
-		CreateFunc: func(e event.CreateEvent) bool {
-			if e.Object == nil {
-				klog.Error(nil, "Create event has no runtime object to create", "event", e)
-				return false
-			}
-			return agentv1.KlusterletAddons[e.Meta.GetName()]
-		},
-		DeleteFunc: func(e event.DeleteEvent) bool {
-			if e.Object == nil {
-				klog.Error(nil, "Delete event has no runtime object to delete", "event", e)
-				return false
-			}
-			return agentv1.KlusterletAddons[e.Meta.GetName()]
-		},
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			if e.MetaOld == nil || e.MetaNew == nil ||
-				e.ObjectOld == nil || e.ObjectNew == nil {
-				klog.Error(nil, "Update event is invalid", "event", e)
-				return false
-			}
-			return agentv1.KlusterletAddons[e.MetaNew.GetName()]
-		},
-	})
 }
 
 type ReconcileKlusterletAddOn struct {
@@ -378,7 +349,12 @@ func getProxyConfig(addonName string, config *agentv1.KlusterletAddonConfig) map
 			return nil
 		}
 		proxyPolicy = config.Spec.IAMPolicyControllerConfig.ProxyPolicy
-	case agentv1.PolicyAddonName:
+	case agentv1.ConfigPolicyAddonName:
+		if !config.Spec.PolicyController.Enabled {
+			return nil
+		}
+		proxyPolicy = config.Spec.PolicyController.ProxyPolicy
+	case agentv1.PolicyFrameworkAddonName:
 		if !config.Spec.PolicyController.Enabled {
 			return nil
 		}

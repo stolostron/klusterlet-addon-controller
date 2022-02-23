@@ -24,7 +24,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	manifestworkv1 "open-cluster-management.io/api/work/v1"
 )
@@ -276,4 +278,32 @@ func GetManifestWork(name, namespace string, client client.Client) (*manifestwor
 	}
 
 	return manifestWork, nil
+}
+
+func KlusterletAddonPredicate() predicate.Predicate {
+	return predicate.Predicate(predicate.Funcs{
+		GenericFunc: func(e event.GenericEvent) bool { return false },
+		CreateFunc: func(e event.CreateEvent) bool {
+			if e.Object == nil {
+				log.Error(nil, "Create event has no runtime object to create", "event", e)
+				return false
+			}
+			return agentv1.KlusterletAddons[e.Meta.GetName()]
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			if e.Object == nil {
+				log.Error(nil, "Delete event has no runtime object to delete", "event", e)
+				return false
+			}
+			return agentv1.KlusterletAddons[e.Meta.GetName()]
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			if e.MetaOld == nil || e.MetaNew == nil ||
+				e.ObjectOld == nil || e.ObjectNew == nil {
+				log.Error(nil, "Update event is invalid", "event", e)
+				return false
+			}
+			return agentv1.KlusterletAddons[e.MetaNew.GetName()]
+		},
+	})
 }
