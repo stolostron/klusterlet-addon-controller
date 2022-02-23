@@ -82,7 +82,7 @@ var _ = Describe("Loopback test", func() {
 
 		By("Check addons are installed")
 		for addonName := range agentv1.KlusterletAddons {
-			if addonName == agentv1.WorkManagerAddonName {
+			if addonName == agentv1.WorkManagerAddonName || addonName == agentv1.PolicyAddonName {
 				continue
 			}
 			Eventually(func() error {
@@ -97,7 +97,7 @@ var _ = Describe("Loopback test", func() {
 
 		By("Check addons are deleted")
 		for addonName := range agentv1.KlusterletAddons {
-			if addonName == agentv1.WorkManagerAddonName {
+			if addonName == agentv1.WorkManagerAddonName || addonName == agentv1.PolicyAddonName {
 				continue
 			}
 			Eventually(func() error {

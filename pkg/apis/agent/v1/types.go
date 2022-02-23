@@ -47,22 +47,26 @@ const (
 )
 
 const (
-	WorkManagerAddonName = "work-manager"
-	ApplicationAddonName = "application-manager"
-	CertPolicyAddonName  = "cert-policy-controller"
-	IamPolicyAddonName   = "iam-policy-controller"
-	PolicyAddonName      = "policy-controller"
-	SearchAddonName      = "search-collector"
+	WorkManagerAddonName     = "work-manager"
+	ApplicationAddonName     = "application-manager"
+	CertPolicyAddonName      = "cert-policy-controller"
+	IamPolicyAddonName       = "iam-policy-controller"
+	PolicyAddonName          = "policy-controller"
+	ConfigPolicyAddonName    = "config-policy-controller"
+	PolicyFrameworkAddonName = "governance-policy-framework"
+	SearchAddonName          = "search-collector"
 )
 
 // KlusterletAddons is for klusterletAddon refactor, set true if the addon is ready to install by itself.
 var KlusterletAddons = map[string]bool{
-	WorkManagerAddonName: true,
-	ApplicationAddonName: false,
-	CertPolicyAddonName:  false,
-	IamPolicyAddonName:   false,
-	PolicyAddonName:      false,
-	SearchAddonName:      false,
+	WorkManagerAddonName:     true,
+	ApplicationAddonName:     false,
+	CertPolicyAddonName:      true,
+	IamPolicyAddonName:       true,
+	PolicyAddonName:          true,
+	ConfigPolicyAddonName:    true,
+	PolicyFrameworkAddonName: true,
+	SearchAddonName:          false,
 }
 
 // KlusterletAddonImageNames is the image key names for each addon agents in image-manifest configmap
@@ -71,6 +75,10 @@ var KlusterletAddonImageNames = map[string][]string{
 	ApplicationAddonName: []string{"multicluster_operators_subscription"},
 	CertPolicyAddonName:  []string{"cert_policy_controller"},
 	IamPolicyAddonName:   []string{"iam_policy_controller"},
-	PolicyAddonName:      []string{"config_policy_controller", "governance_policy_spec_sync", "governance_policy_status_sync", "governance_policy_template_sync"},
-	SearchAddonName:      []string{"search_collector"},
+	PolicyAddonName: []string{"config_policy_controller", "governance_policy_spec_sync",
+		"governance_policy_status_sync", "governance_policy_template_sync"},
+	ConfigPolicyAddonName: []string{"config_policy_controller"},
+	PolicyFrameworkAddonName: []string{"governance_policy_spec_sync", "governance_policy_status_sync",
+		"governance_policy_template_sync"},
+	SearchAddonName: []string{"search_collector"},
 }
