@@ -67,12 +67,12 @@ type ReconcileClusterManagementAddOn struct {
 // Reconcile reads that state of the cluster for a ManagedClusterAddOn object and makes changes based on the state read
 // and status in the ManagedClusterAddOn
 func (r *ReconcileClusterManagementAddOn) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	// Fetch the ManagedClusterAddOn instance
-	clusterManagementAddOn := &addonv1alpha1.ClusterManagementAddOn{}
-	if _, ok := agentv1.KlusterletAddons[clusterManagementAddOn.GetName()]; ok {
+	if agentv1.KlusterletAddons[request.Name] {
 		// the addon finished migration,ignore.
 		return reconcile.Result{}, nil
 	}
+	// Fetch the ManagedClusterAddOn instance
+	clusterManagementAddOn := &addonv1alpha1.ClusterManagementAddOn{}
 	if err := r.client.Get(context.TODO(), request.NamespacedName, clusterManagementAddOn); err != nil {
 		if errors.IsNotFound(err) {
 			clusterManagementAddonMeta := ClusterManagementAddOnMap[request.Name]
