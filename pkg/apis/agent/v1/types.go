@@ -60,7 +60,7 @@ const (
 // KlusterletAddons is for klusterletAddon refactor, set true if the addon is ready to install by itself.
 var KlusterletAddons = map[string]bool{
 	WorkManagerAddonName:     true,
-	ApplicationAddonName:     false,
+	ApplicationAddonName:     true,
 	ConfigPolicyAddonName:    true,
 	CertPolicyAddonName:      true,
 	IamPolicyAddonName:       true,
