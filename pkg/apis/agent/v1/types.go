@@ -66,7 +66,7 @@ var KlusterletAddons = map[string]bool{
 	IamPolicyAddonName:       true,
 	PolicyAddonName:          true,
 	PolicyFrameworkAddonName: true,
-	SearchAddonName:          false,
+	SearchAddonName:          true,
 }
 
 // KlusterletAddonImageNames is the image key names for each addon agents in image-manifest configmap
