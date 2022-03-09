@@ -112,9 +112,13 @@ func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconci
 	managedCluster := &managedclusterv1.ManagedCluster{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: request.Namespace}, managedCluster); err != nil {
 		if errors.IsNotFound(err) {
-			return reconcile.Result{}, nil
+			return reconcile.Result{}, r.deleteAllManagedClusterAddon(managedCluster.GetName())
 		}
 		return reconcile.Result{}, err
+	}
+
+	if !managedCluster.DeletionTimestamp.IsZero() {
+		return reconcile.Result{}, r.deleteAllManagedClusterAddon(managedCluster.GetName())
 	}
 
 	// Fetch the klusterletAddonConfig instance
@@ -349,12 +353,7 @@ func getProxyConfig(addonName string, config *agentv1.KlusterletAddonConfig) map
 			return nil
 		}
 		proxyPolicy = config.Spec.IAMPolicyControllerConfig.ProxyPolicy
-	case agentv1.ConfigPolicyAddonName:
-		if !config.Spec.PolicyController.Enabled {
-			return nil
-		}
-		proxyPolicy = config.Spec.PolicyController.ProxyPolicy
-	case agentv1.PolicyFrameworkAddonName:
+	case agentv1.ConfigPolicyAddonName, agentv1.PolicyFrameworkAddonName:
 		if !config.Spec.PolicyController.Enabled {
 			return nil
 		}
