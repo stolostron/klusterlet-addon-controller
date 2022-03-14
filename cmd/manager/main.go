@@ -136,6 +136,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
 	// create all ClusterManagementAddons for monolith addons
 	clustermanagementaddon.CreateClusterManagementAddon(runtimeClient)
 

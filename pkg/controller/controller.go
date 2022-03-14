@@ -13,6 +13,7 @@ import (
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/csr"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/klusterletaddon"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/managedcluster"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/managedclusteraddon"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -27,7 +28,9 @@ func init() {
 		clustermanagementaddon.Add,
 		managedclusteraddon.Add,
 		klusterletaddon.Add,
-		csr.Add)
+		csr.Add,
+		managedcluster.Add,
+	)
 }
 
 // AddToManager adds all Controllers to the Manager
