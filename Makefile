@@ -145,10 +145,6 @@ build-image-coverage: build-image
 	# @$(DOCKER_BUILDER) build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage -f $(DOCKERFILE_COVERAGE) . 
 	# @$(DOCKER_BUILDER) tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage:$(DOCKER_TAG)
 
-.PHONY: functional-test-full
-functional-test-full: build-image-coverage
-	build/run-functional-tests.sh $(DOCKER_IMAGE_COVERAGE)
-
 # download script for coverage entrypoint. 
 .PHONY: sync-coverage-entrypoint
 sync-coverage-entrypoint:

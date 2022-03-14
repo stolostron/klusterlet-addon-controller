@@ -28,7 +28,7 @@ import (
 	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 )
 
-var log = logf.Log.WithName("controller_managedcluster")
+var log = logf.Log.WithName("managedcluster-controller")
 
 // Add creates a new ManagedCluster Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -113,12 +113,16 @@ func (r *ReconcileManagedCluster) Reconcile(request reconcile.Request) (reconcil
 	managedCluster := &mcv1.ManagedCluster{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: request.Name}, managedCluster); err != nil {
 		if errors.IsNotFound(err) {
-			return reconcile.Result{}, err
+			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
 	}
 
 	if !managedCluster.DeletionTimestamp.IsZero() {
+		return reconcile.Result{}, nil
+	}
+
+	if !hypershiftCluster(managedCluster) && !clusterClaimCluster(managedCluster) {
 		return reconcile.Result{}, nil
 	}
 
@@ -133,7 +137,7 @@ func createKlusterletAddonConfig(client client.Client, cluster *mcv1.ManagedClus
 	var kac kacv1.KlusterletAddonConfig
 	err := client.Get(ctx, types.NamespacedName{Namespace: name, Name: name}, &kac)
 	if errors.IsNotFound(err) {
-		log.Info("Create a new KlusterletAddonConfig resource %s", name)
+		log.Info(fmt.Sprintf("Create a new KlusterletAddonConfig resource %s", name))
 		kacNew := newKlusterletAddonConfig(clusterType(cluster), name)
 		if kacNew == nil {
 			return fmt.Errorf("new KlusterletAddonConfig %s", name)
@@ -156,8 +160,7 @@ func hypershiftCluster(meta metav1.Object) bool {
 }
 
 func clusterClaimCluster(meta metav1.Object) bool {
-	// TODO(zhujian7): enqueue clusters created by cluster claim
-	return false
+	return strings.Contains(meta.GetAnnotations()["cluster.open-cluster-management.io/provisioner"], "ClusterClaim.hive.openshift.io")
 }
 
 func clusterType(cluster *mcv1.ManagedCluster) string {

@@ -112,7 +112,7 @@ func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconci
 	managedCluster := &managedclusterv1.ManagedCluster{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: request.Namespace}, managedCluster); err != nil {
 		if errors.IsNotFound(err) {
-			return reconcile.Result{}, r.deleteAllManagedClusterAddon(managedCluster.GetName())
+			return reconcile.Result{}, r.deleteAllManagedClusterAddon(request.Name)
 		}
 		return reconcile.Result{}, err
 	}
@@ -140,10 +140,7 @@ func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconci
 	}
 
 	var aggregatedErrs []error
-	for addonName, enable := range agentv1.KlusterletAddons {
-		if !enable {
-			continue
-		}
+	for addonName := range agentv1.KlusterletAddons {
 		if !addonIsEnabled(addonName, klusterletAddonConfig) {
 			if err := r.deleteManagedClusterAddon(addonName, managedCluster.GetName()); err != nil {
 				aggregatedErrs = append(aggregatedErrs, err)
@@ -170,11 +167,8 @@ func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconci
 
 func (r *ReconcileKlusterletAddOn) deleteAllManagedClusterAddon(clusterName string) error {
 	var aggregatedErrs []error
-	for addonName, enable := range agentv1.KlusterletAddons {
-		if !enable {
-			continue
-		}
-		if addonName == agentv1.WorkManagerAddonName {
+	for addonName, canBeDeleted := range agentv1.KlusterletAddons {
+		if !canBeDeleted {
 			continue
 		}
 		err := r.deleteManagedClusterAddon(addonName, clusterName)
@@ -192,9 +186,7 @@ func (r *ReconcileKlusterletAddOn) deleteManagedClusterAddon(addonName, clusterN
 	if !agentv1.KlusterletAddons[addonName] {
 		return nil
 	}
-	if addonName == agentv1.WorkManagerAddonName {
-		return nil
-	}
+
 	addon := &addonv1alpha1.ManagedClusterAddOn{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      addonName,
@@ -214,10 +206,10 @@ func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(gv globalValues, ad
 	addon := &addonv1alpha1.ManagedClusterAddOn{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: addonName, Namespace: clusterName}, addon)
 	if errors.IsNotFound(err) {
-		// work manager addon cr is created by itself
-		if addonName == agentv1.WorkManagerAddonName {
+		if !agentv1.KlusterletAddons[addonName] {
 			return nil
 		}
+
 		newAddon := newManagedClusterAddon(addonName, clusterName)
 
 		valuesString, err := marshalGlobalValues(gv)
@@ -507,7 +499,7 @@ func addonIsEnabled(addonName string, config *agentv1.KlusterletAddonConfig) boo
 	case agentv1.IamPolicyAddonName:
 		return config.Spec.IAMPolicyControllerConfig.Enabled
 	case agentv1.PolicyAddonName:
-		return false // delete old ManagedClusterAddon
+		return false //  has been deprecated
 	case agentv1.PolicyFrameworkAddonName:
 		return config.Spec.PolicyController.Enabled
 	case agentv1.SearchAddonName:
@@ -515,5 +507,5 @@ func addonIsEnabled(addonName string, config *agentv1.KlusterletAddonConfig) boo
 	case agentv1.WorkManagerAddonName:
 		return true
 	}
-	return false
+	return true
 }

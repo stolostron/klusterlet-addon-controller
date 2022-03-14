@@ -57,9 +57,11 @@ const (
 	SearchAddonName          = "search-collector"
 )
 
-// KlusterletAddons is for klusterletAddon refactor, set true if the addon is ready to install by itself.
+// KlusterletAddons is a list of managedClusterAddons which can be updated by addon-controller.
+// true means it is deployed by addon-controller, can be updated and deleted.
+// false means it is not deployed by addon-controller, only can be updated, but cannot be deleted.
 var KlusterletAddons = map[string]bool{
-	WorkManagerAddonName:     true,
+	WorkManagerAddonName:     false,
 	ApplicationAddonName:     true,
 	ConfigPolicyAddonName:    true,
 	CertPolicyAddonName:      true,
@@ -81,4 +83,35 @@ var KlusterletAddonImageNames = map[string][]string{
 	PolicyFrameworkAddonName: []string{"governance_policy_spec_sync", "governance_policy_status_sync",
 		"governance_policy_template_sync"},
 	SearchAddonName: []string{"search_collector"},
+}
+
+// ClusterManagementAddons is a list of ClusterManagementAddons need to delete during the upgrade from 2.4 to 2.5
+var ClusterManagementAddons = []string{
+	ApplicationAddonName,
+	CertPolicyAddonName,
+	IamPolicyAddonName,
+	PolicyAddonName,
+	SearchAddonName,
+}
+
+var DeprecatedManagedClusterAddons = []string{
+	PolicyAddonName,
+}
+
+var KlusterletAddonComponentNames = map[string]string{
+	WorkManagerAddonName: "workmgr",
+	ApplicationAddonName: "appmgr",
+	CertPolicyAddonName:  "certpolicyctrl",
+	IamPolicyAddonName:   "iampolicyctrl",
+	PolicyAddonName:      "policyctrl",
+	SearchAddonName:      "search",
+}
+
+var DeprecatedAgentManifestworks = []string{
+	"klusterlet-addon-appmgr",
+	"klusterlet-addon-certpolicyctrl",
+	"klusterlet-addon-iampolicyctrl",
+	"klusterlet-addon-policyctrl",
+	"klusterlet-addon-workmgr",
+	"klusterlet-addon-search",
 }

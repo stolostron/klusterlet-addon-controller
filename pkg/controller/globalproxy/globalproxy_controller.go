@@ -1,6 +1,6 @@
 // Copyright Contributors to the Open Cluster Management project
 
-package klusterletaddon
+package globalproxy
 
 import (
 	"fmt"
@@ -27,7 +27,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -49,7 +48,11 @@ func newGlobalProxyReconciler(mgr manager.Manager, kubeClient kubernetes.Interfa
 	}
 }
 
-func globalProxyReconcilerAdd(mgr manager.Manager, r reconcile.Reconciler) error {
+func Add(mgr manager.Manager, kubeClient kubernetes.Interface) error {
+	return add(mgr, newGlobalProxyReconciler(mgr, kubeClient))
+}
+
+func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	c, err := controller.New("globalProxy-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
@@ -101,9 +104,6 @@ func globalProxyReconcilerAdd(mgr manager.Manager, r reconcile.Reconciler) error
 }
 
 func (r *GlobalProxyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	reqLogger := log.WithValues("Request.Name", req.Name)
-	reqLogger.Info("Reconciling GlobalProxy")
-
 	klusterletAddonConfig := &agentv1.KlusterletAddonConfig{}
 	if err := r.runtimeClient.Get(context.TODO(), types.NamespacedName{Name: req.Name, Namespace: req.Namespace},
 		klusterletAddonConfig); err != nil {

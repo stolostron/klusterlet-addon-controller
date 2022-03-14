@@ -1,6 +1,6 @@
 // Copyright Contributors to the Open Cluster Management project
 
-package klusterletaddon
+package globalproxy
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"time"
 
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	corev1 "k8s.io/api/core/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -20,80 +20,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
-
-var installConfigYaml = []byte(`
-apiVersion: v1
-baseDomain: aws-cluster
-metadata:
-  name: 'cluster'
-baseDomain: test.redhat.com
-networking:
-  networkType: OpenShiftSDN
-  clusterNetwork:
-  - cidr: 10.128.0.0/14
-    hostPrefix: 23
-  machineNetwork:
-  - cidr: 192.168.124.0/24
-  serviceNetwork:
-  - 172.30.0.0/16
-proxy:
-  httpsProxy: https://username:password@proxy.example.com:123/
-  httpProxy: https://username:password@proxy.example.com:123/
-  noProxy: 123.example.com,10.88.0.0/16
-platform:
-  gcp:
-    projectID: yzw-yzw
-    region: us-east1
-`)
-var installConfigBareMetalYaml = []byte(`
-apiVersion: v1
-baseDomain: aws-cluster
-metadata:
-  name: 'cluster'
-baseDomain: test.redhat.com
-networking:
-  networkType: OpenShiftSDN
-  clusterNetwork:
-  - cidr: 10.128.0.0/14
-    hostPrefix: 23
-  machineNetwork:
-  - cidr: 192.168.124.0/24
-  serviceNetwork:
-  - 172.30.0.0/16
-proxy:
-  httpsProxy: https://username:password@proxy.example.com:123/
-  httpProxy: https://username:password@proxy.example.com:123/
-  noProxy: 123.example.com,10.88.0.0/16
-platform:
-  baremetal:
-    libvirtURI: qemu+ssh://root@192.168.124.1/system
-`)
-var installConfigNoProxyYaml = []byte(`
-apiVersion: v1
-baseDomain: aws-cluster
-metadata:
-  name: 'cluster'
-platform:
-  gcp:
-    projectID: yzw-yzw
-    region: us-east1
-`)
-
-func newInstallConfigSecret(name, namespace string, installConfig []byte) *corev1.Secret {
-	data := map[string][]byte{}
-	if len(installConfig) != 0 {
-		data["install-config.yaml"] = installConfig
-	}
-	return &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Data: data,
-		Type: corev1.SecretTypeOpaque,
-	}
-}
 
 func newKlusterletAddonConfig(clusterName string, proxyConfig agentv1.ProxyConfig,
 	appProxyPolicy agentv1.ProxyPolicy, conditions []metav1.Condition) *agentv1.KlusterletAddonConfig {
@@ -131,7 +57,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 		{
 			name:          "update klusterletAddonConfig status correctly",
 			runtimeClient: fake.NewFakeClientWithScheme(testscheme, newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{})),
-			kubeClient:    kubefake.NewSimpleClientset(newInstallConfigSecret("cluster1-install-config", "cluster1", installConfigYaml)),
+			kubeClient:    kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigYaml)),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -158,7 +84,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 		{
 			name:          "update baremetal klusterletAddonConfig status correctly",
 			runtimeClient: fake.NewFakeClientWithScheme(testscheme, newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{})),
-			kubeClient:    kubefake.NewSimpleClientset(newInstallConfigSecret("cluster1-install-config", "cluster1", installConfigBareMetalYaml)),
+			kubeClient:    kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigBareMetalYaml)),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -199,7 +125,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 							Message: "Detected the cluster-wide proxy config in install config.",
 						},
 					})),
-			kubeClient: kubefake.NewSimpleClientset(newInstallConfigSecret("cluster1-install-config", "cluster1", installConfigYaml)),
+			kubeClient: kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigYaml)),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -227,7 +153,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 			name: "no install config secret",
 			runtimeClient: fake.NewFakeClientWithScheme(testscheme,
 				newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{})),
-			kubeClient: kubefake.NewSimpleClientset(newInstallConfigSecret("cluster1-test", "cluster1", installConfigYaml)),
+			kubeClient: kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-test", "cluster1", helpers.InstallConfigYaml)),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -250,7 +176,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 			name: "no install-config.yaml in secret ",
 			runtimeClient: fake.NewFakeClientWithScheme(testscheme,
 				newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{})),
-			kubeClient: kubefake.NewSimpleClientset(newInstallConfigSecret("cluster1-install-config", "cluster1", []byte{})),
+			kubeClient: kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", []byte{})),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -273,7 +199,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 			name: "no proxy config in install-config.yaml ",
 			runtimeClient: fake.NewFakeClientWithScheme(testscheme,
 				newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{})),
-			kubeClient: kubefake.NewSimpleClientset(newInstallConfigSecret("cluster1-install-config", "cluster1", installConfigNoProxyYaml)),
+			kubeClient: kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigNoProxyYaml)),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -295,7 +221,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 		{
 			name: "no klusterletAddonConfig",
 			runtimeClient: fake.NewFakeClientWithScheme(testscheme,
-				newInstallConfigSecret("cluster1-install-config", "cluster1", installConfigYaml)),
+				helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigYaml)),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -310,7 +236,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 			name: "appProxyPolicy is not empty",
 			runtimeClient: fake.NewFakeClientWithScheme(testscheme,
 				newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, agentv1.ProxyPolicyCustomProxy, []metav1.Condition{})),
-			kubeClient: kubefake.NewSimpleClientset(newInstallConfigSecret("cluster1-install-config", "cluster1", installConfigYaml)),
+			kubeClient: kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigYaml)),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -391,7 +317,7 @@ func Test_getGlobalProxyInInstallConfig(t *testing.T) {
 	}{
 		{
 			name:          "get correct proxyConfig",
-			installConfig: installConfigYaml,
+			installConfig: helpers.InstallConfigYaml,
 			expectedProxyConfig: agentv1.ProxyConfig{
 				HTTPProxy:  "https://username:password@proxy.example.com:123/",
 				HTTPSProxy: "https://username:password@proxy.example.com:123/",
@@ -401,7 +327,7 @@ func Test_getGlobalProxyInInstallConfig(t *testing.T) {
 		},
 		{
 			name:          "no proxy in install config",
-			installConfig: installConfigNoProxyYaml,
+			installConfig: helpers.InstallConfigNoProxyYaml,
 			expectedProxyConfig: agentv1.ProxyConfig{
 				HTTPProxy:  "",
 				HTTPSProxy: "",
