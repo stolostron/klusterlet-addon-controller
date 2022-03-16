@@ -53,7 +53,7 @@ func TestReconcileManagedCluster(t *testing.T) {
 			name:     "create hypershift cluster klusterlet addon config",
 			initObjs: nil,
 			mc: newManagedCluster(testClusterName, map[string]string{
-				"cluster.open-cluster-management.io/hypershiftdeployment": "a/b",
+				provisionerAnnotation: "test.test.HypershiftDeployment.cluster.open-cluster-management.io",
 			}),
 			want: reconcile.Result{Requeue: false},
 		},
@@ -61,7 +61,7 @@ func TestReconcileManagedCluster(t *testing.T) {
 			name:     "create claim cluster klusterlet addon config",
 			initObjs: nil,
 			mc: newManagedCluster(testClusterName, map[string]string{
-				"cluster.open-cluster-management.io/provisioner": "test.test.ClusterClaim.hive.openshift.io/v1",
+				provisionerAnnotation: "test.test.ClusterClaim.hive.openshift.io/v1",
 			}),
 			want: reconcile.Result{Requeue: false},
 		},

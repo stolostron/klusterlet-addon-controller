@@ -28,6 +28,8 @@ import (
 	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 )
 
+const provisionerAnnotation = "cluster.open-cluster-management.io/provisioner"
+
 var log = logf.Log.WithName("managedcluster-controller")
 
 // Add creates a new ManagedCluster Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -155,12 +157,11 @@ func createKlusterletAddonConfig(client client.Client, cluster *mcv1.ManagedClus
 }
 
 func hypershiftCluster(meta metav1.Object) bool {
-	// contain the hypershift deployment annotation, and is not empty
-	return strings.Contains(meta.GetAnnotations()["cluster.open-cluster-management.io/hypershiftdeployment"], "/")
+	return strings.Contains(meta.GetAnnotations()[provisionerAnnotation], "HypershiftDeployment.cluster.open-cluster-management.io")
 }
 
 func clusterClaimCluster(meta metav1.Object) bool {
-	return strings.Contains(meta.GetAnnotations()["cluster.open-cluster-management.io/provisioner"], "ClusterClaim.hive.openshift.io")
+	return strings.Contains(meta.GetAnnotations()[provisionerAnnotation], "ClusterClaim.hive.openshift.io")
 }
 
 func clusterType(cluster *mcv1.ManagedCluster) string {
