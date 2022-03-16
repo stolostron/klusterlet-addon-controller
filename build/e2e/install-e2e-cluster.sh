@@ -26,7 +26,7 @@ echo "kubeconfig: $KUBECONFIG"
 echo "############  Cloning registration-operator"
 rm -rf registration-operator
 
-git clone https://github.com/stolostron/registration-operator.git
+git clone --depth 1 --branch backplane-2.0 https://github.com/stolostron/registration-operator.git
 
 cd registration-operator || {
   printf "cd failed, registration-operator does not exist"
@@ -34,6 +34,10 @@ cd registration-operator || {
 }
 
 echo "############  Deploying ocm"
+export IMAGE_NAME=quay.io/stolostron/registration-operator:backplane-2.0
+export REGISTRATION_IMAGE=quay.io/stolostron/registration:backplane-2.0
+export WORK_IMAGE=quay.io/stolostron/work:backplane-2.0
+export PLACEMENT_IMAGE=quay.io/stolostron/placement:backplane-2.0
 make deploy
 if [ $? -ne 0 ]; then
  echo "############  Failed to deploy"

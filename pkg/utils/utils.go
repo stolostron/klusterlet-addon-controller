@@ -288,14 +288,16 @@ func KlusterletAddonPredicate() predicate.Predicate {
 				log.Error(nil, "Create event has no runtime object to create", "event", e)
 				return false
 			}
-			return agentv1.KlusterletAddons[e.Meta.GetName()]
+			_, existed := agentv1.KlusterletAddons[e.Meta.GetName()]
+			return existed
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
 			if e.Object == nil {
 				log.Error(nil, "Delete event has no runtime object to delete", "event", e)
 				return false
 			}
-			return agentv1.KlusterletAddons[e.Meta.GetName()]
+			_, existed := agentv1.KlusterletAddons[e.Meta.GetName()]
+			return existed
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			if e.MetaOld == nil || e.MetaNew == nil ||
@@ -303,7 +305,8 @@ func KlusterletAddonPredicate() predicate.Predicate {
 				log.Error(nil, "Update event is invalid", "event", e)
 				return false
 			}
-			return agentv1.KlusterletAddons[e.MetaNew.GetName()]
+			_, existed := agentv1.KlusterletAddons[e.MetaNew.GetName()]
+			return existed
 		},
 	})
 }

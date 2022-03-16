@@ -10,11 +10,9 @@ package controller
 
 import (
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/addon"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/csr"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/klusterletaddon"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/globalproxy"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/managedcluster"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/managedclusteraddon"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/upgrade"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -25,11 +23,10 @@ var AddToManagerFuncs []func(manager.Manager, kubernetes.Interface) error
 func init() {
 	AddToManagerFuncs = append(AddToManagerFuncs,
 		addon.Add,
-		clustermanagementaddon.Add,
-		managedclusteraddon.Add,
-		klusterletaddon.Add,
-		csr.Add,
 		managedcluster.Add,
+		globalproxy.Add,
+		upgrade.UpgradeAdd,
+		upgrade.CleanupAdd,
 	)
 }
 

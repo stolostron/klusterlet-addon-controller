@@ -57,6 +57,14 @@ func TestReconcileManagedCluster(t *testing.T) {
 			}),
 			want: reconcile.Result{Requeue: false},
 		},
+		{
+			name:     "create claim cluster klusterlet addon config",
+			initObjs: nil,
+			mc: newManagedCluster(testClusterName, map[string]string{
+				"cluster.open-cluster-management.io/provisioner": "test.test.ClusterClaim.hive.openshift.io/v1",
+			}),
+			want: reconcile.Result{Requeue: false},
+		},
 	}
 
 	for _, tt := range tests {

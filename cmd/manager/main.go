@@ -18,7 +18,7 @@ import (
 	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/clustermanagementaddon"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/upgrade"
 	"github.com/stolostron/klusterlet-addon-controller/version"
 	"github.com/stolostron/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 	"k8s.io/client-go/kubernetes"
@@ -141,8 +141,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// create all ClusterManagementAddons for monolith addons
-	clustermanagementaddon.CreateClusterManagementAddon(runtimeClient)
+	// cleanup the old resources for upgrade from 2.4 to 2.5.
+	go upgrade.CleanupOldClusterManagementAddon(runtimeClient)
 
 	// Setup all Controllers
 	if err := controller.AddToManager(mgr, kubeClient); err != nil {
