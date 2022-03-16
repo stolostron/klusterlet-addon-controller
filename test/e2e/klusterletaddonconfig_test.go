@@ -25,7 +25,7 @@ var _ = Describe("klusterletAddonConfig test for claim and hypershift cluster", 
 			managedClusterName = fmt.Sprintf("cluster-test-%s", rand.String(6))
 
 			By(fmt.Sprintf("Create managed cluster %s", managedClusterName), func() {
-				_, err := createManagedCluster(managedClusterName, map[string]string{"cluster.open-cluster-management.io/hypershiftdeployment": "a/b"})
+				_, err := createManagedCluster(managedClusterName, map[string]string{"cluster.open-cluster-management.io/provisioner": "test.test.HypershiftDeployment.cluster.open-cluster-management.io"})
 				Expect(err).ToNot(HaveOccurred())
 			})
 		})
