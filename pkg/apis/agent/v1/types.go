@@ -61,7 +61,6 @@ const (
 // true means it is deployed by addon-controller, can be updated and deleted.
 // false means it is not deployed by addon-controller, only can be updated, but cannot be deleted.
 var KlusterletAddons = map[string]bool{
-	WorkManagerAddonName:     false,
 	ApplicationAddonName:     true,
 	ConfigPolicyAddonName:    true,
 	CertPolicyAddonName:      true,
@@ -73,7 +72,6 @@ var KlusterletAddons = map[string]bool{
 
 // KlusterletAddonImageNames is the image key names for each addon agents in image-manifest configmap
 var KlusterletAddonImageNames = map[string][]string{
-	WorkManagerAddonName:  []string{"multicloud_manager"},
 	ApplicationAddonName:  []string{"multicluster_operators_subscription"},
 	ConfigPolicyAddonName: []string{"config_policy_controller"},
 	CertPolicyAddonName:   []string{"cert_policy_controller"},

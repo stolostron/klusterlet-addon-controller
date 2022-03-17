@@ -203,19 +203,18 @@ func (r *ReconcileKlusterletAddOn) deleteManagedClusterAddon(addonName, clusterN
 }
 
 func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(gv globalValues, addonName, clusterName string) error {
+	valuesString, err := marshalGlobalValues(gv)
+	if err != nil {
+		return err
+	}
 	addon := &addonv1alpha1.ManagedClusterAddOn{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: addonName, Namespace: clusterName}, addon)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: addonName, Namespace: clusterName}, addon)
 	if errors.IsNotFound(err) {
 		if !agentv1.KlusterletAddons[addonName] {
 			return nil
 		}
 
 		newAddon := newManagedClusterAddon(addonName, clusterName)
-
-		valuesString, err := marshalGlobalValues(gv)
-		if err != nil {
-			return err
-		}
 		if len(valuesString) != 0 {
 			newAddon.SetAnnotations(map[string]string{annotationValues: valuesString})
 		}
@@ -232,18 +231,25 @@ func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(gv globalValues, ad
 		addon.Spec.InstallNamespace = agentv1.KlusterletAddonNamespace
 		update = true
 	}
-	values, err := updateAnnotationValues(gv, addon.Annotations[annotationValues])
-	if err != nil {
-		return err
-	}
-	if len(values) != 0 {
-		if len(addon.Annotations) == 0 {
-			addon.Annotations = map[string]string{annotationValues: values}
-		} else {
-			addon.Annotations[annotationValues] = values
-		}
 
+	if len(addon.Annotations) == 0 && len(valuesString) != 0 {
+		addon.SetAnnotations(map[string]string{annotationValues: valuesString})
 		update = true
+	}
+	if len(addon.Annotations) != 0 {
+		values, existed := addon.Annotations[annotationValues]
+		if !existed && len(valuesString) != 0 {
+			addon.Annotations[annotationValues] = valuesString
+			update = true
+		}
+		if existed && !reflect.DeepEqual(values, valuesString) {
+			if len(valuesString) != 0 {
+				addon.Annotations[annotationValues] = valuesString
+			} else {
+				delete(addon.Annotations, annotationValues)
+			}
+			update = true
+		}
 	}
 
 	if !update {
