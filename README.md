@@ -150,4 +150,4 @@ To do so, on hub, edit the manifestwork of `${CLUSTER_NAME}-klusterlet-addon-ope
 oc edit manifestwork -n ${CLUSTER_NAME}  ${CLUSTER_NAME}-klusterlet-addon-operator
 ```
 
-Please remember to restore the replicas when you finishing the devs. Otherwise you will not able to cleanup the managed cluster properly when detach.
+Please remember to restore the replicas when you finishing the devs. Otherwise you will not able to cleanup the managed cluster properly when detach. 
