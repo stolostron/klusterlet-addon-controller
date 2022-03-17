@@ -25,7 +25,7 @@ Kubernetes controller for the [KlusterletAddonConfig](https://github.com/stolost
 > make deps
 ```
 
-## Prepare your cluster 
+## Prepare your cluster
 
 1. Import a managed cluster. Follow this guidelines to import cluster manually.
 
@@ -53,9 +53,9 @@ make run
 make deploy
 ```
 
-NOTE: 
+NOTE:
 - OKD/Openshift is required.
-- [Cluster-Manager](https://operatorhub.io/operator/cluster-manager) is required on the cluster. 
+- [Cluster-Manager](https://operatorhub.io/operator/cluster-manager) is required on the cluster.
 
 ## Installing klusterlet addons using Klusterlet addon controller
 
@@ -125,20 +125,20 @@ oc annotate klusterletaddonconfig -n ${CLUSTER_NAME} ${CLUSTER_NAME} klusterleta
 After running the command, klusterlet-addon-controller will not update and sync the addons, so you can modify.
 
 ### Update Image
-If you only want to update images of an addon, you can directly modify the manifestwork for that addon on hub. 
+If you only want to update images of an addon, you can directly modify the manifestwork for that addon on hub.
 Here is an example of updating application manager. Execute this command on hub:
 ```
 oc edit manifestwork -n ${CLUSTER_NAME}  ${CLUSTER_NAME}-klusterlet-addon-appmgr
 ```
 
 Other addons are:
-- ${CLUSTER_NAME}-klusterlet-addon-appmgr           
-- ${CLUSTER_NAME}-klusterlet-addon-certpolicyctrl   
-- ${CLUSTER_NAME}-klusterlet-addon-crds             
-- ${CLUSTER_NAME}-klusterlet-addon-iampolicyctrl            
-- ${CLUSTER_NAME}-klusterlet-addon-policyctrl       
-- ${CLUSTER_NAME}-klusterlet-addon-search           
-- ${CLUSTER_NAME}-klusterlet-addon-workmgr     
+- ${CLUSTER_NAME}-klusterlet-addon-appmgr
+- ${CLUSTER_NAME}-klusterlet-addon-certpolicyctrl
+- ${CLUSTER_NAME}-klusterlet-addon-crds
+- ${CLUSTER_NAME}-klusterlet-addon-iampolicyctrl
+- ${CLUSTER_NAME}-klusterlet-addon-policyctrl
+- ${CLUSTER_NAME}-klusterlet-addon-search
+- ${CLUSTER_NAME}-klusterlet-addon-workmgr
 
 ### Scale Done klusterlet-addon-operator
 If you want to patch deployments directly on the managed cluster.
@@ -151,3 +151,4 @@ oc edit manifestwork -n ${CLUSTER_NAME}  ${CLUSTER_NAME}-klusterlet-addon-operat
 ```
 
 Please remember to restore the replicas when you finishing the devs. Otherwise you will not able to cleanup the managed cluster properly when detach.
+
