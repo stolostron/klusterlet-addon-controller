@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/utils"
 	"github.com/stolostron/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,8 +18,10 @@ import (
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
@@ -98,9 +99,40 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 				}
 			},
 		)},
-		utils.KlusterletAddonPredicate())
+		klusterletAddonPredicate())
 
 	return err
+}
+
+func klusterletAddonPredicate() predicate.Predicate {
+	return predicate.Predicate(predicate.Funcs{
+		GenericFunc: func(e event.GenericEvent) bool { return false },
+		CreateFunc: func(e event.CreateEvent) bool {
+			if e.Object == nil {
+				klog.Error(nil, "Create event has no runtime object to create", "event", e)
+				return false
+			}
+			_, existed := agentv1.KlusterletAddons[e.Meta.GetName()]
+			return existed
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			if e.Object == nil {
+				klog.Error(nil, "Delete event has no runtime object to delete", "event", e)
+				return false
+			}
+			_, existed := agentv1.KlusterletAddons[e.Meta.GetName()]
+			return existed
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			if e.MetaOld == nil || e.MetaNew == nil ||
+				e.ObjectOld == nil || e.ObjectNew == nil {
+				klog.Error(nil, "Update event is invalid", "event", e)
+				return false
+			}
+			_, existed := agentv1.KlusterletAddons[e.MetaNew.GetName()]
+			return existed
+		},
+	})
 }
 
 type ReconcileKlusterletAddOn struct {
@@ -140,11 +172,16 @@ func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconci
 	}
 
 	var aggregatedErrs []error
-	for addonName := range agentv1.KlusterletAddons {
+	for addonName, needUpdate := range agentv1.KlusterletAddons {
 		if !addonIsEnabled(addonName, klusterletAddonConfig) {
 			if err := r.deleteManagedClusterAddon(addonName, managedCluster.GetName()); err != nil {
 				aggregatedErrs = append(aggregatedErrs, err)
 			}
+			continue
+		}
+
+		// work-manger addon handles by itself, does not need to update here.
+		if !needUpdate {
 			continue
 		}
 
@@ -167,10 +204,7 @@ func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconci
 
 func (r *ReconcileKlusterletAddOn) deleteAllManagedClusterAddon(clusterName string) error {
 	var aggregatedErrs []error
-	for addonName, canBeDeleted := range agentv1.KlusterletAddons {
-		if !canBeDeleted {
-			continue
-		}
+	for addonName := range agentv1.KlusterletAddons {
 		err := r.deleteManagedClusterAddon(addonName, clusterName)
 		if err != nil {
 			aggregatedErrs = append(aggregatedErrs, err)
@@ -183,10 +217,6 @@ func (r *ReconcileKlusterletAddOn) deleteAllManagedClusterAddon(clusterName stri
 }
 
 func (r *ReconcileKlusterletAddOn) deleteManagedClusterAddon(addonName, clusterName string) error {
-	if !agentv1.KlusterletAddons[addonName] {
-		return nil
-	}
-
 	addon := &addonv1alpha1.ManagedClusterAddOn{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      addonName,

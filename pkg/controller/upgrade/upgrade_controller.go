@@ -13,6 +13,7 @@ import (
 	"github.com/stolostron/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -27,6 +28,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+)
+
+const (
+	addonConfigFinalizer string = "agent.open-cluster-management.io/klusterletaddonconfig-cleanup"
 )
 
 func UpgradeAdd(mgr manager.Manager, kubeClient kubernetes.Interface) error {
@@ -74,7 +79,7 @@ func upgradeAdd(mgr manager.Manager, r reconcile.Reconciler) error {
 				}
 			},
 		)},
-		utils.KlusterletAddonPredicate())
+		upgradePredicate())
 
 	return err
 }
@@ -104,7 +109,22 @@ func (r *ReconcileUpgrade) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 	if isUpgraded {
-		return reconcile.Result{}, nil
+		// remove addonConfig finalizer from managedCluster
+		if len(managedCluster.Finalizers) != 0 {
+			newCluster := managedCluster.DeepCopy()
+			for i := range newCluster.Finalizers {
+				if newCluster.Finalizers[i] == addonConfigFinalizer {
+					newFinalizers := append(newCluster.Finalizers[:i], newCluster.Finalizers[i+1:]...)
+					newCluster.SetFinalizers(newFinalizers)
+					err = r.client.Update(context.TODO(), newCluster, &client.UpdateOptions{})
+					if err != nil && !errors.IsNotFound(err) {
+						return reconcile.Result{}, err
+					}
+				}
+			}
+		}
+
+		return reconcile.Result{}, r.updateCondition(clusterName)
 	}
 
 	klusterletAddonConfig := &agentv1.KlusterletAddonConfig{}
@@ -287,4 +307,28 @@ func getImageRegistryAndPullSecret(client client.Client,
 	registry = imageRegistry.Spec.Registry
 	pullSecret = imageRegistry.Spec.PullSecret.Name
 	return registry, namespace, pullSecret, nil
+}
+
+func (r *ReconcileUpgrade) updateCondition(clusterName string) error {
+	for addonName := range agentv1.DeprecatedAddonComponentNames {
+		addon := &addonv1alpha1.ManagedClusterAddOn{}
+		err := r.client.Get(context.TODO(),
+			types.NamespacedName{Name: addonName, Namespace: clusterName}, addon)
+		if errors.IsNotFound(err) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if meta.FindStatusCondition(addon.Status.Conditions, "Progressing") == nil {
+			continue
+		}
+		newAddon := addon.DeepCopy()
+		meta.RemoveStatusCondition(&newAddon.Status.Conditions, "Progressing")
+		err = r.client.Status().Update(context.TODO(), newAddon, &client.UpdateOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			return err
+		}
+	}
+	return nil
 }
