@@ -17,10 +17,6 @@ import (
 // applicationAddon is an exception because it is not deployed by helm in 2.5.
 func CleanupOldClusterManagementAddon(c client.Client) {
 	for _, addonName := range agentv1.ClusterManagementAddons {
-		if addonName == agentv1.ApplicationAddonName {
-			continue
-		}
-
 		clusterManagementAddon := &addonv1alpha1.ClusterManagementAddOn{}
 		if err := c.Get(context.TODO(), types.NamespacedName{Name: addonName}, clusterManagementAddon); err != nil {
 			if errors.IsNotFound(err) {
@@ -28,6 +24,20 @@ func CleanupOldClusterManagementAddon(c client.Client) {
 			}
 
 			klog.Errorf("failed to get clusterManagementAddon %v", addonName)
+			continue
+		}
+
+		// new workManager and application clusterManagementAddon are created before addon-controller pod.
+		// so need to update the spec to remove AddOnConfiguration.CRDName
+		if clusterManagementAddon.Name == agentv1.WorkManagerAddonName ||
+			clusterManagementAddon.Name == agentv1.ApplicationAddonName {
+			newAddon := clusterManagementAddon.DeepCopy()
+			if newAddon.Spec.AddOnConfiguration.CRDName == "klusterletaddonconfigs.agent.open-cluster-management.io" {
+				newAddon.Spec.AddOnConfiguration.CRDName = ""
+				if err := c.Update(context.TODO(), newAddon, &client.UpdateOptions{}); err != nil {
+					klog.Errorf("failed to update clusterManagementAddon %v", addonName)
+				}
+			}
 			continue
 		}
 

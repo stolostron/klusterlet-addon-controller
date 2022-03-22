@@ -59,13 +59,13 @@ const (
 
 // KlusterletAddons is a list of managedClusterAddons which can be updated by addon-controller.
 // true means it is deployed by addon-controller, can be updated and deleted.
-// false means it is not deployed by addon-controller, only can be updated, but cannot be deleted.
+// false means it is not deployed by addon-controller, do not need to be updated, can be deleted.
 var KlusterletAddons = map[string]bool{
+	WorkManagerAddonName:     false,
 	ApplicationAddonName:     true,
 	ConfigPolicyAddonName:    true,
 	CertPolicyAddonName:      true,
 	IamPolicyAddonName:       true,
-	PolicyAddonName:          true,
 	PolicyFrameworkAddonName: true,
 	SearchAddonName:          true,
 }
@@ -90,13 +90,11 @@ var ClusterManagementAddons = []string{
 	IamPolicyAddonName,
 	PolicyAddonName,
 	SearchAddonName,
+	WorkManagerAddonName,
 }
 
-var DeprecatedManagedClusterAddons = []string{
-	PolicyAddonName,
-}
-
-var KlusterletAddonComponentNames = map[string]string{
+// DeprecatedAddonComponentNames is a list of addons need to delete during the upgrade from 2.4 to 2.5
+var DeprecatedAddonComponentNames = map[string]string{
 	WorkManagerAddonName: "workmgr",
 	ApplicationAddonName: "appmgr",
 	CertPolicyAddonName:  "certpolicyctrl",
