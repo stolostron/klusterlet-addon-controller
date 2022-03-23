@@ -168,7 +168,7 @@ func TestReconcileManagedCluster(t *testing.T) {
 				newOperatorManifestWork("cluster1")},
 			roleBindings: []runtime.Object{newRoleBinding("certpolicyctrl", "cluster1"),
 				newRoleBinding("iampolicyctrl", "cluster1")},
-			expectedResult:             reconcile.Result{Requeue: false},
+			expectedResult:             reconcile.Result{Requeue: true, RequeueAfter: 10 * time.Second},
 			expectedAddonCount:         1,
 			expectedManifestWorksCount: 3,
 			expectedRoleBindingCount:   1,

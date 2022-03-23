@@ -100,7 +100,15 @@ func (r *ReconcileCleanup) Reconcile(request reconcile.Request) (reconcile.Resul
 		if sub < 5*time.Minute {
 			return reconcile.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
 		}
-		return reconcile.Result{}, r.cleanupDeprecatedResources(addon)
+
+		deleted, err := r.cleanupDeprecatedResources(addon)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		if !deleted {
+			return reconcile.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
+		}
+		return reconcile.Result{}, nil
 	}
 
 	if !meta.IsStatusConditionTrue(conditions, "Available") {
@@ -124,7 +132,15 @@ func (r *ReconcileCleanup) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
 	}
 
-	return reconcile.Result{}, r.cleanupDeprecatedResources(addon)
+	deleted, err := r.cleanupDeprecatedResources(addon)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	if !deleted {
+		return reconcile.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
+	}
+
+	return reconcile.Result{}, nil
 }
 
 func (r *ReconcileCleanup) addonOperatorUpgradeCompleted(clusterName string) (bool, error) {
@@ -166,23 +182,23 @@ func (r *ReconcileCleanup) addonOperatorUpgradeCompleted(clusterName string) (bo
 	return true, nil
 }
 
-func (r *ReconcileCleanup) cleanupDeprecatedResources(addon *addonv1alpha1.ManagedClusterAddOn) error {
+func (r *ReconcileCleanup) cleanupDeprecatedResources(addon *addonv1alpha1.ManagedClusterAddOn) (bool, error) {
 	errs := []error{}
 
 	if err := r.cleanupDeprecatedAddon(addon); err != nil {
 		errs = append(errs, err)
 	}
-	if err := r.cleanupDeprecatedManifestWorks(addon); err != nil {
+	if err := r.cleanupAgentManifestWork(addon); err != nil {
 		errs = append(errs, err)
 	}
 	if err := r.cleanupDeprecatedRoleBinding(addon); err != nil {
 		errs = append(errs, err)
 	}
 	if len(errs) != 0 {
-		return fmt.Errorf("failed to clean up resources. %v", errs)
+		return false, fmt.Errorf("failed to clean up resources. %v", errs)
 	}
 
-	return nil
+	return r.cleanupOperatorManifestWorks(addon.Namespace)
 }
 
 func (r *ReconcileCleanup) cleanupDeprecatedAddon(addon *addonv1alpha1.ManagedClusterAddOn) error {
@@ -221,50 +237,19 @@ func (r *ReconcileCleanup) cleanupDeprecatedRoleBinding(addon *addonv1alpha1.Man
 	return nil
 }
 
-func (r *ReconcileCleanup) cleanupDeprecatedManifestWorks(addon *addonv1alpha1.ManagedClusterAddOn) error {
+func (r *ReconcileCleanup) cleanupAgentManifestWork(addon *addonv1alpha1.ManagedClusterAddOn) error {
 	componentName := agentv1.DeprecatedAddonComponentNames[addon.GetName()]
 	if componentName == "" {
 		return nil
 	}
-	clusterName := addon.GetNamespace()
 
-	if err := r.deleteManifestWork(clusterName, agentManifestWorkName(clusterName, componentName)); err != nil {
-		return err
-	}
-
-	// check if the deprecated agent manifestWorks are deleted, if yes, delete operator and crds manifestWorks.
-	for _, agentWorkName := range agentv1.DeprecatedAgentManifestworks {
-		work := &manifestworkv1.ManifestWork{}
-		err := r.client.Get(context.TODO(), types.NamespacedName{
-			Namespace: clusterName,
-			Name:      manifestWorkName(clusterName, agentWorkName),
-		}, work)
-		if errors.IsNotFound(err) {
-			continue
-		}
-		if err != nil {
-			return err
-		}
-		if !work.DeletionTimestamp.IsZero() {
-			continue
-		}
-		return nil
-	}
-
-	if err := r.deleteManifestWork(clusterName, manifestWorkName(clusterName, klusterletAddonCRDs)); err != nil {
-		return err
-	}
-	if err := r.deleteManifestWork(clusterName, manifestWorkName(clusterName, klusterletAddonOperator)); err != nil {
-		return err
-	}
-	return nil
-
+	return r.deleteManifestWork(addon.Namespace, agentManifestWorkName(addon.Namespace, componentName))
 }
 
-func (r *ReconcileCleanup) deleteManifestWork(clusterName, name string) error {
+func (r *ReconcileCleanup) deleteManifestWork(namespace, name string) error {
 	work := &manifestworkv1.ManifestWork{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{
-		Namespace: clusterName,
+		Namespace: namespace,
 		Name:      name,
 	}, work)
 	if errors.IsNotFound(err) {
@@ -275,4 +260,31 @@ func (r *ReconcileCleanup) deleteManifestWork(clusterName, name string) error {
 	}
 
 	return r.client.Delete(context.TODO(), work, &client.DeleteOptions{})
+}
+
+// check if the deprecated addon agent manifestWorks are deleted, if yes, delete operator and crds manifestWorks.
+func (r *ReconcileCleanup) cleanupOperatorManifestWorks(namespace string) (bool, error) {
+	for _, agentWorkName := range agentv1.DeprecatedAgentManifestworks {
+		work := &manifestworkv1.ManifestWork{}
+		err := r.client.Get(context.TODO(), types.NamespacedName{
+			Namespace: namespace,
+			Name:      manifestWorkName(namespace, agentWorkName),
+		}, work)
+		if errors.IsNotFound(err) {
+			continue
+		}
+		if err != nil {
+			return false, err
+		}
+
+		return false, nil
+	}
+
+	if err := r.deleteManifestWork(namespace, manifestWorkName(namespace, klusterletAddonCRDs)); err != nil {
+		return false, err
+	}
+	if err := r.deleteManifestWork(namespace, manifestWorkName(namespace, klusterletAddonOperator)); err != nil {
+		return false, err
+	}
+	return true, nil
 }
