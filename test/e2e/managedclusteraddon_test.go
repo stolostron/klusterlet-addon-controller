@@ -90,26 +90,6 @@ var _ = Describe("managedClusterAddon test", func() {
 			}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
 
 		})
-
-		By("delete klusterletAddonConfig", func() {
-			err := kubeClient.Delete(context.TODO(), addonConfig)
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		By("check if all addons are deleted", func() {
-			Eventually(func() error {
-				addonList := &addonv1alpha1.ManagedClusterAddOnList{}
-				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: managedClusterName})
-				if err != nil {
-					return err
-				}
-				if len(addonList.Items) != 0 {
-					return fmt.Errorf("expected 0 addons, but got %v", len(addonList.Items))
-				}
-				return nil
-			}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
-		})
-
 	})
 	It("test managedCluster delete", func() {
 		assertManagedClusterNamespace(managedClusterName)

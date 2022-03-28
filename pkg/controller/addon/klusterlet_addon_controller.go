@@ -157,7 +157,7 @@ func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconci
 	klusterletAddonConfig := &agentv1.KlusterletAddonConfig{}
 	if err := r.client.Get(context.TODO(), request.NamespacedName, klusterletAddonConfig); err != nil {
 		if errors.IsNotFound(err) {
-			return reconcile.Result{}, r.deleteKlusterletManagedClusterAddon(managedCluster.GetName())
+			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
 	}
@@ -205,23 +205,6 @@ func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconci
 func (r *ReconcileKlusterletAddOn) deleteAllManagedClusterAddon(clusterName string) error {
 	var aggregatedErrs []error
 	for addonName := range agentv1.KlusterletAddons {
-		err := r.deleteManagedClusterAddon(addonName, clusterName)
-		if err != nil {
-			aggregatedErrs = append(aggregatedErrs, err)
-		}
-	}
-	if len(aggregatedErrs) != 0 {
-		return fmt.Errorf("failed to delelte all addons %v", aggregatedErrs)
-	}
-	return nil
-}
-
-func (r *ReconcileKlusterletAddOn) deleteKlusterletManagedClusterAddon(clusterName string) error {
-	var aggregatedErrs []error
-	for addonName, needDelete := range agentv1.KlusterletAddons {
-		if !needDelete {
-			continue
-		}
 		err := r.deleteManagedClusterAddon(addonName, clusterName)
 		if err != nil {
 			aggregatedErrs = append(aggregatedErrs, err)
