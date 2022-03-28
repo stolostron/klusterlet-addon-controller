@@ -74,6 +74,10 @@ func (r *ReconcileCleanup) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, nil
 	}
 
+	if err = r.cleanupAddonOwnerRef(addon); err != nil {
+		return reconcile.Result{}, err
+	}
+
 	if _, ok := agentv1.DeprecatedAddonComponentNames[addon.GetName()]; !ok {
 		return reconcile.Result{}, nil
 	}
@@ -287,4 +291,28 @@ func (r *ReconcileCleanup) cleanupOperatorManifestWorks(namespace string) (bool,
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *ReconcileCleanup) cleanupAddonOwnerRef(addon *addonv1alpha1.ManagedClusterAddOn) error {
+	if len(addon.OwnerReferences) == 0 {
+		return nil
+	}
+
+	newAddon := addon.DeepCopy()
+	newOwnerReferences := []metav1.OwnerReference{}
+	needUpdate := false
+	for _, owner := range addon.OwnerReferences {
+		if owner.Kind == "KlusterletAddonConfig" {
+			needUpdate = true
+			continue
+		}
+		newOwnerReferences = append(newOwnerReferences, owner)
+	}
+
+	if !needUpdate {
+		return nil
+	}
+
+	newAddon.SetOwnerReferences(newOwnerReferences)
+	return r.client.Update(context.TODO(), newAddon, &client.UpdateOptions{})
 }
