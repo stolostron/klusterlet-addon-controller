@@ -58,11 +58,11 @@ func Test_syncManifestWorkCRs(t *testing.T) {
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-configmap-2.3.8",
+			Name:      "test-configmap-2.3.9",
 			Namespace: "test-namespace",
 			Labels: map[string]string{
 				"ocm-configmap-type":  "image-manifest",
-				"ocm-release-version": "2.3.8",
+				"ocm-release-version": "2.3.9",
 			},
 		},
 		Data: map[string]string{
