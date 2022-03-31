@@ -11,10 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// CleanupOldClusterManagementAddon deletes the old clusterManagementAddons.
-// some clusterManagementAddons are deployed by helm, will meet upgrade failures if the existed clusterManagementAddon
-// is not deployed by helm. so need to delete the old clusterManagementAddons which is not deployed by helm.
-// applicationAddon is an exception because it is not deployed by helm in 2.5.
+// CleanupOldClusterManagementAddon is to remove the AddOnConfiguration.CRDName klusterletaddonconfigs
 func CleanupOldClusterManagementAddon(c client.Client) {
 	for _, addonName := range agentv1.ClusterManagementAddons {
 		clusterManagementAddon := &addonv1alpha1.ClusterManagementAddOn{}
@@ -27,31 +24,12 @@ func CleanupOldClusterManagementAddon(c client.Client) {
 			continue
 		}
 
-		// new workManager and application clusterManagementAddon are created before addon-controller pod.
-		// so need to update the spec to remove AddOnConfiguration.CRDName
-		if clusterManagementAddon.Name == agentv1.WorkManagerAddonName ||
-			clusterManagementAddon.Name == agentv1.ApplicationAddonName {
-			newAddon := clusterManagementAddon.DeepCopy()
-			if newAddon.Spec.AddOnConfiguration.CRDName == "klusterletaddonconfigs.agent.open-cluster-management.io" {
-				newAddon.Spec.AddOnConfiguration.CRDName = ""
-				if err := c.Update(context.TODO(), newAddon, &client.UpdateOptions{}); err != nil {
-					klog.Errorf("failed to update clusterManagementAddon %v", addonName)
-				}
-			}
-			continue
-		}
-
-		annotations := clusterManagementAddon.GetAnnotations()
-		createdByHelm := false
-		for _, annotation := range annotations {
-			if annotation == "meta.helm.sh/release-name" || annotation == "meta.helm.sh/release-namespace" {
-				createdByHelm = true
-				break
-			}
-		}
-		if !createdByHelm {
-			if err := c.Delete(context.TODO(), clusterManagementAddon, &client.DeleteOptions{}); err != nil {
-				klog.Errorf("failed to delete old clusterManagementAddon %v", addonName)
+		// need to update the spec to remove AddOnConfiguration.CRDName
+		newAddon := clusterManagementAddon.DeepCopy()
+		if newAddon.Spec.AddOnConfiguration.CRDName == "klusterletaddonconfigs.agent.open-cluster-management.io" {
+			newAddon.Spec.AddOnConfiguration.CRDName = ""
+			if err := c.Update(context.TODO(), newAddon, &client.UpdateOptions{}); err != nil {
+				klog.Errorf("failed to update clusterManagementAddon %v", addonName)
 			}
 		}
 	}
