@@ -8,271 +8,109 @@ metadata:
   namespace: open-cluster-management
 rules:
 - apiGroups:
-  - ""
+    - ""
   resources:
-  - events
-  - secrets
-  - configmaps
-  - serviceaccounts
-  - services
+    - events
+    - secrets
+    - configmaps
+    - serviceaccounts
+    - services
   verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
 - apiGroups:
-  - monitoring.coreos.com
+    - agent.open-cluster-management.io
   resources:
-  - servicemonitors
+    - klusterletaddonconfigs
+    - klusterletaddonconfigs/finalizers
+    - klusterletaddonconfigs/status
   verbs:
-  - get
-  - create
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
 - apiGroups:
-  - apps
-  resourceNames:
-  - klusterlet-addon-controller
+    - cluster.open-cluster-management.io
   resources:
-  - deployments/finalizers
+    - managedclusters
+    - managedclusters/finalizers
   verbs:
-  - update
+    - create
+    - get
+    - list
+    - patch
+    - update
+    - watch
 - apiGroups:
-  - ""
+    - work.open-cluster-management.io
   resources:
-  - pods
+    - manifestworks
+    - manifestworks/finalizers
   verbs:
-  - get
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
 - apiGroups:
-  - apps
+    - rbac.authorization.k8s.io
   resources:
-  - replicasets
-  - deployments
+    - roles
+    - rolebindings
   verbs:
-  - get
-- apiGroups:
-  - agent.open-cluster-management.io
-  resources:
-  - klusterletaddonconfigs
-  - klusterletaddonconfigs/finalizers
-  - klusterletaddonconfigs/status
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster.open-cluster-management.io
-  resources:
-  - managedclusters
-  - managedclusters/finalizers
-  verbs:
-  - create
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - work.open-cluster-management.io
-  resources:
-  - manifestworks
-  - manifestworks/finalizers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - roles
-  - rolebindings
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - config.openshift.io
-  resources:
-  - infrastructures
-  verbs:
-  - get
-  - list
-  - watch
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+
 # appmgr
 - apiGroups:
-  - compliance.mcm.ibm.com
+    - apps.open-cluster-management.io
   resources:
-  - compliances
+    - subscriptions
   verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
+    - get
+    - list
+    - watch
 - apiGroups:
-  - policy.mcm.ibm.com
+    - coordination.k8s.io
   resources:
-  - policies
+    - leases
   verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
+    - create
+    - get
+    - list
+    - patch
+    - update
+    - watch
+    - delete
 - apiGroups:
-  - ""
+    - addon.open-cluster-management.io
   resources:
-  - secrets
+    - managedclusteraddons
+    - managedclusteraddons/status
+    - clustermanagementaddons
   verbs:
-  - create
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - klusterlets
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-  - delete
-  - update
-- apiGroups:
-  - apps.open-cluster-management.io
-  resources:
-  - deployables
-  - channels
-  - channels/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - apps.open-cluster-management.io
-  resources:
-  - deployables/status
-  verbs:
-  - patch
-  - update
-- apiGroups: ["cluster.open-cluster-management.io"]
-  resources: ["*"]
-  verbs: ["*"]
-- apiGroups: ["action.open-cluster-management.io"]
-  resources: ["*"]
-  verbs: ["*"]
-- apiGroups: ["view.open-cluster-management.io"]
-  resources: ["*"]
-  verbs: ["*"]
-- apiGroups: ["internal.open-cluster-management.io"]
-  resources: ["*"]
-  verbs: ["*"]
-- apiGroups: ["mcm.ibm.com"]
-  resources: ["*"]
-  verbs: ["*"]
-- apiGroups: ["proxy.open-cluster-management.io"]
-  resources: ["*"]
-  verbs: ["*"]
-- apiGroups: ["policy.open-cluster-management.io"]
-  resources: ["*"]
-  verbs: ["*"]
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - create
-  - get
-  - list
-  - patch
-  - update
-  - watch
-  - delete
-- apiGroups: 
-  - addon.open-cluster-management.io
-  resources: 
-  - managedclusteraddons
-  - managedclusteraddons/status
-  - clustermanagementaddons
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - config.openshift.io
-  resources:
-  - apiservers
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - certificates.k8s.io
-  resources:
-  - certificatesigningrequests
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - certificates.k8s.io
-  resources:
-  - certificatesigningrequests/status
-  - certificatesigningrequests/approval
-  verbs:
-  - update
-- apiGroups:
-  - certificates.k8s.io
-  resources:
-  - signers
-  resourceNames:
-  - kubernetes.io/kube-apiserver-client
-  verbs:
-  - approve
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
 - apiGroups:
     - imageregistry.open-cluster-management.io
   resources:

@@ -18,9 +18,9 @@ import (
 	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/upgrade"
 	"github.com/stolostron/klusterlet-addon-controller/version"
 	"github.com/stolostron/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
@@ -91,6 +91,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	dynamicClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          os.Getenv("WATCH_NAMESPACE"),
@@ -141,11 +147,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// cleanup the old resources for upgrade from 2.4 to 2.5.
-	go upgrade.CleanupOldClusterManagementAddon(runtimeClient)
-
 	// Setup all Controllers
-	if err := controller.AddToManager(mgr, kubeClient); err != nil {
+	if err := controller.AddToManager(mgr, kubeClient, dynamicClient); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

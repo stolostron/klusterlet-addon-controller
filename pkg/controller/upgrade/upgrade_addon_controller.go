@@ -38,7 +38,7 @@ func UpgradeAdd(mgr manager.Manager, kubeClient kubernetes.Interface) error {
 	return upgradeAdd(mgr, newUpgradeReconciler(mgr))
 }
 
-// newReconciler returns a new reconcile.Reconciler
+// newUpgradeReconciler returns a new reconcile.Reconciler
 func newUpgradeReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileUpgrade{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }

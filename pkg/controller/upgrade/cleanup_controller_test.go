@@ -218,13 +218,13 @@ func TestReconcileManagedCluster(t *testing.T) {
 				t.Errorf("expected work count %v, but got %v", tt.expectedManifestWorksCount, len(manifestWorkList.Items))
 			}
 
-			rolbeBindingList := &v1.RoleBindingList{}
-			err = reconciler.client.List(context.TODO(), rolbeBindingList, &client.ListOptions{})
+			roleBindingList := &v1.RoleBindingList{}
+			err = reconciler.client.List(context.TODO(), roleBindingList, &client.ListOptions{})
 			if err != nil {
 				t.Errorf("failed to list rolbeBinding %v", err)
 			}
-			if len(rolbeBindingList.Items) != tt.expectedRoleBindingCount {
-				t.Errorf("expected rolebinding count %v, but got %v", tt.expectedRoleBindingCount, len(rolbeBindingList.Items))
+			if len(roleBindingList.Items) != tt.expectedRoleBindingCount {
+				t.Errorf("expected rolebinding count %v, but got %v", tt.expectedRoleBindingCount, len(roleBindingList.Items))
 			}
 		})
 	}
