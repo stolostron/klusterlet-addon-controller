@@ -21,6 +21,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+const (
+	annotationReleaseName      = "meta.helm.sh/release-name"
+	annotationReleaseNamespace = "meta.helm.sh/release-namespace"
+	labelManagedBy             = "app.kubernetes.io/managed-by"
+)
+
 func UpgradeMgmtAddonAdd(mgr manager.Manager, dynamicClient dynamic.Interface) error {
 	return upgradeMgmtAddonAdd(mgr, newUpgradeMgmtAddonReconciler(mgr, dynamicClient))
 }
@@ -70,12 +76,20 @@ func (r *ReconcileUpgradeMgmtAddon) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{}, err
 	}
 
+	// policy-controller addon is refactored to config-policy-controller and governance-policy-framework addons.
+	// need delete the old clusterManagementAddon cr.
+	if clusterManagementAddon.Name == agentv1.PolicyAddonName {
+		return reconcile.Result{}, r.client.Delete(context.TODO(), clusterManagementAddon, &client.DeleteOptions{})
+	}
+
 	needUpdate := false
 	newAddon := clusterManagementAddon.DeepCopy()
 
-	// only update release annotations and helm label for search and certPolicy addon because they are installed by
+	// only update release annotations and helm label for search and grc addon because they are installed by
 	// subscription. helmRelease cannot update the resources that are not installed by itself.
-	if newAddon.Name == agentv1.SearchAddonName || newAddon.Name == agentv1.CertPolicyAddonName {
+	if newAddon.Name == agentv1.SearchAddonName ||
+		newAddon.Name == agentv1.CertPolicyAddonName ||
+		newAddon.Name == agentv1.IamPolicyAddonName {
 		releaseName, err := r.GetReleaseName(newAddon.Name)
 		if err != nil {
 			return reconcile.Result{}, err
@@ -83,23 +97,23 @@ func (r *ReconcileUpgradeMgmtAddon) Reconcile(request reconcile.Request) (reconc
 		annotations := newAddon.Annotations
 		if len(annotations) == 0 {
 			newAddon.SetAnnotations(map[string]string{
-				"meta.helm.sh/release-name":      releaseName,
-				"meta.helm.sh/release-namespace": os.Getenv("POD_NAMESPACE"),
+				annotationReleaseName:      releaseName,
+				annotationReleaseNamespace: os.Getenv("POD_NAMESPACE"),
 			})
 			needUpdate = true
-		} else if annotations["meta.helm.sh/release-name"] == "" || annotations["meta.helm.sh/release-namespace"] == "" {
-			annotations["meta.helm.sh/release-name"] = releaseName
-			annotations["meta.helm.sh/release-namespace"] = os.Getenv("POD_NAMESPACE")
+		} else if annotations[annotationReleaseName] == "" || annotations[annotationReleaseNamespace] == "" {
+			annotations[annotationReleaseName] = releaseName
+			annotations[annotationReleaseNamespace] = os.Getenv("POD_NAMESPACE")
 			newAddon.SetAnnotations(annotations)
 			needUpdate = true
 		}
 
 		labels := newAddon.Labels
 		if len(labels) == 0 {
-			newAddon.SetLabels(map[string]string{"app.kubernetes.io/managed-by": "Helm"})
+			newAddon.SetLabels(map[string]string{labelManagedBy: "Helm"})
 			needUpdate = true
-		} else if labels["app.kubernetes.io/managed-by"] == "" {
-			labels["app.kubernetes.io/managed-by"] = "Helm"
+		} else if labels[labelManagedBy] == "" {
+			labels[labelManagedBy] = "Helm"
 			newAddon.SetLabels(labels)
 			needUpdate = true
 		}
@@ -130,14 +144,15 @@ func (r *ReconcileUpgradeMgmtAddon) GetReleaseName(addonName string) (string, er
 	case agentv1.SearchAddonName:
 		subscriptionName = "search-prod-sub"
 		releaseNamePrefix = "search-prod"
-	case agentv1.CertPolicyAddonName:
+	case agentv1.CertPolicyAddonName, agentv1.IamPolicyAddonName:
 		subscriptionName = "grc-sub"
 		releaseNamePrefix = "grc"
 	default:
 		return "", fmt.Errorf("the addon %v is not needed to handle", addonName)
 	}
 
-	sub, err := r.dynamicClient.Resource(subscriptionsGVR).Namespace(os.Getenv("POD_NAMESPACE")).Get(context.TODO(), subscriptionName, metav1.GetOptions{})
+	sub, err := r.dynamicClient.Resource(subscriptionsGVR).Namespace(os.Getenv("POD_NAMESPACE")).
+		Get(context.TODO(), subscriptionName, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
