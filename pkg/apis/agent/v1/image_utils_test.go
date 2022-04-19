@@ -11,11 +11,13 @@ package v1
 import (
 	"testing"
 
+	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers/imageregistry"
 	"github.com/stolostron/klusterlet-addon-controller/version"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	clusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -61,13 +63,20 @@ func TestGetImageWithManifest(t *testing.T) {
 			name: "Use Component Sha in " + version.Version,
 			args: args{
 				addonAgentConfig: &AddonAgentConfig{
-					Registry: "sample-registry/uniquePath",
+					ManagedCluster: &clusterv1.ManagedCluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "cluster1",
+							Annotations: map[string]string{
+								imageregistry.ClusterImageRegistriesAnnotation: `{"registries":[{"mirror":"quay.io/rhacm2","source":"sample-registry/uniquePath"}]}`,
+							},
+						},
+					},
 				},
 				component: "klusterlet_addon_operator",
 			},
 			want: GlobalValues{
 				ImageOverrides: map[string]string{
-					"klusterlet_addon_operator": "sample-registry/uniquePath/klusterlet-addon-operator@sha256:fake-sha256-2-1-0",
+					"klusterlet_addon_operator": "quay.io/rhacm2/klusterlet-addon-operator@sha256:fake-sha256-2-1-0",
 				},
 			},
 			wantErr: false,
@@ -185,13 +194,20 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 			name: "Use Component Sha in " + version.Version,
 			args: args{
 				addonAgentConfig: &AddonAgentConfig{
-					Registry: "sample-registry/uniquePath",
+					ManagedCluster: &clusterv1.ManagedCluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "cluster1",
+							Annotations: map[string]string{
+								imageregistry.ClusterImageRegistriesAnnotation: `{"registries":[{"mirror":"quay.io/rhacm2","source":"sample-registry/uniquePath"}]}`,
+							},
+						},
+					},
 				},
 				component: "klusterlet_addon_operator",
 			},
 			want: GlobalValues{
 				ImageOverrides: map[string]string{
-					"klusterlet_addon_operator": "sample-registry/uniquePath/klusterlet-addon-operator@sha256:fake-sha256-2-1-0",
+					"klusterlet_addon_operator": "quay.io/rhacm2/klusterlet-addon-operator@sha256:fake-sha256-2-1-0",
 				},
 			},
 			wantErr: false,

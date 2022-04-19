@@ -29,8 +29,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-
-	"github.com/stolostron/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 )
 
 func TestE2e(t *testing.T) {
@@ -95,10 +93,6 @@ func newRuntimeClient(config *rest.Config) (client.Client, error) {
 
 	if err := addonv1alpha1.AddToScheme(kscheme.Scheme); err != nil {
 		logf.Log.Info("add to scheme error", "error", err, "name", "managedClusterAddon")
-		return nil, err
-	}
-	if err := v1alpha1.AddToScheme(kscheme.Scheme); err != nil {
-		logf.Log.Info("add to scheme error", "error", err, "name", "imageRegistry")
 		return nil, err
 	}
 

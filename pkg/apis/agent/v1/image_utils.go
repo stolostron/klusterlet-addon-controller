@@ -12,8 +12,9 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strings"
 
+	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers/imageregistry"
+	clusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/Masterminds/semver"
@@ -66,18 +67,11 @@ func (config *AddonAgentConfig) GetImage(component string) (imageRepository stri
 		return "", fmt.Errorf("addon image not found")
 	}
 
-	if config.Registry != "" {
-		registry := strings.TrimSuffix(config.Registry, "/")
-		imageSegments := strings.Split(image, "/")
-		image = registry + "/" + imageSegments[len(imageSegments)-1]
-
-	}
-	return image, nil
+	return imageregistry.OverrideImageByAnnotation(config.ManagedCluster.GetAnnotations(), image), nil
 }
 
 // GetImage returns the image.  for the specified component return error if information not found
-func GetImage(imageRegistry, component string) (string, error) {
-
+func GetImage(managedCluster *clusterv1.ManagedCluster, component string) (string, error) {
 	m, err := getManifest(version.Version)
 	if err != nil {
 		return "", err
@@ -88,13 +82,7 @@ func GetImage(imageRegistry, component string) (string, error) {
 		return "", fmt.Errorf("addon image not found")
 	}
 
-	if imageRegistry != "" {
-		registry := strings.TrimSuffix(imageRegistry, "/")
-		imageSegments := strings.Split(image, "/")
-		image = registry + "/" + imageSegments[len(imageSegments)-1]
-
-	}
-	return image, nil
+	return imageregistry.OverrideImageByAnnotation(managedCluster.GetAnnotations(), image), nil
 }
 
 // getManifest returns the manifest that is best matching the required version

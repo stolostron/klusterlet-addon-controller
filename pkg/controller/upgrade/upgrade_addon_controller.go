@@ -3,14 +3,12 @@ package upgrade
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
-	"strings"
 
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	addonoperator "github.com/stolostron/klusterlet-addon-controller/pkg/components/addon-operator/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers/imageregistry"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/utils"
-	"github.com/stolostron/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -35,12 +33,14 @@ const (
 )
 
 func UpgradeAdd(mgr manager.Manager, kubeClient kubernetes.Interface) error {
-	return upgradeAdd(mgr, newUpgradeReconciler(mgr))
+	return upgradeAdd(mgr, newUpgradeReconciler(mgr, kubeClient))
 }
 
 // newUpgradeReconciler returns a new reconcile.Reconciler
-func newUpgradeReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileUpgrade{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+func newUpgradeReconciler(mgr manager.Manager, kubeClient kubernetes.Interface) reconcile.Reconciler {
+	return &ReconcileUpgrade{client: mgr.GetClient(),
+		imageRegistryClient: imageregistry.NewClient(kubeClient),
+		scheme:              mgr.GetScheme()}
 }
 
 func upgradeAdd(mgr manager.Manager, r reconcile.Reconciler) error {
@@ -85,8 +85,9 @@ func upgradeAdd(mgr manager.Manager, r reconcile.Reconciler) error {
 }
 
 type ReconcileUpgrade struct {
-	client client.Client
-	scheme *runtime.Scheme
+	client              client.Client
+	imageRegistryClient imageregistry.Interface
+	scheme              *runtime.Scheme
 }
 
 func (r *ReconcileUpgrade) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -179,25 +180,21 @@ func (r *ReconcileUpgrade) prepareAddonAgentConfig(
 	klusterletAddonConfig *agentv1.KlusterletAddonConfig) (*agentv1.AddonAgentConfig, error) {
 	addonAgentConfig := &agentv1.AddonAgentConfig{
 		KlusterletAddonConfig:    klusterletAddonConfig,
-		ClusterName:              cluster.GetName(),
+		ManagedCluster:           cluster,
 		NodeSelector:             map[string]string{},
-		Registry:                 os.Getenv("DEFAULT_IMAGE_REGISTRY"),
 		ImagePullSecret:          os.Getenv("DEFAULT_IMAGE_PULL_SECRET"),
 		ImagePullSecretNamespace: os.Getenv("POD_NAMESPACE"),
 		ImagePullPolicy:          corev1.PullIfNotPresent,
 	}
-	// if the managedCluster is labelled by imageRegistry, then use it.
-	if cluster.Labels[clusterImageRegistryLabel] != "" {
-		registry, pullSecretNamespace, pullSecret, err := getImageRegistryAndPullSecret(r.client,
-			cluster.Labels[clusterImageRegistryLabel])
-		if err != nil {
-			klog.Error(err, "failed to get custom registry and pull secret. %v", err)
-			return nil, err
-		} else {
-			addonAgentConfig.ImagePullSecret = pullSecret
-			addonAgentConfig.ImagePullSecretNamespace = pullSecretNamespace
-			addonAgentConfig.Registry = registry
-		}
+
+	pullSecret, err := r.imageRegistryClient.Cluster(cluster).PullSecret()
+	if err != nil {
+		klog.Error(err, "failed to get custom registry and pull secret. %v", err)
+		return nil, err
+	}
+	if pullSecret != nil {
+		addonAgentConfig.ImagePullSecret = pullSecret.Name
+		addonAgentConfig.ImagePullSecretNamespace = pullSecret.Namespace
 	}
 
 	if cluster.GetName() == "local-cluster" {
@@ -258,8 +255,8 @@ func (r *ReconcileUpgrade) upgradeAddonOperatorManifestWork(addonAgentConfig *ag
 
 	manifestWork := &manifestworkv1.ManifestWork{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      manifestWorkName(addonAgentConfig.ClusterName, klusterletAddonOperator),
-			Namespace: addonAgentConfig.ClusterName,
+			Name:      manifestWorkName(addonAgentConfig.ManagedCluster.Name, klusterletAddonOperator),
+			Namespace: addonAgentConfig.ManagedCluster.Name,
 		},
 		Spec: manifestworkv1.ManifestWorkSpec{
 			DeleteOption: &manifestworkv1.DeleteOption{
@@ -285,28 +282,6 @@ func (r *ReconcileUpgrade) upgradeAddonOperatorManifestWork(addonAgentConfig *ag
 	}
 
 	return nil
-}
-
-// getImageRegistryAndPullSecret gets registry and pullSecret from imageRegistryLabelValue.
-// imageRegistryLabelValue format is namespace.imageRegistry
-func getImageRegistryAndPullSecret(client client.Client,
-	imageRegistryLabelValue string) (registry, namespace, pullSecret string, err error) {
-	segments := strings.Split(imageRegistryLabelValue, ".")
-	if len(segments) != 2 {
-		klog.Errorf("invalid format of image registry label value %v", imageRegistryLabelValue)
-		return "", "", "", fmt.Errorf("invalid format of image registry label value %v", imageRegistryLabelValue)
-	}
-	namespace = segments[0]
-	imageRegistryName := segments[1]
-	imageRegistry := &v1alpha1.ManagedClusterImageRegistry{}
-	err = client.Get(context.TODO(), types.NamespacedName{Name: imageRegistryName, Namespace: namespace}, imageRegistry)
-	if err != nil {
-		klog.Errorf("failed to get imageregistry %v/%v", namespace, imageRegistryName)
-		return "", "", "", err
-	}
-	registry = imageRegistry.Spec.Registry
-	pullSecret = imageRegistry.Spec.PullSecret.Name
-	return registry, namespace, pullSecret, nil
 }
 
 func (r *ReconcileUpgrade) updateCondition(clusterName string) error {
