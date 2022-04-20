@@ -10,9 +10,8 @@ import (
 )
 
 const (
-	klusterletAddonOperator   = "klusterlet-addon-operator"
-	klusterletAddonCRDs       = "klusterlet-addon-crds"
-	clusterImageRegistryLabel = "open-cluster-management.io/image-registry"
+	klusterletAddonOperator = "klusterlet-addon-operator"
+	klusterletAddonCRDs     = "klusterlet-addon-crds"
 
 	// AnnotationNodeSelector key name of nodeSelector annotation synced from mch
 	AnnotationNodeSelector = "open-cluster-management/nodeSelector"

@@ -10,7 +10,6 @@ require (
 	github.com/onsi/gomega v1.19.0
 	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
 	github.com/openshift/build-machinery-go v0.0.0-20211213093930-7e33a7eb4ce3
-	github.com/stolostron/multicloud-operators-foundation v1.0.0-2021-10-26-20-16-14.0.20220110023249-172fb944faa9
 	github.com/stretchr/testify v1.7.1
 	k8s.io/api v0.22.1
 	k8s.io/apimachinery v0.22.1

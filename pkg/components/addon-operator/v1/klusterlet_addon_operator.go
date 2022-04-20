@@ -34,7 +34,7 @@ const (
 // NewClusterRoleBinding - template for cluster role bindiing
 func NewClusterRoleBinding(addonAgentConfig *agentv1.AddonAgentConfig) *rbacv1.ClusterRoleBinding {
 	labels := map[string]string{
-		"app": addonAgentConfig.ClusterName,
+		"app": addonAgentConfig.ManagedCluster.Name,
 	}
 
 	return &rbacv1.ClusterRoleBinding{
@@ -63,7 +63,7 @@ func NewClusterRoleBinding(addonAgentConfig *agentv1.AddonAgentConfig) *rbacv1.C
 // NewClusterRole - template for cluster role
 func NewClusterRole(addonAgentConfig *agentv1.AddonAgentConfig) *rbacv1.ClusterRole {
 	labels := map[string]string{
-		"app": addonAgentConfig.ClusterName,
+		"app": addonAgentConfig.ManagedCluster.Name,
 	}
 
 	return &rbacv1.ClusterRole{
@@ -94,7 +94,7 @@ func NewClusterRole(addonAgentConfig *agentv1.AddonAgentConfig) *rbacv1.ClusterR
 // NewServiceAccount - template for service account
 func NewServiceAccount(addonAgentConfig *agentv1.AddonAgentConfig, namespace string) *corev1.ServiceAccount {
 	labels := map[string]string{
-		"app": addonAgentConfig.ClusterName,
+		"app": addonAgentConfig.ManagedCluster.Name,
 	}
 
 	serviceAccount := &corev1.ServiceAccount{
@@ -131,10 +131,10 @@ func NewNamespace() *corev1.Namespace {
 // NewDeployment -  template for klusterlet addon operator
 func NewDeployment(addonAgentConfig *agentv1.AddonAgentConfig, namespace string) (*appsv1.Deployment, error) {
 	labels := map[string]string{
-		"app": addonAgentConfig.ClusterName,
+		"app": addonAgentConfig.ManagedCluster.Namespace,
 	}
 
-	deploymentImage, err := addonAgentConfig.GetImage("klusterlet_addon_operator")
+	deploymentImage, err := agentv1.GetImage(addonAgentConfig.ManagedCluster, "klusterlet_addon_operator")
 	if err != nil {
 		return nil, err
 	}

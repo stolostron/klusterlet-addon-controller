@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/stolostron/multicloud-operators-foundation/pkg/apis/imageregistry/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -28,8 +27,6 @@ import (
 
 const (
 	klusterletAddonConfigAnnotationPause = "klusterletaddonconfig-pause"
-
-	clusterImageRegistryLabel = "open-cluster-management.io/image-registry"
 
 	// annotationNodeSelector is key name of nodeSelector annotation synced from mch
 	annotationNodeSelector = "open-cluster-management/nodeSelector"
@@ -185,7 +182,7 @@ func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconci
 			continue
 		}
 
-		imageOverrides, err := getImageOverrides(r.client, managedCluster, addonName)
+		imageOverrides, err := getImageOverrides(managedCluster, addonName)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
@@ -323,37 +320,14 @@ func getNodeSelector(managedCluster *managedclusterv1.ManagedCluster) (map[strin
 	return nodeSelector, nil
 }
 
-func getImageOverrides(client client.Client, managedCluster *managedclusterv1.ManagedCluster, addonName string) (map[string]string, error) {
+func getImageOverrides(managedCluster *managedclusterv1.ManagedCluster, addonName string) (map[string]string, error) {
 	imageOverrides := map[string]string{}
-	if len(managedCluster.Labels) == 0 {
-		return imageOverrides, nil
-	}
-	imageRegistryLabelValue := managedCluster.Labels[clusterImageRegistryLabel]
-	if imageRegistryLabelValue == "" {
-		return imageOverrides, nil
-	}
-
-	segments := strings.Split(imageRegistryLabelValue, ".")
-	if len(segments) != 2 {
-		klog.Errorf("invalid format of image registry label value %v", imageRegistryLabelValue)
-		return imageOverrides, fmt.Errorf("invalid format of image registry label value %v", imageRegistryLabelValue)
-	}
-	namespace := segments[0]
-	imageRegistryName := segments[1]
-	imageRegistry := &v1alpha1.ManagedClusterImageRegistry{}
-	err := client.Get(context.TODO(), types.NamespacedName{Name: imageRegistryName, Namespace: namespace}, imageRegistry)
-	if err != nil {
-		klog.Errorf("failed to get imageregistry %v/%v", namespace, imageRegistryName)
-		return imageOverrides, err
-	}
-	registry := imageRegistry.Spec.Registry
-
-	if registry == "" {
+	if len(managedCluster.Annotations) == 0 {
 		return imageOverrides, nil
 	}
 
 	for _, imageKey := range agentv1.KlusterletAddonImageNames[addonName] {
-		image, err := agentv1.GetImage(registry, imageKey)
+		image, err := agentv1.GetImage(managedCluster, imageKey)
 		if err != nil {
 			return imageOverrides, err
 		}

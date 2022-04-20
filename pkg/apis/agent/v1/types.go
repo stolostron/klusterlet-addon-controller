@@ -10,6 +10,7 @@ package v1
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	clusterv1 "open-cluster-management.io/api/cluster/v1"
 )
 
 // GlobalValues defines the global values
@@ -31,9 +32,8 @@ const (
 // AddonAgentConfig is the configurations for addon agents.
 type AddonAgentConfig struct {
 	KlusterletAddonConfig    *KlusterletAddonConfig
-	ClusterName              string
+	ManagedCluster           *clusterv1.ManagedCluster
 	NodeSelector             map[string]string
-	Registry                 string
 	ImagePullSecret          string
 	ImagePullSecretNamespace string
 	ImagePullPolicy          corev1.PullPolicy
