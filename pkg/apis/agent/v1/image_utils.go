@@ -67,7 +67,7 @@ func (config *AddonAgentConfig) GetImage(component string) (imageRepository stri
 		return "", fmt.Errorf("addon image not found")
 	}
 
-	return imageregistry.OverrideImageByAnnotation(config.ManagedCluster.GetAnnotations(), image), nil
+	return imageregistry.OverrideImageByAnnotation(config.ManagedCluster.GetAnnotations(), image)
 }
 
 // GetImage returns the image.  for the specified component return error if information not found
@@ -82,7 +82,7 @@ func GetImage(managedCluster *clusterv1.ManagedCluster, component string) (strin
 		return "", fmt.Errorf("addon image not found")
 	}
 
-	return imageregistry.OverrideImageByAnnotation(managedCluster.GetAnnotations(), image), nil
+	return imageregistry.OverrideImageByAnnotation(managedCluster.GetAnnotations(), image)
 }
 
 // getManifest returns the manifest that is best matching the required version
