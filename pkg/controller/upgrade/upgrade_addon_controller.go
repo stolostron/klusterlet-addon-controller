@@ -101,35 +101,25 @@ func (r *ReconcileUpgrade) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	if !managedCluster.DeletionTimestamp.IsZero() {
-		return reconcile.Result{}, nil
-	}
-
-	isUpgraded, err := r.addonOperatorIsUpgraded(clusterName)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	if isUpgraded {
-		// remove addonConfig finalizer from managedCluster
-		if len(managedCluster.Finalizers) != 0 {
-			newCluster := managedCluster.DeepCopy()
-			for i := range newCluster.Finalizers {
-				if newCluster.Finalizers[i] == addonConfigFinalizer {
-					newFinalizers := append(newCluster.Finalizers[:i], newCluster.Finalizers[i+1:]...)
-					newCluster.SetFinalizers(newFinalizers)
-					err = r.client.Update(context.TODO(), newCluster, &client.UpdateOptions{})
-					if err != nil && !errors.IsNotFound(err) {
-						return reconcile.Result{}, err
-					}
+	// remove klusterletaddonconfig-cleanup finalizer from managedCluster
+	if len(managedCluster.Finalizers) != 0 {
+		newCluster := managedCluster.DeepCopy()
+		for i := range newCluster.Finalizers {
+			if newCluster.Finalizers[i] == addonConfigFinalizer {
+				newFinalizers := append(newCluster.Finalizers[:i], newCluster.Finalizers[i+1:]...)
+				newCluster.SetFinalizers(newFinalizers)
+				err := r.client.Update(context.TODO(), newCluster, &client.UpdateOptions{})
+				if err != nil && !errors.IsNotFound(err) {
+					return reconcile.Result{}, err
 				}
+				break
 			}
 		}
-
-		return reconcile.Result{}, r.updateCondition(clusterName)
 	}
 
+	// remove finalizer from KlusterletAddonConfig
 	klusterletAddonConfig := &agentv1.KlusterletAddonConfig{}
-	if err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: clusterName, Name: clusterName}, klusterletAddonConfig); err != nil {
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: clusterName, Name: clusterName}, klusterletAddonConfig); err != nil {
 		if errors.IsNotFound(err) {
 			return reconcile.Result{}, nil
 		}
@@ -139,11 +129,25 @@ func (r *ReconcileUpgrade) Reconcile(request reconcile.Request) (reconcile.Resul
 	if len(klusterletAddonConfig.GetFinalizers()) != 0 {
 		addonConfig := klusterletAddonConfig.DeepCopy()
 		addonConfig.Finalizers = []string{}
-		if err = r.client.Update(context.TODO(), addonConfig, &client.UpdateOptions{}); err != nil {
+		if err := r.client.Update(context.TODO(), addonConfig, &client.UpdateOptions{}); err != nil {
 			return reconcile.Result{}, err
 		}
 	}
 
+	// update condition to remove Progressing condition
+	if err := r.updateCondition(clusterName); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	isUpgraded, err := r.addonOperatorIsUpgraded(clusterName)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	if isUpgraded {
+		return reconcile.Result{}, nil
+	}
+
+	// upgrade klusterlet-addon-operator
 	addonAgentConfig, err := r.prepareAddonAgentConfig(managedCluster, klusterletAddonConfig)
 	if err != nil {
 		return reconcile.Result{}, err
