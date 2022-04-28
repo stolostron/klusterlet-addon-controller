@@ -155,6 +155,9 @@ func NewDeployment(addonAgentConfig *agentv1.AddonAgentConfig, namespace string)
 					"name": KlusterletAddonOperator,
 				},
 			},
+			Strategy: appsv1.DeploymentStrategy{
+				Type: appsv1.RecreateDeploymentStrategyType,
+			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
