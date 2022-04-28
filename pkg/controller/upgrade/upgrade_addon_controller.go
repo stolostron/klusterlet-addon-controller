@@ -274,6 +274,21 @@ func (r *ReconcileUpgrade) upgradeAddonOperatorManifestWork(addonAgentConfig *ag
 					},
 				},
 			},
+			ManifestConfigs: []manifestworkv1.ManifestConfigOption{
+				{
+					ResourceIdentifier: manifestworkv1.ResourceIdentifier{
+						Group:     "apps",
+						Resource:  "deployments",
+						Name:      klusterletAddonOperator,
+						Namespace: "open-cluster-management-agent-addon",
+					},
+					FeedbackRules: []manifestworkv1.FeedbackRule{
+						{
+							Type: manifestworkv1.WellKnownStatusType,
+						},
+					},
+				},
+			},
 			Workload: manifestworkv1.ManifestsTemplate{
 				Manifests: manifests,
 			},

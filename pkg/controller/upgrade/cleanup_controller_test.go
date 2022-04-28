@@ -46,11 +46,25 @@ func newManifestWork(name, namespace string) *workv1.ManifestWork {
 }
 
 func newOperatorManifestWork(namespace string) *workv1.ManifestWork {
+	replica := int64(1)
 	return &workv1.ManifestWork{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      manifestWorkName(namespace, klusterletAddonOperator),
 			Namespace: namespace,
 			Labels:    map[string]string{agentv1.UpgradeLabel: ""},
+		},
+		Spec: workv1.ManifestWorkSpec{
+			Workload: workv1.ManifestsTemplate{},
+			ManifestConfigs: []workv1.ManifestConfigOption{
+				{
+					ResourceIdentifier: workv1.ResourceIdentifier{
+						Group:     "",
+						Resource:  "",
+						Name:      "",
+						Namespace: "",
+					},
+				},
+			},
 		},
 		Status: workv1.ManifestWorkStatus{
 			Conditions: []metav1.Condition{
@@ -69,7 +83,31 @@ func newOperatorManifestWork(namespace string) *workv1.ManifestWork {
 						ResourceMeta: workv1.ManifestResourceMeta{
 							Resource: "deployments",
 						},
-						StatusFeedbacks: workv1.StatusFeedbackResult{},
+						StatusFeedbacks: workv1.StatusFeedbackResult{
+							Values: []workv1.FeedbackValue{
+								{
+									Name: "ReadyReplicas",
+									Value: workv1.FieldValue{
+										Type:    workv1.Integer,
+										Integer: &replica,
+									},
+								},
+								{
+									Name: "Replicas",
+									Value: workv1.FieldValue{
+										Type:    workv1.Integer,
+										Integer: &replica,
+									},
+								},
+								{
+									Name: "AvailableReplicas",
+									Value: workv1.FieldValue{
+										Type:    workv1.Integer,
+										Integer: &replica,
+									},
+								},
+							},
+						},
 						Conditions: []metav1.Condition{
 							{
 								Type:   "Applied",
@@ -123,7 +161,7 @@ func TestReconcileManagedCluster(t *testing.T) {
 			clusterName: "cluster1",
 			addon: newManagedClusterAddon(agentv1.PolicyAddonName, "cluster1",
 				[]metav1.Condition{{Type: "Available", Status: "False",
-					LastTransitionTime: metav1.NewTime(time.Now().Add(-10 * time.Minute))}}),
+					LastTransitionTime: metav1.NewTime(time.Now().Add(-40 * time.Minute))}}),
 			manifestWorks: []runtime.Object{newManifestWork("klusterlet-addon-policyctrl", "cluster1"),
 				newManifestWork(klusterletAddonCRDs, "cluster1"),
 				newOperatorManifestWork("cluster1")},
@@ -140,7 +178,7 @@ func TestReconcileManagedCluster(t *testing.T) {
 			addon: newManagedClusterAddon(agentv1.WorkManagerAddonName, "cluster1",
 				[]metav1.Condition{
 					{Type: "RegistrationApplied", Status: "True",
-						LastTransitionTime: metav1.NewTime(time.Now().Add(-10 * time.Minute))},
+						LastTransitionTime: metav1.NewTime(time.Now().Add(-40 * time.Minute))},
 					{Type: "Available", Status: "True"}, {Type: "ManifestApplied", Status: "True"},
 				}),
 			manifestWorks: []runtime.Object{newManifestWork("klusterlet-addon-workmgr", "cluster1"),
@@ -159,7 +197,7 @@ func TestReconcileManagedCluster(t *testing.T) {
 			addon: newManagedClusterAddon(agentv1.CertPolicyAddonName, "cluster1",
 				[]metav1.Condition{
 					{Type: "RegistrationApplied", Status: "True",
-						LastTransitionTime: metav1.NewTime(time.Now().Add(-10 * time.Minute))},
+						LastTransitionTime: metav1.NewTime(time.Now().Add(-40 * time.Minute))},
 					{Type: "Available", Status: "True"}, {Type: "ManifestApplied", Status: "True"},
 				}),
 			manifestWorks: []runtime.Object{newManifestWork("klusterlet-addon-certpolicyctrl", "cluster1"),

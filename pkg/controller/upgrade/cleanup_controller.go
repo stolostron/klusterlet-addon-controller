@@ -101,7 +101,7 @@ func (r *ReconcileCleanup) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 
 		sub := time.Since(availableCondition.LastTransitionTime.Time)
-		if sub < 5*time.Minute {
+		if sub < 30*time.Minute {
 			return reconcile.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
 		}
 
@@ -115,6 +115,7 @@ func (r *ReconcileCleanup) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, nil
 	}
 
+	// old klusterlet addons only have Available condition
 	if !meta.IsStatusConditionTrue(conditions, "Available") {
 		return reconcile.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
 	}
@@ -132,7 +133,7 @@ func (r *ReconcileCleanup) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	sub := time.Since(condition.LastTransitionTime.Time)
-	if sub < 5*time.Minute {
+	if sub < 30*time.Minute {
 		return reconcile.Result{Requeue: true, RequeueAfter: 10 * time.Second}, nil
 	}
 
@@ -164,6 +165,10 @@ func (r *ReconcileCleanup) addonOperatorUpgradeCompleted(clusterName string) (bo
 		return false, nil
 	}
 
+	if len(addonOperatorWork.Spec.ManifestConfigs) == 0 {
+		return false, nil
+	}
+
 	for _, condition := range addonOperatorWork.Status.Conditions {
 		if condition.Type == "Applied" || condition.Type == "Available" {
 			if condition.Status != "True" {
@@ -174,16 +179,35 @@ func (r *ReconcileCleanup) addonOperatorUpgradeCompleted(clusterName string) (bo
 
 	for _, manifest := range addonOperatorWork.Status.ResourceStatus.Manifests {
 		if manifest.ResourceMeta.Resource == "deployments" {
+			conditionTrue := 0
 			for _, condition := range manifest.Conditions {
-				if condition.Type == "Applied" || condition.Type == "Available" || condition.Type == "StatusFeedbackSynced" {
+				switch condition.Type {
+				case "Applied", "Available", "StatusFeedbackSynced":
 					if condition.Status != "True" {
 						return false, nil
 					}
+					conditionTrue++
 				}
 			}
+			replicas := int64(1)
+			replicasCnt := 0
+			for _, v := range manifest.StatusFeedbacks.Values {
+				switch v.Name {
+				case "ReadyReplicas", "Replicas", "AvailableReplicas":
+					if *v.Value.Integer != replicas {
+						return false, nil
+					}
+					replicasCnt++
+				}
+			}
+			if conditionTrue == 3 && replicasCnt == 3 {
+				return true, nil
+			}
+			return false, nil
 		}
 	}
-	return true, nil
+
+	return false, nil
 }
 
 func (r *ReconcileCleanup) cleanupDeprecatedResources(addon *addonv1alpha1.ManagedClusterAddOn) (bool, error) {
