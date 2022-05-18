@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers/imageregistry"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -323,6 +324,10 @@ func getNodeSelector(managedCluster *managedclusterv1.ManagedCluster) (map[strin
 func getImageOverrides(managedCluster *managedclusterv1.ManagedCluster, addonName string) (map[string]string, error) {
 	imageOverrides := map[string]string{}
 	if len(managedCluster.Annotations) == 0 {
+		return imageOverrides, nil
+	}
+
+	if _, ok := managedCluster.Annotations[imageregistry.ClusterImageRegistriesAnnotation]; !ok {
 		return imageOverrides, nil
 	}
 
