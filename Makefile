@@ -77,7 +77,7 @@ go-bindata:
 
 .PHONY: gobindata-check
 go-bindata-check:
-	cd $(mktemp -d) && GO111MODULE=off go install github.com/go-bindata/go-bindata/...
+	cd $(mktemp -d) && GO111MODULE=off go get -u github.com/go-bindata/go-bindata/...
 	@go-bindata --version
 	@go-bindata -nometadata -pkg bindata -o $(BINDATA_TEMP_DIR)/bindata_generated.go -prefix deploy/ deploy/resources/ deploy/crds/ deploy/crds-v1/ deploy/crds-kube1.11/ deploy/resources/...; \
 	diff $(BINDATA_TEMP_DIR)/bindata_generated.go pkg/bindata/bindata_generated.go > go-bindata.diff; \
