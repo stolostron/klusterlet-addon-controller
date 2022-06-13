@@ -20,11 +20,12 @@ linters:
   enable:
   - deadcode
   - errcheck
-  - gosimple
   - govet
   - ineffassign
-  - staticcheck
-  - structcheck
   - typecheck
   - unused
   - varcheck
+  # - gosimple
+  # disable in go 1.18
+  # - staticcheck
+  # - structcheck
