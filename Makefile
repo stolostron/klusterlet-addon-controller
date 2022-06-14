@@ -56,17 +56,17 @@ copyright-check:
 
 .PHONY: test
 ## Runs go unit tests
-test: 
+test:
 	@build/run-unit-tests.sh
 
 .PHONY: build
 ## Builds operator binary inside of an image
-build: 
+build:
 	go build -o build/_output/manager -mod=mod ./cmd/manager
 
 .PHONY: build-image
 ## Builds controller binary inside of an image
-build-image: 
+build-image:
 	@$(DOCKER_BUILDER) build -t $(DOCKER_IMAGE) -f $(DOCKER_FILE) .
 	echo "${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)"
 	@$(DOCKER_BUILDER) tag $(DOCKER_IMAGE) ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
@@ -101,7 +101,7 @@ clean::
 .PHONY: run
 ## Run the operator against the kubeconfig targeted cluster
 run:
-	operator-sdk run local --watch-namespace="" 
+	operator-sdk run local --watch-namespace=""
 
 .PHONE: request-destruct
 request-destruct:
@@ -115,8 +115,8 @@ lint-all:
 .PHONY: lint
 ## Runs linter against go files
 lint:
-	build/run-lint-check.sh	
-   
+	build/run-lint-check.sh
+
 ### HELPER UTILS #######################
 
 .PHONY: utils-crds-install
@@ -134,7 +134,7 @@ deploy:
 	$(KUBECTL) apply -k deploy
 
 .PHONY: functional-test
-functional-test: 
+functional-test:
 	ginkgo -v -tags functional -failFast --slowSpecThreshold=10 test/functional -- --v=1 --image-registry=${COMPONENT_DOCKER_REPO}
 
 .PHONY: build-image-coverage
@@ -142,22 +142,22 @@ functional-test:
 build-image-coverage: build-image
 	$(DOCKER_BUILDER) build -f $(DOCKERFILE_COVERAGE) . -t $(DOCKER_IMAGE_COVERAGE) --build-arg DOCKER_BASE_IMAGE=$(DOCKER_IMAGE)
 
-	# @$(DOCKER_BUILDER) build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage -f $(DOCKERFILE_COVERAGE) . 
+	# @$(DOCKER_BUILDER) build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage -f $(DOCKERFILE_COVERAGE) .
 	# @$(DOCKER_BUILDER) tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage ${DOCKER_REGISTRY}/${DOCKER_IMAGE}-coverage:$(DOCKER_TAG)
 
-# download script for coverage entrypoint. 
+# download script for coverage entrypoint.
 .PHONY: sync-coverage-entrypoint
 sync-coverage-entrypoint:
 	@echo downloading coverage entrypoint file
 	@tmp_dir=$$(mktemp -d); \
 	curl  --fail -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/modules/component/bin/component/coverage-entrypoint-func.sh > "$$tmp_dir/coverage-entrypoint-func.sh" \
 	&& mv "$$tmp_dir/coverage-entrypoint-func.sh" build/bin/ && chmod +x build/bin/coverage-entrypoint-func.sh ;
-	
+
 .PHONY: build-coverage
 ## Builds operator binary inside of an image
-build-coverage: 
+build-coverage:
 	build/build-coverage.sh ${COMPONENT_DOCKER_REPO}/${COMPONENT_NAME}:${COMPONENT_VERSION}${COMPONENT_TAG_EXTENSION}-coverage
-	
+
 # Ensure controller-gen
 ensure-controller-gen:
 ifeq (, $(shell which controller-gen))
