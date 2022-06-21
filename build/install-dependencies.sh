@@ -19,9 +19,3 @@ if ! which gocovmerge > /dev/null; then  echo "Installing gocovmerge..."; go ins
 if ! which golangci-lint > /dev/null; then
     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.37.1
 fi
-
-if ! which go-bindata > /dev/null; then
-	echo "Installing go-bindata..."
-	cd $(mktemp -d) && GO111MODULE=off go get -u github.com/go-bindata/go-bindata/...
-fi
-go-bindata --version

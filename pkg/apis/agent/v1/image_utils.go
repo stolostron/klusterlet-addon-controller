@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers/imageregistry"
+	"github.com/stolostron/cluster-lifecycle-api/helpers/imageregistry"
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 

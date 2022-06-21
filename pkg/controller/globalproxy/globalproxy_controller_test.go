@@ -270,7 +270,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 				scheme:        testscheme,
 			}
 
-			result, err := r.Reconcile(c.request)
+			result, err := r.Reconcile(context.TODO(), c.request)
 			if err != nil && c.expectedErr == nil {
 				t.Errorf("expected no err but got %v", err)
 			}

@@ -26,8 +26,6 @@ export DOCKER_IMAGE_COVERAGE      ?= $(DOCKER_IMAGE)$(DOCKER_IMAGE_COVERAGE_POST
 export DOCKER_TAG        ?= latest
 export DOCKER_BUILDER    ?= docker
 
-export BINDATA_TEMP_DIR := $(shell mktemp -d)
-
 BEFORE_SCRIPT := $(shell build/before-make.sh)
 
 # Only use git commands if it exists
@@ -47,7 +45,7 @@ deps:
 
 .PHONY: check
 ## Runs a set of required checks
-check: lint go-bindata-check
+check: lint
 
 .PHONY: copyright-check
 copyright-check:
@@ -71,23 +69,6 @@ build-image:
 	echo "${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)"
 	@$(DOCKER_BUILDER) tag $(DOCKER_IMAGE) ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:$(DOCKER_TAG)
 
-.PHONY: go-bindata
-go-bindata:
-	go-bindata -nometadata -pkg bindata -o pkg/bindata/bindata_generated.go -prefix deploy/ deploy/resources/ deploy/crds/ deploy/crds-v1/ deploy/crds-kube1.11/ deploy/resources/...
-
-.PHONY: gobindata-check
-go-bindata-check:
-	cd $(mktemp -d) && GO111MODULE=off go get -u github.com/go-bindata/go-bindata/...
-	@go-bindata --version
-	@go-bindata -nometadata -pkg bindata -o $(BINDATA_TEMP_DIR)/bindata_generated.go -prefix deploy/ deploy/resources/ deploy/crds/ deploy/crds-v1/ deploy/crds-kube1.11/ deploy/resources/...; \
-	diff $(BINDATA_TEMP_DIR)/bindata_generated.go pkg/bindata/bindata_generated.go > go-bindata.diff; \
-	if [ $$? != 0 ]; then \
-	  echo "Run 'make go-bindata' to regenerate the bindata_generated.go"; \
-	  cat go-bindata.diff; \
-	  exit 1; \
-	fi
-	rm go-bindata.diff
-	@echo "##### go-bindata-check #### Success"
 
 .PHONY: go-mod-check
 go-mod-check:
@@ -176,23 +157,8 @@ endif
 
 # Generate crds
 manifests: ensure-controller-gen
-	$(CONTROLLER_GEN) "crd:crdVersions=v1" paths="./pkg/apis/agent/v1" output:crd:artifacts:config=deploy/crds-v1
-	mv deploy/crds-v1/agent.open-cluster-management.io_applicationmanagers.yaml deploy/crds-v1/agent.open-cluster-management.io_applicationmanagers_crd.yaml
-	mv deploy/crds-v1/agent.open-cluster-management.io_certpolicycontrollers.yaml deploy/crds-v1/agent.open-cluster-management.io_certpolicycontrollers_crd.yaml
-	mv deploy/crds-v1/agent.open-cluster-management.io_iampolicycontrollers.yaml deploy/crds-v1/agent.open-cluster-management.io_iampolicycontrollers_crd.yaml
-	mv deploy/crds-v1/agent.open-cluster-management.io_policycontrollers.yaml deploy/crds-v1/agent.open-cluster-management.io_policycontrollers_crd.yaml
-	mv deploy/crds-v1/agent.open-cluster-management.io_searchcollectors.yaml deploy/crds-v1/agent.open-cluster-management.io_searchcollectors_crd.yaml
-	mv deploy/crds-v1/agent.open-cluster-management.io_workmanagers.yaml deploy/crds-v1/agent.open-cluster-management.io_workmanagers_crd.yaml
-	mv deploy/crds-v1/agent.open-cluster-management.io_klusterletaddonconfigs.yaml deploy/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
-
-	$(CONTROLLER_GEN) "crd:crdVersions=v1beta1" paths="./pkg/apis/agent/v1" output:crd:artifacts:config=deploy/crds
-	mv deploy/crds/agent.open-cluster-management.io_applicationmanagers.yaml deploy/crds/agent.open-cluster-management.io_applicationmanagers_crd.yaml
-	mv deploy/crds/agent.open-cluster-management.io_certpolicycontrollers.yaml deploy/crds/agent.open-cluster-management.io_certpolicycontrollers_crd.yaml
-	mv deploy/crds/agent.open-cluster-management.io_iampolicycontrollers.yaml deploy/crds/agent.open-cluster-management.io_iampolicycontrollers_crd.yaml
-	mv deploy/crds/agent.open-cluster-management.io_policycontrollers.yaml deploy/crds/agent.open-cluster-management.io_policycontrollers_crd.yaml
-	mv deploy/crds/agent.open-cluster-management.io_searchcollectors.yaml deploy/crds/agent.open-cluster-management.io_searchcollectors_crd.yaml
-	mv deploy/crds/agent.open-cluster-management.io_workmanagers.yaml deploy/crds/agent.open-cluster-management.io_workmanagers_crd.yaml
-	rm -f deploy/crds/agent.open-cluster-management.io_klusterletaddonconfigs.yaml
+	$(CONTROLLER_GEN) "crd:crdVersions=v1" paths="./pkg/apis/agent/v1" output:crd:artifacts:config=deploy/
+	mv deploy/agent.open-cluster-management.io_klusterletaddonconfigs.yaml deploy/agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
 
 # Generate deepcopy
 generate: ensure-controller-gen

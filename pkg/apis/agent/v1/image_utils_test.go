@@ -11,7 +11,7 @@ package v1
 import (
 	"testing"
 
-	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers/imageregistry"
+	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
 	"github.com/stolostron/klusterlet-addon-controller/version"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -67,7 +67,7 @@ func TestGetImageWithManifest(t *testing.T) {
 						ObjectMeta: metav1.ObjectMeta{
 							Name: "cluster1",
 							Annotations: map[string]string{
-								imageregistry.ClusterImageRegistriesAnnotation: `{"registries":[{"mirror":"quay.io/rhacm2","source":"sample-registry/uniquePath"}]}`,
+								imageregistryv1alpha1.ClusterImageRegistriesAnnotation: `{"registries":[{"mirror":"quay.io/rhacm2","source":"sample-registry/uniquePath"}]}`,
 							},
 						},
 					},
@@ -198,7 +198,7 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 						ObjectMeta: metav1.ObjectMeta{
 							Name: "cluster1",
 							Annotations: map[string]string{
-								imageregistry.ClusterImageRegistriesAnnotation: `{"registries":[{"mirror":"quay.io/rhacm2","source":"sample-registry/uniquePath"}]}`,
+								imageregistryv1alpha1.ClusterImageRegistriesAnnotation: `{"registries":[{"mirror":"quay.io/rhacm2","source":"sample-registry/uniquePath"}]}`,
 							},
 						},
 					},

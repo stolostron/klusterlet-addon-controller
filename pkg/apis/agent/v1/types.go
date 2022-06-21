@@ -82,32 +82,3 @@ var KlusterletAddonImageNames = map[string][]string{
 		"governance_policy_template_sync"},
 	SearchAddonName: []string{"search_collector"},
 }
-
-// ClusterManagementAddons is a list of ClusterManagementAddons need to delete during the upgrade from 2.4 to 2.5
-var ClusterManagementAddons = []string{
-	ApplicationAddonName,
-	CertPolicyAddonName,
-	IamPolicyAddonName,
-	PolicyAddonName,
-	SearchAddonName,
-	WorkManagerAddonName,
-}
-
-// DeprecatedAddonComponentNames is a list of addons need to delete during the upgrade from 2.4 to 2.5
-var DeprecatedAddonComponentNames = map[string]string{
-	WorkManagerAddonName: "workmgr",
-	ApplicationAddonName: "appmgr",
-	CertPolicyAddonName:  "certpolicyctrl",
-	IamPolicyAddonName:   "iampolicyctrl",
-	PolicyAddonName:      "policyctrl",
-	SearchAddonName:      "search",
-}
-
-var DeprecatedAgentManifestworks = []string{
-	"klusterlet-addon-appmgr",
-	"klusterlet-addon-certpolicyctrl",
-	"klusterlet-addon-iampolicyctrl",
-	"klusterlet-addon-policyctrl",
-	"klusterlet-addon-workmgr",
-	"klusterlet-addon-search",
-}
