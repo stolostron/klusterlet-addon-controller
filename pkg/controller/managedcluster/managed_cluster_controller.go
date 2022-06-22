@@ -60,19 +60,18 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 					return false
 				}
 
-				return hypershiftCluster(e.Meta) || clusterClaimCluster(e.Meta)
+				return hypershiftCluster(e.Object) || clusterClaimCluster(e.Object)
 			},
 			DeleteFunc: func(e event.DeleteEvent) bool {
 				return false
 			},
 			UpdateFunc: func(e event.UpdateEvent) bool {
-				if e.MetaOld == nil || e.MetaNew == nil ||
-					e.ObjectOld == nil || e.ObjectNew == nil {
+				if e.ObjectOld == nil || e.ObjectNew == nil {
 					log.Error(nil, "Update event is invalid", "event", e)
 					return false
 				}
 
-				return hypershiftCluster(e.MetaNew) || clusterClaimCluster(e.MetaNew)
+				return hypershiftCluster(e.ObjectOld) || clusterClaimCluster(e.ObjectNew)
 			},
 		}))
 	if err != nil {
@@ -107,13 +106,13 @@ type ReconcileManagedCluster struct {
 
 // Reconcile reads managed cluster created by hive or hypershift, and create the default
 // klusterlet addon config for them
-func (r *ReconcileManagedCluster) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileManagedCluster) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Name", request.Name)
 	reqLogger.Info("Reconciling ManagedCluster")
 
 	// Fetch the managedCluster instance
 	managedCluster := &mcv1.ManagedCluster{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: request.Name}, managedCluster); err != nil {
+	if err := r.client.Get(ctx, types.NamespacedName{Name: request.Name}, managedCluster); err != nil {
 		if errors.IsNotFound(err) {
 			return reconcile.Result{}, nil
 		}

@@ -60,41 +60,37 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	err = c.Watch(
 		&source.Kind{Type: &managedclusterv1.ManagedCluster{}},
-		&handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
-			func(obj handler.MapObject) []reconcile.Request {
-				return []reconcile.Request{
-					{
-						NamespacedName: types.NamespacedName{
-							Name:      obj.Meta.GetName(),
-							Namespace: obj.Meta.GetName(),
-						},
+		handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+			return []reconcile.Request{
+				{
+					NamespacedName: types.NamespacedName{
+						Name:      obj.GetName(),
+						Namespace: obj.GetName(),
 					},
-				}
-			},
-		)},
+				},
+			}
+		}),
 	)
 	if err != nil {
 		return err
 	}
 	err = c.Watch(
 		&source.Kind{Type: &agentv1.KlusterletAddonConfig{}},
-		&handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
-			func(obj handler.MapObject) []reconcile.Request {
-				namespace := obj.Meta.GetNamespace()
-				name := obj.Meta.GetName()
-				if name == namespace {
-					return []reconcile.Request{
-						{
-							NamespacedName: types.NamespacedName{
-								Name:      namespace,
-								Namespace: namespace,
-							},
+		handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+			namespace := obj.GetNamespace()
+			name := obj.GetName()
+			if name == namespace {
+				return []reconcile.Request{
+					{
+						NamespacedName: types.NamespacedName{
+							Name:      namespace,
+							Namespace: namespace,
 						},
-					}
+					},
 				}
-				return nil
-			},
-		)},
+			}
+			return nil
+		}),
 	)
 	if err != nil {
 		return err
@@ -103,9 +99,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-func (r *GlobalProxyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+func (r *GlobalProxyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	klusterletAddonConfig := &agentv1.KlusterletAddonConfig{}
-	if err := r.runtimeClient.Get(context.TODO(), types.NamespacedName{Name: req.Name, Namespace: req.Namespace},
+	if err := r.runtimeClient.Get(ctx, types.NamespacedName{Name: req.Name, Namespace: req.Namespace},
 		klusterletAddonConfig); err != nil {
 		if errors.IsNotFound(err) {
 			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
@@ -115,7 +111,7 @@ func (r *GlobalProxyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 
 	newStatus := klusterletAddonConfig.Status.DeepCopy()
 
-	installConfigSecret, err := r.kubeClient.CoreV1().Secrets(req.Namespace).Get(context.TODO(), fmt.Sprintf("%s-install-config", req.Name), metav1.GetOptions{})
+	installConfigSecret, err := r.kubeClient.CoreV1().Secrets(req.Namespace).Get(ctx, fmt.Sprintf("%s-install-config", req.Name), metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			newStatus.OCPGlobalProxy = agentv1.ProxyConfig{}

@@ -75,7 +75,7 @@ func TestReconcileManagedCluster(t *testing.T) {
 				scheme: testscheme,
 			}
 
-			actual, err := reconciler.Reconcile(request)
+			actual, err := reconciler.Reconcile(context.TODO(), request)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}

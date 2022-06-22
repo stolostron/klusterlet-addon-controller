@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"strings"
 
+	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers/imageregistry"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -68,35 +68,33 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	err = c.Watch(&source.Kind{Type: &managedclusterv1.ManagedCluster{}},
-		&handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
-			func(obj handler.MapObject) []reconcile.Request {
-				return []reconcile.Request{
-					{
-						NamespacedName: types.NamespacedName{
-							Name:      obj.Meta.GetName(),
-							Namespace: obj.Meta.GetName(),
-						},
+		handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+			return []reconcile.Request{
+				{
+					NamespacedName: types.NamespacedName{
+						Name:      obj.GetName(),
+						Namespace: obj.GetName(),
 					},
-				}
-			},
-		)})
+				},
+			}
+		}),
+	)
 	if err != nil {
 		return err
 	}
 
 	err = c.Watch(&source.Kind{Type: &addonv1alpha1.ManagedClusterAddOn{}},
-		&handler.EnqueueRequestsFromMapFunc{ToRequests: handler.ToRequestsFunc(
-			func(obj handler.MapObject) []reconcile.Request {
-				return []reconcile.Request{
-					{
-						NamespacedName: types.NamespacedName{
-							Name:      obj.Meta.GetNamespace(),
-							Namespace: obj.Meta.GetNamespace(),
-						},
+		handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+			return []reconcile.Request{
+				{
+					NamespacedName: types.NamespacedName{
+						Name:      obj.GetNamespace(),
+						Namespace: obj.GetNamespace(),
 					},
-				}
-			},
-		)},
+				},
+			}
+		}),
+
 		klusterletAddonPredicate())
 
 	return err
@@ -110,7 +108,7 @@ func klusterletAddonPredicate() predicate.Predicate {
 				klog.Error(nil, "Create event has no runtime object to create", "event", e)
 				return false
 			}
-			_, existed := agentv1.KlusterletAddons[e.Meta.GetName()]
+			_, existed := agentv1.KlusterletAddons[e.Object.GetName()]
 			return existed
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
@@ -118,16 +116,15 @@ func klusterletAddonPredicate() predicate.Predicate {
 				klog.Error(nil, "Delete event has no runtime object to delete", "event", e)
 				return false
 			}
-			_, existed := agentv1.KlusterletAddons[e.Meta.GetName()]
+			_, existed := agentv1.KlusterletAddons[e.Object.GetName()]
 			return existed
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			if e.MetaOld == nil || e.MetaNew == nil ||
-				e.ObjectOld == nil || e.ObjectNew == nil {
+			if e.ObjectOld == nil || e.ObjectNew == nil {
 				klog.Error(nil, "Update event is invalid", "event", e)
 				return false
 			}
-			_, existed := agentv1.KlusterletAddons[e.MetaNew.GetName()]
+			_, existed := agentv1.KlusterletAddons[e.ObjectOld.GetName()]
 			return existed
 		},
 	})
@@ -137,23 +134,23 @@ type ReconcileKlusterletAddOn struct {
 	client client.Client
 }
 
-func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileKlusterletAddOn) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the managedCluster instance
 	managedCluster := &managedclusterv1.ManagedCluster{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: request.Namespace}, managedCluster); err != nil {
+	if err := r.client.Get(ctx, types.NamespacedName{Name: request.Namespace}, managedCluster); err != nil {
 		if errors.IsNotFound(err) {
-			return reconcile.Result{}, r.deleteAllManagedClusterAddon(request.Name)
+			return reconcile.Result{}, r.deleteAllManagedClusterAddon(ctx, request.Name)
 		}
 		return reconcile.Result{}, err
 	}
 
 	if !managedCluster.DeletionTimestamp.IsZero() {
-		return reconcile.Result{}, r.deleteAllManagedClusterAddon(managedCluster.GetName())
+		return reconcile.Result{}, r.deleteAllManagedClusterAddon(ctx, managedCluster.GetName())
 	}
 
 	// Fetch the klusterletAddonConfig instance
 	klusterletAddonConfig := &agentv1.KlusterletAddonConfig{}
-	if err := r.client.Get(context.TODO(), request.NamespacedName, klusterletAddonConfig); err != nil {
+	if err := r.client.Get(ctx, request.NamespacedName, klusterletAddonConfig); err != nil {
 		if errors.IsNotFound(err) {
 			return reconcile.Result{}, nil
 		}
@@ -172,7 +169,7 @@ func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconci
 	var aggregatedErrs []error
 	for addonName, needUpdate := range agentv1.KlusterletAddons {
 		if !addonIsEnabled(addonName, klusterletAddonConfig) {
-			if err := r.deleteManagedClusterAddon(addonName, managedCluster.GetName()); err != nil {
+			if err := r.deleteManagedClusterAddon(ctx, addonName, managedCluster.GetName()); err != nil {
 				aggregatedErrs = append(aggregatedErrs, err)
 			}
 			continue
@@ -189,7 +186,7 @@ func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconci
 		}
 		gv := getGlobalValues(nodeSelector, imageOverrides, addonName, klusterletAddonConfig)
 
-		if err := r.updateManagedClusterAddon(gv, addonName, managedCluster.GetName()); err != nil {
+		if err := r.updateManagedClusterAddon(ctx, gv, addonName, managedCluster.GetName()); err != nil {
 			aggregatedErrs = append(aggregatedErrs, err)
 		}
 	}
@@ -200,10 +197,10 @@ func (r *ReconcileKlusterletAddOn) Reconcile(request reconcile.Request) (reconci
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileKlusterletAddOn) deleteAllManagedClusterAddon(clusterName string) error {
+func (r *ReconcileKlusterletAddOn) deleteAllManagedClusterAddon(ctx context.Context, clusterName string) error {
 	var aggregatedErrs []error
 	for addonName := range agentv1.KlusterletAddons {
-		err := r.deleteManagedClusterAddon(addonName, clusterName)
+		err := r.deleteManagedClusterAddon(ctx, addonName, clusterName)
 		if err != nil {
 			aggregatedErrs = append(aggregatedErrs, err)
 		}
@@ -214,7 +211,7 @@ func (r *ReconcileKlusterletAddOn) deleteAllManagedClusterAddon(clusterName stri
 	return nil
 }
 
-func (r *ReconcileKlusterletAddOn) deleteManagedClusterAddon(addonName, clusterName string) error {
+func (r *ReconcileKlusterletAddOn) deleteManagedClusterAddon(ctx context.Context, addonName, clusterName string) error {
 	addon := &addonv1alpha1.ManagedClusterAddOn{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      addonName,
@@ -222,7 +219,7 @@ func (r *ReconcileKlusterletAddOn) deleteManagedClusterAddon(addonName, clusterN
 		},
 	}
 
-	err := r.client.Delete(context.TODO(), addon)
+	err := r.client.Delete(ctx, addon)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -230,13 +227,13 @@ func (r *ReconcileKlusterletAddOn) deleteManagedClusterAddon(addonName, clusterN
 	return nil
 }
 
-func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(gv globalValues, addonName, clusterName string) error {
+func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(ctx context.Context, gv globalValues, addonName, clusterName string) error {
 	valuesString, err := marshalGlobalValues(gv)
 	if err != nil {
 		return err
 	}
 	addon := &addonv1alpha1.ManagedClusterAddOn{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: addonName, Namespace: clusterName}, addon)
+	err = r.client.Get(ctx, types.NamespacedName{Name: addonName, Namespace: clusterName}, addon)
 	if errors.IsNotFound(err) {
 		if !agentv1.KlusterletAddons[addonName] {
 			return nil
@@ -247,7 +244,7 @@ func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(gv globalValues, ad
 			newAddon.SetAnnotations(map[string]string{annotationValues: valuesString})
 		}
 
-		return r.client.Create(context.TODO(), newAddon)
+		return r.client.Create(ctx, newAddon)
 	}
 	if err != nil {
 		return err
@@ -284,7 +281,7 @@ func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(gv globalValues, ad
 		return nil
 	}
 
-	err = r.client.Update(context.TODO(), addon)
+	err = r.client.Update(ctx, addon)
 	if err != nil {
 		return err
 	}
@@ -327,7 +324,7 @@ func getImageOverrides(managedCluster *managedclusterv1.ManagedCluster, addonNam
 		return imageOverrides, nil
 	}
 
-	if _, ok := managedCluster.Annotations[imageregistry.ClusterImageRegistriesAnnotation]; !ok {
+	if _, ok := managedCluster.Annotations[imageregistryv1alpha1.ClusterImageRegistriesAnnotation]; !ok {
 		return imageOverrides, nil
 	}
 

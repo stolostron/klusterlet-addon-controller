@@ -12,7 +12,6 @@ import (
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/addon"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/globalproxy"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/managedcluster"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/upgrade"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -26,8 +25,6 @@ func init() {
 		addon.Add,
 		managedcluster.Add,
 		globalproxy.Add,
-		upgrade.UpgradeAdd,
-		upgrade.CleanupAdd,
 	)
 }
 
@@ -37,10 +34,6 @@ func AddToManager(m manager.Manager, kubeClient kubernetes.Interface, dynamicCli
 		if err := f(m, kubeClient); err != nil {
 			return err
 		}
-	}
-
-	if err := upgrade.UpgradeMgmtAddonAdd(m, dynamicClient); err != nil {
-		return err
 	}
 
 	return nil
