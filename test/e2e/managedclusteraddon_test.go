@@ -90,6 +90,40 @@ var _ = Describe("managedClusterAddon test", func() {
 			}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
 
 		})
+
+		var changedAddonName string
+		By("change the installNamespace of the addon", func() {
+			Eventually(func() error {
+				addonList := &addonv1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: managedClusterName})
+				if err != nil {
+					return err
+				}
+				addon := addonList.Items[0]
+				addon.Spec.InstallNamespace = "default"
+				err = kubeClient.Update(context.TODO(), &addon, &client.UpdateOptions{})
+				if err != nil {
+					return err
+				}
+				changedAddonName = addon.Name
+				return nil
+			}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
+		})
+
+		By("check if the changed addon is installed", func() {
+			time.Sleep(60 * time.Second) // Wait for controller reconcile.
+			Eventually(func() error {
+				addon := &addonv1alpha1.ManagedClusterAddOn{}
+				err := kubeClient.Get(context.TODO(), types.NamespacedName{Name: changedAddonName, Namespace: managedClusterName}, addon)
+				if err != nil {
+					return err
+				}
+				if addon.Spec.InstallNamespace != "default" {
+					return fmt.Errorf("expected the addon to be installed in default namespace, but got %s", addon.Spec.InstallNamespace)
+				}
+				return nil
+			}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
+		})
 	})
 	It("test managedCluster delete", func() {
 		assertManagedClusterNamespace(managedClusterName)

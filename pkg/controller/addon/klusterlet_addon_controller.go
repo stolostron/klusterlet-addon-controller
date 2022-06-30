@@ -252,10 +252,6 @@ func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(ctx context.Context
 
 	update := false
 	addon = addon.DeepCopy()
-	if addon.Spec.InstallNamespace != agentv1.KlusterletAddonNamespace {
-		addon.Spec.InstallNamespace = agentv1.KlusterletAddonNamespace
-		update = true
-	}
 
 	if len(addon.Annotations) == 0 && len(valuesString) != 0 {
 		addon.SetAnnotations(map[string]string{annotationValues: valuesString})
