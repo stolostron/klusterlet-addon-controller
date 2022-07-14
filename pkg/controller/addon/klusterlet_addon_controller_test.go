@@ -1,10 +1,23 @@
 package addon
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
+	v1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/scheme"
+	"open-cluster-management.io/api/addon/v1alpha1"
+	mcv1 "open-cluster-management.io/api/cluster/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 func validateValues(values, expectedValues string) error {
@@ -105,6 +118,260 @@ func Test_updateAnnotationValues(t *testing.T) {
 			if err := validateValues(values, c.expectedValues); err != nil {
 				t.Errorf("expected values %v, but got %v. error:%v", c.expectedValues, values, err)
 			}
+		})
+	}
+}
+
+func newKlusterletAddonConfig(clusterName string) *v1.KlusterletAddonConfig {
+	return &v1.KlusterletAddonConfig{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterName,
+			Namespace: clusterName,
+		},
+		Spec: v1.KlusterletAddonConfigSpec{
+			ProxyConfig:                v1.ProxyConfig{},
+			SearchCollectorConfig:      v1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			PolicyController:           v1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			ApplicationManagerConfig:   v1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			CertPolicyControllerConfig: v1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			IAMPolicyControllerConfig:  v1.KlusterletAddonAgentConfigSpec{Enabled: true},
+		},
+	}
+}
+
+func newKlusterletAddonConfigWithProxy(clusterName string) *v1.KlusterletAddonConfig {
+	return &v1.KlusterletAddonConfig{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterName,
+			Namespace: clusterName,
+		},
+		Spec: v1.KlusterletAddonConfigSpec{
+			ProxyConfig:                v1.ProxyConfig{},
+			SearchCollectorConfig:      v1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			PolicyController:           v1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			ApplicationManagerConfig:   v1.KlusterletAddonAgentConfigSpec{Enabled: true, ProxyPolicy: v1.ProxyPolicyOCPGlobalProxy},
+			CertPolicyControllerConfig: v1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			IAMPolicyControllerConfig:  v1.KlusterletAddonAgentConfigSpec{Enabled: true},
+		},
+		Status: v1.KlusterletAddonConfigStatus{
+			OCPGlobalProxy: v1.ProxyConfig{
+				HTTPProxy:  "1.1.1.1",
+				HTTPSProxy: "2.2.2.2",
+				NoProxy:    "localhost",
+			},
+		},
+	}
+}
+
+func newDeletingManagedCluster(name string) *mcv1.ManagedCluster {
+	now := metav1.Now()
+	return &mcv1.ManagedCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              name,
+			DeletionTimestamp: &now,
+		},
+	}
+}
+
+func newManagedCluster(name string, annotations map[string]string) *mcv1.ManagedCluster {
+	return &mcv1.ManagedCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        name,
+			Annotations: annotations,
+		},
+	}
+}
+
+func Test_Reconcile(t *testing.T) {
+	testscheme := scheme.Scheme
+	_ = mcv1.AddToScheme(testscheme)
+	_ = v1alpha1.AddToScheme(testscheme)
+	_ = apis.AddToScheme(testscheme)
+
+	tests := []struct {
+		name                  string
+		clusterName           string
+		managedCluster        *mcv1.ManagedCluster
+		klusterletAddonConfig *v1.KlusterletAddonConfig
+		managedClusterAddons  []runtime.Object
+		want                  reconcile.Result
+		validateFunc          func(t *testing.T, client client.Client)
+	}{
+		{
+			name:                  "cluster is deleted, delete all addons",
+			clusterName:           "cluster1",
+			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
+			managedClusterAddons: []runtime.Object{
+				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1"),
+				newManagedClusterAddon(v1.SearchAddonName, "cluster1"),
+			},
+			validateFunc: func(t *testing.T, kubeClient client.Client) {
+				addonList := &v1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "notcluster1"})
+				if err != nil {
+					t.Errorf("faild to list addons. %v", err)
+				}
+				if len(addonList.Items) != 0 {
+					t.Errorf("expected 0 addons, but got %v", len(addonList.Items))
+				}
+			},
+		},
+		{
+			name:                  "cluster is deleting, delete all addons",
+			clusterName:           "cluster1",
+			managedCluster:        newDeletingManagedCluster("cluster1"),
+			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
+			managedClusterAddons: []runtime.Object{
+				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1"),
+				newManagedClusterAddon(v1.SearchAddonName, "cluster1"),
+			},
+			validateFunc: func(t *testing.T, kubeClient client.Client) {
+				addonList := &v1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "cluster1"})
+				if err != nil {
+					t.Errorf("faild to list addons. %v", err)
+				}
+				if len(addonList.Items) != 0 {
+					t.Errorf("expected 0 addons, but got %v", len(addonList.Items))
+				}
+			},
+		},
+		{
+			name:                  "cluster is created, create all addons",
+			clusterName:           "cluster1",
+			managedCluster:        newManagedCluster("cluster1", nil),
+			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
+			validateFunc: func(t *testing.T, kubeClient client.Client) {
+				addonList := &v1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "cluster1"})
+				if err != nil {
+					t.Errorf("faild to list addons. %v", err)
+				}
+				if len(addonList.Items) != 6 {
+					t.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+				}
+			},
+		},
+		{
+			name:           "no klusterletaddonconfig",
+			clusterName:    "cluster1",
+			managedCluster: newManagedCluster("cluster1", nil),
+			validateFunc: func(t *testing.T, kubeClient client.Client) {
+				addonList := &v1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "cluster1"})
+				if err != nil {
+					t.Errorf("faild to list addons. %v", err)
+				}
+				if len(addonList.Items) != 0 {
+					t.Errorf("expected 0 addons, but got %v", len(addonList.Items))
+				}
+			},
+		},
+		{
+			name:        "local-cluster with annotations",
+			clusterName: "local-cluster",
+			managedCluster: newManagedCluster("local-cluster", map[string]string{
+				annotationNodeSelector: `{"node":"infra"}`,
+			}),
+			klusterletAddonConfig: newKlusterletAddonConfig("local-cluster"),
+			validateFunc: func(t *testing.T, kubeClient client.Client) {
+				addonList := &v1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "local-cluster"})
+				if err != nil {
+					t.Errorf("faild to list addons. %v", err)
+				}
+				if len(addonList.Items) != 6 {
+					t.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+				}
+				for _, addon := range addonList.Items {
+					annotations := addon.GetAnnotations()
+					values, ok := annotations[annotationValues]
+					if !ok {
+						t.Errorf("no values annotation")
+					}
+					gv := globalValues{}
+					if err := json.Unmarshal([]byte(values), &gv); err != nil {
+						t.Errorf("failed to Unmarshal gv annotation")
+					}
+					if len(gv.Global.NodeSelector) == 0 {
+						t.Errorf("failed to get nodeSelector in gv")
+					}
+				}
+			},
+		},
+		{
+			name:                  "cluster with proxy",
+			clusterName:           "cluster1",
+			managedCluster:        newManagedCluster("cluster1", nil),
+			klusterletAddonConfig: newKlusterletAddonConfigWithProxy("cluster1"),
+			managedClusterAddons: []runtime.Object{
+				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1"),
+			},
+			validateFunc: func(t *testing.T, kubeClient client.Client) {
+				addonList := &v1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "cluster1"})
+				if err != nil {
+					t.Errorf("faild to list addons. %v", err)
+				}
+				if len(addonList.Items) != 6 {
+					t.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+				}
+				for _, addon := range addonList.Items {
+					if addon.GetName() != v1.ApplicationAddonName {
+						continue
+					}
+					annotations := addon.GetAnnotations()
+					values, ok := annotations[annotationValues]
+					if !ok {
+						t.Errorf("no values annotation")
+					}
+					gv := globalValues{}
+					if err := json.Unmarshal([]byte(values), &gv); err != nil {
+						t.Errorf("failed to Unmarshal gv annotation")
+					}
+					if len(gv.Global.ProxyConfig) == 0 {
+						t.Errorf("failed to get proxyConfig in gv")
+					}
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			objs := []runtime.Object{}
+			if tt.managedCluster != nil {
+				objs = append(objs, tt.managedCluster)
+			}
+			if tt.klusterletAddonConfig != nil {
+				objs = append(objs, tt.klusterletAddonConfig)
+			}
+			if len(tt.managedClusterAddons) != 0 {
+				objs = append(objs, tt.managedClusterAddons...)
+			}
+
+			reconciler := &ReconcileKlusterletAddOn{
+				client: fake.NewClientBuilder().WithScheme(testscheme).WithRuntimeObjects(objs...).Build(),
+			}
+			request := reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      tt.clusterName,
+					Namespace: tt.clusterName,
+				},
+			}
+			actual, err := reconciler.Reconcile(context.TODO(), request)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if !reflect.DeepEqual(actual, tt.want) {
+				t.Errorf("expected %v but got %v", tt.want, actual)
+			}
+
+			tt.validateFunc(t, reconciler.client)
 		})
 	}
 }
