@@ -5,13 +5,13 @@ package managedcluster
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -45,50 +45,83 @@ func TestReconcileManagedCluster(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		initObjs []runtime.Object
 		mc       *mcv1.ManagedCluster
-		want     reconcile.Result
+		validate func(t *testing.T, kubeclient client.Client)
 	}{
 		{
-			name:     "create hypershift cluster klusterlet addon config",
-			initObjs: nil,
+			name: "create hypershift cluster klusterlet addon config",
 			mc: newManagedCluster(testClusterName, map[string]string{
 				provisionerAnnotation: "test.test.HypershiftDeployment.cluster.open-cluster-management.io",
 			}),
-			want: reconcile.Result{Requeue: false},
+			validate: func(t *testing.T, kubeclient client.Client) {
+				var kac kacv1.KlusterletAddonConfig
+				err := kubeclient.Get(context.TODO(),
+					types.NamespacedName{Namespace: testClusterName, Name: testClusterName}, &kac)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+			},
 		},
 		{
-			name:     "create claim cluster klusterlet addon config",
-			initObjs: nil,
+			name: "create claim cluster klusterlet addon config",
 			mc: newManagedCluster(testClusterName, map[string]string{
 				provisionerAnnotation: "test.test.ClusterClaim.hive.openshift.io/v1",
 			}),
-			want: reconcile.Result{Requeue: false},
+			validate: func(t *testing.T, kubeclient client.Client) {
+				var kac kacv1.KlusterletAddonConfig
+				err := kubeclient.Get(context.TODO(),
+					types.NamespacedName{Namespace: testClusterName, Name: testClusterName}, &kac)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+			},
+		},
+		{
+			name: "do not create klusterlet addon config for hypershift",
+			mc: newManagedCluster(testClusterName, map[string]string{
+				provisionerAnnotation:                          "test.test.HypershiftDeployment.cluster.open-cluster-management.io",
+				disableAddonAutomaticInstallationAnnotationKey: "true",
+			}),
+			validate: func(t *testing.T, kubeclient client.Client) {
+				var kac kacv1.KlusterletAddonConfig
+				err := kubeclient.Get(context.TODO(),
+					types.NamespacedName{Namespace: testClusterName, Name: testClusterName}, &kac)
+				if !errors.IsNotFound(err) {
+					t.Errorf("unexpected error: %v", err)
+				}
+			},
+		},
+		{
+			name: "do not create klusterlet addon config for claim",
+			mc: newManagedCluster(testClusterName, map[string]string{
+				provisionerAnnotation:                          "test.test.ClusterClaim.hive.openshift.io/v1",
+				disableAddonAutomaticInstallationAnnotationKey: "true",
+			}),
+			validate: func(t *testing.T, kubeclient client.Client) {
+				var kac kacv1.KlusterletAddonConfig
+				err := kubeclient.Get(context.TODO(),
+					types.NamespacedName{Namespace: testClusterName, Name: testClusterName}, &kac)
+				if !errors.IsNotFound(err) {
+					t.Errorf("unexpected error: %v", err)
+				}
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
+			kubeclient := fake.NewClientBuilder().WithScheme(testscheme).WithObjects(tt.mc).Build()
 			reconciler := &ReconcileManagedCluster{
-				client: fake.NewFakeClientWithScheme(testscheme, append(tt.initObjs, tt.mc)...),
+				client: kubeclient,
 				scheme: testscheme,
 			}
 
-			actual, err := reconciler.Reconcile(context.TODO(), request)
+			_, err := reconciler.Reconcile(context.TODO(), request)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
 
-			if !reflect.DeepEqual(actual, tt.want) {
-				t.Errorf("expected %v but got %v", tt.want, actual)
-			}
-
-			var kac kacv1.KlusterletAddonConfig
-			err = reconciler.client.Get(context.TODO(), types.NamespacedName{Namespace: testClusterName, Name: testClusterName}, &kac)
-			if err != nil {
-				t.Errorf("unexpected error: %v", err)
-			}
+			tt.validate(t, kubeclient)
 		})
 	}
 }

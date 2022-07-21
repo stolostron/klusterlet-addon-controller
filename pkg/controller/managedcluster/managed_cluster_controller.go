@@ -28,7 +28,12 @@ import (
 	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 )
 
-const provisionerAnnotation = "cluster.open-cluster-management.io/provisioner"
+const (
+	provisionerAnnotation = "cluster.open-cluster-management.io/provisioner"
+	// disableAddonAutomaticInstallationAnnotationKey is the annotation key for disabling the functionality of
+	// installing addon automatically
+	disableAddonAutomaticInstallationAnnotationKey = "addon.open-cluster-management.io/disable-automatic-installation"
+)
 
 var log = logf.Log.WithName("managedcluster-controller")
 
@@ -124,6 +129,13 @@ func (r *ReconcileManagedCluster) Reconcile(ctx context.Context, request reconci
 	}
 
 	if !hypershiftCluster(managedCluster) && !clusterClaimCluster(managedCluster) {
+		return reconcile.Result{}, nil
+	}
+
+	if value, ok := managedCluster.Annotations[disableAddonAutomaticInstallationAnnotationKey]; ok &&
+		strings.EqualFold(value, "true") {
+
+		reqLogger.Info("Cluster has disable addon automatic installation annotation, skip addon deploy")
 		return reconcile.Result{}, nil
 	}
 
