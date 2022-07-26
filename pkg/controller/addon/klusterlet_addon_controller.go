@@ -15,18 +15,14 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const (
@@ -54,57 +50,9 @@ type global struct {
 	ProxyConfig    map[string]string `json:"proxyConfig,omitempty"`
 }
 
-func Add(mgr manager.Manager, kubeClient kubernetes.Interface) error {
-	return add(mgr, newReconciler(mgr))
-}
-
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileKlusterletAddOn{client: mgr.GetClient()}
-}
-
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	c, err := controller.New("klusterletAddon-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &agentv1.KlusterletAddonConfig{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &managedclusterv1.ManagedCluster{}},
-		handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
-			return []reconcile.Request{
-				{
-					NamespacedName: types.NamespacedName{
-						Name:      obj.GetName(),
-						Namespace: obj.GetName(),
-					},
-				},
-			}
-		}),
-	)
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(&source.Kind{Type: &addonv1alpha1.ManagedClusterAddOn{}},
-		handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
-			return []reconcile.Request{
-				{
-					NamespacedName: types.NamespacedName{
-						Name:      obj.GetNamespace(),
-						Namespace: obj.GetNamespace(),
-					},
-				},
-			}
-		}),
-
-		klusterletAddonPredicate())
-
-	return err
 }
 
 func klusterletAddonPredicate() predicate.Predicate {

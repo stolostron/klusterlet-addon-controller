@@ -23,15 +23,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
-	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type GlobalProxyReconciler struct {
@@ -46,57 +43,6 @@ func newGlobalProxyReconciler(mgr manager.Manager, kubeClient kubernetes.Interfa
 		kubeClient:    kubeClient,
 		scheme:        mgr.GetScheme(),
 	}
-}
-
-func Add(mgr manager.Manager, kubeClient kubernetes.Interface) error {
-	return add(mgr, newGlobalProxyReconciler(mgr, kubeClient))
-}
-
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	c, err := controller.New("globalProxy-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return err
-	}
-
-	err = c.Watch(
-		&source.Kind{Type: &managedclusterv1.ManagedCluster{}},
-		handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
-			return []reconcile.Request{
-				{
-					NamespacedName: types.NamespacedName{
-						Name:      obj.GetName(),
-						Namespace: obj.GetName(),
-					},
-				},
-			}
-		}),
-	)
-	if err != nil {
-		return err
-	}
-	err = c.Watch(
-		&source.Kind{Type: &agentv1.KlusterletAddonConfig{}},
-		handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
-			namespace := obj.GetNamespace()
-			name := obj.GetName()
-			if name == namespace {
-				return []reconcile.Request{
-					{
-						NamespacedName: types.NamespacedName{
-							Name:      namespace,
-							Namespace: namespace,
-						},
-					},
-				}
-			}
-			return nil
-		}),
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (r *GlobalProxyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {

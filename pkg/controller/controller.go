@@ -28,6 +28,8 @@ func init() {
 	)
 }
 
+
+
 // AddToManager adds all Controllers to the Manager
 func AddToManager(m manager.Manager, kubeClient kubernetes.Interface, dynamicClient dynamic.Interface) error {
 	for _, f := range AddToManagerFuncs {
