@@ -73,7 +73,7 @@ var KlusterletAddons = map[string]bool{
 // KlusterletAddonImageNames is the image key names for each addon agents in image-manifest configmap
 var KlusterletAddonImageNames = map[string][]string{
 	ApplicationAddonName:  []string{"multicluster_operators_subscription"},
-	ConfigPolicyAddonName: []string{"config_policy_controller"},
+	ConfigPolicyAddonName: []string{"config_policy_controller", "kube_rbac_proxy"},
 	CertPolicyAddonName:   []string{"cert_policy_controller"},
 	IamPolicyAddonName:    []string{"iam_policy_controller"},
 	PolicyAddonName: []string{"config_policy_controller", "governance_policy_spec_sync",
