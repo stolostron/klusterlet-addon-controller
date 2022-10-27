@@ -1,6 +1,6 @@
 module github.com/stolostron/klusterlet-addon-controller
 
-go 1.18
+go 1.19
 
 replace golang.org/x/text => golang.org/x/text v0.3.8 // CVE-2022-32149
 
