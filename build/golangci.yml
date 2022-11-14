@@ -23,9 +23,9 @@ linters:
   - govet
   - ineffassign
   - typecheck
-  - unused
   - varcheck
   # - gosimple
   # disable in go 1.18
   # - staticcheck
   # - structcheck
+  # - unused
