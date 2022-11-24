@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	v1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -204,8 +206,8 @@ func Test_Reconcile(t *testing.T) {
 			clusterName:           "cluster1",
 			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
 			managedClusterAddons: []runtime.Object{
-				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1"),
-				newManagedClusterAddon(v1.SearchAddonName, "cluster1"),
+				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1", ""),
+				newManagedClusterAddon(v1.SearchAddonName, "cluster1", ""),
 			},
 			validateFunc: func(t *testing.T, kubeClient client.Client) {
 				addonList := &v1alpha1.ManagedClusterAddOnList{}
@@ -224,8 +226,8 @@ func Test_Reconcile(t *testing.T) {
 			managedCluster:        newDeletingManagedCluster("cluster1"),
 			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
 			managedClusterAddons: []runtime.Object{
-				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1"),
-				newManagedClusterAddon(v1.SearchAddonName, "cluster1"),
+				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1", ""),
+				newManagedClusterAddon(v1.SearchAddonName, "cluster1", ""),
 			},
 			validateFunc: func(t *testing.T, kubeClient client.Client) {
 				addonList := &v1alpha1.ManagedClusterAddOnList{}
@@ -251,6 +253,46 @@ func Test_Reconcile(t *testing.T) {
 				}
 				if len(addonList.Items) != 6 {
 					t.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+				}
+			},
+		},
+		{
+			name:        "cluster is created in hosed mode with hosted add-on enabled",
+			clusterName: "cluster1",
+			managedCluster: newManagedCluster("cluster1", map[string]string{
+				common.AnnotationKlusterletDeployMode:         "Hosted",
+				common.AnnotationKlusterletHostingClusterName: "local-cluster",
+				common.AnnotationEnableHostedModeAddons:       "true",
+			}),
+			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
+			validateFunc: func(t *testing.T, kubeClient client.Client) {
+				addonList := &v1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "cluster1"})
+				if err != nil {
+					t.Errorf("faild to list addons. %v", err)
+				}
+				if len(addonList.Items) != 6 {
+					t.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+				}
+
+				for _, addon := range addonList.Items {
+					if hostedAddOns.Has(addon.Name) {
+						if value := addon.Annotations[common.AnnotationAddOnHostingClusterName]; value != "local-cluster" {
+							t.Errorf("expected hosting cluster of addon %q is %q, but got %s", addon.Name, "local-cluster", value)
+						}
+
+						if addon.Spec.InstallNamespace != "klusterlet-cluster1" {
+							t.Errorf("expected install namespace of addon %q is %q, but got %s", addon.Name, "klusterlet-cluster1", addon.Spec.InstallNamespace)
+						}
+					} else {
+						if _, ok := addon.Annotations[common.AnnotationAddOnHostingClusterName]; ok {
+							t.Errorf("expected addon %q is installed in default mode, but in hosted mode", addon.Name)
+						}
+
+						if addon.Spec.InstallNamespace != agentv1.KlusterletAddonNamespace {
+							t.Errorf("expected install namespace of addon %q is %q, but got %s", addon.Name, agentv1.KlusterletAddonNamespace, addon.Spec.InstallNamespace)
+						}
+					}
 				}
 			},
 		},
@@ -307,7 +349,7 @@ func Test_Reconcile(t *testing.T) {
 			managedCluster:        newManagedCluster("cluster1", nil),
 			klusterletAddonConfig: newKlusterletAddonConfigWithProxy("cluster1"),
 			managedClusterAddons: []runtime.Object{
-				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1"),
+				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1", ""),
 			},
 			validateFunc: func(t *testing.T, kubeClient client.Client) {
 				addonList := &v1alpha1.ManagedClusterAddOnList{}

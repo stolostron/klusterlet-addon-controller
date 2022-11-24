@@ -36,7 +36,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 					return false
 				}
 
-				return hypershiftCluster(e.Object) || clusterClaimCluster(e.Object)
+				return hostedAddOnEnabled(e.Object) || hypershiftCluster(e.Object) || clusterClaimCluster(e.Object)
 			},
 			DeleteFunc: func(e event.DeleteEvent) bool {
 				return false
@@ -47,7 +47,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 					return false
 				}
 
-				return hypershiftCluster(e.ObjectOld) || clusterClaimCluster(e.ObjectNew)
+				return hostedAddOnEnabled(e.ObjectNew) || hypershiftCluster(e.ObjectOld) || clusterClaimCluster(e.ObjectNew)
 			},
 		}))
 	if err != nil {
