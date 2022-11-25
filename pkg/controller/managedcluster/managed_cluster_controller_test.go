@@ -19,6 +19,7 @@ import (
 
 	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
 	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
 )
 
 func newManagedCluster(clusterName string, anno map[string]string) *mcv1.ManagedCluster {
@@ -48,6 +49,31 @@ func TestReconcileManagedCluster(t *testing.T) {
 		mc       *mcv1.ManagedCluster
 		validate func(t *testing.T, kubeclient client.Client)
 	}{
+		{
+			name: "create addon config for hosted addon enabled cluster",
+			mc: newManagedCluster(testClusterName, map[string]string{
+				common.AnnotationKlusterletDeployMode:         "Hosted",
+				common.AnnotationKlusterletHostingClusterName: "local-cluster",
+				common.AnnotationEnableHostedModeAddons:       "true",
+			}),
+			validate: func(t *testing.T, kubeclient client.Client) {
+				var kac kacv1.KlusterletAddonConfig
+				err := kubeclient.Get(context.TODO(),
+					types.NamespacedName{Namespace: testClusterName, Name: testClusterName}, &kac)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+
+				if !kac.Spec.PolicyController.Enabled {
+					t.Errorf("expected policy add-ons are enabled, but not enabled")
+				}
+
+				if kac.Spec.ApplicationManagerConfig.Enabled || kac.Spec.CertPolicyControllerConfig.Enabled ||
+					kac.Spec.IAMPolicyControllerConfig.Enabled || kac.Spec.SearchCollectorConfig.Enabled {
+					t.Errorf("expected other add-ons are disabled, but some of them is enabled")
+				}
+			},
+		},
 		{
 			name: "create hypershift cluster klusterlet addon config",
 			mc: newManagedCluster(testClusterName, map[string]string{

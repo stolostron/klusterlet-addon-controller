@@ -20,6 +20,7 @@ import (
 	mcv1 "open-cluster-management.io/api/cluster/v1"
 
 	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
 )
 
 const (
@@ -66,7 +67,7 @@ func (r *ReconcileManagedCluster) Reconcile(ctx context.Context, request reconci
 		return reconcile.Result{}, nil
 	}
 
-	if !hypershiftCluster(managedCluster) && !clusterClaimCluster(managedCluster) {
+	if !hostedAddOnEnabled(managedCluster) && !hypershiftCluster(managedCluster) && !clusterClaimCluster(managedCluster) {
 		return reconcile.Result{}, nil
 	}
 
@@ -89,7 +90,7 @@ func createKlusterletAddonConfig(client client.Client, cluster *mcv1.ManagedClus
 	err := client.Get(ctx, types.NamespacedName{Namespace: name, Name: name}, &kac)
 	if errors.IsNotFound(err) {
 		log.Info(fmt.Sprintf("Create a new KlusterletAddonConfig resource %s", name))
-		kacNew := newKlusterletAddonConfig(clusterType(cluster), name)
+		kacNew := newKlusterletAddonConfig(clusterType(cluster), name, hostedAddOnEnabled(cluster))
 		if kacNew == nil {
 			return fmt.Errorf("new KlusterletAddonConfig %s", name)
 		}
@@ -103,6 +104,21 @@ func createKlusterletAddonConfig(client client.Client, cluster *mcv1.ManagedClus
 	}
 
 	return nil
+}
+
+func hostedAddOnEnabled(meta metav1.Object) bool {
+	switch {
+	case meta == nil:
+		return false
+	case meta.GetAnnotations()[common.AnnotationKlusterletDeployMode] != "Hosted":
+		return false
+	case len(meta.GetAnnotations()[common.AnnotationKlusterletHostingClusterName]) == 0:
+		return false
+	case !strings.EqualFold(meta.GetAnnotations()[common.AnnotationEnableHostedModeAddons], "true"):
+		return false
+	default:
+		return true
+	}
 }
 
 func hypershiftCluster(meta metav1.Object) bool {
@@ -125,9 +141,25 @@ func clusterType(cluster *mcv1.ManagedCluster) string {
 	return "Unknown"
 }
 
-func newKlusterletAddonConfig(clusterType string, name string) *kacv1.KlusterletAddonConfig {
-	switch clusterType {
-	case clusterTypeClusterClaim:
+func newKlusterletAddonConfig(clusterType string, name string, hostedAddOnEnabled bool) *kacv1.KlusterletAddonConfig {
+	switch {
+	case hostedAddOnEnabled:
+		return &kacv1.KlusterletAddonConfig{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: name,
+				Name:      name,
+			},
+			Spec: kacv1.KlusterletAddonConfigSpec{
+				ClusterName:                name,
+				ClusterNamespace:           name,
+				ApplicationManagerConfig:   kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
+				CertPolicyControllerConfig: kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
+				IAMPolicyControllerConfig:  kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
+				PolicyController:           kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+				SearchCollectorConfig:      kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
+			},
+		}
+	case clusterType == clusterTypeClusterClaim:
 		return &kacv1.KlusterletAddonConfig{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: name,
@@ -144,7 +176,7 @@ func newKlusterletAddonConfig(clusterType string, name string) *kacv1.Klusterlet
 				SearchCollectorConfig:      kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
 			},
 		}
-	case clusterTypeHypershift:
+	case clusterType == clusterTypeHypershift:
 		return &kacv1.KlusterletAddonConfig{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: name,

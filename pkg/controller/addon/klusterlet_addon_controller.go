@@ -9,12 +9,15 @@ import (
 
 	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
+	mcv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -31,6 +34,9 @@ const (
 	// annotationValues is the key name of values annotation on managedClusterAddon
 	annotationValues = "addon.open-cluster-management.io/values"
 )
+
+var hostedAddOns = sets.NewString(agentv1.PolicyFrameworkAddonName, agentv1.ConfigPolicyAddonName,
+	agentv1.CertPolicyAddonName, agentv1.IamPolicyAddonName)
 
 // globalValues is the values can be overridden by klusterletAddon-controller
 type globalValues struct {
@@ -114,6 +120,7 @@ func (r *ReconcileKlusterletAddOn) Reconcile(ctx context.Context, request reconc
 		return reconcile.Result{}, err
 	}
 
+	addOnHostingClusterName := getAddOnHostingClusterName(managedCluster)
 	var aggregatedErrs []error
 	for addonName, needUpdate := range agentv1.KlusterletAddons {
 		if !addonIsEnabled(addonName, klusterletAddonConfig) {
@@ -134,7 +141,7 @@ func (r *ReconcileKlusterletAddOn) Reconcile(ctx context.Context, request reconc
 		}
 		gv := getGlobalValues(nodeSelector, imageOverrides, addonName, klusterletAddonConfig)
 
-		if err := r.updateManagedClusterAddon(ctx, gv, addonName, managedCluster.GetName()); err != nil {
+		if err := r.updateManagedClusterAddon(ctx, gv, addonName, managedCluster.GetName(), addOnHostingClusterName); err != nil {
 			aggregatedErrs = append(aggregatedErrs, err)
 		}
 	}
@@ -175,7 +182,7 @@ func (r *ReconcileKlusterletAddOn) deleteManagedClusterAddon(ctx context.Context
 	return nil
 }
 
-func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(ctx context.Context, gv globalValues, addonName, clusterName string) error {
+func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(ctx context.Context, gv globalValues, addonName, clusterName string, hostingClusterName string) error {
 	valuesString, err := marshalGlobalValues(gv)
 	if err != nil {
 		return err
@@ -187,7 +194,7 @@ func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(ctx context.Context
 			return nil
 		}
 
-		newAddon := newManagedClusterAddon(addonName, clusterName)
+		newAddon := newManagedClusterAddon(addonName, clusterName, hostingClusterName)
 		if len(valuesString) != 0 {
 			newAddon.SetAnnotations(map[string]string{annotationValues: valuesString})
 		}
@@ -344,8 +351,23 @@ func getGlobalValues(nodeSelector map[string]string,
 	}
 }
 
-func newManagedClusterAddon(addonName, namespace string) *addonv1alpha1.ManagedClusterAddOn {
-	return &addonv1alpha1.ManagedClusterAddOn{
+// getAddOnHostingClusterName returns the hosting cluster name for add-ons of the given managed cluster.
+// An empty string is returned if the add-ons should be deployed in the default mode.
+func getAddOnHostingClusterName(cluster *mcv1.ManagedCluster) string {
+	switch {
+	case cluster == nil:
+		return ""
+	case cluster.Annotations[common.AnnotationKlusterletDeployMode] != "Hosted":
+		return ""
+	case !strings.EqualFold(cluster.Annotations[common.AnnotationEnableHostedModeAddons], "true"):
+		return ""
+	default:
+		return cluster.Annotations[common.AnnotationKlusterletHostingClusterName]
+	}
+}
+
+func newManagedClusterAddon(addonName, namespace string, hostingClusterName string) *addonv1alpha1.ManagedClusterAddOn {
+	addOn := &addonv1alpha1.ManagedClusterAddOn{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      addonName,
 			Namespace: namespace,
@@ -354,6 +376,15 @@ func newManagedClusterAddon(addonName, namespace string) *addonv1alpha1.ManagedC
 			InstallNamespace: agentv1.KlusterletAddonNamespace,
 		},
 	}
+
+	if hostedAddOns.Has(addonName) && len(hostingClusterName) > 0 {
+		addOn.Annotations = map[string]string{
+			common.AnnotationAddOnHostingClusterName: hostingClusterName,
+		}
+		addOn.Spec.InstallNamespace = fmt.Sprintf("klusterlet-%s", namespace)
+	}
+
+	return addOn
 }
 
 func marshalGlobalValues(values globalValues) (string, error) {
