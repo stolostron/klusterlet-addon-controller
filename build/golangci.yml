@@ -25,7 +25,7 @@ linters:
   - typecheck
   - varcheck
   # - gosimple
-  # disable in go 1.18
+  # disable in go 1.19
   # - staticcheck
   # - structcheck
   # - unused
