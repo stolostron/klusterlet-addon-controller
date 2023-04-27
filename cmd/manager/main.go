@@ -9,6 +9,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -63,8 +64,6 @@ func main() {
 
 	ctrl.SetLogger(zap.New())
 
-	printVersion()
-
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -95,6 +94,15 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+	version.Version = os.Getenv("HUB_VERSION")
+	if version.Version == "" {
+		version.Version, err = agentv1.GetHubVersion(context.Background(), dynamicClient)
+		if err != nil {
+			log.Error(err, "failed to get hub version.")
+			os.Exit(1)
+		}
+	}
+	printVersion()
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{

@@ -5,7 +5,6 @@ go 1.19
 replace golang.org/x/text => golang.org/x/text v0.3.8 // CVE-2022-32149
 
 require (
-	github.com/Masterminds/semver v1.5.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.20.0
 	github.com/openshift/api v0.0.0-20220525145417-ee5b62754c68

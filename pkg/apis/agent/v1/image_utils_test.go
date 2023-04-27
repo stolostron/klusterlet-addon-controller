@@ -9,6 +9,8 @@
 package v1
 
 import (
+	"context"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"testing"
 
 	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
@@ -17,22 +19,25 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestGetImageWithManifest(t *testing.T) {
+	version.Version = "x.y.z"
 	testConfigMap := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: corev1.SchemeGroupVersion.String(),
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-configmap-2.8.0",
+			Name:      "test-configmap-x.y.z",
 			Namespace: "test-namespace",
 			Labels: map[string]string{
 				"ocm-configmap-type":  "image-manifest",
-				"ocm-release-version": version.Version,
+				"ocm-release-version": "x.y.z",
 			},
 		},
 		Data: map[string]string{
@@ -121,11 +126,11 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-configmap-2.8.0",
+			Name:      "test-configmap-x.y.z",
 			Namespace: "test-namespace",
 			Labels: map[string]string{
 				"ocm-configmap-type":  "image-manifest",
-				"ocm-release-version": version.Version,
+				"ocm-release-version": "x.y.z",
 			},
 		},
 		Data: map[string]string{
@@ -172,6 +177,7 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 		},
 	}
 
+	version.Version = "x.y.z"
 	client := fake.NewFakeClient([]runtime.Object{
 		testConfigMap, testConfigMap1, testConfigMapInvalidVersion,
 	}...)
@@ -242,5 +248,44 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 				assert.Equal(t, tt.want.ImageOverrides[tt.args.component], imgRepository, "repository should match")
 			}
 		})
+	}
+}
+
+var fakeMCHJson = `{
+    "apiVersion": "operator.open-cluster-management.io/v1",
+    "kind": "MultiClusterHub",
+    "metadata": {
+        "name": "multiclusterhub",
+        "namespace": "open-cluster-management"
+    },
+    "spec": {
+        "availabilityConfig": "High"
+    },
+    "status": {
+        "currentVersion": "x.y.z",
+        "desiredVersion": "x.y.z",
+        "phase": "Running"
+    }
+}`
+
+func Test_GetHubVersion(t *testing.T) {
+	testScheme := runtime.NewScheme()
+	testScheme.AddKnownTypes(schema.GroupVersion{Group: MCHgvr.Group, Version: MCHgvr.Version})
+
+	mch := &unstructured.Unstructured{}
+	err := mch.UnmarshalJSON([]byte(fakeMCHJson))
+	if err != nil {
+		t.Errorf("failed to unmarshal mch json. err: %v", err)
+	}
+
+	fakeDynamicClient := dynamicfake.NewSimpleDynamicClient(testScheme, mch)
+
+	hubVersion, err := GetHubVersion(context.Background(), fakeDynamicClient)
+	if err != nil {
+		t.Errorf("failed to get hub version. err: %v", err)
+	}
+
+	if hubVersion != "x.y.z" {
+		t.Errorf("expected version x.y.z,but got %v", hubVersion)
 	}
 }

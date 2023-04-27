@@ -36,3 +36,5 @@ spec:
                 fieldPath: metadata.namespace
           - name: OPERATOR_NAME
             value: "klusterlet-addon-controller"
+          - name: HUB_VERSION
+            value: "x.y.z"
