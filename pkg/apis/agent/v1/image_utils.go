@@ -11,42 +11,40 @@ package v1
 import (
 	"context"
 	"fmt"
-	"sort"
-
 	"github.com/stolostron/cluster-lifecycle-api/helpers/imageregistry"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/Masterminds/semver"
 	"github.com/stolostron/klusterlet-addon-controller/version"
 	corev1 "k8s.io/api/core/v1"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// var defaultComponentImageKeyMap = map[string]string{
-// 	"cert-policy-controller":          "cert_policy_controller",
-// 	"addon-operator":                  "endpoint_component_operator",
-// 	"coredns":                         "coredns",
-// 	"deployable":                      "multicluster_operators_deployable",
-// 	"iam-policy-controller":           "iam_policy_controller",
-// 	"policy-controller":               "config_policy_controller",
-// 	"governance-policy-spec-sync":     "governance_policy_spec_sync",
-// 	"governance-policy-status-sync":   "governance_policy_status_sync",
-// 	"governance-policy-template-sync": "governance_policy_template_sync",
-// 	"router":                          "management_ingress",
-// 	"search-collector":                "search_collector",
-// 	"service-registry":                "multicloud_manager",
-// 	"subscription":                    "multicluster_operators_subscription",
-// 	"work-manager":                    "multicloud_manager",
-// }
+//	var defaultComponentImageKeyMap = map[string]string{
+//		"cert-policy-controller":          "cert_policy_controller",
+//		"addon-operator":                  "endpoint_component_operator",
+//		"coredns":                         "coredns",
+//		"deployable":                      "multicluster_operators_deployable",
+//		"iam-policy-controller":           "iam_policy_controller",
+//		"policy-controller":               "config_policy_controller",
+//		"governance-policy-spec-sync":     "governance_policy_spec_sync",
+//		"governance-policy-status-sync":   "governance_policy_status_sync",
+//		"governance-policy-template-sync": "governance_policy_template_sync",
+//		"router":                          "management_ingress",
+//		"search-collector":                "search_collector",
+//		"service-registry":                "multicloud_manager",
+//		"subscription":                    "multicluster_operators_subscription",
+//		"work-manager":                    "multicloud_manager",
+//	}
 const ocmVersionLabel = "ocm-release-version"
 
 // Manifest contains the manifest.
 // The Manifest is loaded using the LoadManifest method.
 
-var versionList []*semver.Version
-
-var log = logf.Log.WithName("image_utils")
+var versionList []string
 
 type manifest struct {
 	Images map[string]string
@@ -86,40 +84,13 @@ func GetImage(managedCluster *clusterv1.ManagedCluster, component string) (strin
 }
 
 // getManifest returns the manifest that is best matching the required version
-// if no version can match (major version), will return error
 func getManifest(version string) (*manifest, error) {
 	if len(versionList) == 0 || manifests == nil {
 		return nil, fmt.Errorf("image manifest not loaded")
 	}
 
-	// find exact version first
 	if m, ok := manifests[version]; ok {
 		return &m, nil
-	}
-	log.Error(fmt.Errorf("Failed to find image manifest in version %s", version), "version not found")
-
-	// find the version use ^
-	currVersion, err := semver.NewVersion(version)
-	if err != nil {
-		log.Error(err, "not valid version "+version)
-		return nil, err
-	}
-
-	versionConstraint, err := semver.NewConstraint(
-		fmt.Sprintf("^%d.%d.%d", currVersion.Major(), currVersion.Minor(), currVersion.Patch()),
-	)
-	if err != nil {
-		log.Error(err, "failed to generate semver constraint")
-		return nil, err
-	}
-	// search for the first possible version
-	// (used linear because versionList is very short)
-	for _, v := range versionList {
-		if isValid := versionConstraint.Check(v); isValid {
-			if m, ok := manifests[v.Original()]; ok {
-				return &m, nil
-			}
-		}
 	}
 
 	return nil, fmt.Errorf("version %s not supported", version)
@@ -136,19 +107,37 @@ func LoadConfigmaps(k8s client.Client) error {
 	}
 
 	for _, cm := range configmapList.Items {
-		version := cm.Labels[ocmVersionLabel]
-		v, err := semver.NewVersion(version)
-		if err != nil {
-			log.Error(err, "Invalid semantic version found in image-manifests")
-			continue
-		}
+		omcVersion := cm.Labels[ocmVersionLabel]
 		m := manifest{}
 		m.Images = make(map[string]string)
 		m.Images = cm.Data
-		manifests[v.Original()] = m
+		manifests[omcVersion] = m
 
-		versionList = append(versionList, v)
+		versionList = append(versionList, omcVersion)
 	}
-	sort.Sort(semver.Collection(versionList))
 	return nil
+}
+
+var MCHgvr = schema.GroupVersionResource{
+	Group:    "operator.open-cluster-management.io",
+	Version:  "v1",
+	Resource: "multiclusterhubs",
+}
+
+func GetHubVersion(ctx context.Context, dynamicClient dynamic.Interface) (string, error) {
+
+	mchList, err := dynamicClient.Resource(MCHgvr).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return "", fmt.Errorf("failed to list mch. err: %v", err)
+	}
+	if len(mchList.Items) == 0 {
+		return "", fmt.Errorf("get 0 mch instance")
+	}
+
+	mch := mchList.Items[0]
+	hubVersion, _, err := unstructured.NestedString(mch.Object, "status", "currentVersion")
+	if err != nil {
+		return "", fmt.Errorf("failed to version from mch. err: %v", err)
+	}
+	return hubVersion, nil
 }
