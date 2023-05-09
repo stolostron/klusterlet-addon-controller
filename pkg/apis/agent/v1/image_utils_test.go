@@ -33,7 +33,7 @@ func TestGetImageWithManifest(t *testing.T) {
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-configmap-x.y.z",
+			Name:      "test-configmap-2.9.0",
 			Namespace: "test-namespace",
 			Labels: map[string]string{
 				"ocm-configmap-type":  "image-manifest",
@@ -126,7 +126,7 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-configmap-x.y.z",
+			Name:      "test-configmap-2.9.0",
 			Namespace: "test-namespace",
 			Labels: map[string]string{
 				"ocm-configmap-type":  "image-manifest",
