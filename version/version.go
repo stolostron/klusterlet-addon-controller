@@ -11,5 +11,5 @@ package version
 var (
 	// Version Define the release version for the package.
 	// The version is filled from env HUB_VERSION.
-	Version = ""
+	Version = "2.9.0"
 )
