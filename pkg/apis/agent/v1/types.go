@@ -77,6 +77,6 @@ var KlusterletAddonImageNames = map[string][]string{
 	CertPolicyAddonName:      []string{"cert_policy_controller"},
 	IamPolicyAddonName:       []string{"iam_policy_controller"},
 	PolicyAddonName:          []string{"config_policy_controller", "governance_policy_framework_addon"},
-	PolicyFrameworkAddonName: []string{"governance_policy_framework_addon"},
+	PolicyFrameworkAddonName: []string{"governance_policy_framework_addon", "kube_rbac_proxy"},
 	SearchAddonName:          []string{"search_collector"},
 }
