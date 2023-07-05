@@ -29,5 +29,5 @@ if ! which golangci-lint > /dev/null; then
 fi
 
 echo 'Running linting tool ...'
-$(GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} CGO_ENABLED=0 golangci-lint run -c build/golangci.yml)
+$(GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} CGO_ENABLED=1 golangci-lint run -c build/golangci.yml)
 echo '##### lint-check #### Success'

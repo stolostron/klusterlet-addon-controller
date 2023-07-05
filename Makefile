@@ -5,7 +5,7 @@ SHELL := /bin/bash
 
 export BUILD_DATE  = $(shell date +%m/%d@%H:%M:%S)
 
-export CGO_ENABLED  = 0
+export CGO_ENABLED  = 1
 export GO111MODULE := on
 export GOOS         = $(shell go env GOOS)
 export GOPACKAGES   = $(shell go list ./... | grep -v /vendor | grep -v /build | grep -v /test)
