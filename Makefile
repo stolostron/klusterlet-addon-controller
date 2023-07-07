@@ -6,6 +6,7 @@ SHELL := /bin/bash
 export BUILD_DATE  = $(shell date +%m/%d@%H:%M:%S)
 
 export CGO_ENABLED  = 1
+export GOFLAGS ?= 
 export GO111MODULE := on
 export GOOS         = $(shell go env GOOS)
 export GOPACKAGES   = $(shell go list ./... | grep -v /vendor | grep -v /build | grep -v /test)
@@ -60,7 +61,8 @@ test:
 .PHONY: build
 ## Builds operator binary inside of an image
 build:
-	go build -o build/_output/manager -mod=mod ./cmd/manager
+	go build ./cmd/manager
+	go test -covermode=atomic -coverpkg=github.com/stolostron/klusterlet-addon-controller/pkg/... -c -tags testrunmain ./cmd/manager -o manager-coverage
 
 .PHONY: build-image
 ## Builds controller binary inside of an image
