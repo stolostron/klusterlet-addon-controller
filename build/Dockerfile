@@ -8,8 +8,7 @@ ARG REMOTE_SOURCE_DIR
 COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR/app/
 WORKDIR $REMOTE_SOURCE_DIR/app
 
-RUN GOFLAGS="" go build ./cmd/manager
-RUN GOFLAGS="" go test -covermode=atomic -coverpkg=github.com/stolostron/klusterlet-addon-controller/pkg/... -c -tags testrunmain ./cmd/manager -o manager-coverage
+RUN make build 
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
