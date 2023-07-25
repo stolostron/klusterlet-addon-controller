@@ -13,4 +13,7 @@ const (
 
 	// AnnotationAddOnHostingClusterName is the annotation key of hosting cluster name for add-ons
 	AnnotationAddOnHostingClusterName = "addon.open-cluster-management.io/hosting-cluster-name"
+
+	// AnnotationCreateWithDefaultKlusterletAddonConfig is the annotation key for creating default klusterlet addon config for a normal managed cluster.
+	AnnotationCreateWithDefaultKlusterletAddonConfig = "agent.open-cluster-management.io/create-with-default-klusterletaddonconfig"
 )

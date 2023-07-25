@@ -103,6 +103,20 @@ func TestReconcileManagedCluster(t *testing.T) {
 			},
 		},
 		{
+			name: "create klusterlet addon config for normal managed cluster with the annotation",
+			mc: newManagedCluster(testClusterName, map[string]string{
+				common.AnnotationCreateWithDefaultKlusterletAddonConfig: "true",
+			}),
+			validate: func(t *testing.T, kubeclient client.Client) {
+				var kac kacv1.KlusterletAddonConfig
+				err := kubeclient.Get(context.TODO(),
+					types.NamespacedName{Namespace: testClusterName, Name: testClusterName}, &kac)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+			},
+		},
+		{
 			name: "do not create klusterlet addon config for hypershift",
 			mc: newManagedCluster(testClusterName, map[string]string{
 				provisionerAnnotation:                          "test.test.HypershiftDeployment.cluster.open-cluster-management.io",
@@ -122,6 +136,35 @@ func TestReconcileManagedCluster(t *testing.T) {
 			mc: newManagedCluster(testClusterName, map[string]string{
 				provisionerAnnotation:                          "test.test.ClusterClaim.hive.openshift.io/v1",
 				disableAddonAutomaticInstallationAnnotationKey: "true",
+			}),
+			validate: func(t *testing.T, kubeclient client.Client) {
+				var kac kacv1.KlusterletAddonConfig
+				err := kubeclient.Get(context.TODO(),
+					types.NamespacedName{Namespace: testClusterName, Name: testClusterName}, &kac)
+				if !errors.IsNotFound(err) {
+					t.Errorf("unexpected error: %v", err)
+				}
+			},
+		},
+		{
+			name: "do not create klusterlet addon config for normal managed cluster without the annotation",
+			mc: newManagedCluster(testClusterName, map[string]string{
+				common.AnnotationCreateWithDefaultKlusterletAddonConfig: "false",
+			}),
+			validate: func(t *testing.T, kubeclient client.Client) {
+				var kac kacv1.KlusterletAddonConfig
+				err := kubeclient.Get(context.TODO(),
+					types.NamespacedName{Namespace: testClusterName, Name: testClusterName}, &kac)
+				if !errors.IsNotFound(err) {
+					t.Errorf("unexpected error: %v", err)
+				}
+			},
+		},
+		{
+			name: "do not create klusterlet addon config for normal managed cluster with the annotation but disable addon automatic installation",
+			mc: newManagedCluster(testClusterName, map[string]string{
+				common.AnnotationCreateWithDefaultKlusterletAddonConfig: "true",
+				disableAddonAutomaticInstallationAnnotationKey:          "true",
 			}),
 			validate: func(t *testing.T, kubeclient client.Client) {
 				var kac kacv1.KlusterletAddonConfig

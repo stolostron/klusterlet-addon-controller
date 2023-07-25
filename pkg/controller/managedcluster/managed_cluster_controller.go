@@ -67,7 +67,7 @@ func (r *ReconcileManagedCluster) Reconcile(ctx context.Context, request reconci
 		return reconcile.Result{}, nil
 	}
 
-	if !hostedAddOnEnabled(managedCluster) && !hypershiftCluster(managedCluster) && !clusterClaimCluster(managedCluster) {
+	if !hostedAddOnEnabled(managedCluster) && !hypershiftCluster(managedCluster) && !clusterClaimCluster(managedCluster) && !hasAnnotationCreateWithDefaultKAC(managedCluster) {
 		return reconcile.Result{}, nil
 	}
 
@@ -90,8 +90,17 @@ func createKlusterletAddonConfig(client client.Client, cluster *mcv1.ManagedClus
 	err := client.Get(ctx, types.NamespacedName{Namespace: name, Name: name}, &kac)
 	if errors.IsNotFound(err) {
 		log.Info(fmt.Sprintf("Create a new KlusterletAddonConfig resource %s", name))
-		kacNew := newKlusterletAddonConfig(clusterType(cluster), name, hostedAddOnEnabled(cluster))
-		if kacNew == nil {
+		var kacNew *kacv1.KlusterletAddonConfig
+		switch {
+		case hostedAddOnEnabled(cluster):
+			kacNew = hostedKAC(name)
+		case clusterClaimCluster(cluster.GetObjectMeta()):
+			kacNew = clusterClaimKAC(name)
+		case hypershiftCluster(cluster.GetObjectMeta()):
+			kacNew = hypershiftKAC(name)
+		case hasAnnotationCreateWithDefaultKAC(cluster.GetObjectMeta()):
+			kacNew = defaultKAC(name)
+		default:
 			return fmt.Errorf("new KlusterletAddonConfig %s", name)
 		}
 		if err = client.Create(ctx, kacNew); err != nil {
@@ -129,75 +138,79 @@ func clusterClaimCluster(meta metav1.Object) bool {
 	return strings.Contains(meta.GetAnnotations()[provisionerAnnotation], "ClusterClaim.hive.openshift.io")
 }
 
-func clusterType(cluster *mcv1.ManagedCluster) string {
-	if clusterClaimCluster(cluster.GetObjectMeta()) {
-		return clusterTypeClusterClaim
-	}
-
-	if hypershiftCluster(cluster.GetObjectMeta()) {
-		return clusterTypeHypershift
-	}
-
-	return "Unknown"
+func hasAnnotationCreateWithDefaultKAC(meta metav1.Object) bool {
+	return strings.EqualFold(meta.GetAnnotations()[common.AnnotationCreateWithDefaultKlusterletAddonConfig], "true")
 }
 
-func newKlusterletAddonConfig(clusterType string, name string, hostedAddOnEnabled bool) *kacv1.KlusterletAddonConfig {
-	switch {
-	case hostedAddOnEnabled:
-		return &kacv1.KlusterletAddonConfig{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: name,
-				Name:      name,
-			},
-			Spec: kacv1.KlusterletAddonConfigSpec{
-				ClusterName:                name,
-				ClusterNamespace:           name,
-				ApplicationManagerConfig:   kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
-				CertPolicyControllerConfig: kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
-				IAMPolicyControllerConfig:  kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
-				PolicyController:           kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
-				SearchCollectorConfig:      kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
-			},
-		}
-	case clusterType == clusterTypeClusterClaim:
-		return &kacv1.KlusterletAddonConfig{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: name,
-				Name:      name,
-			},
-			Spec: kacv1.KlusterletAddonConfigSpec{
-				ClusterName:                name,
-				ClusterNamespace:           name,
-				ClusterLabels:              map[string]string{"vendor": "OpenShift"}, // Required for object to be created
-				ApplicationManagerConfig:   kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
-				CertPolicyControllerConfig: kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
-				IAMPolicyControllerConfig:  kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
-				PolicyController:           kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
-				SearchCollectorConfig:      kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
-			},
-		}
-	case clusterType == clusterTypeHypershift:
-		return &kacv1.KlusterletAddonConfig{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: name,
-				Name:      name,
-			},
-			Spec: kacv1.KlusterletAddonConfigSpec{
-				ClusterName:                name,
-				ClusterNamespace:           name,
-				ApplicationManagerConfig:   kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
-				CertPolicyControllerConfig: kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
-				IAMPolicyControllerConfig:  kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
-				PolicyController:           kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
-				SearchCollectorConfig:      kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
-			},
-		}
-	default:
-		return nil
+func hostedKAC(clusterName string) *kacv1.KlusterletAddonConfig {
+	return &kacv1.KlusterletAddonConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: clusterName,
+			Name:      clusterName,
+		},
+		Spec: kacv1.KlusterletAddonConfigSpec{
+			ClusterName:                clusterName,
+			ClusterNamespace:           clusterName,
+			ApplicationManagerConfig:   kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
+			CertPolicyControllerConfig: kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
+			IAMPolicyControllerConfig:  kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
+			PolicyController:           kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			SearchCollectorConfig:      kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
+		},
 	}
 }
 
-const (
-	clusterTypeHypershift   string = "Hypershift"
-	clusterTypeClusterClaim string = "ClusterClaim"
-)
+func clusterClaimKAC(clusterName string) *kacv1.KlusterletAddonConfig {
+	return &kacv1.KlusterletAddonConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: clusterName,
+			Name:      clusterName,
+		},
+		Spec: kacv1.KlusterletAddonConfigSpec{
+			ClusterName:                clusterName,
+			ClusterNamespace:           clusterName,
+			ClusterLabels:              map[string]string{"vendor": "OpenShift"}, // Required for object to be created
+			ApplicationManagerConfig:   kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			CertPolicyControllerConfig: kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			IAMPolicyControllerConfig:  kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			PolicyController:           kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			SearchCollectorConfig:      kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+		},
+	}
+}
+
+func hypershiftKAC(clusterName string) *kacv1.KlusterletAddonConfig {
+	return &kacv1.KlusterletAddonConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: clusterName,
+			Name:      clusterName,
+		},
+		Spec: kacv1.KlusterletAddonConfigSpec{
+			ClusterName:                clusterName,
+			ClusterNamespace:           clusterName,
+			ApplicationManagerConfig:   kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
+			CertPolicyControllerConfig: kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			IAMPolicyControllerConfig:  kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			PolicyController:           kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			SearchCollectorConfig:      kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
+		},
+	}
+}
+
+func defaultKAC(clusterName string) *kacv1.KlusterletAddonConfig {
+	return &kacv1.KlusterletAddonConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: clusterName,
+			Name:      clusterName,
+		},
+		Spec: kacv1.KlusterletAddonConfigSpec{
+			ClusterName:                clusterName,
+			ClusterNamespace:           clusterName,
+			ApplicationManagerConfig:   kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			CertPolicyControllerConfig: kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			IAMPolicyControllerConfig:  kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			PolicyController:           kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			SearchCollectorConfig:      kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
+		},
+	}
+}
