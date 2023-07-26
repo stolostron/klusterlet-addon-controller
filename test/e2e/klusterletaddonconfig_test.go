@@ -15,10 +15,11 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("klusterletAddonConfig test for claim and hypershift cluster", func() {
+var _ = Describe("klusterletAddonConfig test", func() {
 	Context("klusterletAddonConfig test for hypershift cluster", func() {
 		var managedClusterName string
 		BeforeEach(func() {
@@ -35,55 +36,10 @@ var _ = Describe("klusterletAddonConfig test for claim and hypershift cluster", 
 		})
 
 		It("test klusterletAddonConfig create", func() {
-			assertManagedClusterNamespace(managedClusterName)
-
-			addonConfig := &agentv1.KlusterletAddonConfig{}
-			By("check if klusterletAddonConfig is created", func() {
-				Eventually(func() error {
-					return kubeClient.Get(context.TODO(), types.NamespacedName{Name: managedClusterName, Namespace: managedClusterName}, addonConfig)
-				}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
-			})
-
-			By("check if all addons are installed", func() {
-				Eventually(func() error {
-					addonList := &addonv1alpha1.ManagedClusterAddOnList{}
-					err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: managedClusterName})
-					if err != nil {
-						return err
-					}
-					if len(addonList.Items) != 4 {
-						return fmt.Errorf("expected 4 addons, but got %v", len(addonList.Items))
-					}
-					return nil
-				}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
-			})
-
-			By("delete klusterletAddonConfig", func() {
-				err := kubeClient.Delete(context.TODO(), addonConfig)
-				Expect(err).ToNot(HaveOccurred())
-			})
-
-			By("check if klusterletAddonConfig is created again", func() {
-				Eventually(func() error {
-					return kubeClient.Get(context.TODO(), types.NamespacedName{Name: managedClusterName, Namespace: managedClusterName}, addonConfig)
-				}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
-			})
-
-			By("check if all addons are installed", func() {
-				Eventually(func() error {
-					addonList := &addonv1alpha1.ManagedClusterAddOnList{}
-					err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: managedClusterName})
-					if err != nil {
-						return err
-					}
-					if len(addonList.Items) != 4 {
-						return fmt.Errorf("expected 4 addons, but got %v", len(addonList.Items))
-					}
-					return nil
-				}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
-			})
+			testKACCreate(managedClusterName, 4)
 		})
 	})
+
 	Context("klusterletAddonConfig test for claim cluster", func() {
 		var managedClusterName string
 		BeforeEach(func() {
@@ -101,53 +57,76 @@ var _ = Describe("klusterletAddonConfig test for claim and hypershift cluster", 
 		})
 
 		It("test klusterletAddonConfig create", func() {
-			assertManagedClusterNamespace(managedClusterName)
+			testKACCreate(managedClusterName, 6)
+		})
+	})
 
-			addonConfig := &agentv1.KlusterletAddonConfig{}
-			By("check if klusterletAddonConfig is created", func() {
-				Eventually(func() error {
-					return kubeClient.Get(context.TODO(), types.NamespacedName{Name: managedClusterName, Namespace: managedClusterName}, addonConfig)
-				}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
-			})
+	Context("klusterletAddonConfig test for normal clusters with annotation", func() {
+		var managedClusterName string
+		BeforeEach(func() {
+			managedClusterName = fmt.Sprintf("cluster-test-%s", rand.String(6))
 
-			By("check if all addons are installed", func() {
-				Eventually(func() error {
-					addonList := &addonv1alpha1.ManagedClusterAddOnList{}
-					err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: managedClusterName})
-					if err != nil {
-						return err
-					}
-					if len(addonList.Items) != 6 {
-						return fmt.Errorf("expected 6 addons, but got %v", len(addonList.Items))
-					}
-					return nil
-				}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
-			})
-
-			By("delete klusterletAddonConfig", func() {
-				err := kubeClient.Delete(context.TODO(), addonConfig)
+			By(fmt.Sprintf("Create managed cluster %s", managedClusterName), func() {
+				_, err := createManagedCluster(managedClusterName,
+					map[string]string{common.AnnotationCreateWithDefaultKlusterletAddonConfig: "true"})
 				Expect(err).ToNot(HaveOccurred())
 			})
+		})
 
-			By("check if klusterletAddonConfig is created again", func() {
-				Eventually(func() error {
-					return kubeClient.Get(context.TODO(), types.NamespacedName{Name: managedClusterName, Namespace: managedClusterName}, addonConfig)
-				}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
-			})
+		AfterEach(func() {
+			deleteManagedCluster(managedClusterName)
+		})
 
-			By("check if all addons are installed", func() {
-				Eventually(func() error {
-					addonList := &addonv1alpha1.ManagedClusterAddOnList{}
-					err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: managedClusterName})
-					if err != nil {
-						return err
-					}
-					if len(addonList.Items) != 6 {
-						return fmt.Errorf("expected 6 addons, but got %v", len(addonList.Items))
-					}
-					return nil
-				}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
-			})
+		It("test klusterletAddonConfig create", func() {
+			testKACCreate(managedClusterName, 5)
 		})
 	})
 })
+
+func testKACCreate(managedClusterName string, addonNumber int) {
+	addonConfig := &agentv1.KlusterletAddonConfig{}
+	By("check if klusterletAddonConfig is created", func() {
+		Eventually(func() error {
+			return kubeClient.Get(context.TODO(), types.NamespacedName{Name: managedClusterName, Namespace: managedClusterName}, addonConfig)
+		}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
+	})
+
+	By("check if all addons are installed", func() {
+		Eventually(func() error {
+			addonList := &addonv1alpha1.ManagedClusterAddOnList{}
+			err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: managedClusterName})
+			if err != nil {
+				return err
+			}
+			if len(addonList.Items) != addonNumber {
+				return fmt.Errorf("expected %d addons, but got %v", addonNumber, len(addonList.Items))
+			}
+			return nil
+		}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
+	})
+
+	By("delete klusterletAddonConfig", func() {
+		err := kubeClient.Delete(context.TODO(), addonConfig)
+		Expect(err).ToNot(HaveOccurred())
+	})
+
+	By("check if klusterletAddonConfig is created again", func() {
+		Eventually(func() error {
+			return kubeClient.Get(context.TODO(), types.NamespacedName{Name: managedClusterName, Namespace: managedClusterName}, addonConfig)
+		}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
+	})
+
+	By("check if all addons are installed", func() {
+		Eventually(func() error {
+			addonList := &addonv1alpha1.ManagedClusterAddOnList{}
+			err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: managedClusterName})
+			if err != nil {
+				return err
+			}
+			if len(addonList.Items) != addonNumber {
+				return fmt.Errorf("expected %d addons, but got %v", addonNumber, len(addonList.Items))
+			}
+			return nil
+		}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
+	})
+}
