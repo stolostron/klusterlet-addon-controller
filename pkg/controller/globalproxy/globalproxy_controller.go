@@ -132,7 +132,7 @@ func (r *GlobalProxyReconciler) updateStatus(clusterName string, status *agentv1
 		}
 		if !equality.Semantic.DeepEqual(klusterletAddonConfig.Status, newStatus) {
 			klusterletAddonConfig.Status = *newStatus
-			return r.runtimeClient.Status().Update(context.TODO(), klusterletAddonConfig, &client.UpdateOptions{})
+			return r.runtimeClient.Status().Update(context.TODO(), klusterletAddonConfig)
 		}
 		return nil
 	})
