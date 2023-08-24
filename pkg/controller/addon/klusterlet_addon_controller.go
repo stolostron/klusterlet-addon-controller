@@ -93,7 +93,8 @@ func (r *ReconcileKlusterletAddOn) Reconcile(ctx context.Context, request reconc
 	managedCluster := &managedclusterv1.ManagedCluster{}
 	if err := r.client.Get(ctx, types.NamespacedName{Name: request.Namespace}, managedCluster); err != nil {
 		if errors.IsNotFound(err) {
-			return reconcile.Result{}, r.deleteAllManagedClusterAddon(ctx, request.Name)
+			klog.Warningf("the cluster %v is not found", request.Namespace)
+			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
 	}
