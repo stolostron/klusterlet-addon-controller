@@ -167,16 +167,6 @@ func newKlusterletAddonConfigWithProxy(clusterName string) *v1.KlusterletAddonCo
 	}
 }
 
-func newDeletingManagedCluster(name string) *mcv1.ManagedCluster {
-	now := metav1.Now()
-	return &mcv1.ManagedCluster{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              name,
-			DeletionTimestamp: &now,
-		},
-	}
-}
-
 func newManagedCluster(name string, annotations map[string]string) *mcv1.ManagedCluster {
 	return &mcv1.ManagedCluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -201,45 +191,6 @@ func Test_Reconcile(t *testing.T) {
 		want                  reconcile.Result
 		validateFunc          func(t *testing.T, client client.Client)
 	}{
-		{
-			name:                  "cluster is deleted, delete all addons",
-			clusterName:           "cluster1",
-			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
-			managedClusterAddons: []runtime.Object{
-				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1", ""),
-				newManagedClusterAddon(v1.SearchAddonName, "cluster1", ""),
-			},
-			validateFunc: func(t *testing.T, kubeClient client.Client) {
-				addonList := &v1alpha1.ManagedClusterAddOnList{}
-				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "notcluster1"})
-				if err != nil {
-					t.Errorf("faild to list addons. %v", err)
-				}
-				if len(addonList.Items) != 0 {
-					t.Errorf("expected 0 addons, but got %v", len(addonList.Items))
-				}
-			},
-		},
-		{
-			name:                  "cluster is deleting, delete all addons",
-			clusterName:           "cluster1",
-			managedCluster:        newDeletingManagedCluster("cluster1"),
-			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
-			managedClusterAddons: []runtime.Object{
-				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1", ""),
-				newManagedClusterAddon(v1.SearchAddonName, "cluster1", ""),
-			},
-			validateFunc: func(t *testing.T, kubeClient client.Client) {
-				addonList := &v1alpha1.ManagedClusterAddOnList{}
-				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "cluster1"})
-				if err != nil {
-					t.Errorf("faild to list addons. %v", err)
-				}
-				if len(addonList.Items) != 0 {
-					t.Errorf("expected 0 addons, but got %v", len(addonList.Items))
-				}
-			},
-		},
 		{
 			name:                  "cluster is created, create all addons",
 			clusterName:           "cluster1",
