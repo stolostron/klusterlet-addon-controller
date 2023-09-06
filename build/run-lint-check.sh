@@ -8,7 +8,7 @@
 set -x
 set -eo pipefail
 
-GOLANGCI_LINT_VERSION="1.50.1"
+GOLANGCI_LINT_VERSION="1.53.2"
 GOLANGCI_LINT_CACHE=/tmp/golangci-cache
 GOOS=$(go env GOOS)
 GOPATH=$(go env GOPATH)
