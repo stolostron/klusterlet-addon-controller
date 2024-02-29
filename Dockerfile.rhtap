@@ -1,0 +1,31 @@
+# Copyright Contributors to the Open Cluster Management project
+
+FROM registry.access.redhat.com/ubi9/go-toolset:1.19 AS builder
+COPY . .
+RUN chmod g+w . && \
+  git config --global --add safe.directory "$PWD"
+RUN GOFLAGS="" go build ./cmd/manager
+RUN GOFLAGS="" go test -covermode=atomic -coverpkg=github.com/stolostron/klusterlet-addon-controller/pkg/... -c -tags testrunmain ./cmd/manager -o manager-coverage
+
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
+
+RUN microdnf update && \
+    microdnf clean all
+
+ENV IMAGE_MANIFEST_PATH=/
+
+ENV OPERATOR=/usr/local/bin/klusterlet-addon-controller \
+    USER_UID=10001 \
+    USER_NAME=klusterlet-addon-controller
+
+COPY --from=builder /opt/app-root/src/deploy/crds deploy/crds
+COPY --from=builder /opt/app-root/src/manager ${OPERATOR}
+COPY --from=builder /opt/app-root/src/manager-coverage ${OPERATOR}-coverage
+COPY --from=builder /opt/app-root/src/build/bin /usr/local/bin
+COPY --from=builder /opt/app-root/src/build/coverage-entrypoint-func.sh /usr/local/bin/coverage-entrypoint-func.sh
+
+RUN  /usr/local/bin/user_setup
+
+USER ${USER_UID}
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
