@@ -69,7 +69,7 @@ func TestReconcileManagedCluster(t *testing.T) {
 				}
 
 				if kac.Spec.ApplicationManagerConfig.Enabled || kac.Spec.CertPolicyControllerConfig.Enabled ||
-					kac.Spec.IAMPolicyControllerConfig.Enabled || kac.Spec.SearchCollectorConfig.Enabled {
+					kac.Spec.SearchCollectorConfig.Enabled {
 					t.Errorf("expected other add-ons are disabled, but some of them is enabled")
 				}
 			},

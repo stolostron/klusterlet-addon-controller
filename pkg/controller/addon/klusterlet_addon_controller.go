@@ -36,7 +36,7 @@ const (
 )
 
 var hostedAddOns = sets.NewString(agentv1.PolicyFrameworkAddonName, agentv1.ConfigPolicyAddonName,
-	agentv1.CertPolicyAddonName, agentv1.IamPolicyAddonName)
+	agentv1.CertPolicyAddonName)
 
 // globalValues is the values can be overridden by klusterletAddon-controller
 type globalValues struct {
@@ -303,11 +303,6 @@ func getProxyConfig(addonName string, config *agentv1.KlusterletAddonConfig) map
 			return nil
 		}
 		proxyPolicy = config.Spec.CertPolicyControllerConfig.ProxyPolicy
-	case agentv1.IamPolicyAddonName:
-		if !config.Spec.IAMPolicyControllerConfig.Enabled {
-			return nil
-		}
-		proxyPolicy = config.Spec.IAMPolicyControllerConfig.ProxyPolicy
 	case agentv1.ConfigPolicyAddonName, agentv1.PolicyFrameworkAddonName:
 		if !config.Spec.PolicyController.Enabled {
 			return nil
@@ -341,7 +336,8 @@ func getProxyConfig(addonName string, config *agentv1.KlusterletAddonConfig) map
 func getGlobalValues(nodeSelector map[string]string,
 	imageOverrides map[string]string,
 	addonName string,
-	config *agentv1.KlusterletAddonConfig) globalValues {
+	config *agentv1.KlusterletAddonConfig,
+) globalValues {
 	return globalValues{
 		Global: global{
 			ImageOverrides: imageOverrides,
@@ -483,8 +479,6 @@ func addonIsEnabled(addonName string, config *agentv1.KlusterletAddonConfig) boo
 		return config.Spec.PolicyController.Enabled
 	case agentv1.CertPolicyAddonName:
 		return config.Spec.CertPolicyControllerConfig.Enabled
-	case agentv1.IamPolicyAddonName:
-		return config.Spec.IAMPolicyControllerConfig.Enabled
 	case agentv1.PolicyAddonName:
 		return false //  has been deprecated
 	case agentv1.PolicyFrameworkAddonName:

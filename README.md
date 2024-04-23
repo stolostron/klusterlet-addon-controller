@@ -135,7 +135,6 @@ Other addons are:
 - ${CLUSTER_NAME}-klusterlet-addon-appmgr
 - ${CLUSTER_NAME}-klusterlet-addon-certpolicyctrl
 - ${CLUSTER_NAME}-klusterlet-addon-crds
-- ${CLUSTER_NAME}-klusterlet-addon-iampolicyctrl
 - ${CLUSTER_NAME}-klusterlet-addon-policyctrl
 - ${CLUSTER_NAME}-klusterlet-addon-search
 - ${CLUSTER_NAME}-klusterlet-addon-workmgr

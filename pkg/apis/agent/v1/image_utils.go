@@ -11,6 +11,7 @@ package v1
 import (
 	"context"
 	"fmt"
+
 	"github.com/stolostron/cluster-lifecycle-api/helpers/imageregistry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -28,7 +29,6 @@ import (
 //		"addon-operator":                  "endpoint_component_operator",
 //		"coredns":                         "coredns",
 //		"deployable":                      "multicluster_operators_deployable",
-//		"iam-policy-controller":           "iam_policy_controller",
 //		"policy-controller":               "config_policy_controller",
 //		"governance-policy-spec-sync":     "governance_policy_spec_sync",
 //		"governance-policy-status-sync":   "governance_policy_status_sync",
@@ -54,7 +54,6 @@ var manifests map[string]manifest
 
 // GetImage returns the image.  for the specified component return error if information not found
 func (config *AddonAgentConfig) GetImage(component string) (imageRepository string, err error) {
-
 	m, err := getManifest(version.Version)
 	if err != nil {
 		return "", err
@@ -125,7 +124,6 @@ var MCHgvr = schema.GroupVersionResource{
 }
 
 func GetHubVersion(ctx context.Context, dynamicClient dynamic.Interface) (string, error) {
-
 	mchList, err := dynamicClient.Resource(MCHgvr).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return "", fmt.Errorf("failed to list mch. err: %v", err)

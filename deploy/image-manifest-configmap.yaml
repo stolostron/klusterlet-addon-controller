@@ -37,7 +37,6 @@ data:
   grc_ui_tests: quay.io/stolostron/grc-ui-tests@sha256:34487b44908e4b84840ed6345a0e4dcba62c151ee814e0d2e9dd994d1a8a4061
   helloprow_go: quay.io/stolostron/helloprow-go@sha256:d860b73ce3c448be708db70b4544491a2639fac45075078ce3509e358714ccfc
   helloworld: quay.io/stolostron/helloworld@sha256:8d282d6f466e5afaa929e71db0e6224b8a3796027b7defe52b3d6cdc7dc43d07
-  iam_policy_controller: quay.io/stolostron/iam-policy-controller@sha256:22967bfed725755a36fd423c756c6257bb88f36eb3f425d0186998e2961bb2da
   insights_client: quay.io/stolostron/insights-client@sha256:d2bf383851e367936ab57ef76810247a782759313a90dab4e9ea51d8dc47e7ab
   insights_metrics: quay.io/stolostron/insights-metrics@sha256:e81351a5b06b41ef338357ddcc51f731591aa6ad52e8a9d7df34c80b5d4438b6
   klusterlet_addon_controller: quay.io/stolostron/klusterlet-addon-controller@sha256:dad60b1955da695667374f2debf81bd250eb14ec8afbae60758d38b07b8c1092

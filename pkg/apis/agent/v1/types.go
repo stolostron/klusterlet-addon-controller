@@ -51,7 +51,6 @@ const (
 	ApplicationAddonName     = "application-manager"
 	CertPolicyAddonName      = "cert-policy-controller"
 	ConfigPolicyAddonName    = "config-policy-controller"
-	IamPolicyAddonName       = "iam-policy-controller"
 	PolicyAddonName          = "policy-controller"
 	PolicyFrameworkAddonName = "governance-policy-framework"
 	SearchAddonName          = "search-collector"
@@ -65,18 +64,16 @@ var KlusterletAddons = map[string]bool{
 	ApplicationAddonName:     true,
 	ConfigPolicyAddonName:    true,
 	CertPolicyAddonName:      true,
-	IamPolicyAddonName:       true,
 	PolicyFrameworkAddonName: true,
 	SearchAddonName:          true,
 }
 
 // KlusterletAddonImageNames is the image key names for each addon agents in image-manifest configmap
 var KlusterletAddonImageNames = map[string][]string{
-	ApplicationAddonName:     []string{"multicluster_operators_subscription"},
-	ConfigPolicyAddonName:    []string{"config_policy_controller", "kube_rbac_proxy"},
-	CertPolicyAddonName:      []string{"cert_policy_controller"},
-	IamPolicyAddonName:       []string{"iam_policy_controller"},
-	PolicyAddonName:          []string{"config_policy_controller", "governance_policy_framework_addon"},
-	PolicyFrameworkAddonName: []string{"governance_policy_framework_addon", "kube_rbac_proxy"},
-	SearchAddonName:          []string{"search_collector"},
+	ApplicationAddonName:     {"multicluster_operators_subscription"},
+	ConfigPolicyAddonName:    {"config_policy_controller", "kube_rbac_proxy"},
+	CertPolicyAddonName:      {"cert_policy_controller"},
+	PolicyAddonName:          {"config_policy_controller", "governance_policy_framework_addon"},
+	PolicyFrameworkAddonName: {"governance_policy_framework_addon", "kube_rbac_proxy"},
+	SearchAddonName:          {"search_collector"},
 }

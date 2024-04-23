@@ -51,8 +51,8 @@ type KlusterletAddonConfigSpec struct {
 	// CertPolicyControllerConfig defines the configurations of CertPolicyController addon agent.
 	CertPolicyControllerConfig KlusterletAddonAgentConfigSpec `json:"certPolicyController"`
 
-	// IAMPolicyControllerConfig defines the configurations of IamPolicyController addon agent.
-	IAMPolicyControllerConfig KlusterletAddonAgentConfigSpec `json:"iamPolicyController"`
+	// DEPRECATED in release 2.11 and will be removed in the future since not used anymore.
+	IAMPolicyControllerConfig KlusterletAddonAgentConfigSpec `json:"iamPolicyController,omitempty"`
 }
 
 // ProxyConfig defines the global proxy env for OCP cluster
