@@ -137,7 +137,6 @@ func newKlusterletAddonConfig(clusterName string) *v1.KlusterletAddonConfig {
 			PolicyController:           v1.KlusterletAddonAgentConfigSpec{Enabled: true},
 			ApplicationManagerConfig:   v1.KlusterletAddonAgentConfigSpec{Enabled: true},
 			CertPolicyControllerConfig: v1.KlusterletAddonAgentConfigSpec{Enabled: true},
-			IAMPolicyControllerConfig:  v1.KlusterletAddonAgentConfigSpec{Enabled: true},
 		},
 	}
 }
@@ -155,7 +154,6 @@ func newKlusterletAddonConfigWithProxy(clusterName string) *v1.KlusterletAddonCo
 			PolicyController:           v1.KlusterletAddonAgentConfigSpec{Enabled: true},
 			ApplicationManagerConfig:   v1.KlusterletAddonAgentConfigSpec{Enabled: true, ProxyPolicy: v1.ProxyPolicyOCPGlobalProxy},
 			CertPolicyControllerConfig: v1.KlusterletAddonAgentConfigSpec{Enabled: true},
-			IAMPolicyControllerConfig:  v1.KlusterletAddonAgentConfigSpec{Enabled: true},
 		},
 		Status: v1.KlusterletAddonConfigStatus{
 			OCPGlobalProxy: v1.ProxyConfig{
@@ -202,8 +200,8 @@ func Test_Reconcile(t *testing.T) {
 				if err != nil {
 					t.Errorf("faild to list addons. %v", err)
 				}
-				if len(addonList.Items) != 6 {
-					t.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+				if len(addonList.Items) != 5 {
+					t.Errorf("expected 5 addons, but got %v", len(addonList.Items))
 				}
 			},
 		},
@@ -222,8 +220,8 @@ func Test_Reconcile(t *testing.T) {
 				if err != nil {
 					t.Errorf("faild to list addons. %v", err)
 				}
-				if len(addonList.Items) != 6 {
-					t.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+				if len(addonList.Items) != 5 {
+					t.Errorf("expected 5 addons, but got %v", len(addonList.Items))
 				}
 
 				for _, addon := range addonList.Items {
@@ -275,8 +273,8 @@ func Test_Reconcile(t *testing.T) {
 				if err != nil {
 					t.Errorf("faild to list addons. %v", err)
 				}
-				if len(addonList.Items) != 6 {
-					t.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+				if len(addonList.Items) != 5 {
+					t.Errorf("expected 5 addons, but got %v", len(addonList.Items))
 				}
 				for _, addon := range addonList.Items {
 					annotations := addon.GetAnnotations()
@@ -308,8 +306,8 @@ func Test_Reconcile(t *testing.T) {
 				if err != nil {
 					t.Errorf("faild to list addons. %v", err)
 				}
-				if len(addonList.Items) != 6 {
-					t.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+				if len(addonList.Items) != 5 {
+					t.Errorf("expected 5 addons, but got %v", len(addonList.Items))
 				}
 				for _, addon := range addonList.Items {
 					if addon.GetName() != v1.ApplicationAddonName {
@@ -334,7 +332,6 @@ func Test_Reconcile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			objs := []runtime.Object{}
 			if tt.managedCluster != nil {
 				objs = append(objs, tt.managedCluster)

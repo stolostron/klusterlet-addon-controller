@@ -165,9 +165,6 @@ func newKlusterletAddonConfig(managedClusterName string) *agentv1.KlusterletAddo
 			CertPolicyControllerConfig: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},
-			IAMPolicyControllerConfig: agentv1.KlusterletAddonAgentConfigSpec{
-				Enabled: true,
-			},
 			PolicyController: agentv1.KlusterletAddonAgentConfigSpec{
 				Enabled: true,
 			},

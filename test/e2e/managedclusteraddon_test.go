@@ -55,12 +55,11 @@ var _ = Describe("managedClusterAddon test", func() {
 					if err != nil {
 						return err
 					}
-					if len(addonList.Items) != 6 {
-						return fmt.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+					if len(addonList.Items) != 5 {
+						return fmt.Errorf("expected 5 addons, but got %v", len(addonList.Items))
 					}
 					return nil
 				}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
-
 			})
 
 			By("disable addons", func() {
@@ -78,7 +77,6 @@ var _ = Describe("managedClusterAddon test", func() {
 					}
 					return nil
 				}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
-
 			})
 
 			By("check if the enabled addons are installed", func() {
@@ -88,12 +86,11 @@ var _ = Describe("managedClusterAddon test", func() {
 					if err != nil {
 						return err
 					}
-					if len(addonList.Items) != 3 {
-						return fmt.Errorf("expected 3 addons, but got %v", len(addonList.Items))
+					if len(addonList.Items) != 2 {
+						return fmt.Errorf("expected 2 addons, but got %v", len(addonList.Items))
 					}
 					return nil
 				}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
-
 			})
 
 			var changedAddonName string
@@ -162,7 +159,6 @@ var _ = Describe("managedClusterAddon test", func() {
 				Expect(addonConfig.Spec.PolicyController.Enabled).Should(BeTrue())
 				Expect(addonConfig.Spec.ApplicationManagerConfig.Enabled).Should(BeFalse())
 				Expect(addonConfig.Spec.CertPolicyControllerConfig.Enabled).Should(BeFalse())
-				Expect(addonConfig.Spec.IAMPolicyControllerConfig.Enabled).Should(BeFalse())
 				Expect(addonConfig.Spec.SearchCollectorConfig.Enabled).Should(BeFalse())
 			})
 

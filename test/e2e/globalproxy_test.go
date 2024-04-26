@@ -73,8 +73,8 @@ var _ = Describe("globalProxy test", func() {
 				if err != nil {
 					return err
 				}
-				if len(addonList.Items) != 6 {
-					return fmt.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+				if len(addonList.Items) != 5 {
+					return fmt.Errorf("expected 5 addons, but got %v", len(addonList.Items))
 				}
 				return nil
 			}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())
@@ -120,8 +120,8 @@ var _ = Describe("globalProxy test", func() {
 				if err != nil {
 					return err
 				}
-				if len(addonList.Items) != 6 {
-					return fmt.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+				if len(addonList.Items) != 5 {
+					return fmt.Errorf("expected 5 addons, but got %v", len(addonList.Items))
 				}
 				return nil
 			}, 60*time.Second, 5*time.Second).ShouldNot(HaveOccurred())

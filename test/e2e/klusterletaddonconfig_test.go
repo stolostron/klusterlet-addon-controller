@@ -36,7 +36,7 @@ var _ = Describe("klusterletAddonConfig test", func() {
 		})
 
 		It("test klusterletAddonConfig create", func() {
-			testKACCreate(managedClusterName, 4)
+			testKACCreate(managedClusterName, 3)
 		})
 	})
 
@@ -57,7 +57,7 @@ var _ = Describe("klusterletAddonConfig test", func() {
 		})
 
 		It("test klusterletAddonConfig create", func() {
-			testKACCreate(managedClusterName, 6)
+			testKACCreate(managedClusterName, 5)
 		})
 	})
 
@@ -78,7 +78,7 @@ var _ = Describe("klusterletAddonConfig test", func() {
 		})
 
 		It("test klusterletAddonConfig create", func() {
-			testKACCreate(managedClusterName, 5)
+			testKACCreate(managedClusterName, 4)
 		})
 	})
 })

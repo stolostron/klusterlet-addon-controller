@@ -26,7 +26,6 @@ ${KUBECTL} patch klusterlet klusterlet --type="json" -p '[{"op": "remove", "path
 component_crds=(
 	applicationmanagers.agent.open-cluster-management.io
 	certpolicycontrollers.agent.open-cluster-management.io
-	iampolicycontrollers.agent.open-cluster-management.io
 	policycontrollers.agent.open-cluster-management.io
 	searchcollectors.agent.open-cluster-management.io
 	workmanagers.agent.open-cluster-management.io
