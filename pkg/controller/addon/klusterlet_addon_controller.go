@@ -487,6 +487,8 @@ func addonIsEnabled(addonName string, config *agentv1.KlusterletAddonConfig) boo
 		return config.Spec.SearchCollectorConfig.Enabled
 	case agentv1.WorkManagerAddonName:
 		return true
+	case agentv1.IamPolicyAddonName:
+		return false //  has been deprecated and removed
 	}
 	return true
 }

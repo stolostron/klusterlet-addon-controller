@@ -328,6 +328,31 @@ func Test_Reconcile(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:                  "upgrade remove iam addon",
+			clusterName:           "cluster1",
+			managedCluster:        newManagedCluster("cluster1", nil),
+			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
+			managedClusterAddons: []runtime.Object{
+				newManagedClusterAddon(v1.IamPolicyAddonName, "cluster1", ""),
+			},
+			validateFunc: func(t *testing.T, kubeClient client.Client) {
+				addonList := &v1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "cluster1"})
+				if err != nil {
+					t.Errorf("faild to list addons. %v", err)
+				}
+				if len(addonList.Items) != 5 {
+					t.Errorf("expected 5 addons, but got %v", len(addonList.Items))
+				}
+				for _, addon := range addonList.Items {
+					if addon.GetName() == v1.IamPolicyAddonName {
+						t.Errorf("iam policy addon is still running")
+					}
+
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {

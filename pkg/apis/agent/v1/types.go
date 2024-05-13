@@ -51,6 +51,7 @@ const (
 	ApplicationAddonName     = "application-manager"
 	CertPolicyAddonName      = "cert-policy-controller"
 	ConfigPolicyAddonName    = "config-policy-controller"
+	IamPolicyAddonName       = "iam-policy-controller" // deprecated and removed
 	PolicyAddonName          = "policy-controller"
 	PolicyFrameworkAddonName = "governance-policy-framework"
 	SearchAddonName          = "search-collector"
@@ -63,6 +64,7 @@ var KlusterletAddons = map[string]bool{
 	WorkManagerAddonName:     false,
 	ApplicationAddonName:     true,
 	ConfigPolicyAddonName:    true,
+	IamPolicyAddonName:       false, // deprecated and removed
 	CertPolicyAddonName:      true,
 	PolicyFrameworkAddonName: true,
 	SearchAddonName:          true,
