@@ -228,6 +228,23 @@ func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(ctx context.Context
 		}
 	}
 
+	oldHostingClusterName, exists := addon.Annotations[common.AnnotationAddOnHostingClusterName]
+	switch {
+	case len(hostingClusterName) == 0:
+		if exists {
+			delete(addon.Annotations, common.AnnotationAddOnHostingClusterName)
+			addon.Spec.InstallNamespace = agentv1.KlusterletAddonNamespace
+			update = true
+		}
+	case oldHostingClusterName != hostingClusterName:
+		if addon.Annotations == nil {
+			addon.Annotations = map[string]string{}
+		}
+		addon.Annotations[common.AnnotationAddOnHostingClusterName] = hostingClusterName
+		addon.Spec.InstallNamespace = fmt.Sprintf("klusterlet-%s", clusterName)
+		update = true
+	}
+
 	if !update {
 		return nil
 	}
