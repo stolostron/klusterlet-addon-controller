@@ -18,11 +18,11 @@ ENV OPERATOR=/usr/local/bin/klusterlet-addon-controller \
     USER_UID=10001 \
     USER_NAME=klusterlet-addon-controller
 
-COPY --from=builder /opt/app-root/src/deploy/crds deploy/crds
-COPY --from=builder /opt/app-root/src/manager ${OPERATOR}
-COPY --from=builder /opt/app-root/src/manager-coverage ${OPERATOR}-coverage
-COPY --from=builder /opt/app-root/src/build/bin /usr/local/bin
-COPY --from=builder /opt/app-root/src/build/coverage-entrypoint-func.sh /usr/local/bin/coverage-entrypoint-func.sh
+COPY --from=builder ./deploy/crds deploy/crds
+COPY --from=builder ./manager ${OPERATOR}
+COPY --from=builder ./manager-coverage ${OPERATOR}-coverage
+COPY --from=builder ./build/bin /usr/local/bin
+COPY --from=builder ./build/coverage-entrypoint-func.sh /usr/local/bin/coverage-entrypoint-func.sh
 
 RUN  /usr/local/bin/user_setup
 
