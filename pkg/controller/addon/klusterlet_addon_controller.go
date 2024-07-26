@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
-	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
 	mcv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -90,7 +89,7 @@ type ReconcileKlusterletAddOn struct {
 
 func (r *ReconcileKlusterletAddOn) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the managedCluster instance
-	managedCluster := &managedclusterv1.ManagedCluster{}
+	managedCluster := &mcv1.ManagedCluster{}
 	if err := r.client.Get(ctx, types.NamespacedName{Name: request.Namespace}, managedCluster); err != nil {
 		if errors.IsNotFound(err) {
 			klog.Warningf("the managed cluster %v is not found.", request.Namespace)
@@ -106,12 +105,14 @@ func (r *ReconcileKlusterletAddOn) Reconcile(ctx context.Context, request reconc
 	klusterletAddonConfig := &agentv1.KlusterletAddonConfig{}
 	if err := r.client.Get(ctx, request.NamespacedName, klusterletAddonConfig); err != nil {
 		if errors.IsNotFound(err) {
+			klog.Infof("the klusterletAddonConfig %v is not found", request.NamespacedName)
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
 	}
 
 	if isPaused(klusterletAddonConfig) {
+		klog.Infof("the klusterletAddonConfig %v is paused", request.Name)
 		return reconcile.Result{}, nil
 	}
 
@@ -126,6 +127,8 @@ func (r *ReconcileKlusterletAddOn) Reconcile(ctx context.Context, request reconc
 		if !addonIsEnabled(addonName, klusterletAddonConfig) {
 			if err := r.deleteManagedClusterAddon(ctx, addonName, managedCluster.GetName()); err != nil {
 				aggregatedErrs = append(aggregatedErrs, err)
+			} else {
+				klog.Infof("delete addon %v/%v successfully", managedCluster.GetName(), addonName)
 			}
 			continue
 		}
@@ -150,20 +153,6 @@ func (r *ReconcileKlusterletAddOn) Reconcile(ctx context.Context, request reconc
 	}
 
 	return reconcile.Result{}, nil
-}
-
-func (r *ReconcileKlusterletAddOn) deleteAllManagedClusterAddon(ctx context.Context, clusterName string) error {
-	var aggregatedErrs []error
-	for addonName := range agentv1.KlusterletAddons {
-		err := r.deleteManagedClusterAddon(ctx, addonName, clusterName)
-		if err != nil {
-			aggregatedErrs = append(aggregatedErrs, err)
-		}
-	}
-	if len(aggregatedErrs) != 0 {
-		return fmt.Errorf("failed to delelte all addons %v", aggregatedErrs)
-	}
-	return nil
 }
 
 func (r *ReconcileKlusterletAddOn) deleteManagedClusterAddon(ctx context.Context, addonName, clusterName string) error {
@@ -199,7 +188,12 @@ func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(ctx context.Context
 			newAddon.SetAnnotations(map[string]string{annotationValues: valuesString})
 		}
 
-		return r.client.Create(ctx, newAddon)
+		if err := r.client.Create(ctx, newAddon); err != nil {
+			return err
+		} else {
+			klog.Infof("create addon %v/%v successfully", clusterName, addonName)
+			return nil
+		}
 	}
 	if err != nil {
 		return err
@@ -254,7 +248,7 @@ func isPaused(instance *agentv1.KlusterletAddonConfig) bool {
 	return false
 }
 
-func getNodeSelector(managedCluster *managedclusterv1.ManagedCluster) (map[string]string, error) {
+func getNodeSelector(managedCluster *mcv1.ManagedCluster) (map[string]string, error) {
 	var nodeSelector map[string]string
 	if managedCluster.GetName() == "local-cluster" {
 		annotations := managedCluster.GetAnnotations()
@@ -269,7 +263,7 @@ func getNodeSelector(managedCluster *managedclusterv1.ManagedCluster) (map[strin
 	return nodeSelector, nil
 }
 
-func getImageOverrides(managedCluster *managedclusterv1.ManagedCluster, addonName string) (map[string]string, error) {
+func getImageOverrides(managedCluster *mcv1.ManagedCluster, addonName string) (map[string]string, error) {
 	imageOverrides := map[string]string{}
 	if len(managedCluster.Annotations) == 0 {
 		return imageOverrides, nil
