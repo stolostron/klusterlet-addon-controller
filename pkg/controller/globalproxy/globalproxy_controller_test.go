@@ -4,6 +4,7 @@ package globalproxy
 
 import (
 	"context"
+	v1 "k8s.io/api/core/v1"
 	"reflect"
 	"testing"
 	"time"
@@ -12,11 +13,9 @@ import (
 	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -47,17 +46,17 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 
 	var testCases = []struct {
 		name                          string
-		runtimeClient                 client.Client
-		kubeClient                    kubernetes.Interface
+		existingKlusterletAddonConfig *agentv1.KlusterletAddonConfig
+		existingConfigSecret          *v1.Secret
 		request                       ctrl.Request
 		expectedKlusterletAddonConfig *agentv1.KlusterletAddonConfig
 		expectedResult                ctrl.Result
 		expectedErr                   error
 	}{
 		{
-			name:          "update klusterletAddonConfig status correctly",
-			runtimeClient: fake.NewFakeClientWithScheme(testscheme, newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{})),
-			kubeClient:    kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigYaml)),
+			name:                          "update klusterletAddonConfig status correctly",
+			existingKlusterletAddonConfig: newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{}),
+			existingConfigSecret:          helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigYaml),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -82,9 +81,9 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 			expectedErr:    nil,
 		},
 		{
-			name:          "update baremetal klusterletAddonConfig status correctly",
-			runtimeClient: fake.NewFakeClientWithScheme(testscheme, newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{})),
-			kubeClient:    kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigBareMetalYaml)),
+			name:                          "update baremetal klusterletAddonConfig status correctly",
+			existingKlusterletAddonConfig: newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{}),
+			existingConfigSecret:          helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigBareMetalYaml),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -110,22 +109,21 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 		},
 		{
 			name: "update klusterletAddonConfig proxyPolicy correctly",
-			runtimeClient: fake.NewFakeClientWithScheme(testscheme,
-				newKlusterletAddonConfig("cluster1",
-					agentv1.ProxyConfig{
-						HTTPProxy:  "https://username:password@proxy.example.com:123/",
-						HTTPSProxy: "https://username:password@proxy.example.com:123/",
-						NoProxy:    ".cluster.local,.svc,10.128.0.0/14,123.example.com,10.88.0.0/16,127.0.0.1,169.254.169.254,172.30.0.0/16,192.168.124.0/24,api-int.cluster.test.redhat.com,localhost",
+			existingKlusterletAddonConfig: newKlusterletAddonConfig("cluster1",
+				agentv1.ProxyConfig{
+					HTTPProxy:  "https://username:password@proxy.example.com:123/",
+					HTTPSProxy: "https://username:password@proxy.example.com:123/",
+					NoProxy:    ".cluster.local,.svc,10.128.0.0/14,123.example.com,10.88.0.0/16,127.0.0.1,169.254.169.254,172.30.0.0/16,192.168.124.0/24,api-int.cluster.test.redhat.com,localhost",
+				},
+				"", []metav1.Condition{
+					{
+						Type:    agentv1.OCPGlobalProxyDetected,
+						Status:  metav1.ConditionTrue,
+						Reason:  agentv1.ReasonOCPGlobalProxyDetected,
+						Message: "Detected the cluster-wide proxy config in install config.",
 					},
-					"", []metav1.Condition{
-						{
-							Type:    agentv1.OCPGlobalProxyDetected,
-							Status:  metav1.ConditionTrue,
-							Reason:  agentv1.ReasonOCPGlobalProxyDetected,
-							Message: "Detected the cluster-wide proxy config in install config.",
-						},
-					})),
-			kubeClient: kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigYaml)),
+				}),
+			existingConfigSecret: helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigYaml),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -150,10 +148,9 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 			expectedErr:    nil,
 		},
 		{
-			name: "no install config secret",
-			runtimeClient: fake.NewFakeClientWithScheme(testscheme,
-				newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{})),
-			kubeClient: kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-test", "cluster1", helpers.InstallConfigYaml)),
+			name:                          "no install config secret",
+			existingKlusterletAddonConfig: newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{}),
+			existingConfigSecret:          helpers.NewInstallConfigSecret("cluster1-test", "cluster1", helpers.InstallConfigYaml),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -173,10 +170,9 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 			expectedErr:    nil,
 		},
 		{
-			name: "no install-config.yaml in secret ",
-			runtimeClient: fake.NewFakeClientWithScheme(testscheme,
-				newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{})),
-			kubeClient: kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", []byte{})),
+			name:                          "no install-config.yaml in secret ",
+			existingKlusterletAddonConfig: newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{}),
+			existingConfigSecret:          helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", []byte{}),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -196,10 +192,9 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 			expectedErr:    nil,
 		},
 		{
-			name: "no proxy config in install-config.yaml ",
-			runtimeClient: fake.NewFakeClientWithScheme(testscheme,
-				newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{})),
-			kubeClient: kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigNoProxyYaml)),
+			name:                          "no proxy config in install-config.yaml ",
+			existingKlusterletAddonConfig: newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, "", []metav1.Condition{}),
+			existingConfigSecret:          helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigNoProxyYaml),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -219,9 +214,8 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 			expectedErr:    nil,
 		},
 		{
-			name: "no klusterletAddonConfig",
-			runtimeClient: fake.NewFakeClientWithScheme(testscheme,
-				helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigYaml)),
+			name:                 "no klusterletAddonConfig",
+			existingConfigSecret: helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigYaml),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -233,10 +227,9 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 			expectedErr:                   nil,
 		},
 		{
-			name: "appProxyPolicy is not empty",
-			runtimeClient: fake.NewFakeClientWithScheme(testscheme,
-				newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, agentv1.ProxyPolicyCustomProxy, []metav1.Condition{})),
-			kubeClient: kubefake.NewSimpleClientset(helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigYaml)),
+			name:                          "appProxyPolicy is not empty",
+			existingKlusterletAddonConfig: newKlusterletAddonConfig("cluster1", agentv1.ProxyConfig{}, agentv1.ProxyPolicyCustomProxy, []metav1.Condition{}),
+			existingConfigSecret:          helpers.NewInstallConfigSecret("cluster1-install-config", "cluster1", helpers.InstallConfigYaml),
 			request: ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "cluster1",
@@ -265,9 +258,16 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 	for _, c := range testCases {
 		t.Run(c.name, func(t *testing.T) {
 			r := &GlobalProxyReconciler{
-				runtimeClient: c.runtimeClient,
-				kubeClient:    c.kubeClient,
-				scheme:        testscheme,
+				kubeClient: kubefake.NewSimpleClientset(c.existingConfigSecret),
+				scheme:     testscheme,
+			}
+
+			if c.existingKlusterletAddonConfig != nil {
+				r.runtimeClient = fake.NewClientBuilder().WithScheme(testscheme).
+					WithRuntimeObjects(c.existingKlusterletAddonConfig).
+					WithStatusSubresource(c.existingKlusterletAddonConfig).Build()
+			} else {
+				r.runtimeClient = fake.NewClientBuilder().WithScheme(testscheme).Build()
 			}
 
 			result, err := r.Reconcile(context.TODO(), c.request)

@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
