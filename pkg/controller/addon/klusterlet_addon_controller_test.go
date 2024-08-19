@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	apiconstants "github.com/stolostron/cluster-lifecycle-api/constants"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	v1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
@@ -165,10 +166,11 @@ func newKlusterletAddonConfigWithProxy(clusterName string) *v1.KlusterletAddonCo
 	}
 }
 
-func newManagedCluster(name string, annotations map[string]string) *mcv1.ManagedCluster {
+func newManagedCluster(name string, labels, annotations map[string]string) *mcv1.ManagedCluster {
 	return &mcv1.ManagedCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
+			Labels:      labels,
 			Annotations: annotations,
 		},
 	}
@@ -192,7 +194,7 @@ func Test_Reconcile(t *testing.T) {
 		{
 			name:                  "cluster is created, create all addons",
 			clusterName:           "cluster1",
-			managedCluster:        newManagedCluster("cluster1", nil),
+			managedCluster:        newManagedCluster("cluster1", nil, nil),
 			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
 			validateFunc: func(t *testing.T, kubeClient client.Client) {
 				addonList := &v1alpha1.ManagedClusterAddOnList{}
@@ -208,7 +210,7 @@ func Test_Reconcile(t *testing.T) {
 		{
 			name:        "cluster is created in hosed mode with hosted add-on enabled",
 			clusterName: "cluster1",
-			managedCluster: newManagedCluster("cluster1", map[string]string{
+			managedCluster: newManagedCluster("cluster1", nil, map[string]string{
 				common.AnnotationKlusterletDeployMode:         "Hosted",
 				common.AnnotationKlusterletHostingClusterName: "local-cluster",
 				common.AnnotationEnableHostedModeAddons:       "true",
@@ -248,7 +250,7 @@ func Test_Reconcile(t *testing.T) {
 		{
 			name:           "no klusterletaddonconfig",
 			clusterName:    "cluster1",
-			managedCluster: newManagedCluster("cluster1", nil),
+			managedCluster: newManagedCluster("cluster1", nil, nil),
 			validateFunc: func(t *testing.T, kubeClient client.Client) {
 				addonList := &v1alpha1.ManagedClusterAddOnList{}
 				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "cluster1"})
@@ -262,14 +264,16 @@ func Test_Reconcile(t *testing.T) {
 		},
 		{
 			name:        "local-cluster with annotations",
-			clusterName: "local-cluster",
-			managedCluster: newManagedCluster("local-cluster", map[string]string{
+			clusterName: "local-cluster-test",
+			managedCluster: newManagedCluster("local-cluster-test", map[string]string{
+				apiconstants.SelfManagedClusterLabelKey: "true",
+			}, map[string]string{
 				annotationNodeSelector: `{"node":"infra"}`,
 			}),
-			klusterletAddonConfig: newKlusterletAddonConfig("local-cluster"),
+			klusterletAddonConfig: newKlusterletAddonConfig("local-cluster-test"),
 			validateFunc: func(t *testing.T, kubeClient client.Client) {
 				addonList := &v1alpha1.ManagedClusterAddOnList{}
-				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "local-cluster"})
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "local-cluster-test"})
 				if err != nil {
 					t.Errorf("faild to list addons. %v", err)
 				}
@@ -295,7 +299,7 @@ func Test_Reconcile(t *testing.T) {
 		{
 			name:                  "cluster with proxy",
 			clusterName:           "cluster1",
-			managedCluster:        newManagedCluster("cluster1", nil),
+			managedCluster:        newManagedCluster("cluster1", nil, nil),
 			klusterletAddonConfig: newKlusterletAddonConfigWithProxy("cluster1"),
 			managedClusterAddons: []runtime.Object{
 				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1", ""),
@@ -331,7 +335,7 @@ func Test_Reconcile(t *testing.T) {
 		{
 			name:                  "upgrade remove iam addon",
 			clusterName:           "cluster1",
-			managedCluster:        newManagedCluster("cluster1", nil),
+			managedCluster:        newManagedCluster("cluster1", nil, nil),
 			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
 			managedClusterAddons: []runtime.Object{
 				newManagedClusterAddon(v1.IamPolicyAddonName, "cluster1", ""),
