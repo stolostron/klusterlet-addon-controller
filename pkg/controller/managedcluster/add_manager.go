@@ -26,11 +26,11 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	if err != nil {
 		return err
 	}
-
-	err = c.Watch(&source.Kind{Type: &mcv1.ManagedCluster{}}, &handler.EnqueueRequestForObject{},
-		predicate.Predicate(predicate.Funcs{
-			GenericFunc: func(e event.GenericEvent) bool { return false },
-			CreateFunc: func(e event.CreateEvent) bool {
+	err = c.Watch(source.Kind(mgr.GetCache(), &mcv1.ManagedCluster{},
+		&handler.TypedEnqueueRequestForObject[*mcv1.ManagedCluster]{},
+		predicate.TypedFuncs[*mcv1.ManagedCluster]{
+			GenericFunc: func(e event.TypedGenericEvent[*mcv1.ManagedCluster]) bool { return false },
+			CreateFunc: func(e event.TypedCreateEvent[*mcv1.ManagedCluster]) bool {
 				if e.Object == nil {
 					log.Error(nil, "Create event has no runtime object to create", "event", e)
 					return false
@@ -38,10 +38,10 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 				return hostedAddOnEnabled(e.Object) || hypershiftCluster(e.Object) || clusterClaimCluster(e.Object) || hasAnnotationCreateWithDefaultKAC(e.Object)
 			},
-			DeleteFunc: func(e event.DeleteEvent) bool {
+			DeleteFunc: func(e event.TypedDeleteEvent[*mcv1.ManagedCluster]) bool {
 				return false
 			},
-			UpdateFunc: func(e event.UpdateEvent) bool {
+			UpdateFunc: func(e event.TypedUpdateEvent[*mcv1.ManagedCluster]) bool {
 				if e.ObjectOld == nil || e.ObjectNew == nil {
 					log.Error(nil, "Update event is invalid", "event", e)
 					return false
@@ -54,13 +54,14 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &kacv1.KlusterletAddonConfig{}}, &handler.EnqueueRequestForObject{},
-		predicate.Predicate(predicate.Funcs{
-			GenericFunc: func(e event.GenericEvent) bool { return false },
-			CreateFunc:  func(e event.CreateEvent) bool { return false },
+	err = c.Watch(source.Kind(mgr.GetCache(), &kacv1.KlusterletAddonConfig{},
+		&handler.TypedEnqueueRequestForObject[*kacv1.KlusterletAddonConfig]{},
+		predicate.TypedFuncs[*kacv1.KlusterletAddonConfig]{
+			GenericFunc: func(e event.TypedGenericEvent[*kacv1.KlusterletAddonConfig]) bool { return false },
+			CreateFunc:  func(e event.TypedCreateEvent[*kacv1.KlusterletAddonConfig]) bool { return false },
 			// If the klusterletAddonConfig is deleted, we will recreate it.
-			DeleteFunc: func(e event.DeleteEvent) bool { return true },
-			UpdateFunc: func(e event.UpdateEvent) bool { return false },
+			DeleteFunc: func(e event.TypedDeleteEvent[*kacv1.KlusterletAddonConfig]) bool { return true },
+			UpdateFunc: func(e event.TypedUpdateEvent[*kacv1.KlusterletAddonConfig]) bool { return false },
 		}))
 	if err != nil {
 		return err

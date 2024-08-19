@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 // Change below variables to serve metrics on different host or port.
@@ -106,10 +107,11 @@ func main() {
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
-		Namespace:          os.Getenv("WATCH_NAMESPACE"),
-		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
-		LeaderElection:     true,
-		LeaderElectionID:   "klusterlet-addon-controller-lock",
+		Metrics: metricsserver.Options{
+			BindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		},
+		LeaderElection:   true,
+		LeaderElectionID: "klusterlet-addon-controller-lock",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

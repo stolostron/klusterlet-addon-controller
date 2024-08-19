@@ -11,7 +11,7 @@ on:
 
 env:
   # Common versions
-  GO_VERSION: '1.19'
+  GO_VERSION: '1.22'
   GO_REQUIRED_MIN_VERSION: ''
   GOPATH: '/home/runner/work/klusterlet-addon-controller/klusterlet-addon-controller/go'
 defaults:

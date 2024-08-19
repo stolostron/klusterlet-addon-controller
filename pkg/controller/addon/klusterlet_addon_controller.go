@@ -19,9 +19,7 @@ import (
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
 	mcv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -52,36 +50,6 @@ type global struct {
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileKlusterletAddOn{client: mgr.GetClient()}
-}
-
-func klusterletAddonPredicate() predicate.Predicate {
-	return predicate.Predicate(predicate.Funcs{
-		GenericFunc: func(e event.GenericEvent) bool { return false },
-		CreateFunc: func(e event.CreateEvent) bool {
-			if e.Object == nil {
-				klog.Error(nil, "Create event has no runtime object to create", "event", e)
-				return false
-			}
-			_, existed := agentv1.KlusterletAddons[e.Object.GetName()]
-			return existed
-		},
-		DeleteFunc: func(e event.DeleteEvent) bool {
-			if e.Object == nil {
-				klog.Error(nil, "Delete event has no runtime object to delete", "event", e)
-				return false
-			}
-			_, existed := agentv1.KlusterletAddons[e.Object.GetName()]
-			return existed
-		},
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			if e.ObjectOld == nil || e.ObjectNew == nil {
-				klog.Error(nil, "Update event is invalid", "event", e)
-				return false
-			}
-			_, existed := agentv1.KlusterletAddons[e.ObjectOld.GetName()]
-			return existed
-		},
-	})
 }
 
 type ReconcileKlusterletAddOn struct {

@@ -1,11 +1,11 @@
 package globalproxy
 
 import (
+	"context"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -24,38 +24,42 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	err = c.Watch(
-		&source.Kind{Type: &managedclusterv1.ManagedCluster{}},
-		handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
-			return []reconcile.Request{
-				{
-					NamespacedName: types.NamespacedName{
-						Name:      obj.GetName(),
-						Namespace: obj.GetName(),
-					},
-				},
-			}
-		}),
-	)
+		source.Kind(mgr.GetCache(), &managedclusterv1.ManagedCluster{},
+			handler.TypedEnqueueRequestsFromMapFunc[*managedclusterv1.ManagedCluster](
+				func(ctx context.Context, cluster *managedclusterv1.ManagedCluster) []reconcile.Request {
+					return []reconcile.Request{
+						{
+							NamespacedName: types.NamespacedName{
+								Name:      cluster.GetName(),
+								Namespace: cluster.GetName(),
+							},
+						},
+					}
+				}),
+		))
+
 	if err != nil {
 		return err
 	}
 	err = c.Watch(
-		&source.Kind{Type: &agentv1.KlusterletAddonConfig{}},
-		handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
-			namespace := obj.GetNamespace()
-			name := obj.GetName()
-			if name == namespace {
-				return []reconcile.Request{
-					{
-						NamespacedName: types.NamespacedName{
-							Name:      namespace,
-							Namespace: namespace,
-						},
-					},
-				}
-			}
-			return nil
-		}),
+		source.Kind(mgr.GetCache(), &agentv1.KlusterletAddonConfig{},
+			handler.TypedEnqueueRequestsFromMapFunc[*agentv1.KlusterletAddonConfig](
+				func(ctx context.Context, obj *agentv1.KlusterletAddonConfig) []reconcile.Request {
+					namespace := obj.GetNamespace()
+					name := obj.GetName()
+					if name == namespace {
+						return []reconcile.Request{
+							{
+								NamespacedName: types.NamespacedName{
+									Name:      namespace,
+									Namespace: namespace,
+								},
+							},
+						}
+					}
+					return nil
+				}),
+		),
 	)
 	if err != nil {
 		return err
