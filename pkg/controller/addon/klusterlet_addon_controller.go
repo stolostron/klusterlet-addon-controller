@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/stolostron/cluster-lifecycle-api/helpers/localcluster"
 	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
@@ -224,7 +225,7 @@ func isPaused(instance *agentv1.KlusterletAddonConfig) bool {
 
 func getNodeSelector(managedCluster *managedclusterv1.ManagedCluster) (map[string]string, error) {
 	var nodeSelector map[string]string
-	if managedCluster.GetName() == "local-cluster" {
+	if localcluster.IsClusterSelfManaged(managedCluster) {
 		annotations := managedCluster.GetAnnotations()
 		if nodeSelectorString, ok := annotations[annotationNodeSelector]; ok {
 			if err := json.Unmarshal([]byte(nodeSelectorString), &nodeSelector); err != nil {
