@@ -3,13 +3,17 @@
 FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.22 AS builder
 COPY . .
 RUN chmod g+w . && \
-  git config --global --add safe.directory "$PWD"
-RUN GOFLAGS="" go build ./cmd/manager
-RUN GOFLAGS="" go test -covermode=atomic -coverpkg=github.com/stolostron/klusterlet-addon-controller/pkg/... -c -tags testrunmain ./cmd/manager -o manager-coverage
+  git config --global --add safe.directory "$PWD" && \
+  GOFLAGS="" go build ./cmd/manager && \
+  GOFLAGS="" go test \
+    -covermode=atomic \
+    -coverpkg=github.com/stolostron/klusterlet-addon-controller/pkg/... \
+    -c -tags testrunmain ./cmd/manager \
+    -o manager-coverage
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
-RUN microdnf update && \
+RUN microdnf update -y && \
     microdnf clean all
 
 ENV IMAGE_MANIFEST_PATH=/
