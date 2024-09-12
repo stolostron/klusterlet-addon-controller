@@ -11,12 +11,11 @@ package v1
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/klog/v2"
+	"os"
 
 	"github.com/stolostron/cluster-lifecycle-api/helpers/imageregistry"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -95,47 +94,39 @@ func getManifest(version string) (*manifest, error) {
 	return nil, fmt.Errorf("version %s not supported", version)
 }
 
-// LoadConfigmaps - loads pre-release image manifests
-func LoadConfigmaps(k8s client.Client) error {
+// LoadImages - loads image manifests from configmap, if configmap is not found get from env
+func LoadImages(k8s client.Client) error {
 	manifests = make(map[string]manifest)
+	m := manifest{Images: make(map[string]string)}
 	configmapList := &corev1.ConfigMapList{}
 
 	err := k8s.List(context.TODO(), configmapList, client.MatchingLabels{"ocm-configmap-type": "image-manifest"})
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return err
+	}
+
+	if len(configmapList.Items) == 0 {
+		for envImageName, imageName := range EnvImageNameMap {
+			image := os.Getenv(envImageName)
+			if image != "" {
+				m.Images[imageName] = image
+			}
+		}
+		if len(m.Images) == 0 {
+			// the images are used only in image override case. so no need to return error here
+			klog.Warningf("no image manifest loaded from configmap or Env")
+			return nil
+		}
+		manifests[version.Version] = m
+		versionList = append(versionList, version.Version)
+		return nil
 	}
 
 	for _, cm := range configmapList.Items {
 		omcVersion := cm.Labels[ocmVersionLabel]
-		m := manifest{}
-		m.Images = make(map[string]string)
 		m.Images = cm.Data
 		manifests[omcVersion] = m
-
 		versionList = append(versionList, omcVersion)
 	}
 	return nil
-}
-
-var MCHgvr = schema.GroupVersionResource{
-	Group:    "operator.open-cluster-management.io",
-	Version:  "v1",
-	Resource: "multiclusterhubs",
-}
-
-func GetHubVersion(ctx context.Context, dynamicClient dynamic.Interface) (string, error) {
-	mchList, err := dynamicClient.Resource(MCHgvr).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return "", fmt.Errorf("failed to list mch. err: %v", err)
-	}
-	if len(mchList.Items) == 0 {
-		return "", fmt.Errorf("get 0 mch instance")
-	}
-
-	mch := mchList.Items[0]
-	hubVersion, _, err := unstructured.NestedString(mch.Object, "status", "currentVersion")
-	if err != nil {
-		return "", fmt.Errorf("failed to version from mch. err: %v", err)
-	}
-	return hubVersion, nil
 }

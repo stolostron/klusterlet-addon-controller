@@ -9,8 +9,7 @@
 package v1
 
 import (
-	"context"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"os"
 	"testing"
 
 	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
@@ -19,8 +18,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	dynamicfake "k8s.io/client-go/dynamic/fake"
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -49,7 +46,7 @@ func TestGetImageWithManifest(t *testing.T) {
 	client := fake.NewFakeClient([]runtime.Object{
 		testConfigMap,
 	}...)
-	err := LoadConfigmaps(client)
+	err := LoadImages(client)
 	if err != nil {
 		return
 	}
@@ -181,7 +178,7 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 	client := fake.NewFakeClient([]runtime.Object{
 		testConfigMap, testConfigMap1, testConfigMapInvalidVersion,
 	}...)
-	err := LoadConfigmaps(client)
+	err := LoadImages(client)
 	if err != nil {
 		return
 	}
@@ -251,41 +248,79 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 	}
 }
 
-var fakeMCHJson = `{
-    "apiVersion": "operator.open-cluster-management.io/v1",
-    "kind": "MultiClusterHub",
-    "metadata": {
-        "name": "multiclusterhub",
-        "namespace": "open-cluster-management"
-    },
-    "spec": {
-        "availabilityConfig": "High"
-    },
-    "status": {
-        "currentVersion": "x.y.z",
-        "desiredVersion": "x.y.z",
-        "phase": "Running"
-    }
-}`
-
-func Test_GetHubVersion(t *testing.T) {
-	testScheme := runtime.NewScheme()
-	testScheme.AddKnownTypes(schema.GroupVersion{Group: MCHgvr.Group, Version: MCHgvr.Version})
-
-	mch := &unstructured.Unstructured{}
-	err := mch.UnmarshalJSON([]byte(fakeMCHJson))
+func TestGetImageWithManifestFromEnv(t *testing.T) {
+	version.Version = "x.y.z"
+	_ = os.Setenv(EnvCertPolicyController, "quay.io/rhacm2/cert-policy-controller@sha256:fake-sha256-2-1-0")
+	_ = os.Setenv(EnvConfigPolicyController, "quay.io/rhacm2/config-policy-controller@sha256:fake-sha256-2-1-0")
+	_ = os.Setenv(EnvGovernancePolicyFrameworkAddon, "quay.io/rhacm2/governance-policy-addon-controller@sha256:fake-sha256-2-1-0")
+	_ = os.Setenv(EnvKubeRBACProxy, "quay.io/rhacm2/kube-rbac-proxy@sha256:fake-sha256-2-1-0")
+	client := fake.NewFakeClient()
+	err := LoadImages(client)
 	if err != nil {
-		t.Errorf("failed to unmarshal mch json. err: %v", err)
+		return
+	}
+	type args struct {
+		addonAgentConfig *AddonAgentConfig
+		component        string
 	}
 
-	fakeDynamicClient := dynamicfake.NewSimpleDynamicClient(testScheme, mch)
-
-	hubVersion, err := GetHubVersion(context.Background(), fakeDynamicClient)
-	if err != nil {
-		t.Errorf("failed to get hub version. err: %v", err)
+	tests := []struct {
+		name    string
+		args    args
+		want    GlobalValues
+		wantErr bool
+	}{
+		{
+			name: "Use Component Sha in " + version.Version,
+			args: args{
+				addonAgentConfig: &AddonAgentConfig{
+					ManagedCluster: &clusterv1.ManagedCluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "cluster1",
+							Annotations: map[string]string{
+								imageregistryv1alpha1.ClusterImageRegistriesAnnotation: `{"registries":[{"mirror":"quay.io/rhacm2","source":"sample-registry/uniquePath"}]}`,
+							},
+						},
+					},
+				},
+				component: "cert_policy_controller",
+			},
+			want: GlobalValues{
+				ImageOverrides: map[string]string{
+					"cert_policy_controller": "quay.io/rhacm2/cert-policy-controller@sha256:fake-sha256-2-1-0",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Not Exists Component",
+			args: args{
+				addonAgentConfig: &AddonAgentConfig{},
+				component:        "notExistsComponent",
+			},
+			want:    GlobalValues{},
+			wantErr: true,
+		},
+		{
+			name: "Image not in manifest.json",
+			args: args{
+				addonAgentConfig: &AddonAgentConfig{},
+				component:        "fakeKey",
+			},
+			want:    GlobalValues{},
+			wantErr: true,
+		},
 	}
 
-	if hubVersion != "x.y.z" {
-		t.Errorf("expected version x.y.z,but got %v", hubVersion)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("Running tests %s", tt.name)
+			imgRepository, err := tt.args.addonAgentConfig.GetImage(tt.args.component)
+			if tt.wantErr != (err != nil) {
+				t.Errorf("Should return error correctly. Error:%s", err)
+			} else if !tt.wantErr {
+				assert.Equal(t, tt.want.ImageOverrides[tt.args.component], imgRepository, "repository should match")
+			}
+		})
 	}
 }

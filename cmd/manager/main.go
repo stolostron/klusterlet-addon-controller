@@ -9,7 +9,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -65,6 +64,15 @@ func main() {
 
 	ctrl.SetLogger(zap.New())
 
+	// if the controller is deployed by MCH, the env HUB_VERSION is required to set the MCH version.
+	// otherwise the env HUB_VERSION is not required.
+	version.Version = os.Getenv("HUB_VERSION")
+	if version.Version == "" {
+		log.Info("Cannot get operator version from env var, use 0.0.0")
+		version.Version = "0.0.0"
+	}
+	printVersion()
+
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -78,7 +86,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = agentv1.LoadConfigmaps(runtimeClient)
+	err = agentv1.LoadImages(runtimeClient)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -95,15 +103,6 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-	version.Version = os.Getenv("HUB_VERSION")
-	if version.Version == "" {
-		version.Version, err = agentv1.GetHubVersion(context.Background(), dynamicClient)
-		if err != nil {
-			log.Error(err, "failed to get hub version.")
-			os.Exit(1)
-		}
-	}
-	printVersion()
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
