@@ -33,10 +33,10 @@ mkdir -p $_tap_out_dir
 go test -v -cover -coverpkg=$_cover_pkgs -covermode=atomic -coverprofile=test/unit/coverage/cover.tmp $_package 2> >( grep -v "warning: no packages being tested depend on" >&2 ) | $GOPATH/bin/patter | tee $_tap_out_dir/$_tap_name.tap | grep -v "TAP version 13" | grep -v ": PASS:" | grep -v -i "# /us"
 
 # Merge coverage files
-if [ -f test/unit/coverage/cover.tmp ]; then
-    $GOPATH/bin/gocovmerge test/unit/coverage/cover.tmp test/unit/coverage/cover.out > test/unit/coverage/cover.all
-    mv test/unit/coverage/cover.all test/unit/coverage/cover.out
-fi
+#if [ -f test/unit/coverage/cover.tmp ]; then
+#    $GOPATH/bin/gocovmerge test/unit/coverage/cover.tmp test/unit/coverage/cover.out > test/unit/coverage/cover.all
+#    mv test/unit/coverage/cover.all test/unit/coverage/cover.out
+#fi
 
 # Clean up temporary files
 rm -f test/unit/coverage/cover.tmp
