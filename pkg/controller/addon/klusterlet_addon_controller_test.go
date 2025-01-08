@@ -215,6 +215,9 @@ func Test_Reconcile(t *testing.T) {
 				common.AnnotationKlusterletHostingClusterName: "local-cluster",
 				common.AnnotationEnableHostedModeAddons:       "true",
 			}),
+			managedClusterAddons: []runtime.Object{
+				newManagedClusterAddon(v1.PolicyFrameworkAddonName, "cluster1", "hosting-cluster1"),
+			},
 			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
 			validateFunc: func(t *testing.T, kubeClient client.Client) {
 				addonList := &v1alpha1.ManagedClusterAddOnList{}
@@ -243,6 +246,35 @@ func Test_Reconcile(t *testing.T) {
 						if addon.Spec.InstallNamespace != agentv1.KlusterletAddonNamespace {
 							t.Errorf("expected install namespace of addon %q is %q, but got %s", addon.Name, agentv1.KlusterletAddonNamespace, addon.Spec.InstallNamespace)
 						}
+					}
+				}
+			},
+		},
+		{
+			name:           "cluster is no longer in hosted mode",
+			clusterName:    "cluster1",
+			managedCluster: newManagedCluster("cluster1", nil),
+			managedClusterAddons: []runtime.Object{
+				newManagedClusterAddon(v1.PolicyFrameworkAddonName, "cluster1", "hosting-cluster1"),
+			},
+			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
+			validateFunc: func(t *testing.T, kubeClient client.Client) {
+				addonList := &v1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "cluster1"})
+				if err != nil {
+					t.Errorf("faild to list addons. %v", err)
+				}
+				if len(addonList.Items) != 6 {
+					t.Errorf("expected 6 addons, but got %v", len(addonList.Items))
+				}
+
+				for _, addon := range addonList.Items {
+					if _, ok := addon.Annotations[common.AnnotationAddOnHostingClusterName]; ok {
+						t.Errorf("expected addon %q is installed in default mode, but in hosted mode", addon.Name)
+					}
+
+					if addon.Spec.InstallNamespace != agentv1.KlusterletAddonNamespace {
+						t.Errorf("expected install namespace of addon %q is %q, but got %s", addon.Name, agentv1.KlusterletAddonNamespace, addon.Spec.InstallNamespace)
 					}
 				}
 			},
