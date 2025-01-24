@@ -2,11 +2,14 @@ package addon
 
 import (
 	"context"
+	"os"
+
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	mchov1 "github.com/stolostron/multiclusterhub-operator/api/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
@@ -19,7 +22,13 @@ import (
 )
 
 func Add(mgr manager.Manager, kubeClient kubernetes.Interface) error {
-	return add(mgr, newReconciler(mgr))
+	namespace := os.Getenv("POD_NAMESPACE")
+	if namespace == "" {
+		klog.Info("POD_NAMESPACE not set, using 'open-cluster-management'")
+		namespace = "open-cluster-management"
+	}
+
+	return add(mgr, newReconciler(mgr, namespace))
 }
 
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
@@ -90,6 +99,57 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 				return existed
 			},
 		}))
+	if err != nil {
+		return err
+	}
+
+	// Need to reconcile all KlusterletAddonConfigs when the grc InternalHubComponent is changed
+	err = c.Watch(source.Kind(mgr.GetCache(), &mchov1.InternalHubComponent{},
+		handler.TypedEnqueueRequestsFromMapFunc[*mchov1.InternalHubComponent](
+			func(ctx context.Context, ihc *mchov1.InternalHubComponent) []reconcile.Request {
+				var configList agentv1.KlusterletAddonConfigList
+				if err := mgr.GetClient().List(ctx, &configList); err != nil {
+					return nil
+				}
+
+				requests := make([]reconcile.Request, len(configList.Items))
+
+				for i, config := range configList.Items {
+					requests[i] = reconcile.Request{
+						NamespacedName: types.NamespacedName{
+							Name:      config.Name,
+							Namespace: config.Namespace,
+						},
+					}
+				}
+
+				return requests
+			}),
+		predicate.TypedFuncs[*mchov1.InternalHubComponent]{
+			GenericFunc: func(e event.TypedGenericEvent[*mchov1.InternalHubComponent]) bool { return false },
+			CreateFunc: func(e event.TypedCreateEvent[*mchov1.InternalHubComponent]) bool {
+				if e.Object == nil {
+					klog.Error(nil, "Create event has no runtime object to create", "event", e)
+					return false
+				}
+				return e.Object.GetName() == "grc"
+			},
+			DeleteFunc: func(e event.TypedDeleteEvent[*mchov1.InternalHubComponent]) bool {
+				if e.Object == nil {
+					klog.Error(nil, "Delete event has no runtime object to delete", "event", e)
+					return false
+				}
+				return e.Object.GetName() == "grc"
+			},
+			UpdateFunc: func(e event.TypedUpdateEvent[*mchov1.InternalHubComponent]) bool {
+				if e.ObjectOld == nil || e.ObjectNew == nil {
+					klog.Error(nil, "Update event is invalid", "event", e)
+					return false
+				}
+				return e.ObjectOld.GetName() == "grc"
+			},
+		},
+	))
 
 	return err
 }

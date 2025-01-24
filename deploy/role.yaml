@@ -124,6 +124,8 @@ rules:
     - operator.open-cluster-management.io
   resources:
     - multiclusterhubs
+    - internalhubcomponents
   verbs:
     - get
     - list
+    - watch

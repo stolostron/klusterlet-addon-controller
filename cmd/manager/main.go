@@ -19,6 +19,7 @@ import (
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller"
 	"github.com/stolostron/klusterlet-addon-controller/version"
+	mchov1 "github.com/stolostron/multiclusterhub-operator/api/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
@@ -44,11 +45,9 @@ import (
 var (
 	metricsHost       = "0.0.0.0"
 	metricsPort int32 = 8383
+	setupLog          = logf.Log.WithName("setup")
+	log               = logf.Log.WithName("cmd")
 )
-var (
-	setupLog = logf.Log.WithName("setup")
-)
-var log = logf.Log.WithName("cmd")
 
 func printVersion() {
 	log.Info(fmt.Sprintf("Operator Version: %s", version.Version))
@@ -146,6 +145,11 @@ func main() {
 	}
 
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := mchov1.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

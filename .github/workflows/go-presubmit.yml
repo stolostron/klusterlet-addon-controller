@@ -81,3 +81,10 @@ jobs:
           make test-e2e
         env:
           KUBECONFIG: /home/runner/.kube/config
+      - name: Emit logs
+        if: ${{ failure() }}
+        run: |
+          kubectl get pods -A
+          kubectl logs -n open-cluster-management -l=name=klusterlet-addon-controller --tail=-1
+        env:
+          KUBECONFIG: /home/runner/.kube/config

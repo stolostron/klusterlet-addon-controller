@@ -12,6 +12,7 @@ import (
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	v1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
+	mchov1 "github.com/stolostron/multiclusterhub-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -181,6 +182,7 @@ func Test_Reconcile(t *testing.T) {
 	_ = mcv1.AddToScheme(testscheme)
 	_ = v1alpha1.AddToScheme(testscheme)
 	_ = apis.AddToScheme(testscheme)
+	_ = mchov1.AddToScheme(testscheme)
 
 	tests := []struct {
 		name                  string
@@ -188,6 +190,7 @@ func Test_Reconcile(t *testing.T) {
 		managedCluster        *mcv1.ManagedCluster
 		klusterletAddonConfig *v1.KlusterletAddonConfig
 		managedClusterAddons  []runtime.Object
+		noIHC                 bool
 		want                  reconcile.Result
 		validateFunc          func(t *testing.T, client client.Client)
 	}{
@@ -259,6 +262,23 @@ func Test_Reconcile(t *testing.T) {
 				}
 				if len(addonList.Items) != 0 {
 					t.Errorf("expected 0 addons, but got %v", len(addonList.Items))
+				}
+			},
+		},
+		{
+			name:                  "no grc internalhubcomponent",
+			clusterName:           "cluster1",
+			managedCluster:        newManagedCluster("cluster1", nil, nil),
+			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
+			noIHC:                 true,
+			validateFunc: func(t *testing.T, kubeClient client.Client) {
+				addonList := &v1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "cluster1"})
+				if err != nil {
+					t.Errorf("failed to list addons. %v", err)
+				}
+				if len(addonList.Items) != 2 {
+					t.Errorf("expected 2 addons, but got %v", len(addonList.Items))
 				}
 			},
 		},
@@ -353,7 +373,6 @@ func Test_Reconcile(t *testing.T) {
 					if addon.GetName() == v1.IamPolicyAddonName {
 						t.Errorf("iam policy addon is still running")
 					}
-
 				}
 			},
 		},
@@ -371,9 +390,18 @@ func Test_Reconcile(t *testing.T) {
 			if len(tt.managedClusterAddons) != 0 {
 				objs = append(objs, tt.managedClusterAddons...)
 			}
+			if !tt.noIHC {
+				objs = append(objs, &mchov1.InternalHubComponent{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "open-cluster-management",
+						Name:      "grc",
+					},
+				})
+			}
 
 			reconciler := &ReconcileKlusterletAddOn{
-				client: fake.NewClientBuilder().WithScheme(testscheme).WithRuntimeObjects(objs...).Build(),
+				client:    fake.NewClientBuilder().WithScheme(testscheme).WithRuntimeObjects(objs...).Build(),
+				namespace: "open-cluster-management",
 			}
 			request := reconcile.Request{
 				NamespacedName: types.NamespacedName{

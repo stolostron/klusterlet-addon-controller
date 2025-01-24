@@ -33,6 +33,7 @@ resources:
 - ./deployment.yaml
 - ./image-manifest-configmap.yaml
 - ./agent.open-cluster-management.io_klusterletaddonconfigs_crd.yaml
+- ./operator.open-cluster-management.io_internalhubcomponents_crd.yaml
 
 images:
 - name: REPLACE_NAME

@@ -12,6 +12,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	mchov1 "github.com/stolostron/multiclusterhub-operator/api/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -72,6 +73,16 @@ var _ = BeforeSuite(func() {
 			return err
 		}
 
+		grcIHC := mchov1.InternalHubComponent{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "grc",
+				Namespace: "open-cluster-management",
+			},
+		}
+		if err := kubeClient.Create(context.TODO(), &grcIHC); err != nil {
+			return err
+		}
+
 		return nil
 	}()
 	Expect(err).ToNot(HaveOccurred())
@@ -93,6 +104,11 @@ func newRuntimeClient(config *rest.Config) (client.Client, error) {
 
 	if err := addonv1alpha1.AddToScheme(kscheme.Scheme); err != nil {
 		logf.Log.Info("add to scheme error", "error", err, "name", "managedClusterAddon")
+		return nil, err
+	}
+
+	if err := mchov1.AddToScheme(kscheme.Scheme); err != nil {
+		logf.Log.Info("add to scheme error", "error", err, "name", "internalhubcomponent")
 		return nil, err
 	}
 

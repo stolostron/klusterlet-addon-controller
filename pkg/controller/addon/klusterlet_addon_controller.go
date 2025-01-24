@@ -11,6 +11,7 @@ import (
 	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
+	mchov1 "github.com/stolostron/multiclusterhub-operator/api/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -49,12 +50,13 @@ type global struct {
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileKlusterletAddOn{client: mgr.GetClient()}
+func newReconciler(mgr manager.Manager, ns string) reconcile.Reconciler {
+	return &ReconcileKlusterletAddOn{client: mgr.GetClient(), namespace: ns}
 }
 
 type ReconcileKlusterletAddOn struct {
-	client client.Client
+	client    client.Client
+	namespace string
 }
 
 func (r *ReconcileKlusterletAddOn) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
@@ -89,10 +91,25 @@ func (r *ReconcileKlusterletAddOn) Reconcile(ctx context.Context, request reconc
 		return reconcile.Result{}, err
 	}
 
+	grcIHCEnabled := true
+
+	if r.namespace != "" {
+		grcIHC := &mchov1.InternalHubComponent{}
+		if err := r.client.Get(ctx, types.NamespacedName{Namespace: r.namespace, Name: "grc"}, grcIHC); err != nil {
+			if errors.IsNotFound(err) {
+				grcIHCEnabled = false
+			} else {
+				return reconcile.Result{}, err
+			}
+		}
+
+		grcIHCEnabled = grcIHCEnabled && grcIHC.GetDeletionTimestamp().IsZero()
+	}
+
 	addOnHostingClusterName := getAddOnHostingClusterName(managedCluster)
 	var aggregatedErrs []error
 	for addonName, needUpdate := range agentv1.KlusterletAddons {
-		if !addonIsEnabled(addonName, klusterletAddonConfig) {
+		if !addonIsEnabled(addonName, klusterletAddonConfig, grcIHCEnabled) {
 			if err := r.deleteManagedClusterAddon(ctx, addonName, managedCluster.GetName()); err != nil {
 				aggregatedErrs = append(aggregatedErrs, err)
 			}
@@ -440,18 +457,18 @@ func mergeValues(a, b map[string]interface{}) map[string]interface{} {
 	return out
 }
 
-func addonIsEnabled(addonName string, config *agentv1.KlusterletAddonConfig) bool {
+func addonIsEnabled(addonName string, config *agentv1.KlusterletAddonConfig, grcIHCEnabled bool) bool {
 	switch addonName {
 	case agentv1.ApplicationAddonName:
 		return config.Spec.ApplicationManagerConfig.Enabled
 	case agentv1.ConfigPolicyAddonName:
-		return config.Spec.PolicyController.Enabled
+		return config.Spec.PolicyController.Enabled && grcIHCEnabled
 	case agentv1.CertPolicyAddonName:
-		return config.Spec.CertPolicyControllerConfig.Enabled
+		return config.Spec.CertPolicyControllerConfig.Enabled && grcIHCEnabled
 	case agentv1.PolicyAddonName:
 		return false //  has been deprecated
 	case agentv1.PolicyFrameworkAddonName:
-		return config.Spec.PolicyController.Enabled
+		return config.Spec.PolicyController.Enabled && grcIHCEnabled
 	case agentv1.SearchAddonName:
 		return config.Spec.SearchCollectorConfig.Enabled
 	case agentv1.WorkManagerAddonName:
