@@ -2,7 +2,7 @@ module github.com/stolostron/klusterlet-addon-controller
 
 go 1.21
 
-replace golang.org/x/text => golang.org/x/text v0.3.8 // CVE-2022-32149
+replace golang.org/x/text => golang.org/x/text v0.22.0 // CVE-2022-32149
 
 require (
 	github.com/onsi/ginkgo v1.16.5
@@ -43,7 +43,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
