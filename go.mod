@@ -1,6 +1,8 @@
 module github.com/stolostron/klusterlet-addon-controller
 
-go 1.21
+go 1.22.0
+
+toolchain go1.22.9
 
 replace golang.org/x/text => golang.org/x/text v0.3.8 // CVE-2022-32149
 
@@ -8,7 +10,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.24.1
 	github.com/openshift/api v0.0.0-20220525145417-ee5b62754c68
-	github.com/openshift/build-machinery-go v0.0.0-20230306181456-d321ffa04533
+	github.com/openshift/build-machinery-go v0.0.0-20250211133638-a00a772ae1a2
 	github.com/stolostron/cluster-lifecycle-api v0.0.0-20230810064008-81160dedc4f8
 	github.com/stretchr/testify v1.8.0
 	k8s.io/api v0.26.7
