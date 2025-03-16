@@ -7,7 +7,7 @@ replace golang.org/x/text => golang.org/x/text v0.3.8 // CVE-2022-32149
 require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.24.1
-	github.com/openshift/api v0.0.0-20220525145417-ee5b62754c68
+	github.com/openshift/api 8a7efbfb5316
 	github.com/openshift/build-machinery-go v0.0.0-20230306181456-d321ffa04533
 	github.com/stolostron/cluster-lifecycle-api v0.0.0-20230810064008-81160dedc4f8
 	github.com/stretchr/testify v1.8.0
