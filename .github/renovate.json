@@ -1,0 +1,55 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "baseBranches": [
+        "main",
+        "/^release-.*/"
+    ],
+    "packageRules": [
+        {
+            "matchManagers": [
+                "dockerfile"
+            ],
+            "matchFileNames": [
+                "Dockerfile.rhtap",
+                "build/Dockerfile",
+                "build/Dockerfile-coverage"
+            ],
+            "enabled": true
+        },
+        {
+            "matchBaseBranches": [
+                "main",
+                "release-2.13",
+                "release-2.12",
+                "release-2.11",
+                "release-2.10"
+            ],
+            "matchManagers": [
+                "gomod",
+                "dockerfile"
+            ],
+            "enabled": true,
+            "addLabels": [
+                "approved"
+            ]
+        },
+        {
+            "matchBaseBranches": [
+                "release-2.9",
+                "release-2.8",
+                "release-2.7",
+                "release-2.6",
+                "release-2.5",
+                "release-2.4",
+                "release-2.3"
+            ],
+            "enabled": false
+        }
+    ],
+    "rebaseWhen": "behind-base-branch",
+    "recreateWhen": "never",
+    "addLabels": [
+        "ok-to-test"
+    ],
+    "schedule": "at any time"
+}
