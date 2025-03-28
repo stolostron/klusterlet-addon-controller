@@ -18,12 +18,12 @@ issues:
 linters:
   disable-all: true
   enable:
-  - deadcode
+  # - deadcode
   - errcheck
   - govet
   - ineffassign
   - typecheck
-  - varcheck
+  # - varcheck
   # - gosimple
   # disable in go 1.19
   # - staticcheck
