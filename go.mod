@@ -10,7 +10,7 @@ require (
 	github.com/openshift/api v0.0.0-20220525145417-ee5b62754c68
 	github.com/openshift/build-machinery-go v0.0.0-20230306181456-d321ffa04533
 	github.com/stolostron/cluster-lifecycle-api v0.0.0-20230810064008-81160dedc4f8
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.10.0
 	k8s.io/api v0.26.7
 	k8s.io/apimachinery v0.26.7
 	k8s.io/client-go v0.26.7
