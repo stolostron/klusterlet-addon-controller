@@ -10,7 +10,7 @@ require (
 	github.com/openshift/api v0.0.0-20220525145417-ee5b62754c68
 	github.com/openshift/build-machinery-go v0.0.0-20230306181456-d321ffa04533
 	github.com/stolostron/cluster-lifecycle-api v0.0.0-20230810064008-81160dedc4f8
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	k8s.io/api v0.26.7
 	k8s.io/apimachinery v0.26.7
 	k8s.io/client-go v0.26.7
@@ -59,9 +59,8 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	go.uber.org/atomic v1.7.0 // indirect
-	go.uber.org/multierr v1.6.0 // indirect
-	go.uber.org/zap v1.24.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
 	golang.org/x/sys v0.28.0 // indirect
