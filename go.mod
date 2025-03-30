@@ -1,6 +1,8 @@
 module github.com/stolostron/klusterlet-addon-controller
 
-go 1.21
+go 1.23.0
+
+toolchain go1.23.7
 
 replace golang.org/x/text => golang.org/x/text v0.3.8 // CVE-2022-32149
 
@@ -67,7 +69,7 @@ require (
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/term v0.27.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/time v0.3.0 // indirect
+	golang.org/x/time v0.11.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
