@@ -9,12 +9,20 @@
             "matchManagers": [
                 "dockerfile"
             ],
-            "matchFileNames": [
-                "Dockerfile.rhtap",
-                "build/Dockerfile",
-                "build/Dockerfile-coverage"
+            "enabled": false
+        },
+        {
+            "matchBaseBranches": [
+                "release-2.14",
+                "release-2.9",
+                "release-2.8",
+                "release-2.7",
+                "release-2.6",
+                "release-2.5",
+                "release-2.4",
+                "release-2.3"
             ],
-            "enabled": true
+            "enabled": false
         },
         {
             "matchBaseBranches": [
@@ -26,30 +34,19 @@
             ],
             "matchManagers": [
                 "gomod",
-                "dockerfile"
+                "tekton"
             ],
             "enabled": true,
             "addLabels": [
-                "approved"
+                "lgtm"
             ]
-        },
-        {
-            "matchBaseBranches": [
-                "release-2.9",
-                "release-2.8",
-                "release-2.7",
-                "release-2.6",
-                "release-2.5",
-                "release-2.4",
-                "release-2.3"
-            ],
-            "enabled": false
         }
     ],
     "rebaseWhen": "behind-base-branch",
     "recreateWhen": "never",
     "addLabels": [
-        "ok-to-test"
+        "ok-to-test",
+        "approved"
     ],
     "schedule": "at any time"
 }
