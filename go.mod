@@ -86,7 +86,7 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 	k8s.io/klog/v2 v2.4.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd // indirect
+	k8s.io/kube-openapi c8a335a9a2ff // indirect
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.0.2 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
