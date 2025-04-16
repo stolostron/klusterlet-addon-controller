@@ -13,7 +13,7 @@ RUN GOFLAGS="" go test -covermode=atomic -coverpkg=github.com/stolostron/kluster
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
-RUN microdnf update && \
+RUN microdnf update -y && \
     microdnf clean all
 
 ARG REMOTE_SOURCE_DIR

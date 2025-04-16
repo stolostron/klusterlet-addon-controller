@@ -8,7 +8,6 @@
 set -x
 set -eo pipefail
 
-GOLANGCI_LINT_VERSION="1.53.2"
 GOLANGCI_LINT_CACHE=/tmp/golangci-cache
 GOOS=$(go env GOOS)
 GOPATH=$(go env GOPATH)
@@ -24,8 +23,7 @@ if ! which golangci-lint > /dev/null; then
         echo "${GOPATH}/bin not in $$PATH"
         exit 1
     fi
-    DOWNLOAD_URL="https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-${GOOS}-amd64.tar.gz"
-    curl -sfL "${DOWNLOAD_URL}" | tar -C "${GOPATH}/bin" -zx --strip-components=1 "golangci-lint-${GOLANGCI_LINT_VERSION}-${GOOS}-amd64/golangci-lint"
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.2
 fi
 
 echo 'Running linting tool ...'
