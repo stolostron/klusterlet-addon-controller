@@ -7,7 +7,7 @@ require (
 	github.com/onsi/gomega v1.33.1
 	github.com/openshift/api v0.0.0-20240509232804-02500a65025d
 	github.com/openshift/build-machinery-go v0.0.0-20240419090851-af9c868bcf52
-	github.com/stolostron/cluster-lifecycle-api v0.0.0-20240813023109-42b5c115d0a3
+	github.com/stolostron/cluster-lifecycle-api 363012f4f827
 	github.com/stretchr/testify v1.8.4
 	k8s.io/api v0.30.2
 	k8s.io/apimachinery v0.30.2
