@@ -3,7 +3,7 @@ module github.com/stolostron/klusterlet-addon-controller
 go 1.23.6
 
 require (
-	github.com/onsi/ginkgo/v2 v2.17.3
+	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.33.1
 	github.com/openshift/api v0.0.0-20240509232804-02500a65025d
 	github.com/openshift/build-machinery-go v0.0.0-20240419090851-af9c868bcf52
