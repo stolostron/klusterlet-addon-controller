@@ -4,8 +4,8 @@ FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.23 AS bui
 COPY . .
 RUN chmod g+w . && \
   git config --global --add safe.directory "$PWD" && \
-  GOFLAGS="-mod=readonly" go build ./cmd/manager && \
-  GOFLAGS="-mod=readonly" go test \
+  go build ./cmd/manager && \
+  go test \
     -covermode=atomic \
     -coverpkg=github.com/stolostron/klusterlet-addon-controller/pkg/... \
     -c -tags testrunmain ./cmd/manager \
