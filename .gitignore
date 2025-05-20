@@ -20,7 +20,6 @@ kind-config-generated.yaml
 build/_output
 build-harness
 build-harness-extensions
-vendor
 .idea
 
 test/e2e/resources/clusters
