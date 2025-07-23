@@ -34,6 +34,12 @@ spec:
     value: Dockerfile.rhtap
   - name: path-context
     value: .
+  - name: send-slack-notification
+    value: "true"
+  - name: konflux-application-name
+    value: "release-acm-215"
+  - name: slack-member-id
+    value: "UUSRGGQ1L"
   pipelineSpec:
     description: |
       This pipeline is ideal for building multi-arch container images from a Containerfile while maintaining trust after pipeline customization.
@@ -54,6 +60,36 @@ spec:
         - name: kind
           value: task
         resolver: bundles
+    - name: slack-webhook-notification
+      params:
+        - name: message
+          value: |
+            :bangbang: <@$(params.slack-member-id)> PipelineRun name: $(context.pipelineRun.name) id: $(context.pipelineRun.uid) failed:
+            - git source: $(params.git-url)/commit/$(params.revision)
+            - output image: $(params.output-image)
+            - see details: https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com/ns/$(context.pipelineRun.namespace)/applications/$(params.konflux-application-name)/pipelineruns/$(context.pipelineRun.name)
+        - name: secret-name
+          value: $(params.slack-webhook-url-secret-name)
+        - name: key-name
+          value: $(params.slack-webhook-url-secret-key)
+      taskRef:
+        params:
+        - name: bundle
+          value: quay.io/konflux-ci/tekton-catalog/task-slack-webhook-notification:0.1@sha256:4e68fe2225debc256d403b828ed358345bb56d03327b46d55cb6c42911375750
+        - name: name
+          value: slack-webhook-notification
+        - name: kind
+          value: Task
+        resolver: bundles
+      when:
+        - input: $(tasks.status)
+          operator: in
+          values:
+          - "Failed"
+        - input: $(params.send-slack-notification)
+          operator: in
+          values:
+          - "true"
     params:
     - description: Source Repository URL
       name: git-url
@@ -120,6 +156,35 @@ spec:
         set of values is determined by the configuration of the multi-platform-controller.
       name: build-platforms
       type: array
+    - default: "false"
+      description: Whether to send slack notification when the pipeline run failed
+      name: send-slack-notification
+      type: string
+    - default: ""
+      name: konflux-application-name
+      description: The name of the application in Konflux, this is required when send-slack-notification is true
+      type: string
+    - default: "slack-acm-notify-secret"
+      name: slack-webhook-url-secret-name
+      description: |
+        The name of the secret in the konflux tenant namespace which contains the slack webhook url, this is required when send-slack-notification is true.
+        If it does not exist, please prepare the slack webhook url for your team and contact the konflux tenant admins to create it.
+        The default secret is "slack-acm-notify-secret", which will send the slack message to the forum-acm-konflux-pipeline-status channel.
+        See details: https://konflux.pages.redhat.com/docs/users/patterns/slack-notifications.html
+      type: string
+    - default: "forum-acm-konflux-pipeline-status-webhook-url"
+      name: slack-webhook-url-secret-key
+      description: |
+        The key of the slack webhook url in the secret, this is required when send-slack-notification is true.
+        Should be changed according to how the secret slack-webhook-url-secret-name is created.
+        The default key is "forum-acm-konflux-pipeline-status-webhook-url", which will send the slack message to the forum-acm-konflux-pipeline-status channel.
+        See details: https://konflux.pages.redhat.com/docs/users/patterns/slack-notifications.html
+    - default: ""
+      name: slack-member-id
+      description: |
+        The member id of the slack user, if this is set will mention the user in the slack message; this id can be found in the slack user profile
+        by clicking the user profile, in the profile pop-up, click the "More" icon(three dots), and then click "Copy member ID" button. e.g. U0600000000
+      type: string
     results:
     - description: ""
       name: IMAGE_URL
