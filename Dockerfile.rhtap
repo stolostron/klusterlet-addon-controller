@@ -3,15 +3,23 @@
 FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.23 AS builder
 COPY . .
 RUN chmod g+w . && \
-  git config --global --add safe.directory "$PWD"
-RUN GOFLAGS="" go build ./cmd/manager
-RUN GOFLAGS="" go test -covermode=atomic -coverpkg=github.com/stolostron/klusterlet-addon-controller/pkg/... -c -tags testrunmain ./cmd/manager -o manager-coverage
+  git config --global --add safe.directory "$PWD" && \
+  GOFLAGS="-mod=readonly" go build ./cmd/manager && \
+  GOFLAGS="-mod=readonly" go test \
+    -covermode=atomic \
+    -coverpkg=github.com/stolostron/klusterlet-addon-controller/pkg/... \
+    -c -tags testrunmain ./cmd/manager \
+    -o manager-coverage
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
-
-RUN microdnf update -y && \
-    microdnf clean all
-
+LABEL \
+    name="klusterlet-addon-controller" \
+    com.redhat.component="klusterlet-addon-controller" \
+    description="Klusterlet AddOn controller is an conponent of RHACM, which manages the Klusterelet AddOns." \
+    io.k8s.description="Klusterlet AddOn controller is an conponent of RHACM, which manages the Klusterelet AddOns." \
+    summary="Klusterlet AddOn controller is an conponent of RHACM, which manages the Klusterelet AddOns." \
+    io.k8s.display-name="Red Hat Advanced Cluster Management Klusterlet AddOn Controller" \
+    io.openshift.tags="mce acm ocm klusterlet-addon-controller"
 ENV IMAGE_MANIFEST_PATH=/
 
 ENV OPERATOR=/usr/local/bin/klusterlet-addon-controller \
