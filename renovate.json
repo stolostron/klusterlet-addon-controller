@@ -1,6 +1,6 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "baseBranches": [
+    "baseBranchPatterns": [
         "main",
         "/^release-2\\.(1[0-3])$/"
     ],
@@ -51,6 +51,6 @@
     ],
     "timezone": "Asia/Shanghai",
     "schedule": [
-        "every monday"
+        "on monday"
     ]
 }
