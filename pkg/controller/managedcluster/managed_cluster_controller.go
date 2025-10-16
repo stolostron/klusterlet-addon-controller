@@ -206,7 +206,7 @@ func defaultKAC(clusterName string) *kacv1.KlusterletAddonConfig {
 			ApplicationManagerConfig:   kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
 			CertPolicyControllerConfig: kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
 			PolicyController:           kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
-			SearchCollectorConfig:      kacv1.KlusterletAddonAgentConfigSpec{Enabled: false},
+			SearchCollectorConfig:      kacv1.KlusterletAddonAgentConfigSpec{Enabled: true},
 		},
 	}
 }
