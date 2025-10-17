@@ -1,5 +1,7 @@
 # Copyright Contributors to the Open Cluster Management project
 
+version: "2"
+
 # options for analysis running
 run:
   # default concurrency is a available CPU number
@@ -8,24 +10,42 @@ run:
   # We're using a somewhat resource-constrained container in the CI
   # environment, so make this longish.
   timeout: 5m
+  relative-path-mode: cfg
+
+formatters:
+  enable:
+    - gofmt
+
+linters:
+  # Use standard linter set
+  default: standard
+  settings:
+    errcheck:
+      check-type-assertions: false
+      check-blank: false
+      verbose: true
+    govet:
+      check-shadowing: false
+    gofmt:
+      simplify: true
+    unused:
+      post-statements-are-reads: true
+      parameters-are-used: true
+      local-variables-are-used: false
+      generated-is-used: true
+  exclusions:
+    generated: strict
+    warn-unused: true
+    presets:
+      - comments
+      - std-error-handling
+      - common-false-positives
+      - legacy
+    paths:
+      - ".*_test\\.go"
 
 issues:
   # We want to make sure we get a full report every time. Setting these
   # to zero disables the limit.
   max-issues-per-linter: 0
   max-same-issues: 0
-
-linters:
-  disable-all: true
-  enable:
- # - deadcode
-  - errcheck
-  - govet
-  - ineffassign
-  - typecheck
- # - varcheck
-  # - gosimple
-  # disable in go 1.19
-  # - staticcheck
-  # - structcheck
-  # - unused

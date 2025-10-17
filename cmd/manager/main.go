@@ -169,7 +169,7 @@ func newRuntimeClient(conf *rest.Config) (client.Client, error) {
 	kubeClient, err := client.New(conf, client.Options{})
 	if err != nil {
 		log.Info("Failed to initialize a client connection to the cluster", "error", err.Error())
-		return nil, fmt.Errorf("Failed to initialize a client connection to the cluster")
+		return nil, fmt.Errorf("failed to initialize a client connection to the cluster")
 	}
 	return kubeClient, nil
 }

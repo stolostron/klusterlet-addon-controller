@@ -8,7 +8,7 @@
 set -x
 set -eo pipefail
 
-GOLANGCI_LINT_VERSION="v1.64.6"
+GOLANGCI_LINT_VERSION="v2.4.0"
 GOLANGCI_LINT_CACHE=/tmp/golangci-cache
 export GOFLAGS=""
 PROJECT_DIR=$(pwd)
