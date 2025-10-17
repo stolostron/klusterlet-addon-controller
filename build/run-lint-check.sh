@@ -8,26 +8,28 @@
 set -x
 set -eo pipefail
 
-GOLANGCI_LINT_VERSION="1.60.1"
+GOLANGCI_LINT_VERSION="v2.4.0"
 GOLANGCI_LINT_CACHE=/tmp/golangci-cache
-GOOS=$(go env GOOS)
-GOPATH=$(go env GOPATH)
 export GOFLAGS=""
-# export PROJECT_DIR=$(shell 'pwd')
-# export BUILD_DIR=$(PROJECT_DIR)/build
+PROJECT_DIR=$(pwd)
+BUILD_DIR=${PROJECT_DIR}/build
 
-if ! which golangci-lint > /dev/null; then
-    mkdir -p "${GOPATH}/bin"
-    echo "${PATH}" | grep -q "${GOPATH}/bin"
-    IN_PATH=$?
-    if [ $IN_PATH != 0 ]; then
-        echo "${GOPATH}/bin not in $$PATH"
-        exit 1
-    fi
-    DOWNLOAD_URL="https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-${GOOS}-amd64.tar.gz"
-    curl -sfL "${DOWNLOAD_URL}" | tar -C "${GOPATH}/bin" -zx --strip-components=1 "golangci-lint-${GOLANGCI_LINT_VERSION}-${GOOS}-amd64/golangci-lint"
+# Use the default from vendor/github.com/openshift/build-machinery-go/make/lib/tmp.mk
+# PERMANENT_TMP_GOPATH defaults to _output/tools
+PERMANENT_TMP_GOPATH=${PERMANENT_TMP_GOPATH:-${PROJECT_DIR}/_output/tools}
+
+# Install golangci-lint locally in project directory
+GOLANGCI_LINT=${PERMANENT_TMP_GOPATH}/bin/golangci-lint
+golangci_lint_gen_dir=$(dirname ${GOLANGCI_LINT})
+
+if [[ ! -f "${GOLANGCI_LINT}" ]]; then
+    echo "Installing golangci-lint ${GOLANGCI_LINT_VERSION} into '${GOLANGCI_LINT}'"
+    mkdir -p "${golangci_lint_gen_dir}"
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${golangci_lint_gen_dir}" ${GOLANGCI_LINT_VERSION}
+else
+    echo "Using existing golangci-lint from '${GOLANGCI_LINT}'"
 fi
 
 echo 'Running linting tool ...'
-$(GOLANGCI_LINT_CACHE=${GOLANGCI_LINT_CACHE} CGO_ENABLED=1 golangci-lint run -c build/golangci.yml)
+CGO_ENABLED=1 ${GOLANGCI_LINT} run -c build/golangci.yml
 echo '##### lint-check #### Success'
