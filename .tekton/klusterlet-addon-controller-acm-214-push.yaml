@@ -48,10 +48,10 @@ spec:
         value: main
       - name: pathInRepo
         value: pipelines/common_mce_2.9.yaml
-    taskRunTemplate:
-      serviceAccountName: build-pipeline-klusterlet-addon-controller-acm-214
-    workspaces:
-      - name: git-auth
-        secret:
-          secretName: '{{ git_auth_secret }}'
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-klusterlet-addon-controller-acm-214
+  workspaces:
+    - name: git-auth
+      secret:
+        secretName: '{{ git_auth_secret }}'
 status: {}
