@@ -16,3 +16,7 @@ approvers:
 - elgnay
 - mikeshng
 - xiangjingli
+# Temporary approvers added to facilitate release repo prow configuration updates during konflux migration.
+# These will be removed after the migration is complete.
+- xuezhaojun
+- zhujian7
