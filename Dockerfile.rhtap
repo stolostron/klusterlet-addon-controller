@@ -13,7 +13,8 @@ RUN chmod g+w . && \
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 LABEL \
-    name="klusterlet-addon-controller" \
+    name="rhacm2/klusterlet-addon-controller-rhel9" \
+    cpe="cpe:/a:redhat:acm:2.13::el9" \
     com.redhat.component="klusterlet-addon-controller" \
     description="Klusterlet AddOn controller is an conponent of RHACM, which manages the Klusterelet AddOns." \
     io.k8s.description="Klusterlet AddOn controller is an conponent of RHACM, which manages the Klusterelet AddOns." \
