@@ -73,6 +73,8 @@ func main() {
 	}
 	printVersion()
 
+	log.Info("Initializing klusterlet-addon-controller manager")
+
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
