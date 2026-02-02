@@ -73,6 +73,8 @@ func main() {
 	}
 	printVersion()
 
+	log.Info("Initializing klusterlet-addon-controller components")
+
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -151,10 +153,12 @@ func main() {
 	}
 
 	// Setup all Controllers
+	log.Info("Setting up controllers")
 	if err := controller.AddToManager(mgr, kubeClient, dynamicClient); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+	log.Info("Controllers setup completed successfully")
 
 	log.Info("Starting the Cmd.")
 
