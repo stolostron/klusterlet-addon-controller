@@ -73,6 +73,8 @@ func main() {
 	}
 	printVersion()
 
+	log.Info("Initializing klusterlet-addon-controller manager")
+
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -157,6 +159,7 @@ func main() {
 	}
 
 	log.Info("Starting the Cmd.")
+	log.Info("All controllers have been set up successfully, starting manager loop")
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
