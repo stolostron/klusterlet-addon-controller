@@ -4,13 +4,12 @@ package globalproxy
 
 import (
 	"context"
-	v1 "k8s.io/api/core/v1"
 	"reflect"
 	"testing"
 	"time"
 
-	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers"
+	v1 "k8s.io/api/core/v1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kubefake "k8s.io/client-go/kubernetes/fake"
@@ -18,8 +17,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers"
 )
 
+//nolint:unparam // clusterName is always "cluster1" in tests, but kept for readability
 func newKlusterletAddonConfig(clusterName string, proxyConfig agentv1.ProxyConfig,
 	appProxyPolicy agentv1.ProxyPolicy, conditions []metav1.Condition) *agentv1.KlusterletAddonConfig {
 	return &agentv1.KlusterletAddonConfig{
@@ -40,7 +43,7 @@ func newKlusterletAddonConfig(clusterName string, proxyConfig agentv1.ProxyConfi
 	}
 }
 
-func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
+func Test_Reconciler_Reconcile(t *testing.T) {
 	testscheme := scheme.Scheme
 	testscheme.AddKnownTypes(agentv1.SchemeGroupVersion, &agentv1.KlusterletAddonConfig{})
 
@@ -257,7 +260,7 @@ func Test_GlobalProxyReconciler_Reconcile(t *testing.T) {
 
 	for _, c := range testCases {
 		t.Run(c.name, func(t *testing.T) {
-			r := &GlobalProxyReconciler{
+			r := &Reconciler{
 				kubeClient: kubefake.NewSimpleClientset(c.existingConfigSecret),
 				scheme:     testscheme,
 			}
