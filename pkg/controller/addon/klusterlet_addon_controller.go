@@ -7,20 +7,21 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/stolostron/cluster-lifecycle-api/helpers/localcluster"
-	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
-	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
-	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
-	mcv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/stolostron/cluster-lifecycle-api/helpers/localcluster"
+	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	mcv1 "open-cluster-management.io/api/cluster/v1"
 )
 
 const (
@@ -337,6 +338,7 @@ func newManagedClusterAddon(addonName, namespace string, hostingClusterName stri
 	return addOn
 }
 
+//nolint:unparam // error return kept for consistency with marshal pattern
 func marshalGlobalValues(values globalValues) (string, error) {
 	if len(values.Global.NodeSelector) == 0 &&
 		len(values.Global.ProxyConfig) == 0 &&

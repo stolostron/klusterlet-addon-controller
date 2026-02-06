@@ -8,16 +8,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+
+	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 
+	//nolint:revive // Dot imports are standard practice for Ginkgo/Gomega BDD tests
 	. "github.com/onsi/ginkgo/v2"
+	//nolint:revive // Dot imports are standard practice for Ginkgo/Gomega BDD tests
 	. "github.com/onsi/gomega"
-	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 )
 
 var _ = Describe("globalProxy test", func() {

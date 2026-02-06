@@ -1,3 +1,6 @@
+// Package common provides shared constants used across the klusterlet addon controller
+//
+//nolint:revive // Package name is established and widely used
 package common
 
 const (

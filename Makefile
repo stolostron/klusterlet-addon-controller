@@ -95,8 +95,12 @@ lint-all:
 
 .PHONY: lint
 ## Runs linter against go files
-lint:
-	build/run-lint-check.sh
+lint: install-golangci-lint
+	golangci-lint run
+
+.PHONY: install-golangci-lint
+install-golangci-lint:
+	@curl -sfL https://raw.githubusercontent.com/stolostron/acm-infra/main/scripts/lint/install-golangci-lint.sh | bash
 
 ### HELPER UTILS #######################
 

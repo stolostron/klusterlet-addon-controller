@@ -10,13 +10,17 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 
+	//nolint:revive // Dot imports are standard practice for Ginkgo/Gomega BDD tests
 	. "github.com/onsi/ginkgo/v2"
+	//nolint:revive // Dot imports are standard practice for Ginkgo/Gomega BDD tests
 	. "github.com/onsi/gomega"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("klusterletAddonConfig test", func() {
