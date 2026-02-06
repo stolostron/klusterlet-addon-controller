@@ -7,20 +7,21 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/stolostron/cluster-lifecycle-api/helpers/localcluster"
-	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
-	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
-	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
-	mcv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/stolostron/cluster-lifecycle-api/helpers/localcluster"
+	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	mcv1 "open-cluster-management.io/api/cluster/v1"
 )
 
 const (
@@ -137,12 +138,9 @@ func (r *ReconcileKlusterletAddOn) deleteManagedClusterAddon(ctx context.Context
 }
 
 func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(ctx context.Context, gv globalValues, addonName, clusterName string, hostingClusterName string) error {
-	valuesString, err := marshalGlobalValues(gv)
-	if err != nil {
-		return err
-	}
+	valuesString := marshalGlobalValues(gv)
 	addon := &addonv1alpha1.ManagedClusterAddOn{}
-	err = r.client.Get(ctx, types.NamespacedName{Name: addonName, Namespace: clusterName}, addon)
+	err := r.client.Get(ctx, types.NamespacedName{Name: addonName, Namespace: clusterName}, addon)
 	if errors.IsNotFound(err) {
 		if !agentv1.KlusterletAddons[addonName] {
 			return nil
@@ -337,25 +335,22 @@ func newManagedClusterAddon(addonName, namespace string, hostingClusterName stri
 	return addOn
 }
 
-func marshalGlobalValues(values globalValues) (string, error) {
+func marshalGlobalValues(values globalValues) string {
 	if len(values.Global.NodeSelector) == 0 &&
 		len(values.Global.ProxyConfig) == 0 &&
 		len(values.Global.ImageOverrides) == 0 {
-		return "", nil
+		return ""
 	}
 
 	gvRaw, err := json.Marshal(values)
 	if err != nil {
-		return "", nil
+		return ""
 	}
-	return string(gvRaw), nil
+	return string(gvRaw)
 }
 
 func updateAnnotationValues(gv globalValues, annotationValues string) (string, error) {
-	gvStr, err := marshalGlobalValues(gv)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal gv. err:%v", err)
-	}
+	gvStr := marshalGlobalValues(gv)
 	if len(gvStr) == 0 {
 		return "", nil
 	}
@@ -364,7 +359,7 @@ func updateAnnotationValues(gv globalValues, annotationValues string) (string, e
 	}
 
 	values := map[string]interface{}{}
-	err = json.Unmarshal([]byte(annotationValues), &values)
+	err := json.Unmarshal([]byte(annotationValues), &values)
 	if err != nil {
 		return "", fmt.Errorf("failed to unmarshal annotation values. err:%v", err)
 	}

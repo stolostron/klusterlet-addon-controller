@@ -1,4 +1,4 @@
-package common
+package common //nolint:revive
 
 const (
 	// AnnotationKlusterletDeployMode is the annotation key of klusterlet deploy mode
