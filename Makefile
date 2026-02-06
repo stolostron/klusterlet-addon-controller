@@ -90,12 +90,8 @@ request-destruct:
 
 .PHONY: lint
 ## Runs linter against go files
-lint: install-golangci-lint
-	golangci-lint run
-
-.PHONY: install-golangci-lint
-install-golangci-lint:
-	@curl -sfL https://raw.githubusercontent.com/stolostron/acm-infra/main/scripts/lint/install-golangci-lint.sh | bash
+lint:
+	@curl -sSL https://raw.githubusercontent.com/stolostron/acm-infra/main/scripts/lint/run-lint.sh | bash
 
 ### HELPER UTILS #######################
 
