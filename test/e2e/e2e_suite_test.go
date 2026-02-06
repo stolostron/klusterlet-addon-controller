@@ -19,14 +19,14 @@ import (
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
-	clusterclient "open-cluster-management.io/api/client/cluster/clientset/versioned"
-	clusterv1 "open-cluster-management.io/api/cluster/v1"
-	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
-	manifestworkv1 "open-cluster-management.io/api/work/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	clusterclient "open-cluster-management.io/api/client/cluster/clientset/versioned"
+	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
+	manifestworkv1 "open-cluster-management.io/api/work/v1"
 
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 )
@@ -104,17 +104,17 @@ func newRuntimeClient(config *rest.Config) (client.Client, error) {
 	return c, nil
 }
 
-func createManagedCluster(clusterName string, annotations map[string]string) (*clusterv1.ManagedCluster, error) {
+func createManagedCluster(clusterName string, annotations map[string]string) (*managedclusterv1.ManagedCluster, error) {
 	cluster, err := hubClusterClient.ClusterV1().ManagedClusters().Get(context.TODO(), clusterName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		return hubClusterClient.ClusterV1().ManagedClusters().Create(
 			context.TODO(),
-			&clusterv1.ManagedCluster{
+			&managedclusterv1.ManagedCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        clusterName,
 					Annotations: annotations,
 				},
-				Spec: clusterv1.ManagedClusterSpec{
+				Spec: managedclusterv1.ManagedClusterSpec{
 					HubAcceptsClient: true,
 				},
 			},
@@ -127,8 +127,10 @@ func createManagedCluster(clusterName string, annotations map[string]string) (*c
 
 func assertManagedClusterNamespace(managedClusterName string) {
 	By("Should create the managedCluster namespace", func() {
-		Expect(wait.Poll(1*time.Second, 60*time.Second, func() (bool, error) {
-			_, err := hubClient.CoreV1().Namespaces().Get(context.TODO(), managedClusterName, metav1.GetOptions{})
+		ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+		defer cancel()
+		Expect(wait.PollUntilContextTimeout(ctx, 1*time.Second, 60*time.Second, true, func(ctx context.Context) (bool, error) {
+			_, err := hubClient.CoreV1().Namespaces().Get(ctx, managedClusterName, metav1.GetOptions{})
 			if err != nil && errors.IsNotFound(err) {
 				return true, nil
 			}

@@ -15,12 +15,13 @@ import (
 	"runtime"
 
 	ocinfrav1 "github.com/openshift/api/config/v1"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller"
 	"github.com/stolostron/klusterlet-addon-controller/version"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
 	manifestworkv1 "open-cluster-management.io/api/work/v1"
@@ -169,7 +170,7 @@ func newRuntimeClient(conf *rest.Config) (client.Client, error) {
 	kubeClient, err := client.New(conf, client.Options{})
 	if err != nil {
 		log.Info("Failed to initialize a client connection to the cluster", "error", err.Error())
-		return nil, fmt.Errorf("Failed to initialize a client connection to the cluster")
+		return nil, fmt.Errorf("failed to initialize a client connection to the cluster")
 	}
 	return kubeClient, nil
 }
