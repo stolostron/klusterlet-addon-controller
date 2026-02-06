@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo" //nolint:revive // dot import is standard for ginkgo test framework
+	. "github.com/onsi/gomega" //nolint:revive // dot import is standard for gomega test framework
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -19,16 +19,15 @@ import (
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
-	clusterclient "open-cluster-management.io/api/client/cluster/clientset/versioned"
-	clusterv1 "open-cluster-management.io/api/cluster/v1"
-	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
-	manifestworkv1 "open-cluster-management.io/api/work/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	clusterclient "open-cluster-management.io/api/client/cluster/clientset/versioned"
+	clusterv1 "open-cluster-management.io/api/cluster/v1"
+	manifestworkv1 "open-cluster-management.io/api/work/v1"
 )
 
 func TestE2e(t *testing.T) {
@@ -86,7 +85,7 @@ func newRuntimeClient(config *rest.Config) (client.Client, error) {
 		logf.Log.Info("add to scheme error", "error", err, "name", "manifestwork")
 		return nil, err
 	}
-	if err := managedclusterv1.AddToScheme(kscheme.Scheme); err != nil {
+	if err := clusterv1.AddToScheme(kscheme.Scheme); err != nil {
 		logf.Log.Info("add to scheme error", "error", err, "name", "managedcluster")
 		return nil, err
 	}

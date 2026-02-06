@@ -8,15 +8,15 @@ import (
 	"fmt"
 	"time"
 
+	. "github.com/onsi/ginkgo" //nolint:revive // dot import is standard for ginkgo test framework
+	. "github.com/onsi/gomega" //nolint:revive // dot import is standard for gomega test framework
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
-	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 )
 
 var _ = Describe("klusterletAddonConfig test", func() {
