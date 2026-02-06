@@ -1,4 +1,4 @@
-package common
+package common //nolint:revive // package name is intentional for shared constants
 
 const (
 	// AnnotationKlusterletDeployMode is the annotation key of klusterlet deploy mode
