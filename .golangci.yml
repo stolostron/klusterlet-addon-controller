@@ -1,0 +1,103 @@
+# golangci-lint v2.x configuration
+# Compatible with golangci-lint v2.0.0+
+# Documentation: https://golangci-lint.run/docs/configuration/
+# Migration guide: https://golangci-lint.run/docs/product/migration-guide/
+
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  # Use 'none' as default and explicitly enable linters
+  # Options: none, standard, all, fast
+  default: none
+
+  enable:
+    # Default/standard linters
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck  # includes gosimple and stylecheck
+    - unused
+
+    # Code style
+    - misspell
+    - unconvert
+    - unparam
+    - nakedret
+    - prealloc
+    - copyloopvar  # replaces exportloopref in v2
+    - revive
+
+  settings:
+    misspell:
+      locale: US
+
+    nakedret:
+      max-func-lines: 30
+
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: increment-decrement
+        - name: var-naming
+        - name: var-declaration
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+
+  # Exclusions configuration (v2 style)
+  exclusions:
+    # Use presets for common exclusions
+    # Options: comments, std-error-handling, common-false-positives, legacy
+    presets:
+      - comments
+      - std-error-handling
+
+    # Generated files handling: strict, lax, or disable
+    generated: strict
+
+    # Custom exclusion rules
+    rules:
+      # Relax some rules for test files
+      - path: _test\.go
+        linters:
+          - govet
+          - errcheck
+          - revive  # Allow dot-imports for Ginkgo/Gomega in tests
+          - unparam  # Test helpers may have unused parameters for flexibility
+
+      # Exclude package naming for common package
+      - path: pkg/common/
+        text: "var-naming: avoid meaningless package names"
+        linters:
+          - revive
+
+      # Exclude type stuttering for GlobalProxyReconciler
+      - path: pkg/controller/globalproxy/
+        text: "type name will be used as globalproxy.GlobalProxyReconciler"
+        linters:
+          - revive
+
+# Formatters are separate from linters in v2
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    goimports:
+      local-prefixes: github.com/stolostron,open-cluster-management.io
