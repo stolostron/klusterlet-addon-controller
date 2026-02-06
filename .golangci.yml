@@ -1,0 +1,89 @@
+# golangci-lint v2.x configuration
+# Extends the default remote config with project-specific exclusions
+
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  default: none
+
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    - unconvert
+    - unparam
+    - nakedret
+    - prealloc
+    - copyloopvar
+    - revive
+
+  settings:
+    misspell:
+      locale: US
+
+    nakedret:
+      max-func-lines: 30
+
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: increment-decrement
+        - name: var-naming
+        - name: var-declaration
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+
+  exclusions:
+    presets:
+      - comments
+      - std-error-handling
+
+    generated: strict
+
+    rules:
+      # Relax some rules for test files
+      - path: _test\.go
+        linters:
+          - govet
+          - errcheck
+          - unparam
+      # Allow dot-imports for ginkgo/gomega in test files
+      - path: _test\.go
+        text: "dot-imports"
+        linters:
+          - revive
+      # Allow package naming for existing packages
+      - path: pkg/common/
+        text: "var-naming: avoid meaningless package names"
+        linters:
+          - revive
+      # Allow stuttering for existing exported types
+      - text: "stutters"
+        linters:
+          - revive
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    goimports:
+      local-prefixes: github.com/stolostron,open-cluster-management.io

@@ -3,14 +3,12 @@
 package globalproxy
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
 	"time"
 
-	"context"
-
-	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -23,12 +21,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
-
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 )
 
 type GlobalProxyReconciler struct {
@@ -155,12 +153,12 @@ func getGlobalProxyConfig(installConfigSecret *corev1.Secret) (agentv1.ProxyConf
 }
 
 func getClusterNetworkCIDRs(proxyConfigRaw map[string]interface{}) ([]string, error) {
-	var cidrs []string
 	clusterNetwork, _, err := unstructured.NestedSlice(proxyConfigRaw, "networking", "clusterNetwork")
 	if err != nil {
 		return []string{}, err
 	}
 
+	cidrs := make([]string, 0, len(clusterNetwork))
 	for _, clusterNetworkEntry := range clusterNetwork {
 		cidr, _, err := unstructured.NestedString(clusterNetworkEntry.(map[string]interface{}), "cidr")
 		if err != nil {
@@ -173,12 +171,12 @@ func getClusterNetworkCIDRs(proxyConfigRaw map[string]interface{}) ([]string, er
 }
 
 func getMachineNetworkCIDRs(proxyConfigRaw map[string]interface{}) ([]string, error) {
-	var cidrs []string
 	machineNetwork, _, err := unstructured.NestedSlice(proxyConfigRaw, "networking", "machineNetwork")
 	if err != nil {
 		return []string{}, err
 	}
 
+	cidrs := make([]string, 0, len(machineNetwork))
 	for _, machineNetworkEntry := range machineNetwork {
 		cidr, _, err := unstructured.NestedString(machineNetworkEntry.(map[string]interface{}), "cidr")
 		if err != nil {
