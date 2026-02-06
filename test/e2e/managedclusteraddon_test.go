@@ -10,13 +10,15 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:revive // dot imports are idiomatic for ginkgo
+	. "github.com/onsi/gomega"    //nolint:revive // dot imports are idiomatic for gomega
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("managedClusterAddon test", func() {
