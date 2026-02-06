@@ -1,0 +1,77 @@
+# golangci-lint v2.x configuration
+# This file extends the centralized config from acm-infra
+# with project-specific exclusions
+
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    - unconvert
+    - unparam
+    - nakedret
+    - prealloc
+    - copyloopvar
+    - revive
+
+  settings:
+    misspell:
+      locale: US
+
+    nakedret:
+      max-func-lines: 30
+
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+          disabled: true  # Allow dot imports (common in Ginkgo/Gomega tests)
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+          disabled: true  # Allow stuttering names like GlobalProxyReconciler
+        - name: increment-decrement
+        - name: var-naming
+          disabled: true  # Allow common package names
+        - name: var-declaration
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+
+  exclusions:
+    presets:
+      - comments
+      - std-error-handling
+    generated: strict
+    rules:
+      - path: _test\.go
+        linters:
+          - govet
+          - errcheck
+          - unparam  # Ignore unused parameters in test functions
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    goimports:
+      local-prefixes: github.com/stolostron,open-cluster-management.io

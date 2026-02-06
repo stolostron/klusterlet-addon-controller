@@ -12,16 +12,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/stolostron/cluster-lifecycle-api/helpers/imageregistry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	clusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/stolostron/klusterlet-addon-controller/version"
+	"github.com/stolostron/cluster-lifecycle-api/helpers/imageregistry"
+	clusterv1 "open-cluster-management.io/api/cluster/v1"
+
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/stolostron/klusterlet-addon-controller/version"
 )
 
 //	var defaultComponentImageKeyMap = map[string]string{

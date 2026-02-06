@@ -10,19 +10,21 @@ package v1
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"testing"
 
-	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
-	"github.com/stolostron/klusterlet-addon-controller/version"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
-	clusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	clusterv1 "open-cluster-management.io/api/cluster/v1"
+
+	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
+	"github.com/stolostron/klusterlet-addon-controller/version"
 )
 
 func TestGetImageWithManifest(t *testing.T) {
@@ -46,9 +48,7 @@ func TestGetImageWithManifest(t *testing.T) {
 		},
 	}
 
-	client := fake.NewFakeClient([]runtime.Object{
-		testConfigMap,
-	}...)
+	client := fake.NewClientBuilder().WithRuntimeObjects(testConfigMap).Build()
 	err := LoadConfigmaps(client)
 	if err != nil {
 		return
@@ -178,9 +178,7 @@ func TestGetImageWithManyConfigmapManifest(t *testing.T) {
 	}
 
 	version.Version = "x.y.z"
-	client := fake.NewFakeClient([]runtime.Object{
-		testConfigMap, testConfigMap1, testConfigMapInvalidVersion,
-	}...)
+	client := fake.NewClientBuilder().WithRuntimeObjects(testConfigMap, testConfigMap1, testConfigMapInvalidVersion).Build()
 	err := LoadConfigmaps(client)
 	if err != nil {
 		return

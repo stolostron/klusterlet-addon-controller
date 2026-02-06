@@ -7,22 +7,23 @@ import (
 	"reflect"
 	"strings"
 
-	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
-	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
-	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
-	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
-	mcv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
+
+	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
 )
 
 const (
@@ -150,20 +151,6 @@ func (r *ReconcileKlusterletAddOn) Reconcile(ctx context.Context, request reconc
 	}
 
 	return reconcile.Result{}, nil
-}
-
-func (r *ReconcileKlusterletAddOn) deleteAllManagedClusterAddon(ctx context.Context, clusterName string) error {
-	var aggregatedErrs []error
-	for addonName := range agentv1.KlusterletAddons {
-		err := r.deleteManagedClusterAddon(ctx, addonName, clusterName)
-		if err != nil {
-			aggregatedErrs = append(aggregatedErrs, err)
-		}
-	}
-	if len(aggregatedErrs) != 0 {
-		return fmt.Errorf("failed to delelte all addons %v", aggregatedErrs)
-	}
-	return nil
 }
 
 func (r *ReconcileKlusterletAddOn) deleteManagedClusterAddon(ctx context.Context, addonName, clusterName string) error {
@@ -349,7 +336,7 @@ func getGlobalValues(nodeSelector map[string]string,
 
 // getAddOnHostingClusterName returns the hosting cluster name for add-ons of the given managed cluster.
 // An empty string is returned if the add-ons should be deployed in the default mode.
-func getAddOnHostingClusterName(cluster *mcv1.ManagedCluster) string {
+func getAddOnHostingClusterName(cluster *managedclusterv1.ManagedCluster) string {
 	switch {
 	case cluster == nil:
 		return ""
@@ -392,7 +379,7 @@ func marshalGlobalValues(values globalValues) (string, error) {
 
 	gvRaw, err := json.Marshal(values)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	return string(gvRaw), nil
 }
