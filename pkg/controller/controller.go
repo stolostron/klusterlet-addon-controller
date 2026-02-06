@@ -9,12 +9,13 @@
 package controller
 
 import (
-	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/addon"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/globalproxy"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/managedcluster"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/addon"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/globalproxy"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller/managedcluster"
 )
 
 // AddToManagerFuncs is a list of functions to add all Controllers to the Manager

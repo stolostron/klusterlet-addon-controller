@@ -7,20 +7,20 @@ import (
 	"reflect"
 	"testing"
 
-	apiconstants "github.com/stolostron/cluster-lifecycle-api/constants"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
-	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	v1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
-	"open-cluster-management.io/api/addon/v1alpha1"
-	mcv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	apiconstants "github.com/stolostron/cluster-lifecycle-api/constants"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
+	"open-cluster-management.io/api/addon/v1alpha1"
+	mcv1 "open-cluster-management.io/api/cluster/v1"
 )
 
 func validateValues(values, expectedValues string) error {
@@ -125,39 +125,39 @@ func Test_updateAnnotationValues(t *testing.T) {
 	}
 }
 
-func newKlusterletAddonConfig(clusterName string) *v1.KlusterletAddonConfig {
-	return &v1.KlusterletAddonConfig{
+func newKlusterletAddonConfig(clusterName string) *agentv1.KlusterletAddonConfig {
+	return &agentv1.KlusterletAddonConfig{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterName,
 			Namespace: clusterName,
 		},
-		Spec: v1.KlusterletAddonConfigSpec{
-			ProxyConfig:                v1.ProxyConfig{},
-			SearchCollectorConfig:      v1.KlusterletAddonAgentConfigSpec{Enabled: true},
-			PolicyController:           v1.KlusterletAddonAgentConfigSpec{Enabled: true},
-			ApplicationManagerConfig:   v1.KlusterletAddonAgentConfigSpec{Enabled: true},
-			CertPolicyControllerConfig: v1.KlusterletAddonAgentConfigSpec{Enabled: true},
+		Spec: agentv1.KlusterletAddonConfigSpec{
+			ProxyConfig:                agentv1.ProxyConfig{},
+			SearchCollectorConfig:      agentv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			PolicyController:           agentv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			ApplicationManagerConfig:   agentv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			CertPolicyControllerConfig: agentv1.KlusterletAddonAgentConfigSpec{Enabled: true},
 		},
 	}
 }
 
-func newKlusterletAddonConfigWithProxy(clusterName string) *v1.KlusterletAddonConfig {
-	return &v1.KlusterletAddonConfig{
+func newKlusterletAddonConfigWithProxy(clusterName string) *agentv1.KlusterletAddonConfig {
+	return &agentv1.KlusterletAddonConfig{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterName,
 			Namespace: clusterName,
 		},
-		Spec: v1.KlusterletAddonConfigSpec{
-			ProxyConfig:                v1.ProxyConfig{},
-			SearchCollectorConfig:      v1.KlusterletAddonAgentConfigSpec{Enabled: true},
-			PolicyController:           v1.KlusterletAddonAgentConfigSpec{Enabled: true},
-			ApplicationManagerConfig:   v1.KlusterletAddonAgentConfigSpec{Enabled: true, ProxyPolicy: v1.ProxyPolicyOCPGlobalProxy},
-			CertPolicyControllerConfig: v1.KlusterletAddonAgentConfigSpec{Enabled: true},
+		Spec: agentv1.KlusterletAddonConfigSpec{
+			ProxyConfig:                agentv1.ProxyConfig{},
+			SearchCollectorConfig:      agentv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			PolicyController:           agentv1.KlusterletAddonAgentConfigSpec{Enabled: true},
+			ApplicationManagerConfig:   agentv1.KlusterletAddonAgentConfigSpec{Enabled: true, ProxyPolicy: agentv1.ProxyPolicyOCPGlobalProxy},
+			CertPolicyControllerConfig: agentv1.KlusterletAddonAgentConfigSpec{Enabled: true},
 		},
-		Status: v1.KlusterletAddonConfigStatus{
-			OCPGlobalProxy: v1.ProxyConfig{
+		Status: agentv1.KlusterletAddonConfigStatus{
+			OCPGlobalProxy: agentv1.ProxyConfig{
 				HTTPProxy:  "1.1.1.1",
 				HTTPSProxy: "2.2.2.2",
 				NoProxy:    "localhost",
@@ -186,7 +186,7 @@ func Test_Reconcile(t *testing.T) {
 		name                  string
 		clusterName           string
 		managedCluster        *mcv1.ManagedCluster
-		klusterletAddonConfig *v1.KlusterletAddonConfig
+		klusterletAddonConfig *agentv1.KlusterletAddonConfig
 		managedClusterAddons  []runtime.Object
 		want                  reconcile.Result
 		validateFunc          func(t *testing.T, client client.Client)
@@ -302,7 +302,7 @@ func Test_Reconcile(t *testing.T) {
 			managedCluster:        newManagedCluster("cluster1", nil, nil),
 			klusterletAddonConfig: newKlusterletAddonConfigWithProxy("cluster1"),
 			managedClusterAddons: []runtime.Object{
-				newManagedClusterAddon(v1.ApplicationAddonName, "cluster1", ""),
+				newManagedClusterAddon(agentv1.ApplicationAddonName, "cluster1", ""),
 			},
 			validateFunc: func(t *testing.T, kubeClient client.Client) {
 				addonList := &v1alpha1.ManagedClusterAddOnList{}
@@ -314,7 +314,7 @@ func Test_Reconcile(t *testing.T) {
 					t.Errorf("expected 5 addons, but got %v", len(addonList.Items))
 				}
 				for _, addon := range addonList.Items {
-					if addon.GetName() != v1.ApplicationAddonName {
+					if addon.GetName() != agentv1.ApplicationAddonName {
 						continue
 					}
 					annotations := addon.GetAnnotations()
@@ -338,7 +338,7 @@ func Test_Reconcile(t *testing.T) {
 			managedCluster:        newManagedCluster("cluster1", nil, nil),
 			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
 			managedClusterAddons: []runtime.Object{
-				newManagedClusterAddon(v1.IamPolicyAddonName, "cluster1", ""),
+				newManagedClusterAddon(agentv1.IamPolicyAddonName, "cluster1", ""),
 			},
 			validateFunc: func(t *testing.T, kubeClient client.Client) {
 				addonList := &v1alpha1.ManagedClusterAddOnList{}
@@ -350,7 +350,7 @@ func Test_Reconcile(t *testing.T) {
 					t.Errorf("expected 5 addons, but got %v", len(addonList.Items))
 				}
 				for _, addon := range addonList.Items {
-					if addon.GetName() == v1.IamPolicyAddonName {
+					if addon.GetName() == agentv1.IamPolicyAddonName {
 						t.Errorf("iam policy addon is still running")
 					}
 
