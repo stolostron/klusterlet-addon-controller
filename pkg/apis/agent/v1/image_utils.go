@@ -11,16 +11,19 @@ package v1
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog/v2"
-	"os"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/stolostron/cluster-lifecycle-api/helpers/imageregistry"
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/stolostron/klusterlet-addon-controller/version"
-	corev1 "k8s.io/api/core/v1"
 )
 
 //	var defaultComponentImageKeyMap = map[string]string{

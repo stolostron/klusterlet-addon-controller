@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:revive // dot imports are idiomatic for ginkgo
+	. "github.com/onsi/gomega"    //nolint:revive // dot imports are idiomatic for gomega
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -19,14 +19,14 @@ import (
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
-	clusterclient "open-cluster-management.io/api/client/cluster/clientset/versioned"
-	clusterv1 "open-cluster-management.io/api/cluster/v1"
-	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
-	manifestworkv1 "open-cluster-management.io/api/work/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	clusterclient "open-cluster-management.io/api/client/cluster/clientset/versioned"
+	clusterv1 "open-cluster-management.io/api/cluster/v1"
+	manifestworkv1 "open-cluster-management.io/api/work/v1"
 
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 )
@@ -86,7 +86,7 @@ func newRuntimeClient(config *rest.Config) (client.Client, error) {
 		logf.Log.Info("add to scheme error", "error", err, "name", "manifestwork")
 		return nil, err
 	}
-	if err := managedclusterv1.AddToScheme(kscheme.Scheme); err != nil {
+	if err := clusterv1.AddToScheme(kscheme.Scheme); err != nil {
 		logf.Log.Info("add to scheme error", "error", err, "name", "managedcluster")
 		return nil, err
 	}
@@ -127,8 +127,8 @@ func createManagedCluster(clusterName string, annotations map[string]string) (*c
 
 func assertManagedClusterNamespace(managedClusterName string) {
 	By("Should create the managedCluster namespace", func() {
-		Expect(wait.Poll(1*time.Second, 60*time.Second, func() (bool, error) {
-			_, err := hubClient.CoreV1().Namespaces().Get(context.TODO(), managedClusterName, metav1.GetOptions{})
+		Expect(wait.PollUntilContextTimeout(context.TODO(), 1*time.Second, 60*time.Second, true, func(ctx context.Context) (bool, error) {
+			_, err := hubClient.CoreV1().Namespaces().Get(ctx, managedClusterName, metav1.GetOptions{})
 			if err != nil && errors.IsNotFound(err) {
 				return true, nil
 			}
