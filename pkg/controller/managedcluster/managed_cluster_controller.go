@@ -109,7 +109,7 @@ func createKlusterletAddonConfig(client client.Client, cluster *mcv1.ManagedClus
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("retreive KlusterletAddonConfig %s error: %v", name, err)
+		return fmt.Errorf("retrieve KlusterletAddonConfig %s error: %v", name, err)
 	}
 
 	return nil
