@@ -12,14 +12,17 @@ import (
 	"os"
 	"testing"
 
-	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
-	"github.com/stolostron/klusterlet-addon-controller/version"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-	clusterv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	clusterv1 "open-cluster-management.io/api/cluster/v1"
+
+	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
+
+	"github.com/stolostron/klusterlet-addon-controller/version"
 )
 
 func TestGetImageWithManifest(t *testing.T) {

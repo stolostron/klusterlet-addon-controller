@@ -15,19 +15,8 @@ import (
 	"runtime"
 
 	ocinfrav1 "github.com/openshift/api/config/v1"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
-	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/controller"
-	"github.com/stolostron/klusterlet-addon-controller/version"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
-	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
-	manifestworkv1 "open-cluster-management.io/api/work/v1"
-
-	// "github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	// kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
-
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -38,6 +27,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
+	manifestworkv1 "open-cluster-management.io/api/work/v1"
+
+	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/controller"
+	"github.com/stolostron/klusterlet-addon-controller/version"
 )
 
 // Change below variables to serve metrics on different host or port.
