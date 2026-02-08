@@ -7,20 +7,20 @@ import (
 	"reflect"
 	"testing"
 
-	apiconstants "github.com/stolostron/cluster-lifecycle-api/constants"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
-	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	v1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
-	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
-	"open-cluster-management.io/api/addon/v1alpha1"
-	mcv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	apiconstants "github.com/stolostron/cluster-lifecycle-api/constants"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
+	v1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
+	"open-cluster-management.io/api/addon/v1alpha1"
+	mcv1 "open-cluster-management.io/api/cluster/v1"
 )
 
 func validateValues(values, expectedValues string) error {
@@ -240,8 +240,8 @@ func Test_Reconcile(t *testing.T) {
 							t.Errorf("expected addon %q is installed in default mode, but in hosted mode", addon.Name)
 						}
 
-						if addon.Spec.InstallNamespace != agentv1.KlusterletAddonNamespace {
-							t.Errorf("expected install namespace of addon %q is %q, but got %s", addon.Name, agentv1.KlusterletAddonNamespace, addon.Spec.InstallNamespace)
+						if addon.Spec.InstallNamespace != v1.KlusterletAddonNamespace {
+							t.Errorf("expected install namespace of addon %q is %q, but got %s", addon.Name, v1.KlusterletAddonNamespace, addon.Spec.InstallNamespace)
 						}
 					}
 				}
