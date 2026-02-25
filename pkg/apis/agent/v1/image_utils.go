@@ -12,6 +12,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/stolostron/cluster-lifecycle-api/helpers/imageregistry"
+	"github.com/stolostron/klusterlet-addon-controller/version"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -19,8 +21,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/stolostron/cluster-lifecycle-api/helpers/imageregistry"
-	"github.com/stolostron/klusterlet-addon-controller/version"
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
 )
 

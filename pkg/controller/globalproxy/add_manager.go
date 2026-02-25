@@ -1,6 +1,7 @@
 package globalproxy
 
 import (
+	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -10,7 +11,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
 )
 
