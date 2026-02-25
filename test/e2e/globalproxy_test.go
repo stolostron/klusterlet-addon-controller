@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 
 	"github.com/stolostron/klusterlet-addon-controller/pkg/helpers"
+
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // dot import is idiomatic for ginkgo
