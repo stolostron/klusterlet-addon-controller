@@ -11,6 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
+
 	mcv1 "open-cluster-management.io/api/cluster/v1"
 )
 
