@@ -19,6 +19,7 @@ import (
 	"github.com/stolostron/klusterlet-addon-controller/pkg/apis"
 	v1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
+
 	"open-cluster-management.io/api/addon/v1alpha1"
 	mcv1 "open-cluster-management.io/api/cluster/v1"
 )
