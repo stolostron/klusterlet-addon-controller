@@ -21,6 +21,7 @@ import (
 	imageregistryv1alpha1 "github.com/stolostron/cluster-lifecycle-api/imageregistry/v1alpha1"
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/common"
+
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	mcv1 "open-cluster-management.io/api/cluster/v1"
 )
