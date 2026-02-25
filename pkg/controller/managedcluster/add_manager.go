@@ -3,7 +3,6 @@ package managedcluster
 import (
 	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"k8s.io/client-go/kubernetes"
-	mcv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -11,6 +10,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	mcv1 "open-cluster-management.io/api/cluster/v1"
 )
 
 // Add creates a new ManagedCluster Controller and adds it to the Manager. The Manager will set fields on the Controller
