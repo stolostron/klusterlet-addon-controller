@@ -20,6 +20,7 @@ import (
 
 	"github.com/stolostron/cluster-lifecycle-api/helpers/imageregistry"
 	"github.com/stolostron/klusterlet-addon-controller/version"
+
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
 )
 
