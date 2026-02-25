@@ -32,6 +32,7 @@ import (
 	agentv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stolostron/klusterlet-addon-controller/pkg/controller"
 	"github.com/stolostron/klusterlet-addon-controller/version"
+
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
 	manifestworkv1 "open-cluster-management.io/api/work/v1"
