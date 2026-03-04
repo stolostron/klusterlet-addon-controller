@@ -17,6 +17,7 @@ kind-config-generated.yaml
 
 # Folders
 .build-docker
+_output
 build/_output
 build-harness
 build-harness-extensions
