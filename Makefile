@@ -38,6 +38,8 @@ endif
 KUBECONFIG ?= ./.kubeconfig
 KUBECTL?=kubectl
 
+ENSURE_ENVTEST_SCRIPT := https://raw.githubusercontent.com/open-cluster-management-io/sdk-go/main/ci/envtest/ensure-envtest.sh
+
 .PHONY: deps
 ## Download all project dependencies
 deps:
@@ -52,9 +54,14 @@ copyright-check:
 	@build/copyright-check.sh
 
 
+.PHONY: envtest-setup
+envtest-setup:
+	$(eval export KUBEBUILDER_ASSETS=$(shell curl -fsSL $(ENSURE_ENVTEST_SCRIPT) | bash))
+	@echo "KUBEBUILDER_ASSETS=$(KUBEBUILDER_ASSETS)"
+
 .PHONY: test
 ## Runs go unit tests
-test:
+test: envtest-setup
 	@build/run-unit-tests.sh
 
 .PHONY: build
