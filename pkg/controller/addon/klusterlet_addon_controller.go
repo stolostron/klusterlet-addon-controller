@@ -16,11 +16,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
-	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
-	mcv1 "open-cluster-management.io/api/cluster/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
+	mcv1 "open-cluster-management.io/api/cluster/v1"
 )
 
 const (
@@ -346,7 +347,7 @@ func marshalGlobalValues(values globalValues) (string, error) {
 
 	gvRaw, err := json.Marshal(values)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	return string(gvRaw), nil
 }

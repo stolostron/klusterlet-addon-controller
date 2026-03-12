@@ -96,7 +96,7 @@ lint-all:
 .PHONY: lint
 ## Runs linter against go files
 lint:
-	build/run-lint-check.sh
+	@curl -sSL https://raw.githubusercontent.com/open-cluster-management-io/sdk-go/main/ci/lint/run-lint.sh | bash
 
 ### HELPER UTILS #######################
 
