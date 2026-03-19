@@ -94,6 +94,16 @@ func (r *ReconcileKlusterletAddOn) Reconcile(ctx context.Context, request reconc
 	addOnHostingClusterName := getAddOnHostingClusterName(managedCluster)
 	var aggregatedErrs []error
 	for addonName, needUpdate := range agentv1.KlusterletAddons {
+
+		// Skip the addon if the ClusterManagementAddOn install strategy type is Placements
+		cma := &addonv1alpha1.ClusterManagementAddOn{}
+		if err := r.client.Get(ctx, types.NamespacedName{Name: addonName}, cma); err == nil {
+			if cma.Spec.InstallStrategy.Type == addonv1alpha1.AddonInstallStrategyPlacements {
+				klog.V(4).Infof("skip addon %v because ClusterManagementAddOn install strategy type is Placements", addonName)
+				continue
+			}
+		}
+
 		if !addonIsEnabled(addonName, klusterletAddonConfig) {
 			if err := r.deleteManagedClusterAddon(ctx, addonName, managedCluster.GetName()); err != nil {
 				aggregatedErrs = append(aggregatedErrs, err)

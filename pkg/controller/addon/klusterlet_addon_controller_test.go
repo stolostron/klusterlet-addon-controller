@@ -178,6 +178,19 @@ func newManagedCluster(name string, labels, annotations map[string]string) *mcv1
 	}
 }
 
+func newClusterManagementAddOn(name, strategyType string) *v1alpha1.ClusterManagementAddOn {
+	return &v1alpha1.ClusterManagementAddOn{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: v1alpha1.ClusterManagementAddOnSpec{
+			InstallStrategy: v1alpha1.InstallStrategy{
+				Type: strategyType,
+			},
+		},
+	}
+}
+
 func Test_Reconcile(t *testing.T) {
 	testscheme := scheme.Scheme
 	_ = mcv1.AddToScheme(testscheme)
@@ -185,13 +198,14 @@ func Test_Reconcile(t *testing.T) {
 	_ = apis.AddToScheme(testscheme)
 
 	tests := []struct {
-		name                  string
-		clusterName           string
-		managedCluster        *mcv1.ManagedCluster
-		klusterletAddonConfig *v1.KlusterletAddonConfig
-		managedClusterAddons  []runtime.Object
-		want                  reconcile.Result
-		validateFunc          func(t *testing.T, client client.Client)
+		name                    string
+		clusterName             string
+		managedCluster          *mcv1.ManagedCluster
+		klusterletAddonConfig   *v1.KlusterletAddonConfig
+		managedClusterAddons    []runtime.Object
+		clusterManagementAddons []runtime.Object
+		want                    reconcile.Result
+		validateFunc            func(t *testing.T, client client.Client)
 	}{
 		{
 			name:                  "cluster is created, create all addons",
@@ -359,6 +373,54 @@ func Test_Reconcile(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:                  "skip addon when CMA install strategy is Placements",
+			clusterName:           "cluster1",
+			managedCluster:        newManagedCluster("cluster1", nil, nil),
+			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
+			clusterManagementAddons: []runtime.Object{
+				newClusterManagementAddOn(v1.ApplicationAddonName, v1alpha1.AddonInstallStrategyPlacements),
+				newClusterManagementAddOn(v1.SearchAddonName, v1alpha1.AddonInstallStrategyPlacements),
+			},
+			validateFunc: func(t *testing.T, kubeClient client.Client) {
+				addonList := &v1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "cluster1"})
+				if err != nil {
+					t.Errorf("faild to list addons. %v", err)
+				}
+				// 5 - 2 (application-manager and search-collector skipped) = 3
+				if len(addonList.Items) != 3 {
+					t.Errorf("expected 3 addons, but got %v", len(addonList.Items))
+				}
+				for _, addon := range addonList.Items {
+					if addon.GetName() == v1.ApplicationAddonName {
+						t.Errorf("application addon should be skipped")
+					}
+					if addon.GetName() == v1.SearchAddonName {
+						t.Errorf("search addon should be skipped")
+					}
+				}
+			},
+		},
+		{
+			name:                  "do not skip addon when CMA install strategy is Manual",
+			clusterName:           "cluster1",
+			managedCluster:        newManagedCluster("cluster1", nil, nil),
+			klusterletAddonConfig: newKlusterletAddonConfig("cluster1"),
+			clusterManagementAddons: []runtime.Object{
+				newClusterManagementAddOn(v1.ApplicationAddonName, v1alpha1.AddonInstallStrategyManual),
+			},
+			validateFunc: func(t *testing.T, kubeClient client.Client) {
+				addonList := &v1alpha1.ManagedClusterAddOnList{}
+				err := kubeClient.List(context.TODO(), addonList, &client.ListOptions{Namespace: "cluster1"})
+				if err != nil {
+					t.Errorf("faild to list addons. %v", err)
+				}
+				if len(addonList.Items) != 5 {
+					t.Errorf("expected 5 addons, but got %v", len(addonList.Items))
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -372,6 +434,9 @@ func Test_Reconcile(t *testing.T) {
 			}
 			if len(tt.managedClusterAddons) != 0 {
 				objs = append(objs, tt.managedClusterAddons...)
+			}
+			if len(tt.clusterManagementAddons) != 0 {
+				objs = append(objs, tt.clusterManagementAddons...)
 			}
 
 			reconciler := &ReconcileKlusterletAddOn{
