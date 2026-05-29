@@ -1,6 +1,6 @@
 module github.com/stolostron/klusterlet-addon-controller
 
-go 1.23.6
+go 1.25.0
 
 require (
 	github.com/onsi/ginkgo v1.16.5
@@ -62,7 +62,7 @@ require (
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/oauth2 v0.28.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
