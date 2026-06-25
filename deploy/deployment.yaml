@@ -1,0 +1,40 @@
+# Copyright Contributors to the Open Cluster Management project
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: klusterlet-addon-controller
+  namespace: open-cluster-management
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: klusterlet-addon-controller
+  template:
+    metadata:
+      annotations:
+        target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
+      labels:
+        name: klusterlet-addon-controller
+    spec:
+      serviceAccountName: klusterlet-addon-controller
+      containers:
+        - name: klusterlet-addon-controller
+          # Replace this with the built image name
+          image: REPLACE_NAME
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: WATCH_NAMESPACE
+            value: "" 
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: OPERATOR_NAME
+            value: "klusterlet-addon-controller"
+          - name: HUB_VERSION
+            value: "x.y.z"

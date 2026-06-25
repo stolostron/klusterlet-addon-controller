@@ -1,0 +1,35 @@
+# Copyright Contributors to the Open Cluster Management project
+
+# Files
+.build-harness
+.build-harness-bootstrap
+OPENSOURCE.check
+.vscode
+cover.html
+cover-functional.html
+cover-functional-filtered.html
+*.out
+*.tap
+*.test
+.DS_Store
+kind_kubeconfig.yaml
+kind-config-generated.yaml
+
+# Folders
+.build-docker
+build/_output
+_output
+build-harness
+build-harness-extensions
+vendor
+.idea
+
+test/e2e/resources/clusters
+test/e2e/resources/hubs
+
+!vbh/.build-harness-vendorized
+!vbh/build-harness
+!vbh/build-harness-extensions
+
+go-bindata.diff
+test/functional/tmp

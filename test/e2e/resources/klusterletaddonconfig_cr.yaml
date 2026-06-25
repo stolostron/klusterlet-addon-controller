@@ -1,0 +1,16 @@
+# Copyright Contributors to the Open Cluster Management project
+
+apiVersion: agent.open-cluster-management.io/v1
+kind: KlusterletAddonConfig
+metadata:
+  name: {{ .ManagedClusterName }}
+  namespace: {{ .ManagedClusterName }}
+spec:
+  applicationManager:
+    enabled: true
+  policyController:
+    enabled: true
+  searchCollector:
+    enabled: true
+  certPolicyController:
+    enabled: true

@@ -1,0 +1,15 @@
+# Copyright Contributors to the Open Cluster Management project
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: "{{ .ManagedClusterName }}-{{ .ComponentName }}-v2"
+  namespace: "{{ .ManagedClusterNamespace }}"
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: "system:open-cluster-management:cluster:{{ .ManagedClusterName }}:addon:{{ .ManagedClusterAddOnName }}"
+roleRef:
+  kind: ClusterRole
+  name: "{{ .ClusterRoleName }}"
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,40 @@
+# Copyright Contributors to the Open Cluster Management project
+
+FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.25 AS builder
+COPY . .
+RUN chmod g+w . && \
+  git config --global --add safe.directory "$PWD" && \
+  GOFLAGS="-mod=readonly" go build ./cmd/manager && \
+  GOFLAGS="-mod=readonly" go test \
+    -covermode=atomic \
+    -coverpkg=github.com/stolostron/klusterlet-addon-controller/pkg/... \
+    -c -tags testrunmain ./cmd/manager \
+    -o manager-coverage
+
+FROM registry.access.redhat.com/hi/core-runtime:latest-openssl-fips
+LABEL \
+    name="rhacm2/klusterlet-addon-controller-rhel9" \
+    cpe="cpe:/a:redhat:acm:2.12::el9" \
+    com.redhat.component="klusterlet-addon-controller" \
+    description="Klusterlet AddOn controller is an conponent of RHACM, which manages the Klusterelet AddOns." \
+    io.k8s.description="Klusterlet AddOn controller is an conponent of RHACM, which manages the Klusterelet AddOns." \
+    summary="Klusterlet AddOn controller is an conponent of RHACM, which manages the Klusterelet AddOns." \
+    io.k8s.display-name="Red Hat Advanced Cluster Management Klusterlet AddOn Controller" \
+    io.openshift.tags="mce acm ocm klusterlet-addon-controller"
+ENV IMAGE_MANIFEST_PATH=/
+
+ENV OPERATOR=/usr/local/bin/klusterlet-addon-controller \
+    USER_UID=10001 \
+    USER_NAME=klusterlet-addon-controller
+
+COPY --from=builder ./deploy/crds deploy/crds
+COPY --from=builder ./manager ${OPERATOR}
+COPY --from=builder ./manager-coverage ${OPERATOR}-coverage
+COPY --from=builder ./build/bin /usr/local/bin
+COPY --from=builder ./build/coverage-entrypoint-func.sh /usr/local/bin/coverage-entrypoint-func.sh
+
+RUN  /usr/local/bin/user_setup
+
+USER ${USER_UID}
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]

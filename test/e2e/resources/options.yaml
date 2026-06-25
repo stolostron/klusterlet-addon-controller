@@ -1,0 +1,13 @@
+# Copyright Contributors to the Open Cluster Management project
+
+options:
+  hub:
+    configDir: "resources/hub"
+    name: 
+    baseDomain: 
+    credentials:
+      kubeadmin:
+        user: 
+        password: 
+  managedClusters:
+    configDir:  "resources/clusters"

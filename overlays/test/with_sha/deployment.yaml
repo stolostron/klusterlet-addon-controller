@@ -1,0 +1,36 @@
+# Copyright Contributors to the Open Cluster Management project
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: klusterlet-addon-controller
+  namespace: open-cluster-management
+spec:
+  template:
+    metadata:
+      annotations:
+        target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
+    spec:
+      securityContext:
+        fsGroup: 2000
+      imagePullSecrets:
+      - name: multicloud-image-pull-secret
+      containers:
+      - name: klusterlet-addon-controller
+        #command: ["/usr/local/bin/entrypoint-coverage"]
+        volumeMounts:
+        - mountPath: /tmp/coverage
+          name: coverage-dir       
+        env:
+        - name: DEFAULT_IMAGE_PULL_SECRET
+          value: "multicloud-image-pull-secret"
+      volumes:
+      - name: coverage-dir
+        hostPath:
+          # directory location on host
+          path: /tmp/coverage
+          # this field is optional
+          type: Directory
+     
+           
+    

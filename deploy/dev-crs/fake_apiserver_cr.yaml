@@ -1,0 +1,7 @@
+# Copyright Contributors to the Open Cluster Management project
+
+apiVersion: config.openshift.io/v1
+kind: APIServer
+metadata:
+  name: cluster
+spec: {}
