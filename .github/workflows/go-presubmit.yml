@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 1
           path: go/src/github.com/stolostron/klusterlet-addon-controller
       - name: install Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go/src/github.com/stolostron/klusterlet-addon-controller/go.mod
       - name: build
@@ -43,7 +43,7 @@ jobs:
           fetch-depth: 1
           path: go/src/github.com/stolostron/klusterlet-addon-controller
       - name: install Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go/src/github.com/stolostron/klusterlet-addon-controller/go.mod
       - name: unit
@@ -59,7 +59,7 @@ jobs:
           fetch-depth: 1
           path: go/src/github.com/stolostron/klusterlet-addon-controller
       - name: install Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go/src/github.com/stolostron/klusterlet-addon-controller/go.mod
       - name: install imagebuilder
