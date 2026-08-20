@@ -98,7 +98,7 @@ request-destruct:
 .PHONY: lint
 ## Runs linter against go files
 lint:
-	@curl -sSL https://raw.githubusercontent.com/open-cluster-management-io/sdk-go/main/ci/lint/run-lint.sh | bash
+	@export GOLANGCI_LINT_VERSION=v2.12.2 && curl -sSL https://raw.githubusercontent.com/open-cluster-management-io/sdk-go/main/ci/lint/run-lint.sh | bash
 
 ### HELPER UTILS #######################
 
