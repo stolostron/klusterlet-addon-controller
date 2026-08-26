@@ -11,7 +11,6 @@ on:
 
 env:
   # Common versions
-  GO_VERSION: '1.25'
   GO_REQUIRED_MIN_VERSION: ''
   GOPATH: '/home/runner/work/klusterlet-addon-controller/klusterlet-addon-controller/go'
 defaults:
@@ -31,7 +30,7 @@ jobs:
       - name: install Go
         uses: actions/setup-go@v7
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go/src/github.com/stolostron/klusterlet-addon-controller/go.mod
       - name: build
         run: make build
 
@@ -47,7 +46,7 @@ jobs:
       - name: install Go
         uses: actions/setup-go@v7
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go/src/github.com/stolostron/klusterlet-addon-controller/go.mod
       - name: unit
         run: make test
 
@@ -63,7 +62,7 @@ jobs:
       - name: install Go
         uses: actions/setup-go@v7
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go/src/github.com/stolostron/klusterlet-addon-controller/go.mod
       - name: install imagebuilder
         run: go install github.com/openshift/imagebuilder/cmd/imagebuilder@v1.2.3
       - name: images
