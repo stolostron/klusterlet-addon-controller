@@ -11,7 +11,7 @@ RUN chmod g+w . && \
     -c -tags testrunmain ./cmd/manager \
     -o manager-coverage
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
+FROM registry.access.redhat.com/hi/core-runtime:latest-openssl-fips
 LABEL \
     name="rhacm2/klusterlet-addon-controller-rhel9" \
     cpe="cpe:/a:redhat:acm:2.12::el9" \
