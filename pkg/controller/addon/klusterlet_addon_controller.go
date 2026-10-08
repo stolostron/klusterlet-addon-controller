@@ -150,7 +150,7 @@ func (r *ReconcileKlusterletAddOn) deleteManagedClusterAddon(ctx context.Context
 }
 
 func (r *ReconcileKlusterletAddOn) updateManagedClusterAddon(ctx context.Context, gv globalValues, addonName, clusterName string, hostingClusterName string) error {
-	valuesString, err := marshalGlobalValues(gv)
+	valuesString, err := r.buildAddonValuesAnnotation(ctx, gv, addonName)
 	if err != nil {
 		return err
 	}
@@ -348,6 +348,56 @@ func newManagedClusterAddon(addonName, namespace string, hostingClusterName stri
 	}
 
 	return addOn
+}
+
+// buildAddonValuesAnnotation builds the JSON payload for the "addon.open-cluster-management.io/
+// values" annotation on a ManagedClusterAddOn: the existing per-addon Global values (node
+// selector, image overrides, proxy config) — same as marshalGlobalValues always produced — plus,
+// for the search-collector addon only, the hub's merged-collector-config Spec under a
+// "collectorConfig" key. This is what makes search-collector on every managed cluster pick up the
+// hub's search collection rules without any ACM Policy: search-v2-operator's own addon-framework
+// wiring already reads this same "collectorConfig.spec" key out of this exact annotation (see
+// its GetValuesFromAddonAnnotation usage). See collectorconfig.go.
+//
+// Returns ("", nil) when there is nothing to write at all — the same "omit the annotation
+// entirely" semantics marshalGlobalValues always had for every other addon.
+func (r *ReconcileKlusterletAddOn) buildAddonValuesAnnotation(
+	ctx context.Context, gv globalValues, addonName string,
+) (string, error) {
+	payload := map[string]interface{}{}
+
+	if hasNonEmptyGlobalValues(gv) {
+		payload["global"] = gv.Global
+	}
+
+	if addonName == agentv1.SearchAddonName {
+		spec, err := getMergedCollectorConfigSpec(ctx, r.client)
+		if err != nil {
+			// Propagate rather than swallow: an empty payload here (when global values are also
+			// empty) would delete a previously-written collectorConfig annotation entry on the
+			// very next reconcile, turning a transient hub read failure into search-collector
+			// losing its distributed collection rules on every managed cluster.
+			return "", err
+		}
+		if spec != nil {
+			payload["collectorConfig"] = map[string]interface{}{"spec": spec}
+		}
+	}
+
+	if len(payload) == 0 {
+		return "", nil
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+	return string(raw), nil
+}
+
+// hasNonEmptyGlobalValues reports whether gv carries anything worth writing — mirrors the guard
+// marshalGlobalValues used before buildAddonValuesAnnotation replaced it as the sole caller.
+func hasNonEmptyGlobalValues(gv globalValues) bool {
+	return len(gv.Global.NodeSelector) != 0 || len(gv.Global.ProxyConfig) != 0 || len(gv.Global.ImageOverrides) != 0
 }
 
 func marshalGlobalValues(values globalValues) (string, error) {
