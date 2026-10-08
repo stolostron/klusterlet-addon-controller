@@ -104,10 +104,24 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// the hub's search collection rules change, instead of only picking it up on the next
 	// KlusterletAddonConfig/ManagedCluster/ManagedClusterAddOn event from the three watches above.
 	//
-	// The search component (and its CollectorConfig CRD) may not be installed on every hub, so a
-	// failure to set up this specific watch is logged and skipped rather than failing controller
-	// startup — every other addon, and search-collector's own annotation refresh via the other
-	// three triggers, must keep working regardless.
+	// The search component (and its CollectorConfig CRD) may not be installed on every hub.
+	// Deliberately check CRD availability via the RESTMapper BEFORE calling c.Watch: a Watch()
+	// call on a source.Kind only registers the informer for later — it doesn't contact the API
+	// server synchronously, so a missing CRD would NOT surface as an error here. It would instead
+	// surface ~2 minutes later (controller-runtime's default CacheSyncTimeout) inside
+	// Controller.Start()'s WaitForSync call, which the manager treats as fatal — crashing this
+	// controller's startup entirely, including the three pre-existing watches above, and with it
+	// every other addon this controller manages. Checking first avoids ever registering that
+	// broken informer in the shared cache.
+	if _, err := mgr.GetRESTMapper().RESTMapping(
+		collectorConfigGVK.GroupKind(), collectorConfigGVK.Version); err != nil {
+		klog.Warningf(
+			"search component's CollectorConfig CRD not found on this hub, skipping the instant "+
+				"config-change watch (search-collector's values annotation will still refresh via "+
+				"the other three triggers above): %v", err)
+		return nil
+	}
+
 	collectorConfigObj := &unstructured.Unstructured{}
 	collectorConfigObj.SetGroupVersionKind(collectorConfigGVK)
 	if err := c.Watch(source.Kind(mgr.GetCache(), collectorConfigObj,
@@ -122,8 +136,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			}),
 	)); err != nil {
 		klog.Warningf(
-			"Could not watch CollectorConfig for instant search-collector config propagation "+
-				"(the search component may not be installed on this hub): %v", err)
+			"Could not watch CollectorConfig for instant search-collector config propagation: %v", err)
 	}
 
 	return nil
