@@ -127,3 +127,26 @@ rules:
   verbs:
     - get
     - list
+# Needed by pkg/controller/addon/collectorconfig.go: resolves the hub Search CR's
+# namespace and reads merged-collector-config's .spec to distribute it to the search-collector
+# ManagedClusterAddOn's values annotation. watch is only needed on collectorconfigs, for the
+# CollectorConfig informer registered in pkg/controller/addon/add_manager.go. The search
+# component may not be installed on every hub -- that watch setup is defensive (logs and
+# continues on failure) and the Search/CollectorConfig reads treat "no matching kind" the same
+# as "not found", but this ClusterRole must still grant access for hubs where search IS
+# installed, or every such read fails with Forbidden instead of gracefully finding no data.
+- apiGroups:
+    - search.open-cluster-management.io
+  resources:
+    - searches
+  verbs:
+    - get
+    - list
+- apiGroups:
+    - search.open-cluster-management.io
+  resources:
+    - collectorconfigs
+  verbs:
+    - get
+    - list
+    - watch
