@@ -354,10 +354,16 @@ func newManagedClusterAddon(addonName, namespace string, hostingClusterName stri
 // values" annotation on a ManagedClusterAddOn: the existing per-addon Global values (node
 // selector, image overrides, proxy config) — same as marshalGlobalValues always produced — plus,
 // for the search-collector addon only, the hub's merged-collector-config Spec under a
-// "collectorConfig" key. This is what makes search-collector on every managed cluster pick up the
-// hub's search collection rules without any ACM Policy: search-v2-operator's own addon-framework
-// wiring already reads this same "collectorConfig.spec" key out of this exact annotation (see
-// its GetValuesFromAddonAnnotation usage). See collectorconfig.go.
+// "collectorConfig" key.
+//
+// This write is a prompt-reconcile trigger, not the value transport: search-v2-operator reads
+// merged-collector-config directly from the hub via its own client, independent of this
+// annotation, to render the actual CollectorConfig CR — and deliberately discards any
+// "collectorConfig" key found in this annotation before use (a security fix, so a per-cluster
+// annotation edit can never override the fleet-wide collection policy; see search-v2-operator's
+// stripCollectorConfigFromAnnotation). What writing this key still buys us: a ManagedClusterAddOn
+// update is one of addon-framework's reconcile triggers, so this write makes search-v2-operator's
+// hub read happen promptly instead of waiting on its own periodic resync. See collectorconfig.go.
 //
 // Returns ("", nil) when there is nothing to write at all — the same "omit the annotation
 // entirely" semantics marshalGlobalValues always had for every other addon.

@@ -14,11 +14,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// This file lets the search-collector ManagedClusterAddOn's values annotation carry the hub's
-// merged-collector-config CollectorConfig Spec, so search-collector on every managed cluster
-// picks up the hub's search collection rules without any ACM Policy. This file implements the
-// "reuse the existing values-annotation transport" side of that, in the controller that actually
-// owns the search-collector ManagedClusterAddOn object.
+// This file causes the search-collector ManagedClusterAddOn to be re-reconciled promptly whenever
+// the hub's merged-collector-config CollectorConfig changes, by writing a "collectorConfig" key
+// into the addon's values annotation (see buildAddonValuesAnnotation in
+// klusterlet_addon_controller.go).
+//
+// That write is a reconcile trigger, not a value transport: search-v2-operator's own
+// addon-framework wiring reads merged-collector-config directly from the hub, via its own client,
+// independent of this annotation, to render the actual CollectorConfig CR — and deliberately
+// discards any "collectorConfig" key found in this annotation before use (a security fix, so a
+// per-cluster annotation edit can never override the fleet-wide collection policy; see
+// search-v2-operator's stripCollectorConfigFromAnnotation). What this write still buys us: a
+// ManagedClusterAddOn update is one of addon-framework's reconcile triggers, so writing here makes
+// search-v2-operator's hub read happen promptly instead of waiting on its own periodic informer
+// resync.
 //
 // Deliberately implemented against unstructured.Unstructured with a manually-set GVK, rather than
 // importing search-v2-operator's api/v1alpha1 Go package: this avoids a hard cross-repo module
