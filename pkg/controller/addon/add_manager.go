@@ -2,8 +2,10 @@ package addon
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -22,6 +24,10 @@ import (
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	managedclusterv1 "open-cluster-management.io/api/cluster/v1"
 )
+
+// collectorConfigCRDRecheckInterval is how often collectorConfigWatchRegistrar polls the
+// RESTMapper for the CollectorConfig CRD when it wasn't available at controller startup.
+const collectorConfigCRDRecheckInterval = 5 * time.Minute
 
 func Add(mgr manager.Manager, kubeClient kubernetes.Interface) error {
 	return add(mgr, newReconciler(mgr))
@@ -113,13 +119,39 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// controller's startup entirely, including the three pre-existing watches above, and with it
 	// every other addon this controller manages. Checking first avoids ever registering that
 	// broken informer in the shared cache.
+	if ok, err := tryWatchCollectorConfig(mgr, c); err != nil {
+		klog.Warningf(
+			"Could not watch CollectorConfig for instant search-collector config propagation: %v", err)
+	} else if !ok {
+		// CRD not present yet (search not installed on this hub at startup) — rather than giving
+		// up permanently (which would require restarting this controller after search gets
+		// installed later), keep checking periodically in the background and register the watch
+		// the first time it succeeds. c.Watch() is safe to call after the controller has already
+		// started: per controller-runtime's Controller.Watch, once Started it just calls
+		// src.Start(ctx, queue) directly — it does NOT re-run the blocking WaitForSync step that
+		// caused the startup-crash bug above, so a still-missing CRD here only means "try again
+		// next tick," never a crash.
+		klog.Warningf(
+			"search component's CollectorConfig CRD not found on this hub yet; will keep checking "+
+				"every %s and register the instant config-change watch once it's installed "+
+				"(search-collector's values annotation will still refresh via the other three "+
+				"triggers above in the meantime)", collectorConfigCRDRecheckInterval)
+		if err := mgr.Add(&collectorConfigWatchRegistrar{mgr: mgr, controller: c}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// tryWatchCollectorConfig registers the CollectorConfig watch on c if its CRD is currently
+// available on the hub (per mgr.GetRESTMapper()), returning (true, nil) on success. Returns
+// (false, nil) — not an error — if the CRD simply isn't installed yet; the caller decides whether
+// to retry. Any other error (e.g. the Watch call itself failing) is returned as-is.
+func tryWatchCollectorConfig(mgr manager.Manager, c controller.Controller) (bool, error) {
 	if _, err := mgr.GetRESTMapper().RESTMapping(
 		collectorConfigGVK.GroupKind(), collectorConfigGVK.Version); err != nil {
-		klog.Warningf(
-			"search component's CollectorConfig CRD not found on this hub, skipping the instant "+
-				"config-change watch (search-collector's values annotation will still refresh via "+
-				"the other three triggers above): %v", err)
-		return nil
+		return false, nil
 	}
 
 	collectorConfigObj := &unstructured.Unstructured{}
@@ -135,11 +167,47 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 				return enqueueAllManagedClusters(ctx, mgr.GetClient())
 			}),
 	)); err != nil {
-		klog.Warningf(
-			"Could not watch CollectorConfig for instant search-collector config propagation: %v", err)
+		return false, err
 	}
+	return true, nil
+}
 
-	return nil
+// collectorConfigWatchRegistrar is a manager.Runnable that periodically retries
+// tryWatchCollectorConfig until it succeeds, then stops. It exists for the case where the search
+// component gets installed on this hub sometime after this controller already started — without
+// it, the instant config-change watch would never be registered until this controller restarts
+// (the other three triggers in add() still work in the meantime regardless; this only affects how
+// promptly a hub config change propagates).
+type collectorConfigWatchRegistrar struct {
+	mgr        manager.Manager
+	controller controller.Controller
+}
+
+// Start implements manager.Runnable.
+func (r *collectorConfigWatchRegistrar) Start(ctx context.Context) error {
+	return wait.PollUntilContextCancel(ctx, collectorConfigCRDRecheckInterval, false,
+		func(ctx context.Context) (bool, error) {
+			ok, err := tryWatchCollectorConfig(r.mgr, r.controller)
+			if err != nil {
+				klog.Warningf(
+					"Could not watch CollectorConfig for instant search-collector config "+
+						"propagation, will keep retrying: %v", err)
+				return false, nil // keep polling — a transient Watch() failure shouldn't give up permanently.
+			}
+			if ok {
+				klog.Infof(
+					"search component's CollectorConfig CRD became available; registered the " +
+						"instant config-change watch")
+			}
+			return ok, nil
+		})
+}
+
+// NeedLeaderElection implements manager.LeaderElectionRunnable. This must only run on the leader:
+// c.Watch() mutates the shared controller/cache state, which should not be done concurrently from
+// multiple replicas.
+func (r *collectorConfigWatchRegistrar) NeedLeaderElection() bool {
+	return true
 }
 
 // enqueueAllManagedClusters lists every ManagedCluster and returns one reconcile.Request per
