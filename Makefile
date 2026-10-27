@@ -3,21 +3,21 @@
 
 SHELL := /bin/bash
 
-export BUILD_DATE  = $(shell date +%m/%d@%H:%M:%S)
+export BUILD_DATE  := $(shell date +%m/%d@%H:%M:%S)
 
 export CGO_ENABLED  = 1
 export GO111MODULE := on
-export GOOS         = $(shell go env GOOS)
-export GOPACKAGES   = $(shell go list ./... | grep -v /vendor | grep -v /build | grep -v /test)
+export GOOS        := $(shell go env GOOS)
+export GOPACKAGES  := $(shell go list ./... | grep -v /vendor | grep -v /build | grep -v /test)
 
 ENSURE_ENVTEST_SCRIPT := https://raw.githubusercontent.com/open-cluster-management-io/sdk-go/main/ci/envtest/ensure-envtest.sh
 
-export PROJECT_DIR            = $(shell 'pwd')
+export PROJECT_DIR            := $(shell pwd)
 export BUILD_DIR              = $(PROJECT_DIR)/build
 export COMPONENT_SCRIPTS_PATH = $(BUILD_DIR)
 
-export COMPONENT_NAME ?= $(shell cat ./COMPONENT_NAME 2> /dev/null)
-export COMPONENT_VERSION ?= $(shell cat ./COMPONENT_VERSION 2> /dev/null)
+export COMPONENT_NAME := $(or $(COMPONENT_NAME),$(shell cat ./COMPONENT_NAME 2> /dev/null))
+export COMPONENT_VERSION := $(or $(COMPONENT_VERSION),$(shell cat ./COMPONENT_VERSION 2> /dev/null))
 
 export DOCKER_FILE        = $(BUILD_DIR)/Dockerfile
 export DOCKERFILE_COVERAGE = $(BUILD_DIR)/Dockerfile-coverage
